@@ -1,0 +1,16 @@
+---
+project:
+  group: jobt
+  archivesBaseName: jobt
+  version: 1.0.0-SNAPSHOT
+plugins:
+  - java
+configuration:
+  sourceCompatibility: 1.8
+dependencies:
+  - org.sonatype.aether:aether-impl:1.13.1
+  - org.sonatype.aether:aether-connector-wagon:1.13.1
+  - org.sonatype.aether:aether-connector-file:1.13.1
+  - org.apache.maven.wagon:wagon-http-lightweight:2.12
+  - org.apache.maven:maven-aether-provider:3.0.3
+  - org.yaml:snakeyaml:1.18

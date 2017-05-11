@@ -1,0 +1,23 @@
+# Gradle
+build
+.gradle
+
+# Jobt
+jobtbuild
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+classes
+
+# Eclipse
+.classpath
+.project
+.settings/
+/bin/
+.checkstyle
+
+# Mac
+.DS_Store

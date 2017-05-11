@@ -1,6 +1,7 @@
 package jobt;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,10 @@ public class MavenResolver {
         final RepositorySystem system = locator.getService(RepositorySystem.class);
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
-        final LocalRepository localRepo = new LocalRepository(new File("/tmp/foo"));
+
+        final Path repository = Paths.get(System.getProperty("user.home"), ".jobt", "repository");
+
+        final LocalRepository localRepo = new LocalRepository(repository.toFile());
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
 
         final RemoteRepository mavenRepository =

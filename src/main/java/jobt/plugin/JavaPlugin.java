@@ -1,7 +1,6 @@
 package jobt.plugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,18 +15,23 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.sonatype.aether.collection.DependencyCollectionException;
+import org.sonatype.aether.resolution.DependencyResolutionException;
+
+import jobt.MavenResolver;
 import jobt.config.BuildConfig;
 
-public class JavaPlugin implements CompilePlugin {
+public class JavaPlugin extends AbstractPlugin {
 
     private final BuildConfig buildConfig;
 
     public JavaPlugin(final BuildConfig buildConfig) {
+        super("compile");
         this.buildConfig = buildConfig;
     }
 
     @Override
-    public Boolean compile(final String classPath) throws IOException {
+    public void run() throws Exception {
         final Path jobtbuild = Paths.get("jobtbuild");
         if (Files.notExists(jobtbuild)) {
             Files.createDirectory(jobtbuild);
@@ -58,7 +62,7 @@ public class JavaPlugin implements CompilePlugin {
         }
 
         options.add("-cp");
-        options.add(classPath);
+        options.add(buildClasspath(buildConfig.getDependencies()));
 
         //System.out.println(options);
 
@@ -71,7 +75,14 @@ public class JavaPlugin implements CompilePlugin {
         final Iterable<? extends JavaFileObject> compUnits =
             fileManager.getJavaFileObjects(srcFiles);
 
-        return compiler.getTask(null, fileManager, diagnosticListener, options, null, compUnits).call();
+        if (!compiler.getTask(null, fileManager, diagnosticListener, options, null, compUnits).call()) {
+            throw new IllegalStateException("Compile failed");
+        }
+    }
+
+    private String buildClasspath(final List<String> dependencies) throws DependencyCollectionException, DependencyResolutionException {
+        return new MavenResolver()
+            .buildClasspath(dependencies, "compile");
     }
 
 }

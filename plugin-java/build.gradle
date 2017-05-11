@@ -1,0 +1,6 @@
+apply plugin: 'java'
+
+dependencies {
+    compileOnly project(':api')
+    compile('junit:junit:4.12')
+}

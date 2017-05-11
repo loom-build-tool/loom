@@ -1,0 +1,76 @@
+apply plugin: 'java'
+
+group = 'jobt'
+archivesBaseName = 'jobt'
+version = '1.0.0'
+
+allprojects {
+    apply plugin: 'checkstyle'
+    apply plugin: 'findbugs'
+    apply plugin: 'pmd'
+
+    sourceCompatibility = 1.8
+
+    checkstyle {
+        configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+        configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
+    }
+
+    pmd {
+        consoleOutput = true
+    }
+
+    tasks.withType(FindBugs) {
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+    }
+
+    repositories {
+        jcenter()
+    }
+}
+
+dependencies {
+    compile project(':api')
+    runtimeOnly project(':plugin-java')
+    runtimeOnly project(':plugin-checkstyle')
+    compile('org.sonatype.aether:aether-impl:1.13.1')
+    compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
+    compile('org.sonatype.aether:aether-connector-file:1.13.1')
+    compile('org.apache.maven.wagon:wagon-http-lightweight:2.12')
+    compile('org.apache.maven:maven-aether-provider:3.0.3')
+    compile('ch.qos.logback:logback-classic:1.1.7')
+    compile('org.yaml:snakeyaml:1.18')
+    compile('commons-cli:commons-cli:1.4')
+    testCompile('junit:junit:4.12')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'jobt.Jobt',
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}
+
+task zip(type: Zip) {
+    into("lib") {
+        from configurations.runtime.allArtifacts.files
+        from configurations.runtime
+    }
+    into("plugin-java") {
+        from project(':plugin-java').configurations.runtime.allArtifacts.files
+        from project(':plugin-java').configurations.runtime
+    }
+    into("plugin-checkstyle") {
+        from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
+        from project(':plugin-checkstyle').configurations.runtime
+    }
+    into("scripts") {
+        from 'scripts/build.yml'
+        from 'scripts/jobt'
+    }
+}

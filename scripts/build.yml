@@ -1,0 +1,5 @@
+---
+project:
+  groupId: yourGroup
+  artifactId: yourBasename
+  version: 1.0.0-SNAPSHOT

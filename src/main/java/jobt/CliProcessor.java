@@ -27,12 +27,13 @@ import jobt.task.Task;
 
 public class CliProcessor {
 
+    private final ProcessMonitor processMonitor;
     private final String[] args;
     private final Map<String, Class<? extends Task>> taskClasses;
 
-    public CliProcessor(final String[] args) {
+    public CliProcessor(final ProcessMonitor processMonitor, final String[] args) {
+        this.processMonitor = processMonitor;
         this.args = args;
-
         taskClasses = buildTaskRegistry();
     }
 
@@ -59,12 +60,16 @@ public class CliProcessor {
 
     public void run() throws Exception {
 
-        System.out.println("\uD83D\uDD0D Read configuration");
+        processMonitor.updateProcess("Read configuration");
         final BuildConfig buildConfig = readConfig();
 
-        System.out.printf("Start building %s version %s%n",
+        processMonitor.newProcess("\uD83D\uDD0D Read configuration",
+            String.format("Start building %s version %s",
             buildConfig.getProject().getArchivesBaseName(),
-            buildConfig.getProject().getVersion());
+            buildConfig.getProject().getVersion()));
+
+
+        Thread.sleep(10000);
 
 
         final Options options = new Options();

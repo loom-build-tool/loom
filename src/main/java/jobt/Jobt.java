@@ -6,8 +6,11 @@ public class Jobt {
         final long startTime = System.nanoTime();
         System.out.println("Java Optimized Build Tool v1.0.0");
 
+        final ProcessMonitor processMonitor = new ProcessMonitor();
         try {
-            new CliProcessor(args).run();
+            new CliProcessor(processMonitor, args).run();
+
+            processMonitor.stop();
         } catch (final Exception e) {
             e.printStackTrace(System.err);
             System.err.println("Build failed - " + e.getLocalizedMessage());
@@ -15,7 +18,7 @@ public class Jobt {
         }
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-        System.out.printf("✨ Built in %.2fs%n", duration);
+        processMonitor.endProcess(String.format("✨ Built in %.2fs%n", duration));
     }
 
 }

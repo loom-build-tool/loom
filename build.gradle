@@ -18,4 +18,5 @@ dependencies {
     compile('org.apache.maven:maven-aether-provider:3.0.3')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
+    compile('com.google.guava:guava:21.0')
 }

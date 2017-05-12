@@ -2,7 +2,7 @@ apply plugin: 'java'
 
 group = 'jobt'
 archivesBaseName = 'jobt'
-version = '1.0.0-SNAPSHOT'
+version = '1.0.0'
 
 sourceCompatibility = 1.8
 
@@ -19,4 +19,15 @@ dependencies {
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('com.google.guava:guava:21.0')
+}
+
+task zip(type: Zip) {
+    into("lib") {
+        from configurations.runtime.allArtifacts.files
+        from configurations.runtime
+    }
+    into("scripts") {
+        from 'scripts/build.yml'
+        from 'scripts/jobt'
+    }
 }

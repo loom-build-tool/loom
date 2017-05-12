@@ -14,7 +14,7 @@ public class PluginRegistry {
         for (final String plugin : buildConfig.getPlugins()) {
             switch (plugin) {
                 case "java":
-                    this.plugins.add(new JavaPlugin(buildConfig));
+                    this.plugins.add(new JavaCompilePlugin(buildConfig));
                     this.plugins.add(new JavaAssemblePlugin(buildConfig));
                     break;
                 default:

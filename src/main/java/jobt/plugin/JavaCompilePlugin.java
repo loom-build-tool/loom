@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.tools.DiagnosticCollector;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -22,19 +24,23 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
 
 import jobt.FileCacher;
 import jobt.MavenResolver;
+import jobt.Progress;
 import jobt.config.BuildConfig;
 
-public class JavaPlugin extends AbstractPlugin {
+public class JavaCompilePlugin extends AbstractPlugin {
 
     private final BuildConfig buildConfig;
 
-    public JavaPlugin(final BuildConfig buildConfig) {
+    public JavaCompilePlugin(final BuildConfig buildConfig) {
         super("compile");
         this.buildConfig = buildConfig;
     }
 
     @Override
     public void run() throws Exception {
+        final List<File> dependencies = buildClasspath(buildConfig.getDependencies());
+
+        Progress.newStatus("Build Java");
         final FileCacher fileCacher = new FileCacher();
 
         final Path buildDir = Paths.get("jobtbuild", "build");
@@ -43,8 +49,7 @@ public class JavaPlugin extends AbstractPlugin {
         }
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        final DiagnosticListener<JavaFileObject> diagnosticListener =
-            diagnostic -> System.out.println("DIAG: " + diagnostic);
+        final DiagnosticListener<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
         final List<String> options = new ArrayList<>();
         options.add("-d");
@@ -83,12 +88,13 @@ public class JavaPlugin extends AbstractPlugin {
         }
 
         if (nonCachedFiles.isEmpty()) {
-            System.out.println("JAVA is up-to-date");
+            Progress.complete();
+            Progress.log("JAVA is up-to-date");
         } else {
             final StandardJavaFileManager fileManager =
                 compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
 
-            fileManager.setLocation(StandardLocation.CLASS_PATH, buildClasspath(buildConfig.getDependencies()));
+            fileManager.setLocation(StandardLocation.CLASS_PATH, dependencies);
             fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singletonList(buildDir.toFile()));
 
 
@@ -101,6 +107,9 @@ public class JavaPlugin extends AbstractPlugin {
             }
 
             fileCacher.cacheFiles(srcFiles);
+
+            Progress.complete();
+            Progress.log("Built java");
         }
 
     }

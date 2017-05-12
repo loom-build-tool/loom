@@ -14,6 +14,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
+import jobt.Progress;
 import jobt.config.BuildConfig;
 
 public class JavaAssemblePlugin extends AbstractPlugin {
@@ -27,8 +28,7 @@ public class JavaAssemblePlugin extends AbstractPlugin {
 
     @Override
     public void run() throws Exception {
-
-        System.out.println("Assemble jar");
+        Progress.newStatus("Assemble jar");
 
         final Path buildDir = Paths.get("jobtbuild/libs");
         Files.createDirectories(buildDir);
@@ -53,6 +53,7 @@ public class JavaAssemblePlugin extends AbstractPlugin {
             }
         }
 
+        Progress.complete();
     }
 
 

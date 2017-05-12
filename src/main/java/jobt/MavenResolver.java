@@ -38,7 +38,7 @@ public class MavenResolver {
     public List<File> buildClasspath(final List<String> deps, final String scope)
         throws DependencyCollectionException, DependencyResolutionException {
 
-        System.out.println("Resolve dependencies for scope " + scope);
+        Progress.newStatus("Resolve dependencies for scope " + scope);
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
@@ -92,6 +92,8 @@ public class MavenResolver {
 
         final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
         node.accept(nlg);
+
+        Progress.complete();
         return nlg.getFiles();
     }
 

@@ -27,12 +27,12 @@ import jobt.task.Task;
 
 public class CliProcessor {
 
-    private final ProcessMonitor processMonitor;
+    private final long startTime;
     private final String[] args;
     private final Map<String, Class<? extends Task>> taskClasses;
 
-    public CliProcessor(final ProcessMonitor processMonitor, final String[] args) {
-        this.processMonitor = processMonitor;
+    public CliProcessor(final String[] args) {
+        startTime = System.nanoTime();
         this.args = args;
         taskClasses = buildTaskRegistry();
     }
@@ -60,19 +60,15 @@ public class CliProcessor {
     }
 
     public void run() throws Exception {
-
-        processMonitor.updateProcess("Read configuration");
+        Progress.newStatus("Read configuration");
         final BuildConfig buildConfig = readConfig();
+        Progress.complete();
 
-        processMonitor.newProcess("\uD83D\uDD0D Read configuration",
-            String.format("Start building %s version %s",
+        Progress.log(String.format("Initialized configuration for %s version %s",
             buildConfig.getProject().getArchivesBaseName(),
             buildConfig.getProject().getVersion()));
 
-
-        Thread.sleep(10000);
-
-
+        Progress.newStatus("Parse command line");
         final Options options = new Options();
 
         final CommandLineParser parser = new DefaultParser();
@@ -80,9 +76,15 @@ public class CliProcessor {
 
         final PluginRegistry pluginRegistry = new PluginRegistry(buildConfig);
 
+        Progress.complete();
+
         for (final String arg : resolveTasks(cmd.getArgs())) {
             doArg(pluginRegistry, arg);
         }
+
+        final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
+        Progress.log(String.format("✨ Built in %.2fs%n", duration));
+
     }
 
     private List<String> resolveTasks(final String[] args) {

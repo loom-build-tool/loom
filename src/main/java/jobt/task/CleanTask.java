@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
+import jobt.Progress;
 import jobt.plugin.PluginRegistry;
 
 public class CleanTask implements Task {
@@ -16,9 +17,10 @@ public class CleanTask implements Task {
 
     @Override
     public void run() throws IOException {
-        System.out.println("Clean output directory");
+        Progress.newStatus("Clean output directory");
         cleanDir("jobtbuild");
         cleanDir(".jobt");
+        Progress.complete();
     }
 
     private void cleanDir(final String path) throws IOException {

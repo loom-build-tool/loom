@@ -1,8 +1,15 @@
 package jobt;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,13 +40,16 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+
 public class MavenResolver {
 
-    public List<File> buildClasspath(final List<String> deps, final String scope)
-        throws DependencyCollectionException, DependencyResolutionException {
+    private final RepositorySystem system;
+    private final MavenRepositorySystemSession session;
+    private final RemoteRepository mavenRepository;
 
-        Progress.newStatus("Resolve dependencies for scope " + scope);
-
+    public MavenResolver() {
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
@@ -62,18 +72,29 @@ public class MavenResolver {
             }
         });
 
+        system = locator.getService(RepositorySystem.class);
 
-        final RepositorySystem system = locator.getService(RepositorySystem.class);
-
-        final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+        session = new MavenRepositorySystemSession();
 
         final Path repository = Paths.get(System.getProperty("user.home"), ".jobt", "repository");
 
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
 
-        final RemoteRepository mavenRepository =
-            new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+        mavenRepository = new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+    }
+
+    public List<File> buildClasspath(final List<String> deps, final String scope)
+        throws DependencyCollectionException, DependencyResolutionException, IOException {
+
+        Progress.newStatus("Resolve dependencies for scope " + scope);
+
+        final List<File> files = readCache(deps, scope);
+
+        if (!files.isEmpty()) {
+            Progress.complete("UP-TO-DATE");
+            return files;
+        }
 
         final CollectRequest collectRequest = new CollectRequest();
 
@@ -93,8 +114,50 @@ public class MavenResolver {
         final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
         node.accept(nlg);
 
+        buildHash(deps, scope, nlg);
+
         Progress.complete();
         return nlg.getFiles();
+    }
+
+    private List<File> readCache(final List<String> deps, final String scope) throws IOException {
+        List<File> files = new ArrayList<>();
+
+        final Path path = Paths.get(".jobt", scope + "-dependencies");
+        if (Files.notExists(path)) {
+            return files;
+        }
+
+        final List<String> strings = Files.readAllLines(path);
+        final String[] split = strings.get(0).split("\t");
+
+        final String hash = buildHash(deps);
+        if (hash.equals(split[0])) {
+            final String[] pathNames = split[1].split(",");
+            files = Arrays.stream(pathNames).map(File::new).collect(Collectors.toList());
+        }
+
+        return files;
+    }
+
+    private void buildHash(final List<String> deps, final String scope, final PreorderNodeListGenerator nlg) throws IOException {
+        final Path buildDir = Paths.get(".jobt");
+        if (Files.notExists(buildDir)) {
+            Files.createDirectories(buildDir);
+        }
+
+
+        final StringBuilder sb = new StringBuilder(buildHash(deps));
+        sb.append('\t');
+        sb.append(nlg.getFiles().stream().map(File::getAbsolutePath).reduce((u, t) -> u + "," + t).get());
+        Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb.toString()),
+            StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    private String buildHash(final List<String> deps) {
+        final Hasher hasher = Hashing.sha256().newHasher();
+        deps.forEach(d -> hasher.putString(d, StandardCharsets.UTF_8));
+        return hasher.hash().toString();
     }
 
 }

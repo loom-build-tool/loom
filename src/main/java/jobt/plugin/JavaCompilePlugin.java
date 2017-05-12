@@ -1,6 +1,7 @@
 package jobt.plugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,8 +89,7 @@ public class JavaCompilePlugin extends AbstractPlugin {
         }
 
         if (nonCachedFiles.isEmpty()) {
-            Progress.complete();
-            Progress.log("JAVA is up-to-date");
+            Progress.complete("UP-TO-DATE");
         } else {
             final StandardJavaFileManager fileManager =
                 compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
@@ -109,12 +109,11 @@ public class JavaCompilePlugin extends AbstractPlugin {
             fileCacher.cacheFiles(srcFiles);
 
             Progress.complete();
-            Progress.log("Built java");
         }
 
     }
 
-    private List<File> buildClasspath(final List<String> dependencies) throws DependencyCollectionException, DependencyResolutionException {
+    private List<File> buildClasspath(final List<String> dependencies) throws DependencyCollectionException, DependencyResolutionException, IOException {
         final List<File> classpath = new MavenResolver()
             .buildClasspath(dependencies, "compile");
         classpath.add(new File("src/main/java"));

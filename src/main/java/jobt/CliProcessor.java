@@ -68,15 +68,12 @@ public class CliProcessor {
             buildConfig.getProject().getArchivesBaseName(),
             buildConfig.getProject().getVersion()));
 
-        Progress.newStatus("Parse command line");
         final Options options = new Options();
 
         final CommandLineParser parser = new DefaultParser();
         final CommandLine cmd = parser.parse(options, args);
 
         final PluginRegistry pluginRegistry = new PluginRegistry(buildConfig);
-
-        Progress.complete();
 
         for (final String arg : resolveTasks(cmd.getArgs())) {
             doArg(pluginRegistry, arg);
@@ -88,8 +85,9 @@ public class CliProcessor {
     }
 
     private List<String> resolveTasks(final String[] args) {
+
         if (args.length == 0) {
-            return Arrays.asList("clean", "compileJava", "assemble");
+            return Arrays.asList("compileJava", "assemble");
             //return Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar");
         }
 
@@ -97,7 +95,7 @@ public class CliProcessor {
         for (final String arg : args) {
             switch (arg) {
                 case "build":
-                    tasks.addAll(Arrays.asList("compileJava"));
+                    tasks.addAll(Arrays.asList("compileJava", "assemble"));
                     //tasks.addAll(Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar"));
                     break;
                 default:

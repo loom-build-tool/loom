@@ -7,7 +7,11 @@ public class Progress {
     }
 
     public static void complete() {
-        System.out.println(" [OK]");
+        complete("OK");
+    }
+
+    public static void complete(final String status) {
+        System.out.println(" [" + status + "]");
     }
 
     public static void log(final String message) {

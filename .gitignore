@@ -4,6 +4,7 @@ build
 
 # Jobt
 jobtbuild
+.jobt
 
 # IntelliJ IDEA
 .idea/

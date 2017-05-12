@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class CliProcessor {
     private static Map<String, Class<? extends Task>> buildTaskRegistry() {
         final Map<String, Class<? extends Task>> taskMap = new HashMap<>();
         taskMap.put("clean", CleanTask.class);
-        taskMap.put("compile", CompileTask.class);
+        taskMap.put("compileJava", CompileTask.class);
         return taskMap;
     }
 
@@ -81,14 +80,16 @@ public class CliProcessor {
 
     private List<String> resolveTasks(final String[] args) {
         if (args.length == 0) {
-            return Collections.singletonList("compile");
+            return Arrays.asList("compileJava");
+            //return Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar");
         }
 
         final List<String> tasks = new ArrayList<>();
         for (final String arg : args) {
             switch (arg) {
                 case "build":
-                    tasks.addAll(Arrays.asList("compile"));
+                    tasks.addAll(Arrays.asList("compileJava"));
+                    //tasks.addAll(Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar"));
                     break;
                 default:
                     tasks.add(arg);

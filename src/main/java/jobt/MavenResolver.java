@@ -1,5 +1,6 @@
 package jobt;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,7 +35,7 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 public class MavenResolver {
 
-    public String buildClasspath(final List<String> deps, final String scope)
+    public List<File> buildClasspath(final List<String> deps, final String scope)
         throws DependencyCollectionException, DependencyResolutionException {
 
         System.out.println("Resolve dependencies for scope " + scope);
@@ -91,7 +92,7 @@ public class MavenResolver {
 
         final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
         node.accept(nlg);
-        return nlg.getClassPath();
+        return nlg.getFiles();
     }
 
 }

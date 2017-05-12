@@ -17,7 +17,12 @@ public class CleanTask implements Task {
     @Override
     public void run() throws IOException {
         System.out.println("Clean output directory");
-        final Path rootPath = Paths.get("jobtbuild");
+        cleanDir("jobtbuild");
+        cleanDir(".jobt");
+    }
+
+    private void cleanDir(final String path) throws IOException {
+        final Path rootPath = Paths.get(path);
         if (Files.isDirectory(rootPath)) {
             Files.walk(rootPath)
                 .sorted(Comparator.reverseOrder())

@@ -15,6 +15,7 @@ public class PluginRegistry {
             switch (plugin) {
                 case "java":
                     this.plugins.add(new JavaPlugin(buildConfig));
+                    this.plugins.add(new JavaAssemblePlugin(buildConfig));
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown plugin: " + plugin);

@@ -37,9 +37,9 @@ public class JavaPlugin extends AbstractPlugin {
     public void run() throws Exception {
         final FileCacher fileCacher = new FileCacher();
 
-        final Path buildDir = Paths.get("buildDir");
+        final Path buildDir = Paths.get("jobtbuild", "build");
         if (Files.notExists(buildDir)) {
-            Files.createDirectory(buildDir);
+            Files.createDirectories(buildDir);
         }
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

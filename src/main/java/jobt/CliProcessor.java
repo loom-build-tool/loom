@@ -20,6 +20,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import jobt.config.BuildConfig;
 import jobt.plugin.PluginRegistry;
+import jobt.task.AssembleTask;
 import jobt.task.CleanTask;
 import jobt.task.CompileTask;
 import jobt.task.Task;
@@ -53,6 +54,7 @@ public class CliProcessor {
         final Map<String, Class<? extends Task>> taskMap = new HashMap<>();
         taskMap.put("clean", CleanTask.class);
         taskMap.put("compileJava", CompileTask.class);
+        taskMap.put("assemble", AssembleTask.class);
         return taskMap;
     }
 
@@ -80,7 +82,7 @@ public class CliProcessor {
 
     private List<String> resolveTasks(final String[] args) {
         if (args.length == 0) {
-            return Arrays.asList("compileJava");
+            return Arrays.asList("clean", "compileJava", "assemble");
             //return Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar");
         }
 

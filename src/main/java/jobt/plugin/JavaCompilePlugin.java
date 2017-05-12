@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.tools.DiagnosticCollector;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
@@ -72,9 +71,9 @@ public class JavaCompilePlugin extends AbstractPlugin {
         //System.out.println(options);
 
         final List<Path> srcFiles = Files.walk(Paths.get("src/main/java"))
-                .filter(f -> Files.isRegularFile(f))
-                .filter(f -> f.toString().endsWith(".java"))
-                .collect(Collectors.toList());
+            .filter(f -> Files.isRegularFile(f))
+            .filter(f -> f.toString().endsWith(".java"))
+            .collect(Collectors.toList());
 
         final List<File> nonCachedFiles;
         if (fileCacher.isCacheEmpty()) {
@@ -98,7 +97,6 @@ public class JavaCompilePlugin extends AbstractPlugin {
             fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singletonList(buildDir.toFile()));
 
 
-
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
 
@@ -114,6 +112,10 @@ public class JavaCompilePlugin extends AbstractPlugin {
     }
 
     private List<File> buildClasspath(final List<String> dependencies) throws DependencyCollectionException, DependencyResolutionException, IOException {
+        if (dependencies == null || dependencies.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         final List<File> classpath = new MavenResolver()
             .buildClasspath(dependencies, "compile");
         classpath.add(new File("src/main/java"));

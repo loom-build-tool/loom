@@ -22,26 +22,24 @@ public class FileCacher {
         cacheFile = Paths.get(".jobt/file.cache");
         if (Files.exists(cacheFile)) {
             final List<String> strings = Files.readAllLines(cacheFile);
-            for (String string : strings) {
+            for (final String string : strings) {
                 final String[] split = string.split("\t");
                 cachedFiles.put(split[0], Long.valueOf(split[1]));
             }
-
         }
-
     }
 
     public boolean notCached(final Path f) {
         final Long lastMod = cachedFiles.get(f.toString());
         try {
             return lastMod == null || Files.getLastModifiedTime(f).toMillis() != lastMod;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             return true;
         }
     }
 
     public void cacheFiles(final List<Path> srcFiles) throws IOException {
-        for (Path srcFile : srcFiles) {
+        for (final Path srcFile : srcFiles) {
             cachedFiles.put(srcFile.toString(), Files.getLastModifiedTime(srcFile).toMillis());
         }
 
@@ -50,10 +48,10 @@ public class FileCacher {
             .collect(Collectors.toList());
 
         Files.write(cacheFile, stringStream);
-
     }
 
     public boolean isCacheEmpty() {
         return cachedFiles.isEmpty();
     }
+
 }

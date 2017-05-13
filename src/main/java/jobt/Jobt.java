@@ -2,7 +2,11 @@ package jobt;
 
 import java.util.StringTokenizer;
 
+@SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:hideutilityclassconstructor",
+    "checkstyle:regexpmultiline", "checkstyle:illegalcatch"})
 public class Jobt {
+
+    private static final int MINIMUM_JAVA_VERSION = 8;
 
     public static void main(final String[] args) {
         final String javaVersion = System.getProperty("java.version");
@@ -11,7 +15,7 @@ public class Jobt {
         checkJavaVersion(javaVersion);
 
         try {
-            new CliProcessor(args).run();
+            new CliProcessor().run(args);
         } catch (final Exception e) {
             System.err.println("Build failed - " + e.getLocalizedMessage());
             System.exit(1);
@@ -29,7 +33,7 @@ public class Jobt {
         }
 
         try {
-            int majorVersion = Integer.parseInt(tokenizer.nextToken());
+            final int majorVersion = Integer.parseInt(tokenizer.nextToken());
 
             if (majorVersion < 1) {
                 System.err.println("Unknown Java version: " + javaVersion);
@@ -42,7 +46,7 @@ public class Jobt {
 
             final int minorVersion = Integer.parseInt(tokenizer.nextToken());
 
-            if (minorVersion < 8) {
+            if (minorVersion < MINIMUM_JAVA_VERSION) {
                 System.err.println("Unsupported Java version: " + javaVersion);
                 System.err.println("Minimum version required: 1.8");
                 System.exit(1);

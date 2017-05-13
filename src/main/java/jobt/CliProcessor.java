@@ -28,12 +28,10 @@ import jobt.task.Task;
 public class CliProcessor {
 
     private final long startTime;
-    private final String[] args;
     private final Map<String, Class<? extends Task>> taskClasses;
 
-    public CliProcessor(final String[] args) {
+    public CliProcessor() {
         startTime = System.nanoTime();
-        this.args = args;
         taskClasses = buildTaskRegistry();
     }
 
@@ -59,7 +57,7 @@ public class CliProcessor {
         return taskMap;
     }
 
-    public void run() throws Exception {
+    public void run(final String[] args) throws Exception {
         Progress.newStatus("Read configuration");
         final BuildConfig buildConfig = readConfig();
         Progress.complete();
@@ -84,19 +82,16 @@ public class CliProcessor {
 
     }
 
-    private List<String> resolveTasks(final String[] args) {
-
-        if (args.length == 0) {
+    private List<String> resolveTasks(final String[] targets) {
+        if (targets.length == 0) {
             return Arrays.asList("compileJava", "assemble");
-            //return Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar");
         }
 
         final List<String> tasks = new ArrayList<>();
-        for (final String arg : args) {
+        for (final String arg : tasks) {
             switch (arg) {
                 case "build":
                     tasks.addAll(Arrays.asList("compileJava", "assemble"));
-                    //tasks.addAll(Arrays.asList("compileJava", "processResources", "compileTestJava", "processTestResources", "test", "jar"));
                     break;
                 default:
                     tasks.add(arg);

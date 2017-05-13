@@ -43,6 +43,7 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver {
 
     private final RepositorySystem system;
@@ -81,7 +82,8 @@ public class MavenResolver {
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
 
-        mavenRepository = new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+        mavenRepository =
+            new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
     }
 
     public List<File> buildClasspath(final List<String> deps, final String scope)
@@ -140,17 +142,19 @@ public class MavenResolver {
         return files;
     }
 
-    private void buildHash(final List<String> deps, final String scope, final PreorderNodeListGenerator nlg) throws IOException {
+    private void buildHash(final List<String> deps, final String scope,
+                           final PreorderNodeListGenerator nlg) throws IOException {
         final Path buildDir = Paths.get(".jobt");
         if (Files.notExists(buildDir)) {
             Files.createDirectories(buildDir);
         }
 
+        final String sb = buildHash(deps) + '\t' + nlg.getFiles().stream()
+            .map(File::getAbsolutePath)
+            .reduce((u, t) -> u + "," + t)
+            .get();
 
-        final StringBuilder sb = new StringBuilder(buildHash(deps));
-        sb.append('\t');
-        sb.append(nlg.getFiles().stream().map(File::getAbsolutePath).reduce((u, t) -> u + "," + t).get());
-        Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb.toString()),
+        Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb),
             StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
     }
 

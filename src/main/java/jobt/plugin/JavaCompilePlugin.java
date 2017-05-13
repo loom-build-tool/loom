@@ -51,24 +51,7 @@ public class JavaCompilePlugin extends AbstractPlugin {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
-        final List<String> options = new ArrayList<>();
-        options.add("-d");
-        options.add(buildDir.toString());
-
-        final Map<String, String> config = buildConfig.getConfiguration();
-        final String sourceCompatibility = config.get("sourceCompatibility");
-        if (sourceCompatibility != null) {
-            options.add("-source");
-            options.add(sourceCompatibility);
-        }
-
-        final String targetCompatibility = config.get("targetCompatibility");
-        if (targetCompatibility != null) {
-            options.add("-target");
-            options.add(targetCompatibility);
-        }
-
-        //System.out.println(options);
+        final List<String> options = buildOptions(buildDir);
 
         final List<Path> srcFiles = Files.walk(Paths.get("src/main/java"))
             .filter(f -> Files.isRegularFile(f))
@@ -94,13 +77,15 @@ public class JavaCompilePlugin extends AbstractPlugin {
                 compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
 
             fileManager.setLocation(StandardLocation.CLASS_PATH, dependencies);
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singletonList(buildDir.toFile()));
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
+                Collections.singletonList(buildDir.toFile()));
 
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
 
-            if (!compiler.getTask(null, fileManager, diagnosticListener, options, null, compUnits).call()) {
+            if (!compiler.getTask(null, fileManager, diagnosticListener,
+                options, null, compUnits).call()) {
                 throw new IllegalStateException("Compile failed");
             }
 
@@ -111,7 +96,29 @@ public class JavaCompilePlugin extends AbstractPlugin {
 
     }
 
-    private List<File> buildClasspath(final List<String> dependencies) throws DependencyCollectionException, DependencyResolutionException, IOException {
+    private List<String> buildOptions(final Path buildDir) {
+        final List<String> options = new ArrayList<>();
+        options.add("-d");
+        options.add(buildDir.toString());
+
+        final Map<String, String> config = buildConfig.getConfiguration();
+        final String sourceCompatibility = config.get("sourceCompatibility");
+        if (sourceCompatibility != null) {
+            options.add("-source");
+            options.add(sourceCompatibility);
+        }
+
+        final String targetCompatibility = config.get("targetCompatibility");
+        if (targetCompatibility != null) {
+            options.add("-target");
+            options.add(targetCompatibility);
+        }
+        return options;
+    }
+
+    private List<File> buildClasspath(final List<String> dependencies)
+        throws DependencyCollectionException, DependencyResolutionException, IOException {
+
         if (dependencies == null || dependencies.isEmpty()) {
             return Collections.emptyList();
         }

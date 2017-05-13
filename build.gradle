@@ -1,4 +1,7 @@
 apply plugin: 'java'
+apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
+apply plugin: 'pmd'
 
 group = 'jobt'
 archivesBaseName = 'jobt'
@@ -19,6 +22,22 @@ dependencies {
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('com.google.guava:guava:21.0')
+}
+
+checkstyle {
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
+}
+
+pmd {
+    consoleOutput = true
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
 }
 
 task zip(type: Zip) {

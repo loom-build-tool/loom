@@ -1,7 +1,5 @@
 package jobt.plugin;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,19 +31,20 @@ public class JavaAssemblePlugin extends AbstractPlugin {
         final Path buildDir = Paths.get("jobtbuild/libs");
         Files.createDirectories(buildDir);
 
-        Manifest manifest = new Manifest();
+        final Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
         final String jarName = String.format("%s-%s.jar",
             buildConfig.getProject().getArchivesBaseName(),
             buildConfig.getProject().getVersion());
 
-        try (JarOutputStream os = new JarOutputStream(new FileOutputStream(new File(buildDir.toFile(), jarName)), manifest)) {
+        try (final JarOutputStream os = new JarOutputStream(
+            Files.newOutputStream(buildDir.resolve(jarName)), manifest)) {
             final Path baseDir = Paths.get("jobtbuild", "build");
 
             final List<Path> paths = Files.walk(baseDir)
                 .sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            for (Path path : paths) {
+            for (final Path path : paths) {
                 final String fileName = baseDir.relativize(path).toString();
                 if (!fileName.isEmpty()) {
                     add(fileName, path, os);
@@ -56,8 +55,9 @@ public class JavaAssemblePlugin extends AbstractPlugin {
         Progress.complete();
     }
 
+    private static void add(final String name, final Path source, final JarOutputStream target)
+        throws IOException {
 
-    private static void add(final String name, Path source, JarOutputStream target) throws IOException {
         final JarEntry entry;
 
         if (Files.isDirectory(source)) {

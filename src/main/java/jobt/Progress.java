@@ -1,6 +1,10 @@
 package jobt;
 
-public class Progress {
+@SuppressWarnings("checkstyle:regexpmultiline")
+public final class Progress {
+
+    private Progress() {
+    }
 
     public static void newStatus(final String message) {
         System.out.print(message);
@@ -17,4 +21,5 @@ public class Progress {
     public static void log(final String message) {
         System.out.println(message);
     }
+
 }

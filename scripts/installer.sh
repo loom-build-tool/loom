@@ -14,13 +14,13 @@ if [ ! -d $jobt_base ]; then
     java -cp jobt-downloader/jobt-downloader.jar jobt.JobtDownloader $jobt_version
 fi
 
-if [ ! -f jobt ]; then
-	echo "Create jobt build script"
+if [ ! -e jobt ]; then
+    echo "Create jobt build script"
     cp "$jobt_base/scripts/jobt" .
     chmod 755 jobt
 fi
 
-if [ ! -d build.yml ]; then
+if [ ! -e build.yml ]; then
     echo "Create build.yml"
     cp "$jobt_base/scripts/build.yml" .
 fi

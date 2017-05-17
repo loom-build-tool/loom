@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
-import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -49,7 +49,7 @@ public class JavaCompilePlugin extends AbstractPlugin {
         }
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        final DiagnosticListener<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
+        final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
         final List<String> options = buildOptions(buildDir);
 
@@ -86,6 +86,11 @@ public class JavaCompilePlugin extends AbstractPlugin {
 
             if (!compiler.getTask(null, fileManager, diagnosticListener,
                 options, null, compUnits).call()) {
+
+                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticListener.getDiagnostics()) {
+                    System.err.println(diagnostic);
+                }
+
                 throw new IllegalStateException("Compile failed");
             }
 
@@ -113,7 +118,17 @@ public class JavaCompilePlugin extends AbstractPlugin {
             options.add("-target");
             options.add(targetCompatibility);
         }
+
+        options.add("-bootclasspath");
+        options.add(buildRuntimePath());
+
+        options.add("-Xlint:all");
+
         return options;
+    }
+
+    private String buildRuntimePath() {
+        return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
     }
 
     private List<File> buildClasspath(final List<String> dependencies)

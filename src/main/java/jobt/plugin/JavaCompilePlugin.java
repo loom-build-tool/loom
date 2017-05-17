@@ -87,8 +87,9 @@ public class JavaCompilePlugin extends AbstractPlugin {
             if (!compiler.getTask(null, fileManager, diagnosticListener,
                 options, null, compUnits).call()) {
 
-                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticListener.getDiagnostics()) {
-                    System.err.println(diagnostic);
+                for (final Diagnostic<? extends JavaFileObject> diagnostic
+                    : diagnosticListener.getDiagnostics()) {
+                    Progress.log(diagnostic.toString());
                 }
 
                 throw new IllegalStateException("Compile failed");

@@ -8,23 +8,34 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 
 import jobt.plugin.Task;
+import jobt.plugin.TaskStatus;
 
 public class CleanTask implements Task {
 
     @Override
-    public void run() throws IOException {
-        cleanDir("jobtbuild");
-        cleanDir(".jobt");
+    public TaskStatus run() throws IOException {
+        final Path jobtbuild = Paths.get("jobtbuild");
+        final Path jobtconfig = Paths.get(".jobt");
+
+        int cleans = 0;
+        if (Files.isDirectory(jobtbuild)) {
+            cleanDir(jobtbuild);
+            cleans++;
+        }
+
+        if (Files.isDirectory(jobtconfig)) {
+            cleanDir(jobtconfig);
+            cleans++;
+        }
+
+        return cleans > 0 ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
     }
 
-    private void cleanDir(final String path) throws IOException {
-        final Path rootPath = Paths.get(path);
-        if (Files.isDirectory(rootPath)) {
-            Files.walk(rootPath)
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
-        }
+    private void cleanDir(final Path rootPath) throws IOException {
+        Files.walk(rootPath)
+            .sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .forEach(File::delete);
     }
 
 }

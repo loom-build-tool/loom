@@ -89,12 +89,12 @@ public class MavenResolver {
     public List<File> buildClasspath(final List<String> deps, final String scope)
         throws DependencyCollectionException, DependencyResolutionException, IOException {
 
-        Progress.newStatus("Resolve dependencies for scope " + scope);
+        //Progress.newStatus("Resolve dependencies for scope " + scope);
 
         final List<File> files = readCache(deps, scope);
 
         if (!files.isEmpty()) {
-            Progress.complete("UP-TO-DATE");
+            //Progress.complete("UP-TO-DATE");
             return files;
         }
 
@@ -118,7 +118,7 @@ public class MavenResolver {
 
         buildHash(deps, scope, nlg);
 
-        Progress.complete();
+        //Progress.complete();
         return nlg.getFiles();
     }
 

@@ -12,9 +12,9 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import jobt.Progress;
 import jobt.config.BuildConfig;
 import jobt.plugin.Task;
+import jobt.plugin.TaskStatus;
 
 public class JavaAssembleTask implements Task {
 
@@ -25,9 +25,7 @@ public class JavaAssembleTask implements Task {
     }
 
     @Override
-    public void run() throws Exception {
-        Progress.newStatus("Assemble jar");
-
+    public TaskStatus run() throws Exception {
         final Path buildDir = Paths.get("jobtbuild/libs");
         Files.createDirectories(buildDir);
 
@@ -52,7 +50,7 @@ public class JavaAssembleTask implements Task {
             }
         }
 
-        Progress.complete();
+        return TaskStatus.OK;
     }
 
     private static void add(final String name, final Path source, final JarOutputStream target)

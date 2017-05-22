@@ -27,6 +27,7 @@ import jobt.MavenResolver;
 import jobt.Progress;
 import jobt.config.BuildConfig;
 import jobt.plugin.Task;
+import jobt.plugin.TaskStatus;
 
 public class JavaCompileTask implements Task {
 
@@ -37,10 +38,9 @@ public class JavaCompileTask implements Task {
     }
 
     @Override
-    public void run() throws Exception {
+    public TaskStatus run() throws Exception {
         final List<File> dependencies = buildClasspath(buildConfig.getDependencies());
 
-        Progress.newStatus("Build Java");
         final FileCacher fileCacher = new FileCacher();
 
         final Path buildDir = Paths.get("jobtbuild", "build");
@@ -71,35 +71,34 @@ public class JavaCompileTask implements Task {
         }
 
         if (nonCachedFiles.isEmpty()) {
-            Progress.complete("UP-TO-DATE");
-        } else {
-            final StandardJavaFileManager fileManager =
-                compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
-
-            fileManager.setLocation(StandardLocation.CLASS_PATH, dependencies);
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
-                Collections.singletonList(buildDir.toFile()));
-
-
-            final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
-
-            if (!compiler.getTask(null, fileManager, diagnosticListener,
-                options, null, compUnits).call()) {
-
-                for (final Diagnostic<? extends JavaFileObject> diagnostic
-                    : diagnosticListener.getDiagnostics()) {
-                    Progress.log(diagnostic.toString());
-                }
-
-                throw new IllegalStateException("Compile failed");
-            }
-
-            fileCacher.cacheFiles(srcFiles);
-
-            Progress.complete();
+            return TaskStatus.UP_TO_DATE;
         }
 
+        final StandardJavaFileManager fileManager =
+            compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
+
+        fileManager.setLocation(StandardLocation.CLASS_PATH, dependencies);
+        fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
+            Collections.singletonList(buildDir.toFile()));
+
+
+        final Iterable<? extends JavaFileObject> compUnits =
+            fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
+
+        if (!compiler.getTask(null, fileManager, diagnosticListener,
+            options, null, compUnits).call()) {
+
+            for (final Diagnostic<? extends JavaFileObject> diagnostic
+                : diagnosticListener.getDiagnostics()) {
+                Progress.log(diagnostic.toString());
+            }
+
+            throw new IllegalStateException("Compile failed");
+        }
+
+        fileCacher.cacheFiles(srcFiles);
+
+        return TaskStatus.OK;
     }
 
     private List<String> buildOptions(final Path buildDir) {

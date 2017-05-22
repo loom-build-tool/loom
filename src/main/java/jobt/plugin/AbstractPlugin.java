@@ -11,11 +11,13 @@ public abstract class AbstractPlugin implements Plugin {
         taskClasses.put(taskName, task);
     }
 
-    public void run(final String task) throws Exception {
+    public TaskStatus run(final String task) throws Exception {
         final Task t = taskClasses.get(task);
         if (t != null) {
-            t.run();
+            return t.run();
         }
+
+        return TaskStatus.OK;
     }
 
 }

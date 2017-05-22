@@ -18,8 +18,12 @@ public final class Progress {
         System.out.println(" [" + status + "]");
     }
 
-    public static void log(final String message) {
-        System.out.println(message);
+    public static void log(final String message, final Object... args) {
+        if (args == null) {
+            System.out.println(message);
+        } else {
+            System.out.println(String.format(message, args));
+        }
     }
 
 }

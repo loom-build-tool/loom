@@ -2,20 +2,23 @@ package jobt.plugin;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import jobt.TaskTemplate;
 import jobt.config.BuildConfig;
+import jobt.plugin.base.BasePlugin;
+import jobt.plugin.java.JavaPlugin;
 
 public class PluginRegistry {
 
     private final List<Plugin> plugins = new ArrayList<>();
 
-    public PluginRegistry(final BuildConfig buildConfig) {
+    public PluginRegistry(final BuildConfig buildConfig, final TaskTemplate taskTemplate) {
+        plugins.add(new BasePlugin(buildConfig, taskTemplate));
+
         for (final String plugin : buildConfig.getPlugins()) {
             switch (plugin) {
                 case "java":
-                    this.plugins.add(new JavaCompilePlugin(buildConfig));
-                    this.plugins.add(new JavaAssemblePlugin(buildConfig));
+                    plugins.add(new JavaPlugin(buildConfig, taskTemplate));
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown plugin: " + plugin);
@@ -25,15 +28,8 @@ public class PluginRegistry {
 
     public void trigger(final String phase) throws Exception {
         for (final Plugin plugin : plugins) {
-            if (phase.equals(plugin.getRegisteredPhase())) {
-                plugin.run();
-            }
+            plugin.run(phase);
         }
     }
 
-    public List<Plugin> getPhasePlugins(final String phase) {
-        return plugins.stream()
-            .filter(p -> p.getRegisteredPhase().equals(phase))
-            .collect(Collectors.toList());
-    }
 }

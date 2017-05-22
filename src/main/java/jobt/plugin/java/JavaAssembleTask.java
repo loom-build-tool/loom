@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.plugin.java;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 
 import jobt.Progress;
 import jobt.config.BuildConfig;
+import jobt.plugin.Task;
 
-public class JavaAssemblePlugin extends AbstractPlugin {
+public class JavaAssembleTask implements Task {
 
     private final BuildConfig buildConfig;
 
-    public JavaAssemblePlugin(final BuildConfig buildConfig) {
-        super("assemble");
+    public JavaAssembleTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
 

@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.plugin.java;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,13 +26,13 @@ import jobt.FileCacher;
 import jobt.MavenResolver;
 import jobt.Progress;
 import jobt.config.BuildConfig;
+import jobt.plugin.Task;
 
-public class JavaCompilePlugin extends AbstractPlugin {
+public class JavaCompileTask implements Task {
 
     private final BuildConfig buildConfig;
 
-    public JavaCompilePlugin(final BuildConfig buildConfig) {
-        super("compile");
+    public JavaCompileTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
 

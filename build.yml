@@ -15,6 +15,5 @@ dependencies:
   - org.apache.maven:maven-aether-provider:3.0.3
   - org.yaml:snakeyaml:1.18
   - commons-cli:commons-cli:1.4
-  - com.google.guava:guava:21.0
 testDependencies:
   - junit:junit:4.12

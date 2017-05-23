@@ -18,7 +18,6 @@
     <allow pkg="org.apache.maven"/>
     <allow pkg="org.sonatype.aether"/>
     <allow pkg="org.junit"/>
-    <allow pkg="com.google.common"/>
     <allow pkg="jobt"/>
 
 </import-control>

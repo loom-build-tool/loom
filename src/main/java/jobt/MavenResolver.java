@@ -2,7 +2,6 @@ package jobt;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,9 +38,6 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
-
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver {
@@ -133,7 +129,7 @@ public class MavenResolver {
         final List<String> strings = Files.readAllLines(path);
         final String[] split = strings.get(0).split("\t");
 
-        final String hash = buildHash(deps);
+        final String hash = Hasher.hash(deps);
         if (hash.equals(split[0])) {
             final String[] pathNames = split[1].split(",");
             files = Arrays.stream(pathNames).map(File::new).collect(Collectors.toList());
@@ -149,19 +145,13 @@ public class MavenResolver {
             Files.createDirectories(buildDir);
         }
 
-        final String sb = buildHash(deps) + '\t' + nlg.getFiles().stream()
+        final String sb = Hasher.hash(deps) + '\t' + nlg.getFiles().stream()
             .map(File::getAbsolutePath)
             .reduce((u, t) -> u + "," + t)
             .get();
 
         Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb),
             StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
-    }
-
-    private String buildHash(final List<String> deps) {
-        final Hasher hasher = Hashing.sha256().newHasher();
-        deps.forEach(d -> hasher.putString(d, StandardCharsets.UTF_8));
-        return hasher.hash().toString();
     }
 
 }

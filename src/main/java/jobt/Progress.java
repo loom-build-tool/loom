@@ -1,6 +1,6 @@
 package jobt;
 
-import com.google.common.base.Strings;
+import java.util.Collections;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public final class Progress {
@@ -45,8 +45,11 @@ public final class Progress {
         final long duration = System.nanoTime() - lastTimestamp;
 
         final int maxMsgLength = 35;
-        System.out.printf(Strings.repeat(" ", maxMsgLength - lastMessage.length())
-            + " [" + color + "%10s" + ANSI_RESET + "] [+ %.3fs]%n", status, duration / NANO_TO_SEC);
+        final String space = String.join("",
+            Collections.nCopies(maxMsgLength - lastMessage.length(), " "));
+
+        System.out.printf(space + " [" + color + "%10s" + ANSI_RESET + "] "
+            + "[+ %.3fs]%n", status, duration / NANO_TO_SEC);
     }
 
     public static void log(final String message, final Object... args) {

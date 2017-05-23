@@ -22,6 +22,7 @@ dependencies {
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('com.google.guava:guava:21.0')
+    testCompile('junit:junit:4.12')
 }
 
 checkstyle {

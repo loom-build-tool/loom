@@ -17,7 +17,7 @@ public abstract class AbstractPlugin implements Plugin {
             return t.run();
         }
 
-        return TaskStatus.OK;
+        return TaskStatus.SKIP;
     }
 
 }

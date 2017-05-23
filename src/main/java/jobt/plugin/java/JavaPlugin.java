@@ -7,7 +7,8 @@ import jobt.plugin.AbstractPlugin;
 public class JavaPlugin extends AbstractPlugin {
 
     public JavaPlugin(final BuildConfig buildConfig, final TaskTemplate taskTemplate) {
-        registerTask("compileJava", new JavaCompileTask(buildConfig));
+        registerTask("compileJava", new JavaCompileTask(buildConfig, CompileTarget.MAIN));
+        registerTask("compileTestJava", new JavaCompileTask(buildConfig, CompileTarget.TEST));
         registerTask("jar", new JavaAssembleTask(buildConfig));
 
         taskTemplate.task("compileJava");

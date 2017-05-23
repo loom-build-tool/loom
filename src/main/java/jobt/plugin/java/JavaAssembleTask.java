@@ -38,7 +38,7 @@ public class JavaAssembleTask implements Task {
 
         try (final JarOutputStream os = new JarOutputStream(
             Files.newOutputStream(buildDir.resolve(jarName)), manifest)) {
-            final Path baseDir = Paths.get("jobtbuild", "build");
+            final Path baseDir = JavaCompileTask.BUILD_MAIN_PATH;
 
             final List<Path> paths = Files.walk(baseDir)
                 .sorted(Comparator.naturalOrder()).collect(Collectors.toList());

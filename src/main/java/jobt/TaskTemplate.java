@@ -9,6 +9,7 @@ import java.util.Set;
 
 import jobt.config.BuildConfig;
 import jobt.plugin.PluginRegistry;
+import jobt.plugin.TaskStatus;
 
 public class TaskTemplate {
 
@@ -37,8 +38,8 @@ public class TaskTemplate {
         for (final String resolvedTask : resolvedTasks) {
             if (!tasksExecucted.contains(resolvedTask)) {
                 Progress.newStatus("Execute Task " + resolvedTask);
-                pluginRegistry.trigger(resolvedTask);
-                Progress.complete();
+                final TaskStatus status = pluginRegistry.trigger(resolvedTask);
+                Progress.complete(status.toString());
 
                 tasksExecucted.add(resolvedTask);
             }

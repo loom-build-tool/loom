@@ -26,10 +26,14 @@ public class PluginRegistry {
         }
     }
 
-    public void trigger(final String phase) throws Exception {
+    public TaskStatus trigger(final String phase) throws Exception {
+        final List<TaskStatus> statuses = new ArrayList<>();
         for (final Plugin plugin : plugins) {
-            plugin.run(phase);
+            statuses.add(plugin.run(phase));
         }
+
+        return statuses.stream().anyMatch(s -> s == TaskStatus.OK)
+            ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
     }
 
 }

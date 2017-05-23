@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
@@ -31,19 +33,51 @@ import jobt.plugin.TaskStatus;
 
 public class JavaCompileTask implements Task {
 
-    private final BuildConfig buildConfig;
+    public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
+    public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
+    public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
+    public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
-    public JavaCompileTask(final BuildConfig buildConfig) {
+    private final BuildConfig buildConfig;
+    private final Path srcPath;
+    private final Path buildDir;
+    private final String dependencyScope;
+    private final List<String> dependencies;
+    private final List<Path> classpathAppendix = new ArrayList<>();
+
+    public JavaCompileTask(final BuildConfig buildConfig, final CompileTarget compileTarget) {
         this.buildConfig = buildConfig;
+        switch (compileTarget) {
+            case MAIN:
+                srcPath = SRC_MAIN_PATH;
+                buildDir = BUILD_MAIN_PATH;
+                dependencyScope = "compile";
+                dependencies = buildConfig.getDependencies();
+                classpathAppendix.add(srcPath);
+                break;
+            case TEST:
+                srcPath = SRC_TEST_PATH;
+                buildDir = BUILD_TEST_PATH;
+                dependencyScope = "test";
+                classpathAppendix.add(srcPath);
+                classpathAppendix.add(BUILD_MAIN_PATH);
+
+                dependencies = Stream.concat(
+                    buildConfig.getDependencies().stream(),
+                    buildConfig.getTestDependencies().stream())
+                    .collect(Collectors.toList());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskStatus run() throws Exception {
-        final List<File> dependencies = buildClasspath(buildConfig.getDependencies());
+        final List<File> classpath = buildClasspath();
 
         final FileCacher fileCacher = new FileCacher();
 
-        final Path buildDir = Paths.get("jobtbuild", "build");
         if (Files.notExists(buildDir)) {
             Files.createDirectories(buildDir);
         }
@@ -51,9 +85,9 @@ public class JavaCompileTask implements Task {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
-        final List<String> options = buildOptions(buildDir);
+        final List<String> options = buildOptions();
 
-        final List<Path> srcFiles = Files.walk(Paths.get("src/main/java"))
+        final List<Path> srcFiles = Files.walk(srcPath)
             .filter(f -> Files.isRegularFile(f))
             .filter(f -> f.toString().endsWith(".java"))
             .collect(Collectors.toList());
@@ -77,7 +111,7 @@ public class JavaCompileTask implements Task {
         final StandardJavaFileManager fileManager =
             compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
 
-        fileManager.setLocation(StandardLocation.CLASS_PATH, dependencies);
+        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
             Collections.singletonList(buildDir.toFile()));
 
@@ -101,7 +135,7 @@ public class JavaCompileTask implements Task {
         return TaskStatus.OK;
     }
 
-    private List<String> buildOptions(final Path buildDir) {
+    private List<String> buildOptions() {
         final List<String> options = new ArrayList<>();
         options.add("-d");
         options.add(buildDir.toString());
@@ -131,7 +165,7 @@ public class JavaCompileTask implements Task {
         return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
     }
 
-    private List<File> buildClasspath(final List<String> dependencies)
+    private List<File> buildClasspath()
         throws DependencyCollectionException, DependencyResolutionException, IOException {
 
         if (dependencies == null || dependencies.isEmpty()) {
@@ -139,8 +173,9 @@ public class JavaCompileTask implements Task {
         }
 
         final List<File> classpath = new MavenResolver()
-            .buildClasspath(dependencies, "compile");
-        classpath.add(new File("src/main/java"));
+            .buildClasspath(dependencies, dependencyScope);
+
+        classpath.addAll(classpathAppendix.stream().map(Path::toFile).collect(Collectors.toList()));
         return classpath;
     }
 

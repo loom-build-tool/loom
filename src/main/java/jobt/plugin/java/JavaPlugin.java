@@ -10,6 +10,8 @@ public class JavaPlugin extends AbstractPlugin {
         registerTask("compileJava", new JavaCompileTask(buildConfig, CompileTarget.MAIN));
         registerTask("compileTestJava", new JavaCompileTask(buildConfig, CompileTarget.TEST));
         registerTask("jar", new JavaAssembleTask(buildConfig));
+        registerTask("processResources", new ResourcesTask(CompileTarget.MAIN));
+        registerTask("processTestResources", new ResourcesTask(CompileTarget.TEST));
 
         taskTemplate.task("compileJava");
 

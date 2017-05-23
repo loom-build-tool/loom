@@ -33,6 +33,10 @@ public final class Progress {
         complete("OK", ANSI_GREEN);
     }
 
+    public static void fail() {
+        complete("FAIL", ANSI_RED);
+    }
+
     public static void skip() {
         complete("SKIPPED", ANSI_WHITE);
     }

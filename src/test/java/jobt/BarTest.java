@@ -1,0 +1,16 @@
+package jobt;
+
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+import jobt.plugin.TaskStatus;
+
+public class BarTest {
+
+    @Test
+    public void test() {
+        assertEquals("SKIP", TaskStatus.SKIP.name());
+    }
+
+}

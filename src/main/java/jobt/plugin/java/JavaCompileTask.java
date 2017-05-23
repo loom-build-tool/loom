@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -39,20 +38,29 @@ public class JavaCompileTask implements Task {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private final BuildConfig buildConfig;
+    private final MavenResolver mavenResolver;
     private final Path srcPath;
     private final Path buildDir;
     private final String dependencyScope;
     private final List<String> dependencies;
     private final List<Path> classpathAppendix = new ArrayList<>();
+    private List<File> classPath;
 
-    public JavaCompileTask(final BuildConfig buildConfig, final CompileTarget compileTarget) {
+    public JavaCompileTask(final BuildConfig buildConfig, final CompileTarget compileTarget,
+                           final MavenResolver mavenResolver) {
         this.buildConfig = buildConfig;
+        this.mavenResolver = mavenResolver;
+
+        dependencies = new ArrayList<>();
+        if (buildConfig.getDependencies() != null) {
+            dependencies.addAll(buildConfig.getDependencies());
+        }
+
         switch (compileTarget) {
             case MAIN:
                 srcPath = SRC_MAIN_PATH;
                 buildDir = BUILD_MAIN_PATH;
                 dependencyScope = "compile";
-                dependencies = buildConfig.getDependencies();
                 classpathAppendix.add(srcPath);
                 break;
             case TEST:
@@ -62,10 +70,9 @@ public class JavaCompileTask implements Task {
                 classpathAppendix.add(srcPath);
                 classpathAppendix.add(BUILD_MAIN_PATH);
 
-                dependencies = Stream.concat(
-                    buildConfig.getDependencies().stream(),
-                    buildConfig.getTestDependencies().stream())
-                    .collect(Collectors.toList());
+                if (buildConfig.getTestDependencies() != null) {
+                    dependencies.addAll(buildConfig.getTestDependencies());
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
@@ -74,7 +81,8 @@ public class JavaCompileTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        final List<File> classpath = buildClasspath();
+        final List<File> classpath = new ArrayList<>(getClassPath());
+        classpath.addAll(classpathAppendix.stream().map(Path::toFile).collect(Collectors.toList()));
 
         final FileCacher fileCacher = new FileCacher();
 
@@ -114,7 +122,6 @@ public class JavaCompileTask implements Task {
         fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
             Collections.singletonList(buildDir.toFile()));
-
 
         final Iterable<? extends JavaFileObject> compUnits =
             fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
@@ -165,18 +172,24 @@ public class JavaCompileTask implements Task {
         return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
     }
 
-    private List<File> buildClasspath()
+    public List<File> getClassPath()
         throws DependencyCollectionException, DependencyResolutionException, IOException {
 
-        if (dependencies == null || dependencies.isEmpty()) {
-            return Collections.emptyList();
+        if (classPath == null) {
+            classPath = Collections.unmodifiableList(buildClasspath());
         }
 
-        final List<File> classpath = new MavenResolver()
-            .buildClasspath(dependencies, dependencyScope);
+        return classPath;
+    }
 
-        classpath.addAll(classpathAppendix.stream().map(Path::toFile).collect(Collectors.toList()));
-        return classpath;
+    private List<File> buildClasspath() throws DependencyCollectionException,
+        DependencyResolutionException, IOException {
+
+        if (dependencies == null || dependencies.isEmpty()) {
+            return classPath;
+        }
+
+        return mavenResolver.buildClasspath(dependencies, dependencyScope);
     }
 
 }

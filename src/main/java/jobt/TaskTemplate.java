@@ -52,6 +52,9 @@ public class TaskTemplate {
                     case SKIP:
                         Progress.skip();
                         break;
+                    case FAIL:
+                        Progress.fail();
+                        return;
                     default:
                         throw new IllegalStateException("Unknown status " + status);
                 }

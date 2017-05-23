@@ -31,7 +31,11 @@ public class PluginRegistry {
     public TaskStatus trigger(final String phase) throws Exception {
         final Set<TaskStatus> statuses = new HashSet<>();
         for (final Plugin plugin : plugins) {
-            statuses.add(plugin.run(phase));
+            final TaskStatus status = plugin.run(phase);
+            if (status == TaskStatus.FAIL) {
+                return TaskStatus.FAIL;
+            }
+            statuses.add(status);
         }
 
         if (statuses.size() == 1) {

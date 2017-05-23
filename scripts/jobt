@@ -8,4 +8,4 @@ if [ ! -e "$LIB" ]; then
 fi
 
 classpath=$(JARS=("$LIB"/*.jar); IFS=:; echo "${JARS[*]}")
-java -cp $classpath jobt.Jobt
+java -cp $classpath jobt.Jobt "$@"

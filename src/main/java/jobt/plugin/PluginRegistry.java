@@ -1,7 +1,9 @@
 package jobt.plugin;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jobt.TaskTemplate;
 import jobt.config.BuildConfig;
@@ -27,9 +29,13 @@ public class PluginRegistry {
     }
 
     public TaskStatus trigger(final String phase) throws Exception {
-        final List<TaskStatus> statuses = new ArrayList<>();
+        final Set<TaskStatus> statuses = new HashSet<>();
         for (final Plugin plugin : plugins) {
             statuses.add(plugin.run(phase));
+        }
+
+        if (statuses.size() == 1) {
+            return statuses.iterator().next();
         }
 
         return statuses.stream().anyMatch(s -> s == TaskStatus.OK)

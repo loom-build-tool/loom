@@ -47,7 +47,7 @@ public class ResourcesTask implements Task {
         private final Path targetPath;
         private Path sourcePath;
 
-        public CopyFileVisitor(final Path targetPath) {
+        CopyFileVisitor(final Path targetPath) {
             this.targetPath = targetPath;
         }
 

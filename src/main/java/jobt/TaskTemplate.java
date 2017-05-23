@@ -35,11 +35,26 @@ public class TaskTemplate {
     public void execute(final String task) throws Exception {
         final Set<String> resolvedTasks = resolveTasks(task);
 
+        Progress.log("Will execute "
+            + resolvedTasks.stream().reduce((a, b) -> a + " > " + b).get());
+
         for (final String resolvedTask : resolvedTasks) {
             if (!tasksExecucted.contains(resolvedTask)) {
                 Progress.newStatus("Execute Task " + resolvedTask);
                 final TaskStatus status = pluginRegistry.trigger(resolvedTask);
-                Progress.complete(status.toString());
+                switch (status) {
+                    case OK:
+                        Progress.ok();
+                        break;
+                    case UP_TO_DATE:
+                        Progress.uptodate();
+                        break;
+                    case SKIP:
+                        Progress.skip();
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown status " + status);
+                }
 
                 tasksExecucted.add(resolvedTask);
             }

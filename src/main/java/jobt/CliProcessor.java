@@ -17,12 +17,6 @@ import jobt.config.BuildConfig;
 
 public class CliProcessor {
 
-    private final long startTime;
-
-    public CliProcessor() {
-        startTime = System.nanoTime();
-    }
-
     private static BuildConfig readConfig() throws IOException {
         final Yaml yaml = new Yaml();
 
@@ -38,9 +32,11 @@ public class CliProcessor {
     }
 
     public void run(final String[] args) throws Exception {
+        final long startTime = System.nanoTime();
+
         Progress.newStatus("Read configuration");
         final BuildConfig buildConfig = readConfig();
-        Progress.complete();
+        Progress.ok();
 
         Progress.log("Initialized configuration for %s version %s",
             buildConfig.getProject().getArchivesBaseName(),
@@ -57,7 +53,7 @@ public class CliProcessor {
         }
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-        Progress.log(String.format("✨ Built in %.2fs%n", duration));
+        Progress.log(String.format("✨  Built in %.2fs%n", duration));
     }
 
 }

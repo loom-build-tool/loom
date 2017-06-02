@@ -1,3 +1,4 @@
 include 'api'
+include 'plugin-java'
 include 'plugin-checkstyle'
 

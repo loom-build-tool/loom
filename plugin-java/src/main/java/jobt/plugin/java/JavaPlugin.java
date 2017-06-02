@@ -1,11 +1,5 @@
 package jobt.plugin.java;
 
-import java.io.IOException;
-
-import org.sonatype.aether.collection.DependencyCollectionException;
-import org.sonatype.aether.resolution.DependencyResolutionException;
-
-import jobt.MavenResolver;
 import jobt.plugin.AbstractPlugin;
 import jobt.plugin.CompileTarget;
 import jobt.plugin.TaskRegistry;
@@ -15,21 +9,13 @@ public class JavaPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskRegistry taskRegistry) {
-        final MavenResolver mavenResolver = new MavenResolver();
+        final JavaCompileTask javaCompileTask = new JavaCompileTask(logger, buildConfig, executionContext,
+            CompileTarget.MAIN, dependencyResolver);
 
-        final JavaCompileTask javaCompileTask =
-            new JavaCompileTask(buildConfig, executionContext, CompileTarget.MAIN, mavenResolver);
+        final JavaCompileTask testCompileTask = new JavaCompileTask(logger, buildConfig, executionContext,
+            CompileTarget.TEST, dependencyResolver);
 
-        final JavaCompileTask testCompileTask =
-            new JavaCompileTask(buildConfig, executionContext, CompileTarget.TEST, mavenResolver);
-
-        final JavaTestTask testTask;
-        try {
-            testTask = new JavaTestTask(testCompileTask.getClassPath());
-        } catch (final DependencyCollectionException | DependencyResolutionException
-            | IOException e) {
-            throw new IllegalStateException(e);
-        }
+        final JavaTestTask testTask = new JavaTestTask(logger, testCompileTask.getClassPath());
 
         taskRegistry.register("compileJava", javaCompileTask);
         taskRegistry.register("compileTestJava", testCompileTask);

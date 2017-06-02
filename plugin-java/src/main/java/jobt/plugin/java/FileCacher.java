@@ -1,4 +1,4 @@
-package jobt;
+package jobt.plugin.java;
 
 import java.io.IOException;
 import java.nio.file.Files;

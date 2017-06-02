@@ -39,8 +39,10 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
+import jobt.plugin.DependencyResolver;
+
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class MavenResolver {
+public class MavenResolver implements DependencyResolver {
 
     private final RepositorySystem system;
     private final MavenRepositorySystemSession session;
@@ -82,37 +84,42 @@ public class MavenResolver {
             new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
     }
 
-    public List<File> buildClasspath(final List<String> deps, final String scope)
-        throws DependencyCollectionException, DependencyResolutionException, IOException {
+    @Override
+    public List<File> buildClasspath(final List<String> deps, final String scope) {
 
         //Progress.newStatus("Resolve dependencies for scope " + scope);
 
-        final List<File> files = readCache(deps, scope);
+        final PreorderNodeListGenerator nlg;
+        try {
+            final List<File> files = readCache(deps, scope);
 
-        if (!files.isEmpty()) {
-            //Progress.complete("UP-TO-DATE");
-            return files;
+            if (!files.isEmpty()) {
+                //Progress.complete("UP-TO-DATE");
+                return files;
+            }
+
+            final CollectRequest collectRequest = new CollectRequest();
+
+            final List<Dependency> dependencies = deps.stream()
+                .map(a -> new Dependency(new DefaultArtifact(a), scope))
+                .collect(Collectors.toList());
+
+            collectRequest.setDependencies(dependencies);
+            collectRequest.addRepository(mavenRepository);
+            final DependencyNode node = system.collectDependencies(session, collectRequest).getRoot();
+
+            final DependencyRequest dependencyRequest = new DependencyRequest();
+            dependencyRequest.setRoot(node);
+
+            system.resolveDependencies(session, dependencyRequest);
+
+            nlg = new PreorderNodeListGenerator();
+            node.accept(nlg);
+
+            buildHash(deps, scope, nlg);
+        } catch (IOException | DependencyCollectionException | DependencyResolutionException e) {
+            throw new IllegalStateException(e);
         }
-
-        final CollectRequest collectRequest = new CollectRequest();
-
-        final List<Dependency> dependencies = deps.stream()
-            .map(a -> new Dependency(new DefaultArtifact(a), scope))
-            .collect(Collectors.toList());
-
-        collectRequest.setDependencies(dependencies);
-        collectRequest.addRepository(mavenRepository);
-        final DependencyNode node = system.collectDependencies(session, collectRequest).getRoot();
-
-        final DependencyRequest dependencyRequest = new DependencyRequest();
-        dependencyRequest.setRoot(node);
-
-        system.resolveDependencies(session, dependencyRequest);
-
-        final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-        node.accept(nlg);
-
-        buildHash(deps, scope, nlg);
 
         //Progress.complete();
         return nlg.getFiles();

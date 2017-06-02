@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     compile project(':api')
+    compile project(':plugin-java')
     compile project(':plugin-checkstyle')
     compile('org.sonatype.aether:aether-impl:1.13.1')
     compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
@@ -23,7 +24,7 @@ dependencies {
     compile('org.apache.maven:maven-aether-provider:3.0.3')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
-    compile('junit:junit:4.12')
+    testCompile('junit:junit:4.12')
 }
 
 checkstyle {

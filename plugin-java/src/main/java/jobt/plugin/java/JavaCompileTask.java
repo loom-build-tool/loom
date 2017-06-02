@@ -1,7 +1,6 @@
 package jobt.plugin.java;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -13,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
@@ -23,14 +22,9 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
-import org.sonatype.aether.collection.DependencyCollectionException;
-import org.sonatype.aether.resolution.DependencyResolutionException;
-
-import jobt.FileCacher;
-import jobt.MavenResolver;
-import jobt.Progress;
 import jobt.plugin.BuildConfig;
 import jobt.plugin.CompileTarget;
+import jobt.plugin.DependencyResolver;
 import jobt.plugin.ExecutionContext;
 import jobt.plugin.Task;
 import jobt.plugin.TaskStatus;
@@ -42,10 +36,11 @@ public class JavaCompileTask implements Task {
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
+    private final Logger logger;
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
-    private final MavenResolver mavenResolver;
+    private final DependencyResolver dependencyResolver;
     private final Path srcPath;
     private final Path buildDir;
     private final String dependencyScope;
@@ -53,12 +48,15 @@ public class JavaCompileTask implements Task {
     private final List<Path> classpathAppendix = new ArrayList<>();
     private List<File> classPath;
 
-    public JavaCompileTask(final BuildConfig buildConfig, final ExecutionContext executionContext,
-                           final CompileTarget compileTarget, final MavenResolver mavenResolver) {
+    public JavaCompileTask(final Logger logger, final BuildConfig buildConfig,
+                           final ExecutionContext executionContext,
+                           final CompileTarget compileTarget,
+                           final DependencyResolver dependencyResolver) {
+        this.logger = logger;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
-        this.mavenResolver = Objects.requireNonNull(mavenResolver);
+        this.dependencyResolver = Objects.requireNonNull(dependencyResolver);
 
         dependencies = new ArrayList<>();
         if (buildConfig.getDependencies() != null) {
@@ -158,7 +156,7 @@ public class JavaCompileTask implements Task {
 
             for (final Diagnostic<? extends JavaFileObject> diagnostic
                 : diagnosticListener.getDiagnostics()) {
-                Progress.log(diagnostic.toString());
+                logger.info(diagnostic.toString());
             }
 
             throw new IllegalStateException("Compile failed");
@@ -207,9 +205,7 @@ public class JavaCompileTask implements Task {
         return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
     }
 
-    public List<File> getClassPath()
-        throws DependencyCollectionException, DependencyResolutionException, IOException {
-
+    public List<File> getClassPath() {
         if (classPath == null) {
             classPath = Collections.unmodifiableList(buildClasspath());
         }
@@ -217,14 +213,12 @@ public class JavaCompileTask implements Task {
         return classPath;
     }
 
-    private List<File> buildClasspath() throws DependencyCollectionException,
-        DependencyResolutionException, IOException {
-
+    private List<File> buildClasspath() {
         if (dependencies == null || dependencies.isEmpty()) {
             return classPath;
         }
 
-        return mavenResolver.buildClasspath(dependencies, dependencyScope);
+        return dependencyResolver.buildClasspath(dependencies, dependencyScope);
     }
 
 }

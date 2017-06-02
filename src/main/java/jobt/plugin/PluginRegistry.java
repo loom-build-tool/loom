@@ -3,7 +3,9 @@ package jobt.plugin;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import jobt.MavenResolver;
 import jobt.TaskTemplateImpl;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.base.BasePlugin;
@@ -13,11 +15,13 @@ import jobt.plugin.java.JavaPlugin;
 public class PluginRegistry {
 
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
-    private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
 
     public PluginRegistry(final BuildConfigImpl buildConfig, final TaskTemplateImpl taskTemplate) {
         final List<String> plugins = buildConfig.getPlugins();
         plugins.add("base");
+
+        final ExecutionContextImpl executionContext = new ExecutionContextImpl();
+        final MavenResolver dependencyResolver = new MavenResolver();
 
         for (final String plugin : plugins) {
             final Plugin regPlugin;
@@ -37,6 +41,8 @@ public class PluginRegistry {
 
             regPlugin.setBuildConfig(buildConfig);
             regPlugin.setExecutionContext(executionContext);
+            regPlugin.setDependencyResolver(dependencyResolver);
+            regPlugin.setLogger(Logger.getLogger(plugin));
             regPlugin.configure(taskTemplate);
             regPlugin.configure(taskRegistry);
         }

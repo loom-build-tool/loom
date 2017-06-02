@@ -1,4 +1,4 @@
-package jobt.plugin.java;
+package jobt.plugin;
 
 public enum CompileTarget {
 

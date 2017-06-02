@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TaskGraphNode {
+import jobt.plugin.TaskGraphNode;
+
+public class TaskGraphNodeImpl implements TaskGraphNode {
 
     private final String name;
     private final List<TaskGraphNode> dependentNodes = new ArrayList<>();
 
-    public TaskGraphNode(final String name) {
+    public TaskGraphNodeImpl(final String name) {
         this.name = name;
     }
 
@@ -17,6 +19,7 @@ public class TaskGraphNode {
         return name;
     }
 
+    @Override
     public void dependsOn(final TaskGraphNode... tasks) {
         dependentNodes.addAll(Arrays.asList(tasks));
     }

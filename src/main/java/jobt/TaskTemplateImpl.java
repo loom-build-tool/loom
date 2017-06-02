@@ -7,27 +7,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jobt.config.BuildConfig;
+import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
+import jobt.plugin.TaskGraphNode;
 import jobt.plugin.TaskStatus;
+import jobt.plugin.TaskTemplate;
 
-public class TaskTemplate {
+public class TaskTemplateImpl implements TaskTemplate {
 
     private final PluginRegistry pluginRegistry;
-    private final Map<String, TaskGraphNode> tasks = new HashMap<>();
+    private final Map<String, TaskGraphNodeImpl> tasks = new HashMap<>();
     private final List<String> tasksExecucted = new ArrayList<>();
 
-    public TaskTemplate(final BuildConfig buildConfig) {
+    public TaskTemplateImpl(final BuildConfigImpl buildConfig) {
         this.pluginRegistry = new PluginRegistry(buildConfig, this);
     }
 
+    @Override
     public TaskGraphNode task(final String name) {
         final TaskGraphNode taskGraphNode = tasks.get(name);
         if (taskGraphNode != null) {
             return taskGraphNode;
         }
 
-        final TaskGraphNode newTask = new TaskGraphNode(name);
+        final TaskGraphNodeImpl newTask = new TaskGraphNodeImpl(name);
         tasks.put(name, newTask);
         return newTask;
     }
@@ -71,9 +74,9 @@ public class TaskTemplate {
     }
 
     private void resolveTasks(final Set<String> resolvedTasks, final String taskName) {
-        final TaskGraphNode taskGraphNode = tasks.get(taskName);
+        final TaskGraphNodeImpl taskGraphNode = tasks.get(taskName);
         for (final TaskGraphNode node : taskGraphNode.getDependentNodes()) {
-            resolveTasks(resolvedTasks, node.getName());
+            resolveTasks(resolvedTasks, ((TaskGraphNodeImpl) node).getName());
         }
         resolvedTasks.add(taskGraphNode.getName());
     }

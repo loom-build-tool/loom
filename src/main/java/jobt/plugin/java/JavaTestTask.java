@@ -35,6 +35,10 @@ public class JavaTestTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
+        if (Files.notExists(Paths.get("jobtbuild/classes/test"))) {
+            return TaskStatus.SKIP;
+        }
+
         final Computer computer = new Computer();
         final JUnitCore jUnitCore = new JUnitCore();
 

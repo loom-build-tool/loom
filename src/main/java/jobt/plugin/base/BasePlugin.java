@@ -1,15 +1,19 @@
 package jobt.plugin.base;
 
-import jobt.TaskTemplate;
-import jobt.config.BuildConfig;
 import jobt.plugin.AbstractPlugin;
+import jobt.plugin.TaskRegistry;
+import jobt.plugin.TaskTemplate;
 
 public class BasePlugin extends AbstractPlugin {
 
-    public BasePlugin(final BuildConfig buildConfig, final TaskTemplate taskTemplate) {
-        taskTemplate.task("clean");
+    @Override
+    public void configure(final TaskRegistry taskRegistry) {
+        taskRegistry.register("clean", new CleanTask());
+    }
 
-        registerTask("clean", new CleanTask());
+    @Override
+    public void configure(final TaskTemplate taskTemplate) {
+        taskTemplate.task("clean");
     }
 
 }

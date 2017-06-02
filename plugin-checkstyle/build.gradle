@@ -1,0 +1,35 @@
+apply plugin: 'java'
+apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
+apply plugin: 'pmd'
+
+group = 'jobt'
+archivesBaseName = 'jobt-plugin-checkstyle'
+version = '1.0.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+checkstyle {
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
+}
+
+pmd {
+    consoleOutput = true
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+dependencies {
+    compile project(':api')
+    compile('com.puppycrawl.tools:checkstyle:7.8')
+}

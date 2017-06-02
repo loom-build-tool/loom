@@ -12,7 +12,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import jobt.config.BuildConfig;
+import jobt.plugin.BuildConfig;
 import jobt.plugin.Task;
 import jobt.plugin.TaskStatus;
 

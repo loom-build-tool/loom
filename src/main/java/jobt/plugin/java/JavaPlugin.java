@@ -6,30 +6,41 @@ import org.sonatype.aether.collection.DependencyCollectionException;
 import org.sonatype.aether.resolution.DependencyResolutionException;
 
 import jobt.MavenResolver;
-import jobt.TaskTemplate;
-import jobt.config.BuildConfig;
 import jobt.plugin.AbstractPlugin;
+import jobt.plugin.CompileTarget;
+import jobt.plugin.TaskRegistry;
+import jobt.plugin.TaskTemplate;
 
 public class JavaPlugin extends AbstractPlugin {
 
-    public JavaPlugin(final BuildConfig buildConfig, final TaskTemplate taskTemplate) {
+    @Override
+    public void configure(final TaskRegistry taskRegistry) {
         final MavenResolver mavenResolver = new MavenResolver();
-        registerTask("compileJava",
-            new JavaCompileTask(buildConfig, CompileTarget.MAIN, mavenResolver));
-        final JavaCompileTask testCompileTask =
-            new JavaCompileTask(buildConfig, CompileTarget.TEST, mavenResolver);
-        registerTask("compileTestJava", testCompileTask);
-        registerTask("jar", new JavaAssembleTask(buildConfig));
-        registerTask("processResources", new ResourcesTask(CompileTarget.MAIN));
-        registerTask("processTestResources", new ResourcesTask(CompileTarget.TEST));
 
+        final JavaCompileTask javaCompileTask =
+            new JavaCompileTask(buildConfig, executionContext, CompileTarget.MAIN, mavenResolver);
+
+        final JavaCompileTask testCompileTask =
+            new JavaCompileTask(buildConfig, executionContext, CompileTarget.TEST, mavenResolver);
+
+        final JavaTestTask testTask;
         try {
-            registerTask("test", new JavaTestTask(testCompileTask.getClassPath()));
+            testTask = new JavaTestTask(testCompileTask.getClassPath());
         } catch (final DependencyCollectionException | DependencyResolutionException
             | IOException e) {
             throw new IllegalStateException(e);
         }
 
+        taskRegistry.register("compileJava", javaCompileTask);
+        taskRegistry.register("compileTestJava", testCompileTask);
+        taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
+        taskRegistry.register("processResources", new ResourcesTask(CompileTarget.MAIN));
+        taskRegistry.register("processTestResources", new ResourcesTask(CompileTarget.TEST));
+        taskRegistry.register("test", testTask);
+    }
+
+    @Override
+    public void configure(final TaskTemplate taskTemplate) {
         taskTemplate.task("compileJava");
 
         taskTemplate.task("processResources");

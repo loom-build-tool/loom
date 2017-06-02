@@ -13,11 +13,11 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.yaml.snakeyaml.Yaml;
 
-import jobt.config.BuildConfig;
+import jobt.config.BuildConfigImpl;
 
 public class CliProcessor {
 
-    private static BuildConfig readConfig() throws IOException {
+    private static BuildConfigImpl readConfig() throws IOException {
         final Yaml yaml = new Yaml();
 
         final Path buildFile = Paths.get("build.yml");
@@ -27,7 +27,7 @@ public class CliProcessor {
 
         try (final Reader resourceAsStream = Files.newBufferedReader(buildFile,
             StandardCharsets.UTF_8)) {
-            return yaml.loadAs(resourceAsStream, BuildConfig.class);
+            return yaml.loadAs(resourceAsStream, BuildConfigImpl.class);
         }
     }
 
@@ -35,7 +35,7 @@ public class CliProcessor {
         final long startTime = System.nanoTime();
 
         Progress.newStatus("Read configuration");
-        final BuildConfig buildConfig = readConfig();
+        final BuildConfigImpl buildConfig = readConfig();
         Progress.ok();
 
         Progress.log("Initialized configuration for %s version %s",
@@ -46,7 +46,7 @@ public class CliProcessor {
         final CommandLineParser parser = new DefaultParser();
         final CommandLine cmd = parser.parse(options, args);
 
-        final TaskTemplate taskTemplate = new TaskTemplate(buildConfig);
+        final TaskTemplateImpl taskTemplate = new TaskTemplateImpl(buildConfig);
 
         for (final String taskName : cmd.getArgs()) {
             taskTemplate.execute(taskName);

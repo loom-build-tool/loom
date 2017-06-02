@@ -2,6 +2,8 @@ package jobt.plugin.java;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.tools.Diagnostic;
@@ -26,7 +29,9 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
 import jobt.FileCacher;
 import jobt.MavenResolver;
 import jobt.Progress;
-import jobt.config.BuildConfig;
+import jobt.plugin.BuildConfig;
+import jobt.plugin.CompileTarget;
+import jobt.plugin.ExecutionContext;
 import jobt.plugin.Task;
 import jobt.plugin.TaskStatus;
 
@@ -38,6 +43,8 @@ public class JavaCompileTask implements Task {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private final BuildConfig buildConfig;
+    private final ExecutionContext executionContext;
+    private final CompileTarget compileTarget;
     private final MavenResolver mavenResolver;
     private final Path srcPath;
     private final Path buildDir;
@@ -46,10 +53,12 @@ public class JavaCompileTask implements Task {
     private final List<Path> classpathAppendix = new ArrayList<>();
     private List<File> classPath;
 
-    public JavaCompileTask(final BuildConfig buildConfig, final CompileTarget compileTarget,
-                           final MavenResolver mavenResolver) {
-        this.buildConfig = buildConfig;
-        this.mavenResolver = mavenResolver;
+    public JavaCompileTask(final BuildConfig buildConfig, final ExecutionContext executionContext,
+                           final CompileTarget compileTarget, final MavenResolver mavenResolver) {
+        this.buildConfig = Objects.requireNonNull(buildConfig);
+        this.executionContext = Objects.requireNonNull(executionContext);
+        this.compileTarget = Objects.requireNonNull(compileTarget);
+        this.mavenResolver = Objects.requireNonNull(mavenResolver);
 
         dependencies = new ArrayList<>();
         if (buildConfig.getDependencies() != null) {
@@ -81,8 +90,26 @@ public class JavaCompileTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
+        if (Files.notExists(srcPath)) {
+            return TaskStatus.SKIP;
+        }
+
         final List<File> classpath = new ArrayList<>(getClassPath());
         classpath.addAll(classpathAppendix.stream().map(Path::toFile).collect(Collectors.toList()));
+
+        final List<URL> urls = classpath.stream()
+            .map(JavaCompileTask::buildUrl).collect(Collectors.toList());
+
+        switch (compileTarget) {
+            case MAIN:
+                executionContext.setCompileClasspath(urls);
+                break;
+            case TEST:
+                executionContext.setTestClasspath(urls);
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
 
         final FileCacher fileCacher = new FileCacher();
 
@@ -140,6 +167,14 @@ public class JavaCompileTask implements Task {
         fileCacher.cacheFiles(srcFiles);
 
         return TaskStatus.OK;
+    }
+
+    private static URL buildUrl(final File f) {
+        try {
+            return f.toURI().toURL();
+        } catch (final MalformedURLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private List<String> buildOptions() {

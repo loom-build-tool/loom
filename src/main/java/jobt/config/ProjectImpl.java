@@ -1,11 +1,14 @@
 package jobt.config;
 
-public class Project {
+import jobt.plugin.Project;
+
+public class ProjectImpl implements Project {
 
     private String group;
     private String archivesBaseName;
     private String version;
 
+    @Override
     public String getGroup() {
         return group;
     }
@@ -14,6 +17,7 @@ public class Project {
         this.group = group;
     }
 
+    @Override
     public String getArchivesBaseName() {
         return archivesBaseName;
     }
@@ -22,6 +26,7 @@ public class Project {
         this.archivesBaseName = archivesBaseName;
     }
 
+    @Override
     public String getVersion() {
         return version;
     }

@@ -3,22 +3,26 @@ package jobt.config;
 import java.util.List;
 import java.util.Map;
 
-public class BuildConfig {
+import jobt.plugin.BuildConfig;
 
-    private Project project;
+public class BuildConfigImpl implements BuildConfig {
+
+    private ProjectImpl project;
     private List<String> plugins;
     private Map<String, String> configuration;
     private List<String> dependencies;
     private List<String> testDependencies;
 
-    public Project getProject() {
+    @Override
+    public ProjectImpl getProject() {
         return project;
     }
 
-    public void setProject(final Project project) {
+    public void setProject(final ProjectImpl project) {
         this.project = project;
     }
 
+    @Override
     public List<String> getPlugins() {
         return plugins;
     }
@@ -27,6 +31,7 @@ public class BuildConfig {
         this.plugins = plugins;
     }
 
+    @Override
     public Map<String, String> getConfiguration() {
         return configuration;
     }
@@ -35,6 +40,7 @@ public class BuildConfig {
         this.configuration = configuration;
     }
 
+    @Override
     public List<String> getDependencies() {
         return dependencies;
     }
@@ -43,6 +49,7 @@ public class BuildConfig {
         this.dependencies = dependencies;
     }
 
+    @Override
     public List<String> getTestDependencies() {
         return testDependencies;
     }

@@ -7,10 +7,10 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -27,25 +27,43 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevelCounter;
 
+import jobt.plugin.CompileTarget;
+import jobt.plugin.ExecutionContext;
 import jobt.plugin.Task;
 import jobt.plugin.TaskStatus;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class CheckstyleTask implements Task {
 
-    private final List<File> classPath;
-
     private final Path baseDir;
+    private final CompileTarget compileTarget;
+    private final ExecutionContext executionContext;
+
     private String configLocation = "config/checkstyle/checkstyle.xml";
     private boolean omitIgnoredModules = true;
 
-    public CheckstyleTask(final String baseDir, final List<File> classPath) {
-        this.baseDir = Paths.get(baseDir);
-        this.classPath = classPath;
+    public CheckstyleTask(final CompileTarget compileTarget, final ExecutionContext executionContext) {
+
+        this.compileTarget = compileTarget;
+        this.executionContext = executionContext;
+
+        switch (compileTarget) {
+            case MAIN:
+                this.baseDir = Paths.get("src/main/java");
+                break;
+            case TEST:
+                this.baseDir = Paths.get("src/test/java");
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskStatus run() throws Exception {
+        if (Files.notExists(baseDir)) {
+            return TaskStatus.SKIP;
+        }
 
         final List<File> collect = Files.walk(baseDir)
             .filter(Files::isRegularFile)
@@ -73,7 +91,7 @@ public class CheckstyleTask implements Task {
         return TaskStatus.FAIL;
     }
 
-    private RootModule createRootModule() throws MalformedURLException {
+    private RootModule createRootModule() throws MalformedURLException, ExecutionException, InterruptedException {
         final RootModule rootModule;
         final String classpath = "";
 
@@ -118,12 +136,21 @@ public class CheckstyleTask implements Task {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException {
-        final List<URL> urls = new ArrayList<>();
-        for (final File file : classPath) {
-            urls.add(file.toURI().toURL());
+    private URLClassLoader buildClassLoader() throws MalformedURLException, ExecutionException, InterruptedException {
+
+        final List<URL> classpath;
+        switch (compileTarget) {
+            case MAIN:
+                classpath = executionContext.getCompileClasspath();
+                break;
+            case TEST:
+                classpath = executionContext.getTestClasspath();
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
-        return new URLClassLoader(urls.toArray(new URL[]{}));
+
+        return new URLClassLoader(classpath.toArray(new URL[]{}));
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")
@@ -136,7 +163,7 @@ public class CheckstyleTask implements Task {
             @Override
             public void auditFinished(final AuditEvent event) {
             }
-        }
+        },
         };
     }
 

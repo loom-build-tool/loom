@@ -19,6 +19,7 @@ dependencies {
     compile('org.sonatype.aether:aether-connector-file:1.13.1')
     compile('org.apache.maven.wagon:wagon-http-lightweight:2.12')
     compile('org.apache.maven:maven-aether-provider:3.0.3')
+    compile('com.puppycrawl.tools:checkstyle:7.8')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('junit:junit:4.12')

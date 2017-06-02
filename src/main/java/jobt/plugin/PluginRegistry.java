@@ -8,6 +8,7 @@ import java.util.Set;
 import jobt.TaskTemplate;
 import jobt.config.BuildConfig;
 import jobt.plugin.base.BasePlugin;
+import jobt.plugin.checkstyle.CheckstylePlugin;
 import jobt.plugin.java.JavaPlugin;
 
 public class PluginRegistry {
@@ -21,6 +22,9 @@ public class PluginRegistry {
             switch (plugin) {
                 case "java":
                     plugins.add(new JavaPlugin(buildConfig, taskTemplate));
+                    break;
+                case "checkstyle":
+                    plugins.add(new CheckstylePlugin(buildConfig, taskTemplate));
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown plugin: " + plugin);

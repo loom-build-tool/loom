@@ -174,7 +174,7 @@
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
         <module name="ImportOrder">
-            <property name="groups" value="/^javax?\./,org,com"/>
+            <property name="groups" value="/^java\./,javax,org,com"/>
             <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
             <property name="option" value="top"/>
@@ -228,7 +228,9 @@
 
         <!-- Checks for Modifiers - http://checkstyle.sf.net/config_modifier.html -->
         <module name="ModifierOrder"/>
-        <module name="RedundantModifier"/>
+        <module name="RedundantModifier">
+            <property name="tokens" value="METHOD_DEF, VARIABLE_DEF, ANNOTATION_FIELD_DEF, INTERFACE_DEF, CTOR_DEF, CLASS_DEF, ENUM_DEF"/>
+        </module>
 
         <!-- Checks for Naming Conventions - http://checkstyle.sf.net/config_naming.html -->
         <module name="AbstractClassName"/>

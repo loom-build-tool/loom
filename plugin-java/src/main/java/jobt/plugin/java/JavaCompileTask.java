@@ -22,12 +22,12 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
-import jobt.plugin.BuildConfig;
-import jobt.plugin.CompileTarget;
-import jobt.plugin.DependencyResolver;
-import jobt.plugin.ExecutionContext;
-import jobt.plugin.Task;
-import jobt.plugin.TaskStatus;
+import jobt.api.BuildConfig;
+import jobt.api.CompileTarget;
+import jobt.api.DependencyResolver;
+import jobt.api.ExecutionContext;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 
 public class JavaCompileTask implements Task {
 

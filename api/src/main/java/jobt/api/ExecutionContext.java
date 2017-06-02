@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.api;
 
 import java.net.URL;
 import java.util.List;

@@ -12,9 +12,9 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import jobt.plugin.BuildConfig;
-import jobt.plugin.Task;
-import jobt.plugin.TaskStatus;
+import jobt.api.BuildConfig;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 
 public class JavaAssembleTask implements Task {
 

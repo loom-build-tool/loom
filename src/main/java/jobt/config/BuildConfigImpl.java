@@ -3,7 +3,7 @@ package jobt.config;
 import java.util.List;
 import java.util.Map;
 
-import jobt.plugin.BuildConfig;
+import jobt.api.BuildConfig;
 
 public class BuildConfigImpl implements BuildConfig {
 

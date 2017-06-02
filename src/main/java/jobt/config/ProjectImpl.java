@@ -1,6 +1,6 @@
 package jobt.config;
 
-import jobt.plugin.Project;
+import jobt.api.Project;
 
 public class ProjectImpl implements Project {
 

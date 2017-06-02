@@ -2,7 +2,7 @@ package jobt;
 
 import static org.junit.Assert.assertEquals;
 
-import jobt.plugin.TaskStatus;
+import jobt.api.TaskStatus;
 
 public class XooTest {
 

@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.api;
 
 import java.util.List;
 import java.util.logging.Logger;

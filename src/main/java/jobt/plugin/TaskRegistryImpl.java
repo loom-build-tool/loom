@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jobt.api.Task;
+import jobt.api.TaskRegistry;
+
 public class TaskRegistryImpl implements TaskRegistry {
 
     private final Map<String, List<Task>> tasks = new HashMap<>();

@@ -7,6 +7,9 @@ import java.util.logging.Logger;
 
 import jobt.MavenResolver;
 import jobt.TaskTemplateImpl;
+import jobt.api.Plugin;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.base.BasePlugin;
 import jobt.plugin.checkstyle.CheckstylePlugin;

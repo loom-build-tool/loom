@@ -3,10 +3,10 @@ package jobt.plugin.checkstyle;
 import java.util.Collections;
 import java.util.List;
 
-import jobt.plugin.AbstractPlugin;
-import jobt.plugin.CompileTarget;
-import jobt.plugin.TaskRegistry;
-import jobt.plugin.TaskTemplate;
+import jobt.api.AbstractPlugin;
+import jobt.api.CompileTarget;
+import jobt.api.TaskRegistry;
+import jobt.api.TaskTemplate;
 
 public class CheckstylePlugin extends AbstractPlugin {
 

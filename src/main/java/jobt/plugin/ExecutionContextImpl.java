@@ -4,6 +4,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import jobt.api.ExecutionContext;
+
 public class ExecutionContextImpl implements ExecutionContext {
 
     private CountDownLatch compileClassPathLatch = new CountDownLatch(1);

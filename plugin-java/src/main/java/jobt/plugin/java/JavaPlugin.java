@@ -1,9 +1,9 @@
 package jobt.plugin.java;
 
-import jobt.plugin.AbstractPlugin;
-import jobt.plugin.CompileTarget;
-import jobt.plugin.TaskRegistry;
-import jobt.plugin.TaskTemplate;
+import jobt.api.AbstractPlugin;
+import jobt.api.CompileTarget;
+import jobt.api.TaskRegistry;
+import jobt.api.TaskTemplate;
 
 public class JavaPlugin extends AbstractPlugin {
 

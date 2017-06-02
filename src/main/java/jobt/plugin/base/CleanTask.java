@@ -7,8 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
-import jobt.plugin.Task;
-import jobt.plugin.TaskStatus;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 
 public class CleanTask implements Task {
 

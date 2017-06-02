@@ -9,9 +9,9 @@ import java.util.Set;
 
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
-import jobt.plugin.TaskGraphNode;
-import jobt.plugin.TaskStatus;
-import jobt.plugin.TaskTemplate;
+import jobt.api.TaskGraphNode;
+import jobt.api.TaskStatus;
+import jobt.api.TaskTemplate;
 
 public class TaskTemplateImpl implements TaskTemplate {
 

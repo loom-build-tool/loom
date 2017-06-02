@@ -1,8 +1,8 @@
 package jobt.plugin.base;
 
-import jobt.plugin.AbstractPlugin;
-import jobt.plugin.TaskRegistry;
-import jobt.plugin.TaskTemplate;
+import jobt.api.AbstractPlugin;
+import jobt.api.TaskRegistry;
+import jobt.api.TaskTemplate;
 
 public class BasePlugin extends AbstractPlugin {
 

@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.api;
 
 public interface Task {
 

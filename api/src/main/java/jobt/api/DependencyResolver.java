@@ -1,4 +1,4 @@
-package jobt.plugin;
+package jobt.api;
 
 import java.io.File;
 import java.util.List;

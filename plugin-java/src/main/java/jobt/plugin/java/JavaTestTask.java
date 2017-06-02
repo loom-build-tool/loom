@@ -22,8 +22,8 @@ import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
-import jobt.plugin.Task;
-import jobt.plugin.TaskStatus;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 
 public class JavaTestTask implements Task {
 

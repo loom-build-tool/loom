@@ -27,10 +27,10 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 import com.puppycrawl.tools.checkstyle.api.SeverityLevelCounter;
 
-import jobt.plugin.CompileTarget;
-import jobt.plugin.ExecutionContext;
-import jobt.plugin.Task;
-import jobt.plugin.TaskStatus;
+import jobt.api.CompileTarget;
+import jobt.api.ExecutionContext;
+import jobt.api.Task;
+import jobt.api.TaskStatus;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class CheckstyleTask implements Task {

@@ -53,7 +53,7 @@ public class CliProcessor {
         }
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-        Progress.log(String.format("✨  Built in %.2fs%n", duration));
+        Progress.log(String.format("\uD83C\uDF5D  Cooked your pasta in %.2fs%n", duration));
     }
 
 }

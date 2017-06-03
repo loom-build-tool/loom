@@ -35,7 +35,7 @@ public class Job implements Callable<TaskStatus> {
         final Logger log = LoggerFactory.getLogger(Job.class.getName() + "<" + name + ">");
 
         if (!dependencies.isEmpty()) {
-            log.info("Wait for dependencies " + dependencies);
+            log.info("Wait for dependencies {}", dependencies);
 
             final long startWait = System.nanoTime();
             for (final Job dependency : dependencies) {

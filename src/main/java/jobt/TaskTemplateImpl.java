@@ -63,7 +63,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
         final AtomicReference<Exception> firstException = new AtomicReference<>();
 
-        final ExecutorService executor = Executors.newFixedThreadPool(jobs.size());
+        final ExecutorService executor = Executors.newWorkStealingPool();
 
         for (final Job job : jobs) {
             CompletableFuture.runAsync(() -> {
@@ -111,7 +111,11 @@ public class TaskTemplateImpl implements TaskTemplate {
                 .collect(Collectors.toList());
             stringJobEntry.getValue().setDependencies(dependentJobs);
         }
-        return jobs.values();
+
+        // guaranty same order to support single thread execution
+        return resolvedTasks.stream()
+            .map(jobs::get)
+            .collect(Collectors.toList());
     }
 
     private Set<String> resolveTasks(final String task) {

@@ -32,7 +32,7 @@ import jobt.api.ExecutionContext;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
-@SuppressWarnings("checkstyle:classdataabstractioncoupling")
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask implements Task {
 
     private final Path baseDir;
@@ -42,7 +42,8 @@ public class CheckstyleTask implements Task {
     private String configLocation = "config/checkstyle/checkstyle.xml";
     private boolean omitIgnoredModules = true;
 
-    public CheckstyleTask(final CompileTarget compileTarget, final ExecutionContext executionContext) {
+    public CheckstyleTask(final CompileTarget compileTarget,
+                          final ExecutionContext executionContext) {
 
         this.compileTarget = compileTarget;
         this.executionContext = executionContext;
@@ -91,7 +92,8 @@ public class CheckstyleTask implements Task {
         return TaskStatus.FAIL;
     }
 
-    private RootModule createRootModule() throws MalformedURLException, ExecutionException, InterruptedException {
+    private RootModule createRootModule()
+        throws MalformedURLException, ExecutionException, InterruptedException {
         final RootModule rootModule;
         final String classpath = "";
 
@@ -136,7 +138,8 @@ public class CheckstyleTask implements Task {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException, ExecutionException, InterruptedException {
+    private URLClassLoader buildClassLoader()
+        throws MalformedURLException, ExecutionException, InterruptedException {
 
         final List<URL> classpath;
         switch (compileTarget) {

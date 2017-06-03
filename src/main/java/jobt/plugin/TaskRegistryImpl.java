@@ -11,21 +11,16 @@ import jobt.api.TaskRegistry;
 
 public class TaskRegistryImpl implements TaskRegistry {
 
-    private final Map<String, List<Task>> tasks = new HashMap<>();
+    private final Map<String, List<Task>> taskMap = new HashMap<>();
 
     @Override
     public void register(final String name, final Task task) {
-        List<Task> taskList = this.tasks.get(name);
-        if (taskList == null) {
-            taskList = new ArrayList<>();
-            tasks.put(name, taskList);
-        }
-
+        final List<Task> taskList = taskMap.computeIfAbsent(name, k -> new ArrayList<>());
         taskList.add(task);
     }
 
-    public List<Task> getTasks(final String name) {
-        final List<Task> tasks = this.tasks.get(name);
+    List<Task> getTasks(final String name) {
+        final List<Task> tasks = taskMap.get(name);
         return tasks != null ? tasks : Collections.emptyList();
     }
 

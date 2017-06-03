@@ -1,7 +1,12 @@
 package jobt.plugin.java;
 
+import java.util.logging.Logger;
+
 import jobt.api.AbstractPlugin;
+import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
+import jobt.api.DependencyResolver;
+import jobt.api.ExecutionContext;
 import jobt.api.TaskRegistry;
 import jobt.api.TaskTemplate;
 
@@ -9,11 +14,16 @@ public class JavaPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskRegistry taskRegistry) {
-        final JavaCompileTask javaCompileTask = new JavaCompileTask(logger, buildConfig, executionContext,
-            CompileTarget.MAIN, dependencyResolver);
+        final Logger logger = getLogger();
+        final BuildConfig buildConfig = getBuildConfig();
+        final ExecutionContext executionContext = getExecutionContext();
+        final DependencyResolver dependencyResolver = getDependencyResolver();
 
-        final JavaCompileTask testCompileTask = new JavaCompileTask(logger, buildConfig, executionContext,
-            CompileTarget.TEST, dependencyResolver);
+        final JavaCompileTask javaCompileTask = new JavaCompileTask(logger, buildConfig,
+            executionContext, CompileTarget.MAIN, dependencyResolver);
+
+        final JavaCompileTask testCompileTask = new JavaCompileTask(logger, buildConfig,
+            executionContext, CompileTarget.TEST, dependencyResolver);
 
         final JavaTestTask testTask = new JavaTestTask(logger, testCompileTask.getClassPath());
 

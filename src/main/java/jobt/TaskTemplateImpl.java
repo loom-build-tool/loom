@@ -6,21 +6,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import jobt.config.BuildConfigImpl;
-import jobt.plugin.PluginRegistry;
 import jobt.api.TaskGraphNode;
 import jobt.api.TaskStatus;
 import jobt.api.TaskTemplate;
+import jobt.config.BuildConfigImpl;
+import jobt.plugin.PluginRegistry;
 
+@SuppressWarnings("checkstyle:regexpmultiline")
 public class TaskTemplateImpl implements TaskTemplate {
 
     private final PluginRegistry pluginRegistry;
     private final Map<String, TaskGraphNodeImpl> tasks = new HashMap<>();
-    private final List<String> tasksExecucted = new ArrayList<>();
+    private final List<String> tasksExecuted = new ArrayList<>();
 
-    public TaskTemplateImpl(final BuildConfigImpl buildConfig) {
-        this.pluginRegistry = new PluginRegistry(buildConfig, this);
+    public TaskTemplateImpl(final BuildConfigImpl buildConfig, final Stopwatch stopwatch) {
+        this.pluginRegistry = new PluginRegistry(buildConfig, this, stopwatch);
     }
 
     @Override
@@ -38,31 +40,18 @@ public class TaskTemplateImpl implements TaskTemplate {
     public void execute(final String task) throws Exception {
         final Set<String> resolvedTasks = resolveTasks(task);
 
-        Progress.log("Will execute "
-            + resolvedTasks.stream().reduce((a, b) -> a + " > " + b).get());
+        System.out.println("Will execute "
+            + resolvedTasks.stream().collect(Collectors.joining(" > ")));
 
         for (final String resolvedTask : resolvedTasks) {
-            if (!tasksExecucted.contains(resolvedTask)) {
-                Progress.newStatus("Execute Task " + resolvedTask);
+            if (!tasksExecuted.contains(resolvedTask)) {
                 final TaskStatus status = pluginRegistry.trigger(resolvedTask);
-                switch (status) {
-                    case OK:
-                        Progress.ok();
-                        break;
-                    case UP_TO_DATE:
-                        Progress.uptodate();
-                        break;
-                    case SKIP:
-                        Progress.skip();
-                        break;
-                    case FAIL:
-                        Progress.fail();
-                        return;
-                    default:
-                        throw new IllegalStateException("Unknown status " + status);
+
+                if (status == TaskStatus.FAIL) {
+                    return;
                 }
 
-                tasksExecucted.add(resolvedTask);
+                tasksExecuted.add(resolvedTask);
             }
         }
     }

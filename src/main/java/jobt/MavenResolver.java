@@ -106,7 +106,8 @@ public class MavenResolver implements DependencyResolver {
 
             collectRequest.setDependencies(dependencies);
             collectRequest.addRepository(mavenRepository);
-            final DependencyNode node = system.collectDependencies(session, collectRequest).getRoot();
+            final DependencyNode node =
+                system.collectDependencies(session, collectRequest).getRoot();
 
             final DependencyRequest dependencyRequest = new DependencyRequest();
             dependencyRequest.setRoot(node);
@@ -117,7 +118,8 @@ public class MavenResolver implements DependencyResolver {
             node.accept(nlg);
 
             buildHash(deps, scope, nlg);
-        } catch (IOException | DependencyCollectionException | DependencyResolutionException e) {
+        } catch (final IOException | DependencyCollectionException
+            | DependencyResolutionException e) {
             throw new IllegalStateException(e);
         }
 

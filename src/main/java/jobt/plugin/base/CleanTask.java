@@ -24,7 +24,11 @@ public class CleanTask implements Task {
         }
 
         if (Files.isDirectory(jobtconfig)) {
-            cleanDir(jobtconfig);
+            Files.walk(jobtconfig)
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .filter(f -> !f.getName().equals("build.log"))
+                .forEach(File::delete);
             cleans++;
         }
 

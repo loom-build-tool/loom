@@ -75,7 +75,7 @@ public class JobtProcessor {
         final FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
         fileAppender.setContext(lc);
         fileAppender.setName("Jobt File Appender");
-        fileAppender.setFile("jobtbuild/build.log");
+        fileAppender.setFile(".jobt/build.log");
         fileAppender.setAppend(false);
         fileAppender.setEncoder(encoder);
         fileAppender.start();

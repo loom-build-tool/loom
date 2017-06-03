@@ -4,6 +4,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jobt.MavenResolver;
 import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
@@ -16,6 +19,8 @@ import jobt.plugin.checkstyle.CheckstylePlugin;
 import jobt.plugin.java.JavaPlugin;
 
 public class PluginRegistry {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PluginRegistry.class);
 
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
     private final Stopwatch stopwatch;
@@ -67,7 +72,9 @@ public class PluginRegistry {
         final Set<TaskStatus> statuses = new HashSet<>();
 
         for (final Task task : tasks) {
+            LOG.info("Start task {}", phase);
             final TaskStatus status = task.run();
+            LOG.info("Task {} resulted with {}", phase, status);
             statuses.add(status);
         }
 

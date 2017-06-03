@@ -11,6 +11,8 @@ import jobt.api.TaskStatus;
 
 public class Job implements Callable<TaskStatus> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Job.class);
+
     private final String name;
     private final Callable<TaskStatus> callable;
 
@@ -32,10 +34,8 @@ public class Job implements Callable<TaskStatus> {
 
     @Override
     public TaskStatus call() throws Exception {
-        final Logger log = LoggerFactory.getLogger(Job.class.getName() + "<" + name + ">");
-
         if (!dependencies.isEmpty()) {
-            log.info("Wait for dependencies {}", dependencies);
+            LOG.info("Task {} waits for dependencies {}", name, dependencies);
 
             final long startWait = System.nanoTime();
             for (final Job dependency : dependencies) {
@@ -44,10 +44,10 @@ public class Job implements Callable<TaskStatus> {
             final long stopWait = System.nanoTime();
 
             final double duration = (stopWait - startWait) / 1_000_000_000D;
-            log.info(String.format("Execute task - dependencies met: " + dependencies
-                + " - waited for %.2fs", duration));
+            LOG.info(String.format("Execute task %s - dependencies met: %s"
+                + " - waited for %.2fs", name, dependencies, duration));
         } else {
-            log.info("Execute task (no dependencies)");
+            LOG.info("Execute task {} (no dependencies)", name);
         }
 
         final TaskStatus taskStatus = callable.call();

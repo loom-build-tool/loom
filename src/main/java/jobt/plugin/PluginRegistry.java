@@ -57,17 +57,19 @@ public class PluginRegistry {
     }
 
     public TaskStatus trigger(final String phase) throws Exception {
+        final List<Task> tasks = taskRegistry.getTasks(phase);
+
+        if (tasks.isEmpty()) {
+            return TaskStatus.SKIP;
+        }
+
         final String stopwatchProcess = "Task " + phase;
         stopwatch.startProcess(stopwatchProcess);
 
         final Set<TaskStatus> statuses = new HashSet<>();
 
-        for (final Task task : taskRegistry.getTasks(phase)) {
+        for (final Task task : tasks) {
             final TaskStatus status = task.run();
-            if (status == TaskStatus.FAIL) {
-                stopwatch.stopProcess(phase);
-                return TaskStatus.FAIL;
-            }
             statuses.add(status);
         }
 

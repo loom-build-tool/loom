@@ -54,7 +54,11 @@ public class JavaTestTask implements Task {
             logger.info(failure.toString());
         }
 
-        return run.wasSuccessful() ? TaskStatus.OK : TaskStatus.FAIL;
+        if (run.wasSuccessful()) {
+            return TaskStatus.OK;
+        }
+
+        throw new IllegalStateException("Failed");
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException {

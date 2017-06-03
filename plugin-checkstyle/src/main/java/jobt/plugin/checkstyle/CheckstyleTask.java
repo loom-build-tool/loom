@@ -88,8 +88,7 @@ public class CheckstyleTask implements Task {
             return TaskStatus.OK;
         }
 
-
-        return TaskStatus.FAIL;
+        throw new IllegalStateException("Errors: " + errors);
     }
 
     private RootModule createRootModule()

@@ -13,9 +13,4 @@ public class FooTest {
         assertEquals("OK", TaskStatus.OK.name());
     }
 
-    @Test
-    public void test2() {
-        assertEquals("FAIL", TaskStatus.FAIL.name());
-    }
-
 }

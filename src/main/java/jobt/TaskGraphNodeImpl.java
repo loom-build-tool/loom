@@ -15,6 +15,7 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
         this.name = name;
     }
 
+    @Override
     public String getName() {
         return name;
     }

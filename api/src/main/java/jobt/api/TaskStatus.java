@@ -4,7 +4,6 @@ public enum TaskStatus {
 
     OK,
     UP_TO_DATE,
-    SKIP,
-    FAIL
+    SKIP
 
 }

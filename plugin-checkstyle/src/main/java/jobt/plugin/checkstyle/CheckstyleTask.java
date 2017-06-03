@@ -15,17 +15,12 @@ import java.util.stream.Collectors;
 
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
-import com.puppycrawl.tools.checkstyle.DefaultLogger;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
-import com.puppycrawl.tools.checkstyle.api.AuditEvent;
-import com.puppycrawl.tools.checkstyle.api.AuditListener;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
-import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
-import com.puppycrawl.tools.checkstyle.api.SeverityLevelCounter;
 
 import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
@@ -71,24 +66,19 @@ public class CheckstyleTask implements Task {
             .map(Path::toFile)
             .collect(Collectors.toList());
 
+        final LoggingAuditListener listener = new LoggingAuditListener();
+
         final RootModule checker = createRootModule();
-
-        final AuditListener[] listeners = getListeners();
-        for (final AuditListener element : listeners) {
-            checker.addListener(element);
-        }
-        final SeverityLevelCounter warningCounter =
-            new SeverityLevelCounter(SeverityLevel.WARNING);
-        checker.addListener(warningCounter);
-
+        checker.addListener(listener);
 
         final int errors = checker.process(collect);
+        checker.destroy();
 
         if (errors == 0) {
             return TaskStatus.OK;
         }
 
-        throw new IllegalStateException("Errors: " + errors);
+        throw new IllegalStateException();
     }
 
     private RootModule createRootModule()
@@ -153,20 +143,6 @@ public class CheckstyleTask implements Task {
         }
 
         return new URLClassLoader(classpath.toArray(new URL[]{}));
-    }
-
-    @SuppressWarnings("checkstyle:regexpmultiline")
-    private AuditListener[] getListeners() {
-        return new AuditListener[]{new DefaultLogger(System.out, false) {
-            @Override
-            public void auditStarted(final AuditEvent event) {
-            }
-
-            @Override
-            public void auditFinished(final AuditEvent event) {
-            }
-        },
-        };
     }
 
 }

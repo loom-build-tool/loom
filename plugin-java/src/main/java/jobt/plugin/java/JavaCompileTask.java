@@ -12,16 +12,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
@@ -37,7 +38,8 @@ public class JavaCompileTask implements Task {
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
-    private final Logger logger;
+    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
+
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
@@ -49,11 +51,10 @@ public class JavaCompileTask implements Task {
     private final List<Path> classpathAppendix = new ArrayList<>();
     private List<File> classPath;
 
-    public JavaCompileTask(final Logger logger, final BuildConfig buildConfig,
+    public JavaCompileTask(final BuildConfig buildConfig,
                            final ExecutionContext executionContext,
                            final CompileTarget compileTarget,
                            final DependencyResolver dependencyResolver) {
-        this.logger = logger;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
@@ -155,12 +156,11 @@ public class JavaCompileTask implements Task {
         if (!compiler.getTask(null, fileManager, diagnosticListener,
             options, null, compUnits).call()) {
 
-            for (final Diagnostic<? extends JavaFileObject> diagnostic
-                : diagnosticListener.getDiagnostics()) {
-                logger.info(diagnostic.toString());
-            }
+            final String collect = diagnosticListener.getDiagnostics().stream()
+                .map(Object::toString)
+                .collect(Collectors.joining("\n"));
 
-            throw new IllegalStateException("Compile failed");
+            throw new IllegalStateException(collect);
         }
 
         fileCacher.cacheFiles(srcFiles);

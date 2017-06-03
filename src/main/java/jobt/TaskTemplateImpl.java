@@ -1,17 +1,21 @@
 package jobt;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jobt.api.TaskGraphNode;
 import jobt.api.TaskTemplate;
@@ -21,7 +25,7 @@ import jobt.plugin.PluginRegistry;
 @SuppressWarnings("checkstyle:regexpmultiline")
 public class TaskTemplateImpl implements TaskTemplate {
 
-    private static final Logger LOG = Logger.getLogger(TaskTemplateImpl.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(TaskTemplateImpl.class);
 
     private final PluginRegistry pluginRegistry;
     private final Map<String, TaskGraphNodeImpl> tasks = new HashMap<>();
@@ -43,6 +47,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         return newTask;
     }
 
+    @SuppressWarnings("checkstyle:illegalcatch")
     public void execute(final String task) throws Exception {
         final Set<String> resolvedTasks = resolveTasks(task);
         resolvedTasks.removeAll(tasksExecuted);
@@ -51,9 +56,48 @@ public class TaskTemplateImpl implements TaskTemplate {
             return;
         }
 
-        LOG.info("Will execute "
-            + resolvedTasks.stream().collect(Collectors.joining(" > ")));
+        LOG.info("Will execute {}",
+            resolvedTasks.stream().collect(Collectors.joining(" > ")));
 
+        final Collection<Job> jobs = buildJobs(resolvedTasks);
+
+        final AtomicReference<Exception> firstException = new AtomicReference<>();
+
+        final ExecutorService executor = Executors.newFixedThreadPool(jobs.size());
+
+        for (final Job job : jobs) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    job.call();
+                } catch (final Exception e) {
+                    firstException.compareAndSet(null, e);
+                    if (!(e instanceof InterruptedException)) {
+                        LOG.error(e.getMessage(), e);
+                    }
+                    executor.shutdownNow();
+                }
+            }, executor);
+
+            if (executor.isShutdown()) {
+                break;
+            }
+        }
+
+        LOG.info("Shutting down Job Pool");
+        executor.shutdown();
+
+        LOG.info("Awaiting Job Pool shutdown");
+        executor.awaitTermination(1, TimeUnit.HOURS);
+        LOG.info("Job Pool has shut down");
+
+        if (firstException.get() != null) {
+            throw firstException.get();
+        }
+
+        tasksExecuted.addAll(resolvedTasks);
+    }
+
+    private Collection<Job> buildJobs(final Set<String> resolvedTasks) {
         final Map<String, Job> jobs = new HashMap<>();
         for (final String resolvedTask : resolvedTasks) {
             jobs.put(resolvedTask, new Job(resolvedTask,
@@ -67,43 +111,7 @@ public class TaskTemplateImpl implements TaskTemplate {
                 .collect(Collectors.toList());
             stringJobEntry.getValue().setDependencies(dependentJobs);
         }
-
-        final AtomicInteger errors = new AtomicInteger();
-
-        final Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(final Thread t, final Throwable e) {
-                System.out.println("INC ERROR");
-                errors.incrementAndGet();
-            }
-        };
-        final ExecutorService fjp = new ForkJoinPool(jobs.size(),
-            ForkJoinPool.defaultForkJoinWorkerThreadFactory, handler, false);
-
-        fjp.invokeAll(jobs.values());
-
-        LOG.info("Shutting down Job Pool");
-
-        fjp.shutdown();
-
-        LOG.info("Awaiting Job Pool shutdown");
-
-        while (true) {
-            fjp.awaitTermination(1, TimeUnit.SECONDS);
-            System.out.println("Errors: " + errors.get());
-            if (errors.get() > 0) {
-                throw new IllegalStateException("Errors available");
-            }
-            if (fjp.isTerminated()) {
-                break;
-            }
-        }
-
-        LOG.info("Job Pool has shut down");
-
-        // TODO handle failed
-
-        tasksExecuted.addAll(resolvedTasks);
+        return jobs.values();
     }
 
     private Set<String> resolveTasks(final String task) {

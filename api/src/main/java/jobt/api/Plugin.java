@@ -1,7 +1,6 @@
 package jobt.api;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public interface Plugin {
 
@@ -10,8 +9,6 @@ public interface Plugin {
     void setExecutionContext(ExecutionContext executionContext);
 
     void setDependencyResolver(DependencyResolver dependencyResolver);
-
-    void setLogger(Logger logger);
 
     List<String> dependencies();
 

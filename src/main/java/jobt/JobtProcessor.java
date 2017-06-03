@@ -1,19 +1,21 @@
 package jobt;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
-import java.util.logging.LogManager;
 
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
 import jobt.config.BuildConfigImpl;
 
 public class JobtProcessor {
@@ -39,27 +41,27 @@ public class JobtProcessor {
         }
     }
 
-    public void configureLogger(final boolean enable) {
-        final Properties properties = new Properties();
-        if (enable) {
-            properties.setProperty("handlers", "java.util.logging.ConsoleHandler");
-            properties.setProperty("java.util.logging.ConsoleHandler.level", "FINE");
-            properties.setProperty("java.util.logging.ConsoleHandler.formatter",
-                "java.util.logging.SimpleFormatter");
-            properties.setProperty("java.util.logging.SimpleFormatter.format",
-                "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL %4$-7s [%3$s] (%2$s) %5$s %6$s%n");
-        } else {
-            properties.setProperty("handlers", "");
-        }
+    public void configureLogger() {
+        final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        lc.start();
 
-        try {
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            properties.store(out, null);
-            final ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-            LogManager.getLogManager().readConfiguration(in);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        final PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setPattern("%date %level [%thread] %logger - %msg%n");
+        encoder.setContext(lc);
+        encoder.start();
+
+        final FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
+        fileAppender.setFile(".jobtbuild/build.log");
+        fileAppender.setAppend(false);
+        fileAppender.setEncoder(encoder);
+        fileAppender.setContext(lc);
+        fileAppender.start();
+
+        final Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
+        rootLogger.setAdditive(false);
+        rootLogger.setLevel(Level.INFO);
+        rootLogger.addAppender(fileAppender);
+        rootLogger.detachAppender("console");
     }
 
     public void init(final BuildConfigImpl buildConfig) {

@@ -1,7 +1,6 @@
 package jobt.api;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin implements Plugin {
@@ -9,7 +8,6 @@ public abstract class AbstractPlugin implements Plugin {
     private BuildConfig buildConfig;
     private ExecutionContext executionContext;
     private DependencyResolver dependencyResolver;
-    private Logger logger;
 
     @Override
     public void setBuildConfig(final BuildConfig buildConfig) {
@@ -36,15 +34,6 @@ public abstract class AbstractPlugin implements Plugin {
 
     public DependencyResolver getDependencyResolver() {
         return dependencyResolver;
-    }
-
-    @Override
-    public void setLogger(final Logger logger) {
-        this.logger = logger;
-    }
-
-    public Logger getLogger() {
-        return logger;
     }
 
     @Override

@@ -15,10 +15,12 @@
     <allow pkg="javax.tools"/>
 
     <allow pkg="com.puppycrawl.tools"/>
+    <allow pkg="ch.qos.logback"/>
 
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>
     <allow pkg="org.apache.maven"/>
+    <allow pkg="org.slf4j"/>
     <allow pkg="org.sonatype.aether"/>
     <allow pkg="org.junit"/>
     <allow pkg="jobt"/>

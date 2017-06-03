@@ -39,14 +39,13 @@ public class CliProcessor {
 
         stopwatch.startProcess("Parse commandline");
         final Options options = new Options();
-        options.addOption("l", "log", false, "Enabled console logging");
         options.addOption("s", "stat", false, "Enabled statistics output");
         final CommandLineParser parser = new DefaultParser();
         final CommandLine cmd = parser.parse(options, args);
         stopwatch.stopProcess("Parse commandline");
 
         final JobtProcessor jobtProcessor = new JobtProcessor(stopwatch);
-        jobtProcessor.configureLogger(cmd.hasOption("log"));
+        jobtProcessor.configureLogger();
 
         stopwatch.startProcess("Read configuration");
         final BuildConfigImpl buildConfig = jobtProcessor.readConfig();

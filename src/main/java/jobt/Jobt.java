@@ -14,7 +14,8 @@ public class Jobt {
             new CliProcessor().run(args);
         } catch (final Exception e) {
             e.printStackTrace(System.err);
-            System.err.println("Build failed - " + e.getLocalizedMessage());
+            System.err.println();
+            System.err.println("Build failed");
             System.exit(1);
         }
     }

@@ -3,7 +3,6 @@ package jobt.plugin;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import jobt.MavenResolver;
 import jobt.Stopwatch;
@@ -50,7 +49,6 @@ public class PluginRegistry {
             regPlugin.setBuildConfig(buildConfig);
             regPlugin.setExecutionContext(executionContext);
             regPlugin.setDependencyResolver(dependencyResolver);
-            regPlugin.setLogger(Logger.getLogger(plugin));
             regPlugin.configure(taskTemplate);
             regPlugin.configure(taskRegistry);
         }

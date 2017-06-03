@@ -14,24 +14,25 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.junit.Test;
 import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
 public class JavaTestTask implements Task {
 
-    private final Logger logger;
+    private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
+
     private final List<File> classPath;
 
-    public JavaTestTask(final Logger logger, final List<File> classPath) {
-        this.logger = logger;
+    public JavaTestTask(final List<File> classPath) {
         this.classPath = classPath;
     }
 
@@ -50,12 +51,12 @@ public class JavaTestTask implements Task {
 
         final Result run = jUnitCore.run(computer, fooTest.toArray(new Class<?>[] {}));
 
-        for (final Failure failure : run.getFailures()) {
-            logger.info(failure.toString());
-        }
-
         if (run.wasSuccessful()) {
             return TaskStatus.OK;
+        }
+
+        for (final Failure failure : run.getFailures()) {
+            LOG.error(failure.toString());
         }
 
         throw new IllegalStateException("Failed");

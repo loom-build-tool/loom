@@ -3,7 +3,9 @@ package jobt;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jobt.api.TaskStatus;
 
@@ -30,7 +32,7 @@ public class Job implements Callable<TaskStatus> {
 
     @Override
     public TaskStatus call() throws Exception {
-        final Logger log = Logger.getLogger(Job.class.getName() + "<" + name + ">");
+        final Logger log = LoggerFactory.getLogger(Job.class.getName() + "<" + name + ">");
 
         if (!dependencies.isEmpty()) {
             log.info("Wait for dependencies " + dependencies);
@@ -48,15 +50,9 @@ public class Job implements Callable<TaskStatus> {
             log.info("Execute task (no dependencies)");
         }
 
-        try {
-            final TaskStatus taskStatus = callable.call();
-            countDownLatch.countDown();
-            return taskStatus;
-        } catch (Exception e) {
-            log.severe("Got exception " + e);
-            e.printStackTrace();
-            throw e;
-        }
+        final TaskStatus taskStatus = callable.call();
+        countDownLatch.countDown();
+        return taskStatus;
     }
 
     @Override

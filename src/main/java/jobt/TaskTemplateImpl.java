@@ -39,21 +39,24 @@ public class TaskTemplateImpl implements TaskTemplate {
 
     public void execute(final String task) throws Exception {
         final Set<String> resolvedTasks = resolveTasks(task);
+        resolvedTasks.removeAll(tasksExecuted);
+
+        if (resolvedTasks.isEmpty()) {
+            return;
+        }
 
         System.out.println("Will execute "
             + resolvedTasks.stream().collect(Collectors.joining(" > ")));
 
         for (final String resolvedTask : resolvedTasks) {
-            if (!tasksExecuted.contains(resolvedTask)) {
-                final TaskStatus status = pluginRegistry.trigger(resolvedTask);
+            final TaskStatus status = pluginRegistry.trigger(resolvedTask);
 
-                if (status == TaskStatus.FAIL) {
-                    return;
-                }
-
-                tasksExecuted.add(resolvedTask);
+            if (status == TaskStatus.FAIL) {
+                return;
             }
         }
+
+        tasksExecuted.addAll(resolvedTasks);
     }
 
     private Set<String> resolveTasks(final String task) {

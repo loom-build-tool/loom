@@ -156,8 +156,7 @@ public class MavenResolver implements DependencyResolver {
 
         final String sb = Hasher.hash(deps) + '\t' + nlg.getFiles().stream()
             .map(File::getAbsolutePath)
-            .reduce((u, t) -> u + "," + t)
-            .get();
+            .collect(Collectors.joining(","));
 
         Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb),
             StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);

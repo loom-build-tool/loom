@@ -44,6 +44,15 @@ tasks.withType(FindBugs) {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'jobt.Jobt',
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}
+
 task zip(type: Zip) {
     into("lib") {
         from configurations.runtime.allArtifacts.files

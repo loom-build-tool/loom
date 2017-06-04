@@ -7,5 +7,4 @@ if [ ! -e "$LIB" ]; then
     java -cp jobt-downloader/jobt-downloader.jar jobt.JobtDownloader $jobt_version
 fi
 
-classpath=$(JARS=("$LIB"/*.jar); IFS=:; echo "${JARS[*]}")
-java -cp $classpath jobt.Jobt "$@"
+java -jar $LIB/jobt-$jobt_version.jar "$@"

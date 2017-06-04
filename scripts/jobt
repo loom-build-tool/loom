@@ -1,11 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-jobt_version=1.0.0
-LIB=~/.jobt/binary/$jobt_version/lib
+VERSION=1.0.0
+LIB=~/.jobt/binary/$VERSION/lib/jobt-$VERSION.jar
 
-if [ ! -e "$LIB" ]; then
-    java -cp jobt-downloader/jobt-downloader.jar jobt.JobtDownloader $jobt_version
-fi
+test -e "$LIB" || java -cp jobt-downloader/jobt-downloader.jar jobt.JobtDownloader $VERSION
 
-classpath=$(JARS=("$LIB"/*.jar); IFS=:; echo "${JARS[*]}")
-java -cp $classpath jobt.Jobt "$@"
+java -jar $LIB "$@"

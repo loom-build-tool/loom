@@ -16,20 +16,14 @@ public class JavaPlugin extends AbstractPlugin {
         final ExecutionContext executionContext = getExecutionContext();
         final DependencyResolver dependencyResolver = getDependencyResolver();
 
-        final JavaCompileTask javaCompileTask = new JavaCompileTask(buildConfig,
-            executionContext, CompileTarget.MAIN, dependencyResolver);
-
-        final JavaCompileTask testCompileTask = new JavaCompileTask(buildConfig,
-            executionContext, CompileTarget.TEST, dependencyResolver);
-
-        final JavaTestTask testTask = new JavaTestTask(executionContext);
-
-        taskRegistry.register("compileJava", javaCompileTask);
-        taskRegistry.register("compileTestJava", testCompileTask);
+        taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
+            executionContext, CompileTarget.MAIN, dependencyResolver));
+        taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
+            executionContext, CompileTarget.TEST, dependencyResolver));
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
         taskRegistry.register("processResources", new ResourcesTask(CompileTarget.MAIN));
         taskRegistry.register("processTestResources", new ResourcesTask(CompileTarget.TEST));
-        taskRegistry.register("test", testTask);
+        taskRegistry.register("test", new JavaTestTask(executionContext));
     }
 
     @Override

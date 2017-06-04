@@ -7,7 +7,9 @@ import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import jobt.config.BuildConfigImpl;
 
@@ -38,13 +40,36 @@ public class CliProcessor {
         final Stopwatch stopwatch = new Stopwatch();
 
         stopwatch.startProcess("Parse commandline");
-        final Options options = new Options();
-        options.addOption("s", "stat", false, "Enabled statistics output");
+        final Options options = new Options()
+            .addOption("h", "help", false, "Prints this help")
+            .addOption("s", "stat", false, "Enabled statistics output")
+            .addOption("c", "clean", false, "Clean before execution");
         final CommandLineParser parser = new DefaultParser();
-        final CommandLine cmd = parser.parse(options, args);
+
+        final CommandLine cmd;
+        try {
+            cmd = parser.parse(options, args);
+        } catch (final ParseException e) {
+            System.err.println("Error parsing command line: " + e.getMessage());
+            printHelp(options);
+
+            System.exit(1);
+            throw new IllegalStateException();
+        }
         stopwatch.stopProcess("Parse commandline");
 
+        if (cmd.hasOption("help")) {
+            printHelp(options);
+            System.exit(0);
+        }
+
         final JobtProcessor jobtProcessor = new JobtProcessor(stopwatch);
+
+        if (cmd.hasOption("clean")) {
+            System.out.println("Cleaning...");
+            jobtProcessor.clean();
+        }
+
         jobtProcessor.configureLogger();
 
         stopwatch.startProcess("Read configuration");
@@ -57,9 +82,8 @@ public class CliProcessor {
 
         jobtProcessor.init(buildConfig);
 
-        System.out.println("Executing...");
-
         for (final String taskName : cmd.getArgs()) {
+            System.out.println("Executing " + taskName + "...");
             jobtProcessor.execute(taskName);
         }
 
@@ -69,6 +93,11 @@ public class CliProcessor {
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
         System.out.printf(PASTA + "  Cooked your pasta in %.2fs%n", duration);
+    }
+
+    private void printHelp(final Options options) {
+        final HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp("jobt [option...] [task...]", options);
     }
 
     private void printExecutionStatistics(final Stopwatch stopwatch) {

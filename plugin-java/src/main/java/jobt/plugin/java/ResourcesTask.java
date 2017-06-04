@@ -33,6 +33,10 @@ public class ResourcesTask implements Task {
     }
 
     @Override
+    public void prepare() throws Exception {
+    }
+
+    @Override
     public TaskStatus run() throws Exception {
         if (!Files.isDirectory(srcPath)) {
             return TaskStatus.SKIP;

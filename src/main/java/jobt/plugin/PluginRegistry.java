@@ -14,7 +14,6 @@ import jobt.api.Plugin;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.config.BuildConfigImpl;
-import jobt.plugin.base.BasePlugin;
 import jobt.plugin.checkstyle.CheckstylePlugin;
 import jobt.plugin.java.JavaPlugin;
 
@@ -29,18 +28,13 @@ public class PluginRegistry {
                           final Stopwatch stopwatch) {
         this.stopwatch = stopwatch;
 
-        final List<String> plugins = buildConfig.getPlugins();
-        plugins.add("base");
-
         final ExecutionContextImpl executionContext = new ExecutionContextImpl();
         final MavenResolver dependencyResolver = new MavenResolver();
 
-        for (final String plugin : plugins) {
+        for (final String plugin : buildConfig.getPlugins()) {
+            LOG.info("Initialize plugin {}", plugin);
             final Plugin regPlugin;
             switch (plugin) {
-                case "base":
-                    regPlugin = new BasePlugin();
-                    break;
                 case "java":
                     regPlugin = new JavaPlugin();
                     break;
@@ -56,6 +50,8 @@ public class PluginRegistry {
             regPlugin.setDependencyResolver(dependencyResolver);
             regPlugin.configure(taskTemplate);
             regPlugin.configure(taskRegistry);
+
+            LOG.info("Plugin {} initialized", plugin);
         }
     }
 
@@ -88,6 +84,12 @@ public class PluginRegistry {
 
         stopwatch.stopProcess(stopwatchProcess);
         return ret;
+    }
+
+    public void warmup(final String phase) throws Exception {
+        for (final Task task : taskRegistry.getTasks(phase)) {
+            task.prepare();
+        }
     }
 
 }

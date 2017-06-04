@@ -25,6 +25,10 @@ public class JavaAssembleTask implements Task {
     }
 
     @Override
+    public void prepare() throws Exception {
+    }
+
+    @Override
     public TaskStatus run() throws Exception {
         final Path buildDir = Paths.get("jobtbuild/libs");
         Files.createDirectories(buildDir);

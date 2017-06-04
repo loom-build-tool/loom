@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticCollector;
@@ -43,13 +44,14 @@ public class JavaCompileTask implements Task {
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
-    private final DependencyResolver dependencyResolver;
     private final Path srcPath;
     private final Path buildDir;
-    private final String dependencyScope;
-    private final List<String> dependencies;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private List<Path> classPath;
+    private final DependencyResolver dependencyResolver;
+    private final List<String> dependencies;
+    private final String dependencyScope;
+
+    private Future<List<Path>> resolvedDependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final ExecutionContext executionContext,
@@ -89,12 +91,17 @@ public class JavaCompileTask implements Task {
     }
 
     @Override
+    public void prepare() throws Exception {
+        resolvedDependencies = dependencyResolver.resolveDependencies(dependencies, dependencyScope);
+    }
+
+    @Override
     public TaskStatus run() throws Exception {
         if (Files.notExists(srcPath)) {
             return TaskStatus.SKIP;
         }
 
-        final List<Path> classpath = new ArrayList<>(getClassPath());
+        final List<Path> classpath = new ArrayList<>(resolvedDependencies.get());
         classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
@@ -205,22 +212,6 @@ public class JavaCompileTask implements Task {
 
     private String buildRuntimePath() {
         return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
-    }
-
-    private List<Path> getClassPath() {
-        if (classPath == null) {
-            classPath = Collections.unmodifiableList(buildClasspath());
-        }
-
-        return classPath;
-    }
-
-    private List<Path> buildClasspath() {
-        if (dependencies == null || dependencies.isEmpty()) {
-            return classPath;
-        }
-
-        return dependencyResolver.buildClasspath(dependencies, dependencyScope);
     }
 
 }

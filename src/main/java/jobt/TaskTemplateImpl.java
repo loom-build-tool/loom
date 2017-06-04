@@ -61,6 +61,10 @@ public class TaskTemplateImpl implements TaskTemplate {
 
         final Collection<Job> jobs = buildJobs(resolvedTasks);
 
+        for (final String resolvedTask : resolvedTasks) {
+            pluginRegistry.warmup(resolvedTask);
+        }
+
         final AtomicReference<Exception> firstException = new AtomicReference<>();
 
         final ExecutorService executor = Executors.newWorkStealingPool();

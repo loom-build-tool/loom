@@ -56,6 +56,10 @@ public class CheckstyleTask implements Task {
     }
 
     @Override
+    public void prepare() throws Exception {
+    }
+
+    @Override
     public TaskStatus run() throws Exception {
         if (Files.notExists(baseDir)) {
             return TaskStatus.SKIP;

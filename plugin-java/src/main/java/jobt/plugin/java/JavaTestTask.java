@@ -38,6 +38,10 @@ public class JavaTestTask implements Task {
     }
 
     @Override
+    public void prepare() throws Exception {
+    }
+
+    @Override
     public TaskStatus run() throws Exception {
         if (Files.notExists(Paths.get("jobtbuild/classes/test"))) {
             return TaskStatus.SKIP;

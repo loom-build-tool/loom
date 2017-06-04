@@ -6,10 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -49,11 +51,18 @@ public class MavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
 
-    private final RepositorySystem system;
-    private final RemoteRepository mavenRepository;
+    private volatile boolean initialized;
+    private RepositorySystem system;
+    private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
 
-    public MavenResolver() {
+    private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
+        final Thread thread = new Thread(r);
+        thread.setDaemon(true);
+        return thread;
+    });
+
+    private void init() {
         LOG.debug("Initialize MavenResolver");
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
@@ -89,86 +98,99 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> buildClasspath(final List<String> deps, final String scope) {
+    public Future<List<Path>> resolveDependencies(final List<String> deps, final String scope) {
+        return pool.submit(() -> resolve(deps, scope));
+    }
+
+    private List<Path> resolve(final List<String> deps, final String scope)
+        throws IOException, DependencyCollectionException, DependencyResolutionException {
+
+        if (!initialized) {
+            synchronized (this) {
+                if (!initialized) {
+                    init();
+                    initialized = true;
+                }
+            }
+        }
+
         LOG.info("Resolve {} dependencies: {}", scope, deps);
+
+        final List<Path> files = readCache(deps, scope);
+
+        if (!files.isEmpty()) {
+            LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
+            return Collections.unmodifiableList(files);
+        }
+
+        final List<Path> paths = resolveRemote(deps, scope);
+        LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+        writeCache(deps, scope, paths);
+
+        return paths;
+    }
+
+    private List<Path> readCache(final List<String> deps, final String scope) throws IOException {
+        final Path path = Paths.get(".jobt", scope + "-dependencies");
+        if (Files.exists(path)) {
+            final List<String> strings = Files.readAllLines(path);
+            final String[] split = strings.get(0).split("\t");
+
+            final String hash = Hasher.hash(deps);
+            if (hash.equals(split[0])) {
+                final String[] pathNames = split[1].split(",");
+                return Arrays.stream(pathNames).map(Paths::get).collect(Collectors.toList());
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private List<Path> resolveRemote(final List<String> deps, final String scope)
+        throws DependencyCollectionException, DependencyResolutionException, IOException {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
 
-        final PreorderNodeListGenerator nlg;
-        try {
-            final List<Path> files = readCache(deps, scope);
+        final CollectRequest collectRequest = new CollectRequest();
 
-            if (!files.isEmpty()) {
-                return files;
-            }
+        final List<Dependency> dependencies = deps.stream()
+            .map(a -> new Dependency(new DefaultArtifact(a), scope))
+            .collect(Collectors.toList());
 
-            final CollectRequest collectRequest = new CollectRequest();
+        collectRequest.setDependencies(dependencies);
+        collectRequest.addRepository(mavenRepository);
+        final DependencyNode node =
+            system.collectDependencies(session, collectRequest).getRoot();
 
-            final List<Dependency> dependencies = deps.stream()
-                .map(a -> new Dependency(new DefaultArtifact(a), scope))
-                .collect(Collectors.toList());
+        final DependencyRequest dependencyRequest = new DependencyRequest();
+        dependencyRequest.setRoot(node);
 
-            collectRequest.setDependencies(dependencies);
-            collectRequest.addRepository(mavenRepository);
-            final DependencyNode node =
-                system.collectDependencies(session, collectRequest).getRoot();
+        system.resolveDependencies(session, dependencyRequest);
 
-            final DependencyRequest dependencyRequest = new DependencyRequest();
-            dependencyRequest.setRoot(node);
-
-            system.resolveDependencies(session, dependencyRequest);
-
-            nlg = new PreorderNodeListGenerator();
-            node.accept(nlg);
-
-            buildHash(deps, scope, nlg);
-        } catch (final IOException | DependencyCollectionException
-            | DependencyResolutionException e) {
-            throw new IllegalStateException(e);
-        }
+        final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+        node.accept(nlg);
 
         final List<Path> libs = nlg.getFiles().stream()
             .map(File::toPath)
             .collect(Collectors.toList());
 
-        LOG.debug("Resolved {} dependencies {} to {}", scope, deps, libs);
-        return libs;
+        return Collections.unmodifiableList(libs);
     }
 
-    private List<Path> readCache(final List<String> deps, final String scope) throws IOException {
-        List<Path> files = new ArrayList<>();
-
-        final Path path = Paths.get(".jobt", scope + "-dependencies");
-        if (Files.notExists(path)) {
-            return files;
-        }
-
-        final List<String> strings = Files.readAllLines(path);
-        final String[] split = strings.get(0).split("\t");
-
-        final String hash = Hasher.hash(deps);
-        if (hash.equals(split[0])) {
-            final String[] pathNames = split[1].split(",");
-            files = Arrays.stream(pathNames).map(Paths::get).collect(Collectors.toList());
-        }
-
-        return files;
-    }
-
-    private void buildHash(final List<String> deps, final String scope,
-                           final PreorderNodeListGenerator nlg) throws IOException {
+    private void writeCache(final List<String> deps, final String scope,
+                            final List<Path> files) throws IOException {
         final Path buildDir = Paths.get(".jobt");
         if (Files.notExists(buildDir)) {
             Files.createDirectories(buildDir);
         }
 
-        final String sb = Hasher.hash(deps) + '\t' + nlg.getFiles().stream()
-            .map(File::getAbsolutePath)
+        final String sb = Hasher.hash(deps) + '\t' + files.stream()
+            .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
         Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb),
-            StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
+            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
 }

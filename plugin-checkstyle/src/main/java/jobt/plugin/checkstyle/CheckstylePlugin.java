@@ -17,13 +17,6 @@ public class CheckstylePlugin extends AbstractPlugin {
     }
 
     @Override
-    public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("check").dependsOn(
-            taskTemplate.task("checkstyleMain"),
-            taskTemplate.task("checkstyleTest"));
-    }
-
-    @Override
     public void configure(final TaskRegistry taskRegistry) {
         final ExecutionContext executionContext = getExecutionContext();
 
@@ -32,6 +25,13 @@ public class CheckstylePlugin extends AbstractPlugin {
 
         taskRegistry.register("checkstyleTest",
             new CheckstyleTask(CompileTarget.TEST, executionContext));
+    }
+
+    @Override
+    public void configure(final TaskTemplate taskTemplate) {
+        taskTemplate.task("check").dependsOn(
+            taskTemplate.task("checkstyleMain"),
+            taskTemplate.task("checkstyleTest"));
     }
 
 }

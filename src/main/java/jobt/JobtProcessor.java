@@ -1,11 +1,17 @@
 package jobt;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -96,6 +102,29 @@ public class JobtProcessor {
 
     public void execute(final String taskName) throws Exception {
         taskTemplate.execute(taskName);
+    }
+
+    public void clean() throws ExecutionException, InterruptedException {
+        final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        final ForkJoinTask<?> cleanJobtbuildTask =
+            forkJoinPool.submit(() -> cleanDir(Paths.get("jobtbuild")));
+        final ForkJoinTask<?> cleanJobtTask =
+            forkJoinPool.submit(() -> cleanDir(Paths.get(".jobt")));
+        cleanJobtbuildTask.get();
+        cleanJobtTask.get();
+    }
+
+    private static void cleanDir(final Path rootPath) {
+        if (Files.isDirectory(rootPath)) {
+            try {
+                Files.walk(rootPath)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
     }
 
 }

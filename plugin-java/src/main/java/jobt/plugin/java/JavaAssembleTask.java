@@ -30,7 +30,13 @@ public class JavaAssembleTask implements Task {
         Files.createDirectories(buildDir);
 
         final Manifest manifest = new Manifest();
-        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        final Attributes mainAttributes = manifest.getMainAttributes();
+        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+        final String mainClassName = buildConfig.getConfiguration().get("mainClassName");
+        if (mainClassName != null) {
+            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName);
+        }
 
         final String jarName = String.format("%s-%s.jar",
             buildConfig.getProject().getArchivesBaseName(),

@@ -19,6 +19,8 @@ import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
@@ -32,6 +34,7 @@ import org.sonatype.aether.impl.VersionRangeResolver;
 import org.sonatype.aether.impl.VersionResolver;
 import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.repository.LocalRepository;
+import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
@@ -44,11 +47,14 @@ import jobt.api.DependencyResolver;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver implements DependencyResolver {
 
+    private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
+
     private final RepositorySystem system;
-    private final MavenRepositorySystemSession session;
     private final RemoteRepository mavenRepository;
+    private LocalRepositoryManager localRepositoryManager;
 
     public MavenResolver() {
+        LOG.debug("Initialize MavenResolver");
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
@@ -73,28 +79,27 @@ public class MavenResolver implements DependencyResolver {
 
         system = locator.getService(RepositorySystem.class);
 
-        session = new MavenRepositorySystemSession();
-
-        final Path repository = Paths.get(System.getProperty("user.home"), ".jobt", "repository");
-
-        final LocalRepository localRepo = new LocalRepository(repository.toFile());
-        session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
-
         mavenRepository =
             new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+
+        final Path repository = Paths.get(System.getProperty("user.home"), ".jobt", "repository");
+        final LocalRepository localRepo = new LocalRepository(repository.toFile());
+        localRepositoryManager = system.newLocalRepositoryManager(localRepo);
+        LOG.debug("MavenResolver initialized");
     }
 
     @Override
-    public List<File> buildClasspath(final List<String> deps, final String scope) {
+    public List<Path> buildClasspath(final List<String> deps, final String scope) {
+        LOG.info("Resolve {} dependencies: {}", scope, deps);
 
-        //Progress.newStatus("Resolve dependencies for scope " + scope);
+        final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+        session.setLocalRepositoryManager(localRepositoryManager);
 
         final PreorderNodeListGenerator nlg;
         try {
-            final List<File> files = readCache(deps, scope);
+            final List<Path> files = readCache(deps, scope);
 
             if (!files.isEmpty()) {
-                //Progress.complete("UP-TO-DATE");
                 return files;
             }
 
@@ -123,12 +128,16 @@ public class MavenResolver implements DependencyResolver {
             throw new IllegalStateException(e);
         }
 
-        //Progress.complete();
-        return nlg.getFiles();
+        final List<Path> libs = nlg.getFiles().stream()
+            .map(File::toPath)
+            .collect(Collectors.toList());
+
+        LOG.debug("Resolved {} dependencies {} to {}", scope, deps, libs);
+        return libs;
     }
 
-    private List<File> readCache(final List<String> deps, final String scope) throws IOException {
-        List<File> files = new ArrayList<>();
+    private List<Path> readCache(final List<String> deps, final String scope) throws IOException {
+        List<Path> files = new ArrayList<>();
 
         final Path path = Paths.get(".jobt", scope + "-dependencies");
         if (Files.notExists(path)) {
@@ -141,7 +150,7 @@ public class MavenResolver implements DependencyResolver {
         final String hash = Hasher.hash(deps);
         if (hash.equals(split[0])) {
             final String[] pathNames = split[1].split(",");
-            files = Arrays.stream(pathNames).map(File::new).collect(Collectors.toList());
+            files = Arrays.stream(pathNames).map(Paths::get).collect(Collectors.toList());
         }
 
         return files;

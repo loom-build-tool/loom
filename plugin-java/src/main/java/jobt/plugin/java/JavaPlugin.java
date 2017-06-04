@@ -22,7 +22,7 @@ public class JavaPlugin extends AbstractPlugin {
         final JavaCompileTask testCompileTask = new JavaCompileTask(buildConfig,
             executionContext, CompileTarget.TEST, dependencyResolver);
 
-        final JavaTestTask testTask = new JavaTestTask(testCompileTask.getClassPath());
+        final JavaTestTask testTask = new JavaTestTask(executionContext);
 
         taskRegistry.register("compileJava", javaCompileTask);
         taskRegistry.register("compileTestJava", testCompileTask);

@@ -23,6 +23,7 @@ import org.junit.runner.notification.Failure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.ExecutionContext;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
@@ -30,10 +31,10 @@ public class JavaTestTask implements Task {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
 
-    private final List<File> classPath;
+    private final ExecutionContext executionContext;
 
-    public JavaTestTask(final List<File> classPath) {
-        this.classPath = classPath;
+    public JavaTestTask(final ExecutionContext executionContext) {
+        this.executionContext = executionContext;
     }
 
     @Override
@@ -62,17 +63,12 @@ public class JavaTestTask implements Task {
         throw new IllegalStateException("Failed");
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException {
-        final List<URL> urls = new ArrayList<>();
+    private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
+        final List<URL> urls = new ArrayList<>(executionContext.getTestClasspath());
         urls.add(Paths.get("jobtbuild/classes/test").toUri().toURL());
         urls.add(Paths.get("jobtbuild/classes/main").toUri().toURL());
         urls.add(Paths.get("jobtbuild/resources/test").toUri().toURL());
         urls.add(Paths.get("jobtbuild/resources/main").toUri().toURL());
-
-        for (final File file : classPath) {
-            urls.add(file.toURI().toURL());
-        }
-
         return new URLClassLoader(urls.toArray(new URL[] {}));
     }
 

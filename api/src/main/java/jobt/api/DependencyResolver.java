@@ -1,10 +1,10 @@
 package jobt.api;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface DependencyResolver {
 
-    List<File> buildClasspath(List<String> deps, String scope);
+    List<Path> buildClasspath(List<String> deps, String scope);
 
 }

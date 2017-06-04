@@ -49,7 +49,7 @@ public class JavaCompileTask implements Task {
     private final String dependencyScope;
     private final List<String> dependencies;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private List<File> classPath;
+    private List<Path> classPath;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final ExecutionContext executionContext,
@@ -94,8 +94,8 @@ public class JavaCompileTask implements Task {
             return TaskStatus.SKIP;
         }
 
-        final List<File> classpath = new ArrayList<>(getClassPath());
-        classpath.addAll(classpathAppendix.stream().map(Path::toFile).collect(Collectors.toList()));
+        final List<Path> classpath = new ArrayList<>(getClassPath());
+        classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
             .map(JavaCompileTask::buildUrl).collect(Collectors.toList());
@@ -146,7 +146,8 @@ public class JavaCompileTask implements Task {
         final StandardJavaFileManager fileManager =
             compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
 
-        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+        fileManager.setLocation(StandardLocation.CLASS_PATH,
+            classpath.stream().map(Path::toFile).collect(Collectors.toList()));
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
             Collections.singletonList(buildDir.toFile()));
 
@@ -168,9 +169,9 @@ public class JavaCompileTask implements Task {
         return TaskStatus.OK;
     }
 
-    private static URL buildUrl(final File f) {
+    private static URL buildUrl(final Path f) {
         try {
-            return f.toURI().toURL();
+            return f.toUri().toURL();
         } catch (final MalformedURLException e) {
             throw new IllegalStateException(e);
         }
@@ -206,7 +207,7 @@ public class JavaCompileTask implements Task {
         return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
     }
 
-    public List<File> getClassPath() {
+    private List<Path> getClassPath() {
         if (classPath == null) {
             classPath = Collections.unmodifiableList(buildClasspath());
         }
@@ -214,7 +215,7 @@ public class JavaCompileTask implements Task {
         return classPath;
     }
 
-    private List<File> buildClasspath() {
+    private List<Path> buildClasspath() {
         if (dependencies == null || dependencies.isEmpty()) {
             return classPath;
         }

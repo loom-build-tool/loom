@@ -82,7 +82,7 @@ public class JobtProcessor {
 
         final Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.setAdditive(false);
-        rootLogger.setLevel(Level.INFO);
+        rootLogger.setLevel(Level.DEBUG);
         rootLogger.detachAppender("console");
         rootLogger.addAppender(consoleAppender);
         rootLogger.addAppender(fileAppender);

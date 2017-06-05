@@ -87,12 +87,12 @@ public class TaskTemplateImpl implements TaskTemplate {
             }
         }
 
-        LOG.info("Shutting down Job Pool");
+        LOG.debug("Shutting down Job Pool");
         executor.shutdown();
 
-        LOG.info("Awaiting Job Pool shutdown");
+        LOG.debug("Awaiting Job Pool shutdown");
         executor.awaitTermination(1, TimeUnit.HOURS);
-        LOG.info("Job Pool has shut down");
+        LOG.debug("Job Pool has shut down");
 
         if (firstException.get() != null) {
             throw firstException.get();

@@ -24,6 +24,7 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import jobt.config.BuildConfigImpl;
 
+@SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JobtProcessor {
 
     private final Stopwatch stopwatch;
@@ -84,9 +85,16 @@ public class JobtProcessor {
         fileAppender.setEncoder(encoder);
         fileAppender.start();
 
+        final Logger jobtLogger = lc.getLogger("jobt");
+        jobtLogger.setAdditive(false);
+        jobtLogger.setLevel(Level.DEBUG);
+        jobtLogger.detachAppender("console");
+        jobtLogger.addAppender(consoleAppender);
+        jobtLogger.addAppender(fileAppender);
+
         final Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.setAdditive(false);
-        rootLogger.setLevel(Level.DEBUG);
+        rootLogger.setLevel(Level.ERROR);
         rootLogger.detachAppender("console");
         rootLogger.addAppender(consoleAppender);
         rootLogger.addAppender(fileAppender);

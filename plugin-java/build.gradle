@@ -30,6 +30,13 @@ tasks.withType(FindBugs) {
 }
 
 dependencies {
-    compile project(':api')
+    compileOnly project(':api')
     compile('junit:junit:4.12')
+}
+
+task zip(type: Zip) {
+    into("plugin-java") {
+        from configurations.runtime.allArtifacts.files
+        from configurations.runtime
+    }
 }

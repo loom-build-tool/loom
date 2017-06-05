@@ -92,7 +92,8 @@ public class JavaCompileTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-        resolvedDependencies = dependencyResolver.resolveDependencies(dependencies, dependencyScope);
+        resolvedDependencies =
+            dependencyResolver.resolveDependencies(dependencies, dependencyScope);
     }
 
     @Override

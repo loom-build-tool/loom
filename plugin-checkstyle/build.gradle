@@ -29,7 +29,20 @@ tasks.withType(FindBugs) {
     }
 }
 
+configurations {
+    all*.exclude module: 'commons-cli'
+    all*.exclude module: 'commons-logging'
+}
+
 dependencies {
-    compile project(':api')
+    compileOnly project(':api')
     compile('com.puppycrawl.tools:checkstyle:7.8')
+    compile('org.slf4j:jcl-over-slf4j:1.7.22')
+}
+
+task zip(type: Zip) {
+    into("plugin-checkstyle") {
+        from configurations.runtime.allArtifacts.files
+        from configurations.runtime
+    }
 }

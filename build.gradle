@@ -2,7 +2,6 @@ apply plugin: 'java'
 apply plugin: 'checkstyle'
 apply plugin: 'findbugs'
 apply plugin: 'pmd'
-apply plugin: 'distribution'
 
 group = 'jobt'
 archivesBaseName = 'jobt'
@@ -54,25 +53,21 @@ jar {
     }
 }
 
-distributions {
-    main {
-        contents {
-            into("lib") {
-                from configurations.runtime.allArtifacts.files
-                from configurations.runtime
-            }
-            into("plugin-java") {
-                from project(':plugin-java').configurations.runtime.allArtifacts.files
-                from project(':plugin-java').configurations.runtime
-            }
-            into("plugin-checkstyle") {
-                from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
-                from project(':plugin-checkstyle').configurations.runtime
-            }
-            into("scripts") {
-                from 'scripts/build.yml'
-                from 'scripts/jobt'
-            }
-        }
+task zip(type: Zip) {
+    into("lib") {
+        from configurations.runtime.allArtifacts.files
+        from configurations.runtime
+    }
+    into("plugin-java") {
+        from project(':plugin-java').configurations.runtime.allArtifacts.files
+        from project(':plugin-java').configurations.runtime
+    }
+    into("plugin-checkstyle") {
+        from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
+        from project(':plugin-checkstyle').configurations.runtime
+    }
+    into("scripts") {
+        from 'scripts/build.yml'
+        from 'scripts/jobt'
     }
 }

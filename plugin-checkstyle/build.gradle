@@ -40,9 +40,3 @@ dependencies {
     compile('org.slf4j:jcl-over-slf4j:1.7.22')
 }
 
-task zip(type: Zip) {
-    into("plugin-checkstyle") {
-        from configurations.runtime.allArtifacts.files
-        from configurations.runtime
-    }
-}

@@ -1,7 +1,5 @@
 package jobt.api;
 
-import java.util.List;
-
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin implements Plugin {
 
@@ -34,11 +32,6 @@ public abstract class AbstractPlugin implements Plugin {
 
     public DependencyResolver getDependencyResolver() {
         return dependencyResolver;
-    }
-
-    @Override
-    public List<String> dependencies() {
-        return null;
     }
 
 }

@@ -1,12 +1,8 @@
 package jobt.plugin.java;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 
 import jobt.api.CompileTarget;
 import jobt.api.Task;
@@ -17,7 +13,7 @@ public class ResourcesTask implements Task {
     private final Path srcPath;
     private final Path destPath;
 
-    public ResourcesTask(final CompileTarget compileTarget) {
+    ResourcesTask(final CompileTarget compileTarget) {
         switch (compileTarget) {
             case MAIN:
                 srcPath = Paths.get("src", "main", "resources");
@@ -38,43 +34,25 @@ public class ResourcesTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (!Files.isDirectory(srcPath)) {
+        if (Files.notExists(srcPath) && Files.notExists(destPath)) {
             return TaskStatus.SKIP;
         }
 
-        Files.walkFileTree(srcPath, new CopyFileVisitor(destPath));
+        assertDirectory(srcPath);
+        assertDirectory(destPath);
+
+        if (Files.notExists(srcPath) && Files.exists(destPath)) {
+            FileUtil.deleteDirectoryRecursively(destPath);
+        } else {
+            FileUtil.syncDir(srcPath, destPath);
+        }
 
         return TaskStatus.OK;
     }
 
-    private static class CopyFileVisitor extends SimpleFileVisitor<Path> {
-
-        private final Path targetPath;
-        private Path sourcePath;
-
-        CopyFileVisitor(final Path targetPath) {
-            this.targetPath = targetPath;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
-            throws IOException {
-
-            if (sourcePath == null) {
-                sourcePath = dir;
-            } else {
-                Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir)));
-            }
-
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-            throws IOException {
-
-            Files.copy(file, targetPath.resolve(sourcePath.relativize(file)));
-            return FileVisitResult.CONTINUE;
+    private void assertDirectory(final Path path) {
+        if (Files.exists(path) && !Files.isDirectory(path)) {
+            throw new IllegalStateException("Path '" + path + "' is not a directory");
         }
     }
 

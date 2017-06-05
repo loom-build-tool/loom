@@ -10,8 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -105,13 +103,8 @@ public class JobtProcessor {
     }
 
     public void clean() throws ExecutionException, InterruptedException {
-        final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
-        final ForkJoinTask<?> cleanJobtbuildTask =
-            forkJoinPool.submit(() -> cleanDir(Paths.get("jobtbuild")));
-        final ForkJoinTask<?> cleanJobtTask =
-            forkJoinPool.submit(() -> cleanDir(Paths.get(".jobt")));
-        cleanJobtbuildTask.get();
-        cleanJobtTask.get();
+        cleanDir(Paths.get("jobtbuild"));
+        cleanDir(Paths.get(".jobt"));
     }
 
     private static void cleanDir(final Path rootPath) {

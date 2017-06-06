@@ -14,7 +14,7 @@ public final class FileUtil {
     }
 
     public static void deleteDirectoryRecursively(final Path dir) {
-        checkDir(dir);
+        assertDirectory(dir);
         try {
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
                 @Override
@@ -36,14 +36,7 @@ public final class FileUtil {
         }
     }
 
-    public static void syncDir(final Path srcPath, final Path destPath) throws IOException {
-        checkDir(srcPath);
-
-        Files.walkFileTree(srcPath, new CopyFileVisitor(destPath));
-        Files.walkFileTree(destPath, new DeleteObsoleteFileVisitor(srcPath));
-    }
-
-    private static void checkDir(final Path dir) {
+    public static void assertDirectory(final Path dir) {
         if (!Files.isDirectory(dir)) {
             throw new IllegalArgumentException("Directory '" + dir + " doesn't exist");
         }

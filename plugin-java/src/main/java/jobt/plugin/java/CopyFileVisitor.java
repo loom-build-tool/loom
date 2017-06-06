@@ -11,10 +11,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
     private final Path targetBasePath;
+    private final KeyValueCache cache;
     private Path sourceBasePath;
 
-    CopyFileVisitor(final Path targetBasePath) throws IOException {
+    CopyFileVisitor(final Path targetBasePath, final KeyValueCache cache) throws IOException {
         this.targetBasePath = targetBasePath;
+        this.cache = cache;
         Files.createDirectories(targetBasePath);
     }
 
@@ -42,13 +44,26 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
         throws IOException {
 
-        final Path destPath = targetBasePath.resolve(sourceBasePath.relativize(file));
+        final long lastModifiedTime = Files.getLastModifiedTime(file).toMillis();
+
+        final Path relativizedFile = sourceBasePath.relativize(file);
+
+        final String cacheKey = relativizedFile.toString();
+        final Long cachedMtime = cache.get(cacheKey);
+        if (cachedMtime != null && cachedMtime == lastModifiedTime) {
+            return FileVisitResult.CONTINUE;
+        }
+
+        final Path destPath = targetBasePath.resolve(relativizedFile);
 
         if (Files.exists(destPath) && Files.isDirectory(destPath)) {
             FileUtil.deleteDirectoryRecursively(destPath);
         }
 
         Files.copy(file, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+        cache.put(cacheKey, lastModifiedTime);
+
         return FileVisitResult.CONTINUE;
     }
 

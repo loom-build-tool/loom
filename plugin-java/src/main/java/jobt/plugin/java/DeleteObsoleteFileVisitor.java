@@ -9,20 +9,22 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 class DeleteObsoleteFileVisitor extends SimpleFileVisitor<Path> {
 
-    private final Path targetBasePath;
-    private Path sourceBasePath;
+    private final Path sourceBasePath;
+    private final KeyValueCache cache;
+    private Path targetBasePath;
 
-    DeleteObsoleteFileVisitor(final Path targetBasePath) {
-        this.targetBasePath = targetBasePath;
+    DeleteObsoleteFileVisitor(final Path sourceBasePath, final KeyValueCache cache) {
+        this.sourceBasePath = sourceBasePath;
+        this.cache = cache;
     }
 
     @Override
     public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
         throws IOException {
 
-        if (sourceBasePath == null) {
-            sourceBasePath = dir;
-        } else if (Files.notExists(targetBasePath.resolve(sourceBasePath.relativize(dir)))) {
+        if (targetBasePath == null) {
+            targetBasePath = dir;
+        } else if (Files.notExists(sourceBasePath.resolve(targetBasePath.relativize(dir)))) {
             FileUtil.deleteDirectoryRecursively(dir);
             return FileVisitResult.SKIP_SUBTREE;
         }
@@ -34,7 +36,10 @@ class DeleteObsoleteFileVisitor extends SimpleFileVisitor<Path> {
     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
         throws IOException {
 
-        if (Files.notExists(targetBasePath.resolve(sourceBasePath.relativize(file)))) {
+        final Path relativizedFile = targetBasePath.relativize(file);
+
+        if (Files.notExists(sourceBasePath.resolve(relativizedFile))) {
+            cache.remove(relativizedFile.toString());
             Files.delete(file);
         }
 

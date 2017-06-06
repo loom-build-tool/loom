@@ -2,10 +2,6 @@
 build
 .gradle
 
-# Jobt
-jobtbuild
-.jobt
-
 # IntelliJ IDEA
 .idea/
 *.iml

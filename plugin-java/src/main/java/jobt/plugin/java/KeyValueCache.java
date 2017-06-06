@@ -43,8 +43,14 @@ public final class KeyValueCache {
 
         final Path cacheTmpFile = Paths.get(cacheFile + ".tmp");
 
+        final Path parent = cacheTmpFile.getParent();
+        if (parent == null) {
+            // Keep Findbugs happy
+            throw new IllegalStateException("Parent of " + cacheTmpFile + " is null");
+        }
+
         try {
-            Files.createDirectories(cacheTmpFile.getParent());
+            Files.createDirectories(parent);
 
             try (final BufferedWriter writer =
                      Files.newBufferedWriter(cacheTmpFile, StandardCharsets.UTF_8)) {

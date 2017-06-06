@@ -15,8 +15,8 @@ repositories {
 
 dependencies {
     compile project(':api')
-    compileOnly project(':plugin-java')
-    compileOnly project(':plugin-checkstyle')
+    runtimeOnly project(':plugin-java')
+    runtimeOnly project(':plugin-checkstyle')
     compile('org.sonatype.aether:aether-impl:1.13.1')
     compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
     compile('org.sonatype.aether:aether-connector-file:1.13.1')

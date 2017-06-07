@@ -43,7 +43,7 @@ public class JavaAssembleTask implements Task {
         }
 
         final String jarName = String.format("%s-%s.jar",
-            buildConfig.getProject().getArchivesBaseName(),
+            buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion());
 
         try (final JarOutputStream os = new JarOutputStream(

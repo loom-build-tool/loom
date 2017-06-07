@@ -125,13 +125,8 @@ public class JavaCompileTask implements Task {
             Files.createDirectories(buildDir);
         }
 
-        final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
-
-        final List<String> options = buildOptions();
-
         final List<Path> srcFiles = Files.walk(srcPath)
-            .filter(f -> Files.isRegularFile(f))
+            .filter(Files::isRegularFile)
             .filter(f -> f.toString().endsWith(".java"))
             .collect(Collectors.toList());
 
@@ -151,25 +146,33 @@ public class JavaCompileTask implements Task {
             return TaskStatus.UP_TO_DATE;
         }
 
-        final StandardJavaFileManager fileManager =
-            compiler.getStandardFileManager(diagnosticListener, null, StandardCharsets.UTF_8);
+        final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
-        fileManager.setLocation(StandardLocation.CLASS_PATH,
-            classpath.stream().map(Path::toFile).collect(Collectors.toList()));
-        fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
-            Collections.singletonList(buildDir.toFile()));
+        try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+            diagnosticListener, null, StandardCharsets.UTF_8)) {
 
-        final Iterable<? extends JavaFileObject> compUnits =
-            fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
+            fileManager.setLocation(StandardLocation.CLASS_PATH,
+                classpath.stream().map(Path::toFile).collect(Collectors.toList()));
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
+                Collections.singletonList(buildDir.toFile()));
 
-        if (!compiler.getTask(null, fileManager, diagnosticListener,
-            options, null, compUnits).call()) {
+            final Iterable<? extends JavaFileObject> compUnits =
+                fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
 
-            final String collect = diagnosticListener.getDiagnostics().stream()
-                .map(Object::toString)
-                .collect(Collectors.joining("\n"));
+            final List<String> options = buildOptions();
 
-            throw new IllegalStateException(collect);
+            LOG.info("Compile {} sources with options {}", srcFiles.size(), options);
+
+            if (!compiler.getTask(null, fileManager, diagnosticListener,
+                options, null, compUnits).call()) {
+
+                final String collect = diagnosticListener.getDiagnostics().stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining("\n"));
+
+                throw new IllegalStateException(collect);
+            }
         }
 
         fileCacher.cacheFiles(srcFiles);
@@ -190,29 +193,23 @@ public class JavaCompileTask implements Task {
         options.add("-d");
         options.add(buildDir.toString());
 
-        final Map<String, String> config = buildConfig.getConfiguration();
-        final String sourceCompatibility = config.get("sourceCompatibility");
-        if (sourceCompatibility != null) {
-            options.add("-source");
-            options.add(sourceCompatibility);
-        }
-
-        final String targetCompatibility = config.get("targetCompatibility");
-        if (targetCompatibility != null) {
-            options.add("-target");
-            options.add(targetCompatibility);
-        }
-
-        options.add("-bootclasspath");
-        options.add(buildRuntimePath());
+        options.add("-encoding");
+        options.add("UTF-8");
 
         options.add("-Xlint:all");
 
-        return options;
-    }
+        options.add("-sourcepath");
+        options.add("");
 
-    private String buildRuntimePath() {
-        return Paths.get(System.getProperty("java.home"), "jre/lib/rt.jar").toString();
+        options.add("-Xpkginfo:always");
+
+        final Map<String, String> config = buildConfig.getConfiguration();
+
+        final String configuredPlatformVersion = config.get("javaPlatformVersion");
+        options.add("--release");
+        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
+
+        return options;
     }
 
 }

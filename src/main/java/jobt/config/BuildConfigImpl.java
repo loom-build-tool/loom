@@ -1,17 +1,18 @@
 package jobt.config;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import jobt.api.BuildConfig;
 
 public class BuildConfigImpl implements BuildConfig {
 
     private ProjectImpl project;
-    private List<String> plugins;
-    private Map<String, String> configuration;
-    private List<String> dependencies;
-    private List<String> testDependencies;
+    private Set<String> plugins = Collections.emptySet();
+    private Map<String, String> configuration = Collections.emptyMap();
+    private Set<String> dependencies = Collections.emptyNavigableSet();
+    private Set<String> testDependencies = Collections.emptyNavigableSet();
 
     @Override
     public ProjectImpl getProject() {
@@ -23,12 +24,12 @@ public class BuildConfigImpl implements BuildConfig {
     }
 
     @Override
-    public List<String> getPlugins() {
+    public Set<String> getPlugins() {
         return plugins;
     }
 
-    public void setPlugins(final List<String> plugins) {
-        this.plugins = plugins;
+    public void setPlugins(final Set<String> plugins) {
+        this.plugins = Collections.unmodifiableSet(plugins);
     }
 
     @Override
@@ -37,25 +38,25 @@ public class BuildConfigImpl implements BuildConfig {
     }
 
     public void setConfiguration(final Map<String, String> configuration) {
-        this.configuration = configuration;
+        this.configuration = Collections.unmodifiableMap(configuration);
     }
 
     @Override
-    public List<String> getDependencies() {
+    public Set<String> getDependencies() {
         return dependencies;
     }
 
-    public void setDependencies(final List<String> dependencies) {
-        this.dependencies = dependencies;
+    public void setDependencies(final Set<String> dependencies) {
+        this.dependencies = Collections.unmodifiableSet(dependencies);
     }
 
     @Override
-    public List<String> getTestDependencies() {
+    public Set<String> getTestDependencies() {
         return testDependencies;
     }
 
-    public void setTestDependencies(final List<String> testDependencies) {
-        this.testDependencies = testDependencies;
+    public void setTestDependencies(final Set<String> testDependencies) {
+        this.testDependencies = Collections.unmodifiableSet(testDependencies);
     }
 
 }

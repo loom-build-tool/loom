@@ -1,10 +1,5 @@
 ---
 project:
-  group: yourGroup
-  archivesBaseName: yourBasename
+  groupId: yourGroup
+  artifactId: yourBasename
   version: 1.0.0-SNAPSHOT
-plugins:
-  - java
-configuration:
-  sourceCompatibility: 1.8
-dependencies:

@@ -41,6 +41,11 @@ public class CliProcessor {
             jobtProcessor.clean();
         }
 
+        if (cmd.getArgList().isEmpty()) {
+            // We're done
+            return;
+        }
+
         jobtProcessor.configureLogger();
 
         stopwatch.startProcess("Read configuration");
@@ -48,7 +53,7 @@ public class CliProcessor {
         stopwatch.stopProcess("Read configuration");
 
         System.out.printf("Initialized configuration for %s version %s%n",
-            buildConfig.getProject().getArchivesBaseName(),
+            buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion());
 
         jobtProcessor.init(buildConfig);

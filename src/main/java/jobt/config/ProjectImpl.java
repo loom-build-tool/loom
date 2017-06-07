@@ -4,26 +4,26 @@ import jobt.api.Project;
 
 public class ProjectImpl implements Project {
 
-    private String group;
-    private String archivesBaseName;
+    private String groupId;
+    private String artifactId;
     private String version;
 
     @Override
-    public String getGroup() {
-        return group;
+    public String getGroupId() {
+        return groupId;
     }
 
-    public void setGroup(final String group) {
-        this.group = group;
+    public void setGroupId(final String groupId) {
+        this.groupId = groupId;
     }
 
     @Override
-    public String getArchivesBaseName() {
-        return archivesBaseName;
+    public String getArtifactId() {
+        return artifactId;
     }
 
-    public void setArchivesBaseName(final String archivesBaseName) {
-        this.archivesBaseName = archivesBaseName;
+    public void setArtifactId(final String artifactId) {
+        this.artifactId = artifactId;
     }
 
     @Override

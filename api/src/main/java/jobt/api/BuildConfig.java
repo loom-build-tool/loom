@@ -1,18 +1,18 @@
 package jobt.api;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface BuildConfig {
 
     Project getProject();
 
-    List<String> getPlugins();
+    Set<String> getPlugins();
 
     Map<String, String> getConfiguration();
 
-    List<String> getDependencies();
+    Set<String> getDependencies();
 
-    List<String> getTestDependencies();
+    Set<String> getTestDependencies();
 
 }

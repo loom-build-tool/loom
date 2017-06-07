@@ -1,5 +1,7 @@
 package jobt;
 
+import javax.tools.ToolProvider;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -15,10 +17,21 @@ public class Jobt {
         System.out.println("Java Optimized Build Tool v" + Version.getVersion()
             + " (on Java " + javaVersion + ")");
 
+        if (ToolProvider.getSystemJavaCompiler() == null) {
+            System.err.println("JDK required (running inside of JRE)");
+            System.exit(1);
+        }
+
         final Options options = new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("s", "stat", false, "Enabled statistics output")
             .addOption("c", "clean", false, "Clean before execution");
+
+        if (args.length == 0) {
+            System.err.println("Nothing to do!");
+            printHelp(options);
+            System.exit(1);
+        }
 
         try {
             final CommandLine cmd = new DefaultParser().parse(options, args);

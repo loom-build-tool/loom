@@ -53,8 +53,11 @@ public class PluginRegistry {
     private void initPlugins() {
         final AtomicReference<Exception> firstException = new AtomicReference<>();
 
+        final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
+        plugins.add("java");
+
         final ExecutorService executorService = Executors.newWorkStealingPool();
-        for (final String plugin : buildConfig.getPlugins()) {
+        for (final String plugin : plugins) {
             if (firstException.get() != null) {
                 break;
             }

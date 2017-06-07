@@ -2,9 +2,9 @@ package jobt.api;
 
 public interface Project {
 
-    String getGroup();
+    String getGroupId();
 
-    String getArchivesBaseName();
+    String getArtifactId();
 
     String getVersion();
 

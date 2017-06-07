@@ -11,8 +11,6 @@ public interface Plugin {
 
     void setBuildConfig(BuildConfig buildConfig);
 
-    void setExtClassLoader(ClassLoader extClassLoader);
-
     void setExecutionContext(ExecutionContext executionContext);
 
     void setDependencyResolver(DependencyResolver dependencyResolver);

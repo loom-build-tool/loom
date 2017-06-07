@@ -205,10 +205,9 @@ public class JavaCompileTask implements Task {
 
         final Map<String, String> config = buildConfig.getConfiguration();
 
-        System.out.println("FIXME javaPlatformVersion"); // FIXME
-//        final String configuredPlatformVersion = config.get("javaPlatformVersion");
-//        options.add("--release");
-//        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
+        final String configuredPlatformVersion = config.get("javaPlatformVersion");
+        options.add("--release");
+        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
 
         return options;
     }

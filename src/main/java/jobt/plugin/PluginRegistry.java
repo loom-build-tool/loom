@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.Jobt;
 import jobt.MavenResolver;
 import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
@@ -64,7 +65,7 @@ public class PluginRegistry {
             CompletableFuture.runAsync(() -> {
                     try {
                         initPlugin(plugin);
-                    } catch (final Throwable e) {
+                    } catch (final Exception e) {
                         executorService.shutdownNow();
                         firstException.compareAndSet(null, e);
                     }
@@ -96,6 +97,9 @@ public class PluginRegistry {
             case "checkstyle":
                 pluginClassname = "jobt.plugin.checkstyle.CheckstylePlugin";
                 break;
+            case "findbugs":
+                pluginClassname = "jobt.plugin.findbugs.FindBugsPlugin";
+                break;
             default:
                 throw new IllegalArgumentException("Unknown plugin: " + plugin);
         }
@@ -103,16 +107,39 @@ public class PluginRegistry {
         final URL[] urls = scanPluginJars(plugin);
         LOG.info("Load plugin {} with classloader {}", plugin, urls);
 
-        final URLClassLoader classLoader = new URLClassLoader(urls);
+        final URLClassLoader classLoader = new URLClassLoader(urls, getExtClassLoader());
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setExecutionContext(executionContext);
         regPlugin.setDependencyResolver(dependencyResolver);
+        regPlugin.setExtClassLoader(getExtClassLoader()); // TODO check if we need this
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 
         LOG.info("Plugin {} initialized", plugin);
+    }
+
+    public static ClassLoader getExtClassLoader() {
+        final ClassLoader extClassLoader = Jobt.class.getClassLoader().getParent();
+        // must be sun.misc.Launcher$ExtClassLoader
+        if (!extClassLoader.getClass().getSimpleName().equals("ExtClassLoader")) {
+            throw new RuntimeException();
+        }
+        return extClassLoader;
+    }
+    public static ClassLoader getInitialClassLoaderZZ() {
+
+        ClassLoader cl = Jobt.class.getClassLoader();
+
+        for(int i=0;i<5 && cl != null;i++) {
+            if (cl.getClass().getSimpleName().equals("AppClassLoader")) {
+                return cl.getParent();
+            }
+            cl = cl.getParent();
+        }
+
+        throw new IllegalStateException("AppClassLoader not found in hierarchy!");
     }
 
     private URL[] scanPluginJars(final String name) throws IOException {

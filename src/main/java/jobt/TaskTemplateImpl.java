@@ -73,7 +73,7 @@ public class TaskTemplateImpl implements TaskTemplate {
             CompletableFuture.runAsync(() -> {
                 try {
                     job.call();
-                } catch (final Throwable e) {
+                } catch (final Exception e) {
                     firstException.compareAndSet(null, e);
                     if (!(e instanceof InterruptedException)) {
                         LOG.error(e.getMessage(), e);

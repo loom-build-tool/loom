@@ -30,11 +30,11 @@ import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 import jobt.util.Util;
 
-public class FindBugsSonarWayMain {
+public class FindBugsRunner {
 
     private static final String USERS_SOSTERMAYR_WORKSPACE_BRAINCODE_JOBT_EXAMPLE = "/Users/sostermayr/workspace_braincode/jobt-example";
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindBugsSonarWayMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FindBugsRunner.class);
 
     private final boolean useFbContrib = true;
     private final boolean useFindSecBugs = true;
@@ -50,7 +50,7 @@ public class FindBugsSonarWayMain {
     private final Path classesDir;
     private final List<URL> compileClasspath;
 
-    public FindBugsSonarWayMain(final Path classesDir, final List<URL> compileClasspath) {
+    public FindBugsRunner(final Path classesDir, final List<URL> compileClasspath) {
         this.classesDir = classesDir;
         this.compileClasspath = compileClasspath;
     }

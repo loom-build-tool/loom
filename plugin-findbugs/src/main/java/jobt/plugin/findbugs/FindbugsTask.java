@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.BugInstance;
 import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.Task;
@@ -67,7 +68,13 @@ public class FindbugsTask implements Task {
 //        final String checkTarget = compileOutput.getSingleEntry().toString();
 //        System.out.println("checkTarget="+checkTarget);
 
-        FindBugsInvoker.runFindBugs(compileOutput, executionContext.getCompileClasspath());
+
+        final List<BugInstance> bugs = new FindBugsRunner(compileOutput.getSingleEntry(), executionContext.getCompileClasspath()).findMyBugs();
+        for (final BugInstance bug : bugs) {
+
+            System.out.println("bug #"+bug.getMessage());
+
+        }
 
 //        final URLClassLoader urlClassLoader = ClassLoaderUtils.createUrlClassLoader(fbUrls, extClassLoader);
 //        ClassLoaderUtils.debug(urlClassLoader);

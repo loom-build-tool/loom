@@ -1,16 +1,35 @@
 apply plugin: 'java'
-apply plugin: 'checkstyle'
-apply plugin: 'findbugs'
-apply plugin: 'pmd'
 
 group = 'jobt'
 archivesBaseName = 'jobt'
 version = '1.0.0'
 
-sourceCompatibility = 1.8
+allprojects {
+    apply plugin: 'checkstyle'
+    apply plugin: 'findbugs'
+    apply plugin: 'pmd'
 
-repositories {
-    jcenter()
+    sourceCompatibility = 1.8
+
+    checkstyle {
+        configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+        configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
+    }
+
+    pmd {
+        consoleOutput = true
+    }
+
+    tasks.withType(FindBugs) {
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+    }
+
+    repositories {
+        jcenter()
+    }
 }
 
 dependencies {
@@ -26,22 +45,6 @@ dependencies {
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     testCompile('junit:junit:4.12')
-}
-
-checkstyle {
-    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-    configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
-}
-
-pmd {
-    consoleOutput = true
-}
-
-tasks.withType(FindBugs) {
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
 }
 
 jar {

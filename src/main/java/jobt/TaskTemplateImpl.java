@@ -65,7 +65,7 @@ public class TaskTemplateImpl implements TaskTemplate {
             pluginRegistry.warmup(resolvedTask);
         }
 
-        final AtomicReference<Exception> firstException = new AtomicReference<>();
+        final AtomicReference<Throwable> firstException = new AtomicReference<>();
 
         final ExecutorService executor = Executors.newWorkStealingPool();
 
@@ -95,7 +95,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         LOG.debug("Job Pool has shut down");
 
         if (firstException.get() != null) {
-            throw firstException.get();
+            throw new IllegalStateException(firstException.get());
         }
 
         tasksExecuted.addAll(resolvedTasks);

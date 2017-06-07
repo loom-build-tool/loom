@@ -51,7 +51,7 @@ public class PluginRegistry {
     }
 
     private void initPlugins() {
-        final AtomicReference<Exception> firstException = new AtomicReference<>();
+        final AtomicReference<Throwable> firstException = new AtomicReference<>();
 
         final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
         plugins.add("java");

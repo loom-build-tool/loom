@@ -45,7 +45,7 @@ public class Jobt {
         } catch (final ParseException e) {
             System.err.println("Error parsing command line: " + e.getMessage());
             System.exit(1);
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
             e.printStackTrace(System.err);
             System.err.println();
             System.err.println("Build failed");

@@ -64,7 +64,7 @@ public class PluginRegistry {
             CompletableFuture.runAsync(() -> {
                     try {
                         initPlugin(plugin);
-                    } catch (final Exception e) {
+                    } catch (final Throwable e) {
                         executorService.shutdownNow();
                         firstException.compareAndSet(null, e);
                     }

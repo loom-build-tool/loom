@@ -47,7 +47,7 @@ public class FindBugsInvoker implements WorkerProtocol<FindBugsArgs>, Serializab
 
     public static void runFindBugs() {
 
-        final Path classDir = Paths.get("jobt-findbugs-sample/build/classes/main");
+        final Path classDir = Paths.get("./jobtbuild/classes/main");
         final List<BugInstance> bugs = new FindBugsSonarWayMain(classDir).findMyBugs();
         for (final BugInstance bug : bugs) {
 

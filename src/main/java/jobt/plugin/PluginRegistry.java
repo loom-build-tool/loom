@@ -103,21 +103,20 @@ public class PluginRegistry {
         final URL[] urls = scanPluginJars(plugin);
         LOG.info("Load plugin {} with classloader {}", plugin, urls);
 
-        try (final URLClassLoader classLoader = new URLClassLoader(urls,
+        final URLClassLoader classLoader = new URLClassLoader(urls,
             new BiSectFilteringClassLoader(
                 getPlatformClassLoader(),
                 Thread.currentThread().getContextClassLoader()
-                ))) {
+                ));
 
-            final Class<?> aClass = classLoader.loadClass(pluginClassname);
-            final Plugin regPlugin = (Plugin) aClass.newInstance();
-            regPlugin.setBuildConfig(buildConfig);
-            regPlugin.setExecutionContext(executionContext);
-            regPlugin.setDependencyResolver(dependencyResolver);
-            regPlugin.configure(taskTemplate);
-            regPlugin.configure(taskRegistry);
+        final Class<?> aClass = classLoader.loadClass(pluginClassname);
+        final Plugin regPlugin = (Plugin) aClass.newInstance();
+        regPlugin.setBuildConfig(buildConfig);
+        regPlugin.setExecutionContext(executionContext);
+        regPlugin.setDependencyResolver(dependencyResolver);
+        regPlugin.configure(taskTemplate);
+        regPlugin.configure(taskRegistry);
 
-        }
 
         LOG.info("Plugin {} initialized", plugin);
     }

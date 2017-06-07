@@ -43,7 +43,7 @@ public class JobtProcessor {
             throw new IOException("No build.yml found");
         }
 
-        try (final Reader resourceAsStream = Files.newBufferedReader(buildFile,
+        try (Reader resourceAsStream = Files.newBufferedReader(buildFile,
             StandardCharsets.UTF_8)) {
             return yaml.loadAs(resourceAsStream, BuildConfigImpl.class);
         }

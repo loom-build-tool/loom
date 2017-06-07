@@ -14,42 +14,55 @@ public final class BiSectFilteringClassLoader extends ClassLoader {
     private static final Logger LOG = LoggerFactory.getLogger(BiSectFilteringClassLoader.class);
 
     // please add DOTs
-    private static final List<String> WHITELISTED_PACKAGES = Arrays.asList("org.slf4j.", "jobt.api.");
+    private static final List<String> WHITELISTED_PACKAGES =
+        Arrays.asList("org.slf4j.", "jobt.api.");
 
     private final ClassLoader appClassLoader;
 
-    public BiSectFilteringClassLoader(final ClassLoader extClassLoader, final ClassLoader appClassLoader) {
+    public BiSectFilteringClassLoader(
+        final ClassLoader extClassLoader, final ClassLoader appClassLoader) {
         super(extClassLoader);
         this.appClassLoader = appClassLoader;
+        checkHierarchy(extClassLoader, appClassLoader);
     }
 
+    private static void checkHierarchy(
+        final ClassLoader extClassLoader, final ClassLoader appClassLoader) {
+
+        boolean isOk = false;
+
+        for (ClassLoader cl = appClassLoader; cl != null; cl = cl.getParent()) {
+            if (cl.equals(extClassLoader)) {
+                isOk = true;
+            }
+        }
+
+        if (!isOk) {
+            throw new IllegalArgumentException("ClassLoaders must be in one hierarchy");
+        }
+
+    }
 
     @Override
-    protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+    protected Class<?> loadClass(final String name, final boolean resolve)
+        throws ClassNotFoundException {
         try {
-            final Class<?> cl = super.loadClass(name, false);
-            if (resolve) {
-                resolveClass(cl);
+            return super.loadClass(name, resolve);
+        } catch (final ClassNotFoundException notFound) {
+            if (classAllowed(name)) {
+                return appClassLoader.loadClass(name);
+            } else {
+                throw notFound;
             }
-            return cl;
-        } catch (final ClassNotFoundException ignore) {
-            // ignore
         }
-
-        if (!classAllowed(name)) {
-            throw new ClassNotFoundException(name + " not found.");
-        }
-
-        return appClassLoader.loadClass(name);
     }
 
     private boolean classAllowed(final String className) {
 
         final boolean allowed = isWhitelistedPackage(className);
 
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("class <"+className+"> is "+(allowed?"allowed":"not allowed"));
-        }
+        LOG.trace("Class <{}> is {}", className, allowed ? "whitelisted" : "not whitelisted");
+
         return allowed;
     }
 

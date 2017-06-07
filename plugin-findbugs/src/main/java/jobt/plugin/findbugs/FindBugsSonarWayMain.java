@@ -28,7 +28,6 @@ import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
-import jobt.util.Preconditions;
 import jobt.util.Util;
 
 public class FindBugsSonarWayMain {
@@ -49,22 +48,25 @@ public class FindBugsSonarWayMain {
     public static final String EFFORT_MAX = "max";
 
     private final Path classesDir;
-    public FindBugsSonarWayMain(final Path classesDir) {
+    private final List<URL> compileClasspath;
+
+    public FindBugsSonarWayMain(final Path classesDir, final List<URL> compileClasspath) {
         this.classesDir = classesDir;
+        this.compileClasspath = compileClasspath;
     }
 
-    public static void main(final String[] args) {
-        Preconditions.checkState(Files.isDirectory(baseDir), "missing basedir "+baseDir);
-
-
-        final List<BugInstance> bugs = new FindBugsSonarWayMain(baseDir.resolve(Paths.get("jobtbuild/classes/main"))).findMyBugs();;
-
-        for (final BugInstance bug : bugs) {
-
-                System.out.println("bug #"+bug.getMessage());
-
-        }
-    }
+//    public static void main(final String[] args) {
+//        Preconditions.checkState(Files.isDirectory(baseDir), "missing basedir "+baseDir);
+//
+//
+//        final List<BugInstance> bugs = new FindBugsSonarWayMain(baseDir.resolve(Paths.get("jobtbuild/classes/main"))).findMyBugs();;
+//
+//        for (final BugInstance bug : bugs) {
+//
+//                System.out.println("bug #"+bug.getMessage());
+//
+//        }
+//    }
 
     public List<BugInstance> findMyBugs() {
 
@@ -230,8 +232,11 @@ public class FindBugsSonarWayMain {
         final Project findbugsProject = new Project();
 
         for (final File file : getSourceFiles()) { //The original source file are look at by some detectors
+
+
             if("java".equals(Util.getFileExtension(file.getName()))) {
                 findbugsProject.addFile(file.getCanonicalPath());
+                System.out.println("++ "+file.getCanonicalPath());
             }
         }
 
@@ -272,10 +277,7 @@ public class FindBugsSonarWayMain {
             .map(Path::toString)
             .forEach(findbugsProject::addFile);
 
-        Files.list(baseDir.resolve("deps"))
-            .filter(p -> "jar".equals(Util.getFileExtension(p.getFileName().toString())))
-            .map(p -> p.toAbsolutePath().normalize())
-            .map(Path::toString)
+        compileClasspath.stream().map(url -> url.getFile())
             .forEach(findbugsProject::addAuxClasspathEntry);
 
         System.out.println("configure files to "+findbugsProject.getFileList());
@@ -301,6 +303,8 @@ public class FindBugsSonarWayMain {
         findbugsProject.setCurrentWorkingDirectory(workDir());
         return findbugsProject;
     }
+
+
 
     private File workDir() {
         return Paths.get("work").toFile();

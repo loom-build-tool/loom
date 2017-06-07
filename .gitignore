@@ -13,7 +13,7 @@ classes
 .classpath
 .project
 .settings/
-/bin/
+**/bin/
 .checkstyle
 
 # Mac

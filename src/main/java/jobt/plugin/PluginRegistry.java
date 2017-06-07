@@ -96,6 +96,9 @@ public class PluginRegistry {
             case "checkstyle":
                 pluginClassname = "jobt.plugin.checkstyle.CheckstylePlugin";
                 break;
+            case "findbugs":
+                pluginClassname = "jobt.plugin.findbugs.FindBugsPlugin";
+                break;
             default:
                 throw new IllegalArgumentException("Unknown plugin: " + plugin);
         }

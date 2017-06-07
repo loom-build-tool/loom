@@ -3,7 +3,6 @@ package jobt.plugin.findbugs;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,20 +17,17 @@ import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
-import jobt.util.Util;
 
 
 public class FindbugsTask implements Task {
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
 
-    private final ClassLoader extClassLoader;
     private final ExecutionContext executionContext;
     private final DependencyResolver dependencyResolver;
 
-    public FindbugsTask(final ClassLoader extClassLoader,
+    public FindbugsTask(
         final ExecutionContext executionContext, final DependencyResolver dependencyResolver) {
-        this.extClassLoader = extClassLoader;
         this.executionContext = executionContext;
         this.dependencyResolver = dependencyResolver;
     }
@@ -45,7 +41,7 @@ public class FindbugsTask implements Task {
 //        final Classpath resolvedBuildDependencies = executionContext.lookup(Classpath.class, "compileJava.resolvedBuildDependencies");
         //        final Classpath classpathTestBuildDeps = executionContext.lookup(Classpath.class, ZZZZZ);
         final Classpath compileOutput = new Classpath(
-            Collections.singletonList(Paths.get("/Users/sostermayr/workspace_braincode/jobt-example/jobtbuild/classes")));
+            Collections.singletonList(Paths.get("/Users/sostermayr/workspace_braincode/jobt-example/jobtbuild/classes/main")));
 
         //        final Classpath classpathSrcTest = executionContext.lookup(Classpath.class, ZZZZ);
 
@@ -55,23 +51,23 @@ public class FindbugsTask implements Task {
 
         // TODO configure, preload
 
-        final List<Path> fbDependencies =
-            dependencyResolver.resolveDependencies(
-                Collections.singletonList("com.google.code.findbugs:findbugs:3.0.1"), "compile")
-            .get();
+//        final List<Path> fbDependencies =
+//            dependencyResolver.resolveDependencies(
+//                Collections.singletonList("com.google.code.findbugs:findbugs:3.0.1"), "compile")
+//            .get();
+//
+//        System.out.println("fbDependencies=");
+//        fbDependencies.forEach(System.out::println);
 
-        System.out.println("fbDependencies=");
-        fbDependencies.forEach(System.out::println);
 
+//        final URL[] fbUrls = fbDependencies.stream()
+//            .map(Util::toUrl)
+//            .toArray(URL[]::new);
 
-        final URL[] fbUrls = fbDependencies.stream()
-            .map(Util::toUrl)
-            .toArray(URL[]::new);
+//        final String checkTarget = compileOutput.getSingleEntry().toString();
+//        System.out.println("checkTarget="+checkTarget);
 
-        final String checkTarget = compileOutput.getSingleEntry().toString();
-        System.out.println("checkTarget="+checkTarget);
-
-        FindBugsInvoker.runFindBugs();
+        FindBugsInvoker.runFindBugs(compileOutput, executionContext.getCompileClasspath());
 
 //        final URLClassLoader urlClassLoader = ClassLoaderUtils.createUrlClassLoader(fbUrls, extClassLoader);
 //        ClassLoaderUtils.debug(urlClassLoader);

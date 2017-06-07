@@ -15,9 +15,7 @@ public class FindBugsPlugin extends AbstractPlugin {
     @Override
     public void configure(final TaskRegistry taskRegistry) {
 
-        taskRegistry.register("findbugsMain", new FindbugsTask(getExtClassLoader(), getExecutionContext(), getDependencyResolver()));
-
-        taskRegistry.register("findbugsGoGo", new FindbugsTask(getExtClassLoader(), getExecutionContext(), getDependencyResolver()));
+        taskRegistry.register("findbugsMain", new FindbugsTask(getExecutionContext(), getDependencyResolver()));
 
 //        taskRegistry.register("findBugsTest", task); // TODO
 
@@ -25,8 +23,6 @@ public class FindBugsPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-
-        taskTemplate.task("findbugsGoGo");
 
         taskTemplate.task("findbugsMain")
             .dependsOn(taskTemplate.task("classes"));

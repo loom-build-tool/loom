@@ -1,8 +1,7 @@
 package jobt.plugin.findbugs;
 
 import java.io.Serializable;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,8 @@ public class FindBugsInvoker implements WorkerProtocol<FindBugsArgs>, Serializab
             Thread.currentThread().setContextClassLoader(FindBugs2.class.getClassLoader());
             System.out.println("loading findBugs using classLoader "+Thread.currentThread().getContextClassLoader());
 
-            runFindBugs();
+            System.out.println("FIXME remove"); // FIXME remove
+//            runFindBugs();
 
             System.out.println("execution done.");
             return new DefaultWorkResult(true, null);
@@ -45,10 +45,9 @@ public class FindBugsInvoker implements WorkerProtocol<FindBugsArgs>, Serializab
         }
     }
 
-    public static void runFindBugs() {
+    public static void runFindBugs(final Classpath compileOutput, final List<URL> compileClasspath) {
 
-        final Path classDir = Paths.get("./jobtbuild/classes/main");
-        final List<BugInstance> bugs = new FindBugsSonarWayMain(classDir).findMyBugs();
+        final List<BugInstance> bugs = new FindBugsSonarWayMain(compileOutput.getSingleEntry(), compileClasspath).findMyBugs();
         for (final BugInstance bug : bugs) {
 
             System.out.println("bug #"+bug.getMessage());

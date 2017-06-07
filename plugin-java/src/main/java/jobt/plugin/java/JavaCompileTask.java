@@ -205,9 +205,10 @@ public class JavaCompileTask implements Task {
 
         final Map<String, String> config = buildConfig.getConfiguration();
 
-        final String configuredPlatformVersion = config.get("javaPlatformVersion");
-        options.add("--release");
-        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
+        System.out.println("FIXME no JRE 9 support");
+//        final String configuredPlatformVersion = config.get("javaPlatformVersion");
+//        options.add("--release");
+//        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
 
         return options;
     }

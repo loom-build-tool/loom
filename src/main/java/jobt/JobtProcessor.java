@@ -1,9 +1,7 @@
 package jobt;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +11,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -33,20 +30,6 @@ public class JobtProcessor {
 
     public JobtProcessor(final Stopwatch stopwatch) {
         this.stopwatch = stopwatch;
-    }
-
-    public BuildConfigImpl readConfig() throws IOException {
-        final Yaml yaml = new Yaml();
-
-        final Path buildFile = Paths.get("build.yml");
-        if (!Files.isRegularFile(buildFile)) {
-            throw new IOException("No build.yml found");
-        }
-
-        try (Reader resourceAsStream = Files.newBufferedReader(buildFile,
-            StandardCharsets.UTF_8)) {
-            return yaml.loadAs(resourceAsStream, BuildConfigImpl.class);
-        }
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")

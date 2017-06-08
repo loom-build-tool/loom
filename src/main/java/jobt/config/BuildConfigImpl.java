@@ -1,12 +1,15 @@
 package jobt.config;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import jobt.api.BuildConfig;
 
-public class BuildConfigImpl implements BuildConfig {
+public class BuildConfigImpl implements BuildConfig, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private ProjectImpl project;
     private Set<String> plugins = Collections.emptySet();

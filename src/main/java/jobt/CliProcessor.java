@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 
 import jobt.config.BuildConfigImpl;
+import jobt.config.ConfigReader;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public class CliProcessor {
@@ -49,7 +50,7 @@ public class CliProcessor {
         jobtProcessor.configureLogger();
 
         stopwatch.startProcess("Read configuration");
-        final BuildConfigImpl buildConfig = jobtProcessor.readConfig();
+        final BuildConfigImpl buildConfig = ConfigReader.readConfig();
         stopwatch.stopProcess("Read configuration");
 
         System.out.printf("Initialized configuration for %s version %s%n",

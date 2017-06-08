@@ -126,8 +126,18 @@ public class CheckstyleTask implements Task {
 
     private Properties createOverridingProperties() {
         final Properties properties = new Properties();
-        properties.setProperty("samedir", "config/checkstyle");
-        properties.setProperty("project_loc", "");
+
+        final Path baseDir = Paths.get("").toAbsolutePath();
+        final Path checkstyleConfigDir =
+            baseDir.resolve(Paths.get("config", "checkstyle"));
+
+        // Set the same variables as the checkstyle plugin for eclipse
+        // http://eclipse-cs.sourceforge.net/#!/properties
+        properties.setProperty("basedir", baseDir.toString());
+        properties.setProperty("project_loc", baseDir.toString());
+        properties.setProperty("samedir", checkstyleConfigDir.toString());
+        properties.setProperty("config_loc", checkstyleConfigDir.toString());
+
         return properties;
     }
 

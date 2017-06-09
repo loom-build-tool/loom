@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
@@ -31,15 +32,17 @@ import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
+import jobt.util.Preconditions;
 import jobt.util.Util;
 
 public class FindBugsRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(FindBugsRunner.class);
 
-    private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
 
     private static final int BUG_PRIORITY = Priorities.NORMAL_PRIORITY;
+
+    private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
 
     private final boolean useFbContrib = true;
     private final boolean useFindSecBugs = true;
@@ -55,6 +58,22 @@ public class FindBugsRunner {
 
     private final Iterable<String> sourceFiles;
 
+    private final static CountDownLatch customPluginsInitLatch = new CountDownLatch(1);
+    private static List<Plugin> customPlugins = null;
+
+
+    public static synchronized void initFindBugs() {
+        if (customPlugins != null) {
+            return;
+        }
+        Preconditions.checkState(customPluginsInitLatch.getCount() == 1);
+
+        customPlugins = loadFindbugsPlugin();
+        disableUpdateChecksOnEveryPlugin();
+        customPluginsInitLatch.countDown();
+    }
+
+
     public FindBugsRunner(
         final Path sourcesDir,
         final Path classesDir, final List<URL> auxClasspath) {
@@ -66,7 +85,11 @@ public class FindBugsRunner {
 
     public List<BugInstance> findMyBugs() {
 
-        System.out.println("NEW STYLE INVOKER @ work");
+        waitForPluginInit();
+
+        System.out.println("Using findbugs custom plugins: ");
+        Plugin.getAllPluginIds().stream().forEach(id -> System.out.println(" " + id));
+
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
@@ -74,7 +97,6 @@ public class FindBugsRunner {
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        List<Plugin> customPlugins = null;
         try (PrintStream outputStream = new PrintStream(getTargetXMLReport(), "UTF-8")) {
             final FindBugs2 engine = new FindBugs2();
             final Project project = getFindbugsProject();
@@ -84,15 +106,9 @@ public class FindBugsRunner {
             //                return new ArrayList<>();
             //            }
 
-            customPlugins = loadFindbugsPlugin();
+//            customPlugins = loadFindbugsPlugin();
 
-            if (!customPlugins.isEmpty()) {
-                System.out.println("Using findbugs custom plugins: ");
-                customPlugins.stream().map(p -> p.getPluginId()).forEach(id -> System.out.println(" " + id));
-//                        customPlugins = loadFindbugsPlugins(useFbContrib,useFindSecBugs);
-            }
 
-            disableUpdateChecksOnEveryPlugin();
             engine.setProject(project);
 
             final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
@@ -123,46 +139,23 @@ public class FindBugsRunner {
         } finally {
             // we set back the original security manager BEFORE shutting down the executor service, otherwise there's a problem with Java 5
             System.setSecurityManager(currentSecurityManager);
-            resetCustomPluginList(customPlugins);
+//            resetCustomPluginList(customPlugins);
 //            Thread.currentThread().setContextClassLoader(initialClassLoader);
             Locale.setDefault(initialLocale);
         }
     }
 
-    private List<Plugin> loadFindbugsPlugin() {
 
-        final ClassLoader contextClassLoader = FindBugsRunner.class.getClassLoader();
-
+    private static void waitForPluginInit() {
         try {
-
-            return
-            Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-            .peek(url -> System.out.println(" url= " +url+ "  " + Thread.currentThread()))
-            .map(url -> normalizeUrl(url))
-            .map(Paths::get).filter(p -> Files.exists(p))
-            .map(Path::toUri)
-            .map(uri -> {
-                try {
-                    return Optional.of(Plugin.addCustomPlugin(uri, contextClassLoader));
-                } catch (final PluginException e) {
-                    throw new IllegalStateException("Error loading plugin " + uri, e);
-                } catch (final DuplicatePluginIdException e) {
-                    if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-                        throw new IllegalStateException("Duplicate findbugs plugin "+e.getPluginId());
-                    }
-                    return Optional.<Plugin>empty();
-                }
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-
-        } catch (final IOException e) {
-            throw new RuntimeException(e); // FIXME
+            customPluginsInitLatch.await();
+        } catch (final InterruptedException e) {
+            throw new IllegalStateException("Findbugs Plugin init aborted!", e);
         }
 
     }
 
+    // FIXME move to report dir + make sure, it gets not overwritten
     public File getTargetXMLReport() {
         return Paths.get("findbugs-result.xml").toFile();
     }
@@ -327,14 +320,53 @@ public class FindBugsRunner {
         //        ));
     }
 
+
+    /**
+     * Note: findbugs plugins are registered in a static map and thus has many concurrency issues.
+     */
+    private static List<Plugin> loadFindbugsPlugin() {
+
+        final ClassLoader contextClassLoader = FindBugsRunner.class.getClassLoader();
+
+        try {
+
+            return
+            Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
+            .peek(url -> System.out.println(" url= " +url+ "  " + Thread.currentThread()))
+            .map(url -> FindBugsRunner.normalizeUrl(url))
+            .map(Paths::get).filter(p -> Files.exists(p))
+            .map(Path::toUri)
+            .map(uri -> {
+                try {
+                    return Optional.of(Plugin.addCustomPlugin(uri, contextClassLoader));
+                } catch (final PluginException e) {
+                    throw new IllegalStateException("Error loading plugin " + uri, e);
+                } catch (final DuplicatePluginIdException e) {
+                    if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
+                        throw new IllegalStateException("Duplicate findbugs plugin "+e.getPluginId());
+                    }
+                    return Optional.<Plugin>empty();
+                }
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+
+        } catch (final IOException e) {
+            throw new RuntimeException(e); // FIXME
+        }
+
+    }
+
     /**
      * Disable the update check for every plugin. See http://findbugs.sourceforge.net/updateChecking.html
      */
-    private void disableUpdateChecksOnEveryPlugin() {
+    private static void disableUpdateChecksOnEveryPlugin() {
         for (final Plugin plugin : Plugin.getAllPlugins()) {
             plugin.setMyGlobalOption("noUpdateChecks", "true");
         }
     }
+
 
     private static void resetCustomPluginList(final List<Plugin> customPlugins) {
         if (customPlugins != null) {

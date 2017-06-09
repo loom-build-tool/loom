@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,13 @@ public class FindbugsTask implements Task {
     private final CompileTarget compileTarget;
 
 
+    private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
+        final Thread thread = new Thread(r);
+        thread.setDaemon(true);
+        return thread;
+    });
+
+
     public FindbugsTask(final CompileTarget compileTarget,
         final ExecutionContext executionContext) {
         this.executionContext = executionContext;
@@ -56,7 +65,14 @@ public class FindbugsTask implements Task {
 
     @Override
     public void prepare() throws Exception {
+
+        pool.submit(() -> {
+            FindBugsRunner.initFindBugs();
+
+        });
+
     }
+
 
     @Override
     public TaskStatus run() throws Exception {

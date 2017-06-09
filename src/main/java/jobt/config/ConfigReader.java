@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import jobt.Hasher;
+import jobt.RuntimeConfigurationImpl;
 
 public final class ConfigReader {
 
@@ -25,7 +26,8 @@ public final class ConfigReader {
     private ConfigReader() {
     }
 
-    public static BuildConfigImpl readConfig() throws IOException {
+    public static BuildConfigImpl readConfig(final RuntimeConfigurationImpl runtimeConfiguration)
+        throws IOException {
         final Path buildFile = Paths.get("build.yml");
 
         if (!Files.isRegularFile(buildFile)) {
@@ -34,6 +36,14 @@ public final class ConfigReader {
 
         final byte[] configData = Files.readAllBytes(buildFile);
 
+        if (!runtimeConfiguration.isCacheEnabled()) {
+            return parseConfig(configData);
+        }
+
+        return parseAndCacheConfig(configData);
+    }
+
+    private static BuildConfigImpl parseAndCacheConfig(final byte[] configData) throws IOException {
         final byte[] configHash = Hasher.hash(configData);
 
         final Path cachePath = Paths.get(".jobt", "cache", "base");

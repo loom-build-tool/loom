@@ -31,8 +31,11 @@ public class TaskTemplateImpl implements TaskTemplate {
     private final Map<String, TaskGraphNodeImpl> tasks = new HashMap<>();
     private final List<String> tasksExecuted = new ArrayList<>();
 
-    public TaskTemplateImpl(final BuildConfigImpl buildConfig, final Stopwatch stopwatch) {
-        this.pluginRegistry = new PluginRegistry(buildConfig, this, stopwatch);
+    public TaskTemplateImpl(final BuildConfigImpl buildConfig,
+                            final RuntimeConfigurationImpl runtimeConfiguration,
+                            final Stopwatch stopwatch) {
+        this.pluginRegistry =
+            new PluginRegistry(buildConfig, runtimeConfiguration, this, stopwatch);
     }
 
     @Override

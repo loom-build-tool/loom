@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.MavenResolver;
+import jobt.RuntimeConfigurationImpl;
 import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
 import jobt.Version;
@@ -34,16 +35,20 @@ public class PluginRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(PluginRegistry.class);
 
     private final BuildConfigImpl buildConfig;
+    private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
     private final MavenResolver dependencyResolver = new MavenResolver();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
     private final Stopwatch stopwatch;
 
-    public PluginRegistry(final BuildConfigImpl buildConfig, final TaskTemplateImpl taskTemplate,
+    public PluginRegistry(final BuildConfigImpl buildConfig,
+                          final RuntimeConfigurationImpl runtimeConfiguration,
+                          final TaskTemplateImpl taskTemplate,
                           final Stopwatch stopwatch) {
 
         this.buildConfig = buildConfig;
+        this.runtimeConfiguration = runtimeConfiguration;
         this.taskTemplate = taskTemplate;
         this.stopwatch = stopwatch;
 
@@ -112,11 +117,11 @@ public class PluginRegistry {
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
         regPlugin.setBuildConfig(buildConfig);
+        regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         regPlugin.setExecutionContext(executionContext);
         regPlugin.setDependencyResolver(dependencyResolver);
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
-
 
         LOG.info("Plugin {} initialized", plugin);
     }

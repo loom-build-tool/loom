@@ -84,9 +84,10 @@ public class JobtProcessor {
         rootLogger.addAppender(fileAppender);
     }
 
-    public void init(final BuildConfigImpl buildConfig) {
+    public void init(final BuildConfigImpl buildConfig,
+                     final RuntimeConfigurationImpl runtimeConfiguration) {
         stopwatch.startProcess("Initialize plugins");
-        taskTemplate = new TaskTemplateImpl(buildConfig, stopwatch);
+        taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration, stopwatch);
         stopwatch.stopProcess("Initialize plugins");
     }
 

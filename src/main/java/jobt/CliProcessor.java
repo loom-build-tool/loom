@@ -47,17 +47,20 @@ public class CliProcessor {
             return;
         }
 
+        final RuntimeConfigurationImpl runtimeConfiguration =
+            new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
+
         jobtProcessor.configureLogger();
 
         stopwatch.startProcess("Read configuration");
-        final BuildConfigImpl buildConfig = ConfigReader.readConfig();
+        final BuildConfigImpl buildConfig = ConfigReader.readConfig(runtimeConfiguration);
         stopwatch.stopProcess("Read configuration");
 
         System.out.printf("Initialized configuration for %s version %s%n",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion());
 
-        jobtProcessor.init(buildConfig);
+        jobtProcessor.init(buildConfig, runtimeConfiguration);
 
         for (final String taskName : cmd.getArgs()) {
             System.out.println("Executing " + taskName + "...");

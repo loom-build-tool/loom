@@ -25,7 +25,8 @@ public class Jobt {
         final Options options = new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("s", "stat", false, "Enabled statistics output")
-            .addOption("c", "clean", false, "Clean before execution");
+            .addOption("c", "clean", false, "Clean before execution")
+            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)");
 
         if (args.length == 0) {
             System.err.println("Nothing to do!");

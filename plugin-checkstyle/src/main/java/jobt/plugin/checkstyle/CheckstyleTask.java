@@ -30,7 +30,7 @@ import jobt.api.TaskStatus;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask implements Task {
 
-    private final Path baseDir;
+    private final Path srcBaseDir;
     private final CompileTarget compileTarget;
     private final ExecutionContext executionContext;
 
@@ -45,10 +45,10 @@ public class CheckstyleTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                this.baseDir = Paths.get("src/main/java");
+                this.srcBaseDir = Paths.get("src/main/java");
                 break;
             case TEST:
-                this.baseDir = Paths.get("src/test/java");
+                this.srcBaseDir = Paths.get("src/test/java");
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -61,11 +61,11 @@ public class CheckstyleTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(baseDir)) {
+        if (Files.notExists(srcBaseDir)) {
             return TaskStatus.SKIP;
         }
 
-        final List<File> collect = Files.walk(baseDir)
+        final List<File> collect = Files.walk(srcBaseDir)
             .filter(Files::isRegularFile)
             .map(Path::toFile)
             .collect(Collectors.toList());
@@ -126,8 +126,18 @@ public class CheckstyleTask implements Task {
 
     private Properties createOverridingProperties() {
         final Properties properties = new Properties();
-        properties.setProperty("samedir", "config/checkstyle");
-        properties.setProperty("project_loc", "");
+
+        final Path baseDir = Paths.get("").toAbsolutePath();
+        final Path checkstyleConfigDir =
+            baseDir.resolve(Paths.get("config", "checkstyle"));
+
+        // Set the same variables as the checkstyle plugin for eclipse
+        // http://eclipse-cs.sourceforge.net/#!/properties
+        properties.setProperty("basedir", baseDir.toString());
+        properties.setProperty("project_loc", baseDir.toString());
+        properties.setProperty("samedir", checkstyleConfigDir.toString());
+        properties.setProperty("config_loc", checkstyleConfigDir.toString());
+
         return properties;
     }
 

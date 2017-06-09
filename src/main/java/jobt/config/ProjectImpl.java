@@ -1,8 +1,12 @@
 package jobt.config;
 
+import java.io.Serializable;
+
 import jobt.api.Project;
 
-public class ProjectImpl implements Project {
+public class ProjectImpl implements Project, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String groupId;
     private String artifactId;

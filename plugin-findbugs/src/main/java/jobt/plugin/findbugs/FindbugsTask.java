@@ -1,8 +1,5 @@
 package jobt.plugin.findbugs;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,23 +11,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.BugInstance;
-import jobt.api.DependencyResolver;
+import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.util.Preconditions;
 
 
 public class FindbugsTask implements Task {
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
 
-    private final ExecutionContext executionContext;
-    private final DependencyResolver dependencyResolver;
+    public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
+    public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
+    public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
+    public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
-    public FindbugsTask(
-        final ExecutionContext executionContext, final DependencyResolver dependencyResolver) {
+    private final ExecutionContext executionContext;
+    private final Path sourceDir;
+    private final Path classesDir;
+    private final CompileTarget compileTarget;
+
+    public FindbugsTask(final CompileTarget compileTarget,
+        final ExecutionContext executionContext) {
         this.executionContext = executionContext;
-        this.dependencyResolver = dependencyResolver;
+        this.compileTarget = compileTarget;
+
+        switch (compileTarget) {
+            case MAIN:
+                this.sourceDir = SRC_MAIN_PATH;
+                this.classesDir = BUILD_MAIN_PATH;
+                break;
+            case TEST:
+                this.sourceDir = SRC_TEST_PATH;
+                this.classesDir = BUILD_TEST_PATH;
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
@@ -39,99 +57,29 @@ public class FindbugsTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-//        final Classpath resolvedBuildDependencies = executionContext.lookup(Classpath.class, "compileJava.resolvedBuildDependencies");
-        //        final Classpath classpathTestBuildDeps = executionContext.lookup(Classpath.class, ZZZZZ);
-        final Classpath compileOutput = new Classpath(
-            Collections.singletonList(Paths.get("/Users/sostermayr/workspace_braincode/jobt-example/jobtbuild/classes/main")));
+        checkDirs();
 
-        //        final Classpath classpathSrcTest = executionContext.lookup(Classpath.class, ZZZZ);
+        final Classpath compileOutput = new Classpath(Collections.singletonList(classesDir));
 
-        //    runFindBugs.run();
-        // TODO inject
-//        final MavenResolver mavenResolver = new MavenResolver();
+        final List<BugInstance> bugs = new FindBugsRunner(
+            sourceDir,
+            compileOutput.getSingleEntry(), executionContext.getCompileClasspath()).findMyBugs();
 
-        // TODO configure, preload
-
-//        final List<Path> fbDependencies =
-//            dependencyResolver.resolveDependencies(
-//                Collections.singletonList("com.google.code.findbugs:findbugs:3.0.1"), "compile")
-//            .get();
-//
-//        System.out.println("fbDependencies=");
-//        fbDependencies.forEach(System.out::println);
-
-
-//        final URL[] fbUrls = fbDependencies.stream()
-//            .map(Util::toUrl)
-//            .toArray(URL[]::new);
-
-//        final String checkTarget = compileOutput.getSingleEntry().toString();
-//        System.out.println("checkTarget="+checkTarget);
-
-
-        final List<BugInstance> bugs = new FindBugsRunner(compileOutput.getSingleEntry(), executionContext.getCompileClasspath()).findMyBugs();
         for (final BugInstance bug : bugs) {
 
             System.out.println("bug #"+bug.getMessage());
 
         }
 
-//        final URLClassLoader urlClassLoader = ClassLoaderUtils.createUrlClassLoader(fbUrls, extClassLoader);
-//        ClassLoaderUtils.debug(urlClassLoader);
-//        final ClassLoader backup = Thread.currentThread().getContextClassLoader();
-
-//        Thread.currentThread().setContextClassLoader(urlClassLoader);
-//        try {
-//            runFindBugs(urlClassLoader);
-//        } finally {
-//            Thread.currentThread().setContextClassLoader(backup);
-//        }
-
-//        Dispatcher.executeInWorkerClassLoader(urlClassLoader, FindBugsInvoker.class, new FindBugsArgs());
-
-
         return TaskStatus.OK;
     }
 
-    private static void runFindBugs(final ClassLoader classLoader)
-        throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
-        NoSuchMethodException, InvocationTargetException {
-        final Class<?> findBugsClass = classLoader.loadClass("edu.umd.cs.findbugs.FindBugs");
-        final Class<?> findBugs2Class = classLoader.loadClass("edu.umd.cs.findbugs.FindBugs2");
-        final Class<?> textUICommandLineClass = classLoader.loadClass("edu.umd.cs.findbugs.TextUICommandLine");
-
-//            final FindBugs2 findBugs2 = new FindBugs2();
-        final Object findBugs2 = findBugs2Class.newInstance();
-
-//            final TextUICommandLine commandLine = new TextUICommandLine();
-        final Object commandLine = textUICommandLineClass.newInstance();
-
-        final Path resultFile = Paths.get("findbugs-results.txt");
-        Files.deleteIfExists(resultFile);
-        final String classpathArg = formatClasspath(Collections.emptyList());
-        final String[] strArray = new String[] {"-output","findbugs-results.txt",
-            "-auxclasspath",
-            classpathArg,
-//                "jobtbuild/classes/main/"
-            "jobt-findbugs-sample/build/classes/main"
-            };
-//            FindBugs.processCommandLine(commandLine, strArray, findBugs2);
-//            findBugs2.execute();
-
-        final Method processCommandLine = findBugsClass.getDeclaredMethod(
-          "processCommandLine", textUICommandLineClass, String[].class, classLoader.loadClass("edu.umd.cs.findbugs.IFindBugsEngine"));
-        processCommandLine.invoke(null, commandLine, strArray, findBugs2);
-
-        findBugs2Class.getMethod("execute").invoke(findBugs2);
-
-        System.out.println("INIT DONE");
-
-        final List<String> resultLines = Files.readAllLines(resultFile);
-        System.out.println("===RESULTS===");
-        resultLines.forEach(System.out::println);
-        System.out.println("=============");
+    private void checkDirs() {
+        Preconditions.checkState(Files.isDirectory(sourceDir),
+            "Source dir <%s> does not exist", sourceDir);
+        Preconditions.checkState(Files.isDirectory(classesDir),
+            "Classes dir <%s> does not exist", classesDir);
     }
-
 
     private static String formatClasspath(final List<Classpath> auxclasspaths) {
 

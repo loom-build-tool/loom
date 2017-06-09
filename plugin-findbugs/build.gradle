@@ -1,33 +1,4 @@
 apply plugin: 'java'
-//apply plugin: 'checkstyle'
-//apply plugin: 'findbugs'
-//apply plugin: 'pmd'
-
-group = 'jobt'
-archivesBaseName = 'jobt-plugin-findbugs'
-version = '1.0.0'
-
-sourceCompatibility = 1.8
-
-repositories {
-    jcenter()
-}
-
-checkstyle {
-    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-    configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
-}
-
-pmd {
-    consoleOutput = true
-}
-
-tasks.withType(FindBugs) {
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
 
 configurations {
     all*.exclude module: 'commons-cli'
@@ -39,4 +10,3 @@ dependencies {
     compile('com.google.code.findbugs:findbugs:3.0.1')
     compile('org.slf4j:jcl-over-slf4j:1.7.22')
 }
-

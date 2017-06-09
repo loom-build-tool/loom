@@ -32,14 +32,12 @@ import jobt.util.Util;
 
 public class FindBugsRunner {
 
-    private static final String USERS_SOSTERMAYR_WORKSPACE_BRAINCODE_JOBT_EXAMPLE = "/Users/sostermayr/workspace_braincode/jobt-example";
-
     private static final Logger LOG = LoggerFactory.getLogger(FindBugsRunner.class);
+
+    private static final int BUG_PRIORITY = Priorities.NORMAL_PRIORITY;
 
     private final boolean useFbContrib = true;
     private final boolean useFindSecBugs = true;
-
-    private static Path baseDir = Paths.get(USERS_SOSTERMAYR_WORKSPACE_BRAINCODE_JOBT_EXAMPLE);
 
     public static final String EFFORT_MIN = "min";
 
@@ -50,33 +48,22 @@ public class FindBugsRunner {
     private final Path classesDir;
     private final List<URL> compileClasspath;
 
-    public FindBugsRunner(final Path classesDir, final List<URL> compileClasspath) {
+    private final Iterable<String> sourceFiles;
+
+    public FindBugsRunner(
+        final Path sourcesDir,
+        final Path classesDir, final List<URL> compileClasspath) {
         this.classesDir = classesDir;
         this.compileClasspath = compileClasspath;
-    }
 
-//    public static void main(final String[] args) {
-//        Preconditions.checkState(Files.isDirectory(baseDir), "missing basedir "+baseDir);
-//
-//
-//        final List<BugInstance> bugs = new FindBugsSonarWayMain(baseDir.resolve(Paths.get("jobtbuild/classes/main"))).findMyBugs();;
-//
-//        for (final BugInstance bug : bugs) {
-//
-//                System.out.println("bug #"+bug.getMessage());
-//
-//        }
-//    }
+        sourceFiles = getSourceFiles(sourcesDir);
+    }
 
     public List<BugInstance> findMyBugs() {
 
         System.out.println("NEW STYLE INVOKER @ work");
 
-        // We keep a handle on the current security manager because FB plays with it and we need to restore it before shutting down the executor
-        // service
-//        final SecurityManager currentSecurityManager = System.getSecurityManager();
-//        final ClassLoader initialClassLoader = Thread.currentThread().getContextClassLoader();
-//        Thread.currentThread().setContextClassLoader(FindBugs2.class.getClassLoader());
+        final SecurityManager currentSecurityManager = System.getSecurityManager();
 
         // This is a dirty workaround, but unfortunately there is no other way to make Findbugs generate english messages only - see SONARJAVA-380
         final Locale initialLocale = Locale.getDefault();
@@ -104,7 +91,7 @@ public class FindBugsRunner {
             engine.setProject(project);
 
             final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
-            xmlBugReporter.setPriorityThreshold(Priorities.NORMAL_PRIORITY); // TODO
+            xmlBugReporter.setPriorityThreshold(BUG_PRIORITY); // TODO
             xmlBugReporter.setAddMessages(true);
             System.out.println("CHECK");
             xmlBugReporter.setOutputStream(outputStream);
@@ -115,28 +102,12 @@ public class FindBugsRunner {
             userPreferences.setEffort(EFFORT_MAX); // TODO make configurable
             engine.setUserPreferences(userPreferences);
 
-            // FIXME what is this?
-//            engine.addFilter(configuration.saveIncludeConfigXml().getAbsolutePath(), true);
-
-            // TODO excludes
-//            for (final File filterFile : configuration.getExcludesFilters()) {
-//                if (filterFile.isFile()) {
-//                    LOG.info("Use filter-file: {}", filterFile);
-//                    engine.addFilter(filterFile.getAbsolutePath(), false);
-//                } else {
-//                    LOG.warn("FindBugs filter-file not found: {}", filterFile);
-//                }
-//            }
-
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
             engine.setAnalysisFeatureSettings(FindBugs.DEFAULT_EFFORT);
 
             engine.finishSettings();
 
-            //            executorService.submit(new FindbugsTask(engine)).get(configuration.getTimeout(), TimeUnit.MILLISECONDS);
-            System.out.println("PRE EXEC");
             engine.execute();
-            System.out.println("POSt EXEC");
 
             final ArrayList<BugInstance> bugs = new ArrayList<>();
             xmlBugReporter.getBugCollection().forEach(bugs::add);
@@ -147,7 +118,7 @@ public class FindBugsRunner {
             throw new IllegalStateException("Can not execute Findbugs", e);
         } finally {
             // we set back the original security manager BEFORE shutting down the executor service, otherwise there's a problem with Java 5
-//            System.setSecurityManager(currentSecurityManager);
+            System.setSecurityManager(currentSecurityManager);
             //            resetCustomPluginList(customPlugins);
 //            Thread.currentThread().setContextClassLoader(initialClassLoader);
             Locale.setDefault(initialLocale);
@@ -231,13 +202,8 @@ public class FindBugsRunner {
     public Project getFindbugsProject() throws IOException {
         final Project findbugsProject = new Project();
 
-        for (final File file : getSourceFiles()) { //The original source file are look at by some detectors
-
-
-            if("java".equals(Util.getFileExtension(file.getName()))) {
-                findbugsProject.addFile(file.getCanonicalPath());
-                System.out.println("++ "+file.getCanonicalPath());
-            }
+        for (final String fileName : sourceFiles) { //The original source file are look at by some detectors
+                findbugsProject.addFile(fileName);
         }
 
 //        final List<File> classFilesToAnalyze = new ArrayList<>(javaResourceLocator.classFilesToAnalyze());
@@ -318,21 +284,19 @@ public class FindBugsRunner {
 //      return file;
 //    }
 
-    private Iterable<File> getSourceFiles() {
+    private static List<String> getSourceFiles(final Path sourcesDir) {
         try {
             // FIXME
             return
-                Files.list(baseDir.resolve(Paths.get("src/main/java")) ).filter(p -> Files.isRegularFile(p))
+                Files.list(sourcesDir).filter(p -> Files.isRegularFile(p))
                 .filter(p -> "java".equals(Util.getFileExtension(p.getFileName().toString())))
-                .map(Path::toFile).collect(Collectors.toList());
+                .filter(p -> !p.getFileName().toString().equals("package-info.java"))
+                .map(p -> p.toAbsolutePath().toString())
+                .collect(Collectors.toList());
+
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        //        FilePredicates pred = fileSystem.predicates();
-        //        return fileSystem.files(pred.and(
-        //                pred.hasType(Type.MAIN),
-        //                pred.hasLanguage(Java.KEY),
-        //                pred.not(pred.matchesPathPattern("**/package-info.java"))
         //        ));
     }
 

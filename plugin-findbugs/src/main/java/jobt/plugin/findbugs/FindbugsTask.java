@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,15 +79,5 @@ public class FindbugsTask implements Task {
         Preconditions.checkState(Files.isDirectory(classesDir),
             "Classes dir <%s> does not exist", classesDir);
     }
-
-    private static String formatClasspath(final List<Classpath> auxclasspaths) {
-
-        return auxclasspaths.stream()
-            .flatMap(cps -> cps.getEntries().stream())
-            .map(file -> file.toString())
-            .collect(Collectors.joining(":"));
-    }
-
-
 
 }

@@ -21,7 +21,7 @@ public class FindBugsPlugin extends AbstractPlugin {
             new FindbugsTask(CompileTarget.MAIN, getExecutionContext()));
 
         taskRegistry.register(
-            "findBugsTest",
+            "findbugsTest",
             new FindbugsTask(CompileTarget.TEST, getExecutionContext()));
 
     }
@@ -32,7 +32,7 @@ public class FindBugsPlugin extends AbstractPlugin {
         taskTemplate.task("findbugsMain")
             .dependsOn(taskTemplate.task("classes"));
 
-        taskTemplate.task("findBugsTest")
+        taskTemplate.task("findbugsTest")
         .dependsOn(
             taskTemplate.task("classes"),
             taskTemplate.task("testClasses")
@@ -40,7 +40,7 @@ public class FindBugsPlugin extends AbstractPlugin {
 
         taskTemplate.task("check").dependsOn(
             taskTemplate.task("findbugsMain"),
-            taskTemplate.task("findBugsTest"));
+            taskTemplate.task("findbugsTest"));
 
     }
 

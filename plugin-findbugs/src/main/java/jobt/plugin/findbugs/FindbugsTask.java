@@ -1,8 +1,10 @@
 package jobt.plugin.findbugs;
 
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class FindbugsTask implements Task {
     private final Path classesDir;
     private final CompileTarget compileTarget;
 
+
     public FindbugsTask(final CompileTarget compileTarget,
         final ExecutionContext executionContext) {
         this.executionContext = executionContext;
@@ -48,6 +51,7 @@ public class FindbugsTask implements Task {
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
+
     }
 
     @Override
@@ -62,7 +66,9 @@ public class FindbugsTask implements Task {
 
         final List<BugInstance> bugs = new FindBugsRunner(
             sourceDir,
-            compileOutput.getSingleEntry(), executionContext.getCompileClasspath()).findMyBugs();
+            compileOutput.getSingleEntry(),
+            calcClasspath())
+            .findMyBugs();
 
         for (final BugInstance bug : bugs) {
 
@@ -71,6 +77,24 @@ public class FindbugsTask implements Task {
         }
 
         return TaskStatus.OK;
+    }
+
+    private List<URL> calcClasspath() {
+        try {
+            final List<URL> classpathElements = new ArrayList<>();
+            switch(compileTarget) {
+                case MAIN:
+                    classpathElements.addAll(executionContext.getCompileClasspath());
+                    break;
+                case TEST:
+                    classpathElements.addAll(executionContext.getCompileClasspath());
+                    classpathElements.addAll(executionContext.getTestClasspath());
+                    break;
+            }
+            return classpathElements;
+        } catch (final InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void checkDirs() {

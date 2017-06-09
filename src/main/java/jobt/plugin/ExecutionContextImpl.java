@@ -8,8 +8,8 @@ import jobt.api.ExecutionContext;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
-    private CountDownLatch compileClassPathLatch = new CountDownLatch(1);
-    private CountDownLatch testClassPathLatch = new CountDownLatch(1);
+    private final CountDownLatch compileClassPathLatch = new CountDownLatch(1);
+    private final CountDownLatch testClassPathLatch = new CountDownLatch(1);
 
     private volatile List<URL> compileClasspath;
     private volatile List<URL> testClasspath;
@@ -34,7 +34,7 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     @Override
     public void setTestClasspath(final List<URL> testClasspath) {
-        this.testClasspath = compileClasspath;
+        this.testClasspath = testClasspath;
         testClassPathLatch.countDown();
     }
 

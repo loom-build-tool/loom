@@ -46,15 +46,15 @@ public class FindBugsRunner {
     public static final String EFFORT_MAX = "max";
 
     private final Path classesDir;
-    private final List<URL> compileClasspath;
+    private final List<URL> auxClasspath;
 
     private final Iterable<String> sourceFiles;
 
     public FindBugsRunner(
         final Path sourcesDir,
-        final Path classesDir, final List<URL> compileClasspath) {
+        final Path classesDir, final List<URL> auxClasspath) {
         this.classesDir = classesDir;
-        this.compileClasspath = compileClasspath;
+        this.auxClasspath = auxClasspath;
 
         sourceFiles = getSourceFiles(sourcesDir);
     }
@@ -69,15 +69,10 @@ public class FindBugsRunner {
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        System.out.println("CHECK");
-
         final Collection<Plugin> customPlugins = null;
         try (PrintStream outputStream = new PrintStream(getTargetXMLReport(), "UTF-8")) {
-            System.out.println("CHECK");
             final FindBugs2 engine = new FindBugs2();
-            System.out.println("CHECK");
             final Project project = getFindbugsProject();
-            System.out.println("CHECK");
 
             //            if(project.getFileCount() == 0) {
             //                LOG.info("Findbugs analysis skipped for this project.");
@@ -87,13 +82,11 @@ public class FindBugsRunner {
             //            customPlugins = loadFindbugsPlugins(useFbContrib,useFindSecBugs);
 
             disableUpdateChecksOnEveryPlugin();
-            System.out.println("CHECK");
             engine.setProject(project);
 
             final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
             xmlBugReporter.setPriorityThreshold(BUG_PRIORITY); // TODO
             xmlBugReporter.setAddMessages(true);
-            System.out.println("CHECK");
             xmlBugReporter.setOutputStream(outputStream);
 
             engine.setBugReporter(xmlBugReporter);
@@ -243,7 +236,7 @@ public class FindBugsRunner {
             .map(Path::toString)
             .forEach(findbugsProject::addFile);
 
-        compileClasspath.stream().map(url -> url.getFile())
+        auxClasspath.stream().map(url -> url.getFile())
             .forEach(findbugsProject::addAuxClasspathEntry);
 
         System.out.println("configure files to "+findbugsProject.getFileList());

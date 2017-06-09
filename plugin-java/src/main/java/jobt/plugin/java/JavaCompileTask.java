@@ -8,10 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,10 @@ public class JavaCompileTask implements Task {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
+    private static final int DEFAULT_JAVA_PLATFORM = 9;
+
+    // The first Java version which supports the --release flag
+    private static final int JAVA_VERSION_WITH_RELEASE_FLAG = 9;
 
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
@@ -211,18 +217,79 @@ public class JavaCompileTask implements Task {
     }
 
     private List<String> configuredPlatformVersion(final String versionString) {
-        final List<String> options = new ArrayList<>();
-        final Integer platformVersion =
-            Optional.ofNullable(versionString)
-            .map(Integer::parseInt)
-            .orElse(9);
+        final String javaSpecVersion = System.getProperty("java.specification.version");
 
-        if (platformVersion >= 9) {
-            options.add("--release");
-            options.add(platformVersion.toString());
+        if (javaSpecVersion == null) {
+            throw new IllegalStateException("Unknown java.specification.version");
         }
 
-        return options;
+        final int parsedJavaSpecVersion = parseJavaVersion(javaSpecVersion);
+
+        final int platformVersion =
+            Optional.ofNullable(versionString)
+                .map(JavaCompileTask::parseJavaVersion)
+                .orElse(DEFAULT_JAVA_PLATFORM);
+
+        if (platformVersion == parsedJavaSpecVersion) {
+            return Collections.emptyList();
+        }
+
+        return parsedJavaSpecVersion >= JAVA_VERSION_WITH_RELEASE_FLAG
+            ? crossCompileWithReleaseFlag(platformVersion)
+            : crossCompileWithSourceTargetFlags(platformVersion);
+    }
+
+    @SuppressWarnings({ "checkstyle:magicnumber", "checkstyle:returncount" })
+    private static int parseJavaVersion(final String javaVersion) {
+        switch (javaVersion) {
+            case "9":
+                return 9;
+            case "8":
+            case "1.8":
+                return 8;
+            case "7":
+            case "1.7":
+                return 7;
+            case "6":
+            case "1.6":
+                return 6;
+            case "5":
+            case "1.5":
+                return 5;
+            default:
+                throw new IllegalStateException("Java Platform Version <" + javaVersion + "> is "
+                    + "unsupported");
+        }
+    }
+
+    private List<String> crossCompileWithReleaseFlag(final Integer platformVersion) {
+        return Arrays.asList("--release", platformVersion.toString());
+    }
+
+    private List<String> crossCompileWithSourceTargetFlags(final Integer platformVersion) {
+        return Arrays.asList(
+            "-source", platformVersion.toString(),
+            "-target", platformVersion.toString(),
+            "-bootclasspath", getBootstrapClasspath(),
+            "-extdirs", getExtdirs()
+        );
+    }
+
+    public String getBootstrapClasspath() {
+        return requireEnv("JOBT_JAVA_CROSS_COMPILE_BOOTSTRAPCLASSPATH");
+    }
+
+    public String getExtdirs() {
+        return requireEnv("JOBT_JAVA_CROSS_COMPILE_EXTDIRS");
+    }
+
+    private String requireEnv(final String envName) {
+        final String env = System.getenv(envName);
+        if (env == null) {
+            throw new IllegalStateException("System environment variable <"
+                + envName + "> not set");
+        }
+        return env;
     }
 
 }

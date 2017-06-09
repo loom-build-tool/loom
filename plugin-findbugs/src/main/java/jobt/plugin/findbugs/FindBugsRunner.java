@@ -145,7 +145,6 @@ public class FindBugsRunner {
         }
     }
 
-
     private static void waitForPluginInit() {
         try {
             customPluginsInitLatch.await();

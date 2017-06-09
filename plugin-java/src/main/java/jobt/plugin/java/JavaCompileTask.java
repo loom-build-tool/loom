@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -205,10 +206,22 @@ public class JavaCompileTask implements Task {
 
         final Map<String, String> config = buildConfig.getConfiguration();
 
-        System.out.println("FIXME no JRE 9 support");
-//        final String configuredPlatformVersion = config.get("javaPlatformVersion");
-//        options.add("--release");
-//        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
+        options.addAll(configuredPlatformVersion(config.get("javaPlatformVersion")));
+
+        return options;
+    }
+
+    private List<String> configuredPlatformVersion(final String versionString) {
+        final List<String> options = new ArrayList<>();
+        final Integer platformVersion =
+            Optional.ofNullable(versionString)
+            .map(Integer::parseInt)
+            .orElse(9);
+
+        if (platformVersion >= 9) {
+            options.add("--release");
+            options.add(platformVersion.toString());
+        }
 
         return options;
     }

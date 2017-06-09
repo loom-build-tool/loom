@@ -8,7 +8,7 @@ configurations {
 dependencies {
     compileOnly project(':api')
     compile('com.google.code.findbugs:findbugs:3.0.1')
-    //compile('com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0')
+    compile('com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0')
 //     compile('com.mebigfatguy.fb-contrib:fb-contrib:7.0.2')
     compile('org.slf4j:jcl-over-slf4j:1.7.22')
 }

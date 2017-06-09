@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -69,7 +68,6 @@ public class FindBugsRunner {
 
         System.out.println("NEW STYLE INVOKER @ work");
 
-
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
         // This is a dirty workaround, but unfortunately there is no other way to make Findbugs generate english messages only - see SONARJAVA-380
@@ -125,7 +123,7 @@ public class FindBugsRunner {
         } finally {
             // we set back the original security manager BEFORE shutting down the executor service, otherwise there's a problem with Java 5
             System.setSecurityManager(currentSecurityManager);
-                        resetCustomPluginList(customPlugins);
+            resetCustomPluginList(customPlugins);
 //            Thread.currentThread().setContextClassLoader(initialClassLoader);
             Locale.setDefault(initialLocale);
         }
@@ -133,13 +131,13 @@ public class FindBugsRunner {
 
     private List<Plugin> loadFindbugsPlugin() {
 
-        final ClassLoader contextClassLoader = FindBugs2.class.getClassLoader();
+        final ClassLoader contextClassLoader = FindBugsRunner.class.getClassLoader();
 
         try {
 
             return
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-            .peek(url -> System.out.println(" url= " +url))
+            .peek(url -> System.out.println(" url= " +url+ "  " + Thread.currentThread()))
             .map(url -> normalizeUrl(url))
             .map(Paths::get).filter(p -> Files.exists(p))
             .map(Path::toUri)
@@ -338,10 +336,13 @@ public class FindBugsRunner {
         }
     }
 
-    private static void resetCustomPluginList(final Collection<Plugin> customPlugins) {
+    private static void resetCustomPluginList(final List<Plugin> customPlugins) {
         if (customPlugins != null) {
             for (final Plugin plugin : customPlugins) {
                 Plugin.removeCustomPlugin(plugin);
+
+                System.out.println("remove plugin "+plugin.getPluginId());
+
             }
         }
     }

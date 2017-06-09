@@ -205,9 +205,22 @@ public class JavaCompileTask implements Task {
 
         final Map<String, String> config = buildConfig.getConfiguration();
 
-        final String configuredPlatformVersion = config.get("javaPlatformVersion");
-        options.add("--release");
-        options.add(configuredPlatformVersion != null ? configuredPlatformVersion : "9");
+        options.addAll(configuredPlatformVersion(config.get("javaPlatformVersion")));
+
+        return options;
+    }
+
+    private List<String> configuredPlatformVersion(final String versionString) {
+        final List<String> options = new ArrayList<>();
+        final Integer platformVersion =
+            Optional.ofNullable(versionString)
+            .map(Integer::parseInt)
+            .orElse(9);
+
+        if (platformVersion >= 9) {
+            options.add("--release");
+            options.add(platformVersion.toString());
+        }
 
         return options;
     }

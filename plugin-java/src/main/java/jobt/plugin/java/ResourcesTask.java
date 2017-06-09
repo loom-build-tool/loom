@@ -44,7 +44,7 @@ public class ResourcesTask implements Task {
         assertDirectoryOrMissing(destPath);
 
         if (Files.notExists(srcPath) && Files.exists(destPath)) {
-            FileUtil.deleteDirectoryRecursively(destPath);
+            FileUtil.deleteDirectoryRecursively(destPath, true);
             return TaskStatus.OK;
         }
 

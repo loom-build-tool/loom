@@ -114,43 +114,39 @@ public class JavaCompileTask implements Task {
         final List<URL> urls = classpath.stream()
             .map(JavaCompileTask::buildUrl).collect(Collectors.toList());
 
+        final FileCacher fileCacher;
+
         switch (compileTarget) {
             case MAIN:
                 executionContext.setCompileClasspath(urls);
+                fileCacher = new FileCacher("main");
                 break;
             case TEST:
                 executionContext.setTestClasspath(urls);
+                fileCacher = new FileCacher("test");
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final FileCacher fileCacher = new FileCacher();
-
-        if (Files.notExists(buildDir)) {
-            Files.createDirectories(buildDir);
-        }
-
-        final List<Path> srcFiles = Files.walk(srcPath)
+        final List<Path> srcPaths = Files.walk(srcPath)
             .filter(Files::isRegularFile)
             .filter(f -> f.toString().endsWith(".java"))
             .collect(Collectors.toList());
 
-        final List<File> nonCachedFiles;
-        if (fileCacher.isCacheEmpty()) {
-            nonCachedFiles = srcFiles.stream()
-                .map(Path::toFile)
-                .collect(Collectors.toList());
-        } else {
-            nonCachedFiles = srcFiles.stream()
-                .filter(fileCacher::notCached)
-                .map(Path::toFile)
-                .collect(Collectors.toList());
-        }
-
-        if (nonCachedFiles.isEmpty()) {
+        if (fileCacher.filesCached(srcPaths)) {
             return TaskStatus.UP_TO_DATE;
         }
+
+        if (Files.notExists(buildDir)) {
+            Files.createDirectories(buildDir);
+        } else {
+            FileUtil.deleteDirectoryRecursively(buildDir, false);
+        }
+
+        final List<File> srcFiles = srcPaths.stream()
+            .map(Path::toFile)
+            .collect(Collectors.toList());
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
@@ -164,7 +160,7 @@ public class JavaCompileTask implements Task {
                 Collections.singletonList(buildDir.toFile()));
 
             final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(nonCachedFiles);
+                fileManager.getJavaFileObjectsFromFiles(srcFiles);
 
             final List<String> options = buildOptions();
 
@@ -181,7 +177,7 @@ public class JavaCompileTask implements Task {
             }
         }
 
-        fileCacher.cacheFiles(srcFiles);
+        fileCacher.cacheFiles(srcPaths);
 
         return TaskStatus.OK;
     }

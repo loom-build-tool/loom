@@ -38,9 +38,7 @@ public final class ConfigReader {
 
         final Path cachePath = Paths.get(".jobt", "cache", "base");
 
-        if (Files.notExists(cachePath)) {
-            Files.createDirectories(cachePath);
-        }
+        Files.createDirectories(cachePath);
 
         final Path hashFile = cachePath.resolve(Paths.get("config.hash"));
         final Path cacheFile = cachePath.resolve(Paths.get("config.cache"));

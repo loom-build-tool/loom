@@ -32,9 +32,7 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
                 Files.delete(destPath);
             }
 
-            if (Files.notExists(destPath)) {
-                Files.createDirectory(destPath);
-            }
+            Files.createDirectory(destPath);
         }
 
         return FileVisitResult.CONTINUE;
@@ -57,7 +55,7 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
         final Path destPath = targetBasePath.resolve(relativizedFile);
 
         if (Files.exists(destPath) && Files.isDirectory(destPath)) {
-            FileUtil.deleteDirectoryRecursively(destPath);
+            FileUtil.deleteDirectoryRecursively(destPath, true);
         }
 
         Files.copy(file, destPath, StandardCopyOption.REPLACE_EXISTING);

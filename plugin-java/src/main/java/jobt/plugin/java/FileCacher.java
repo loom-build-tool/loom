@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,34 +14,50 @@ import java.util.stream.Collectors;
 public class FileCacher {
 
     private Path cacheFile;
-    private Map<String, Long> cachedFiles = new HashMap<>();
 
-    public FileCacher() throws IOException {
-        final Path path = Paths.get(".jobt");
-        if (Files.notExists(path)) {
-            Files.createDirectory(path);
+    public FileCacher(final String type) throws IOException {
+        final Path path = Paths.get(".jobt/", "cache", "java");
+        Files.createDirectories(path);
+        cacheFile = path.resolve("java-" + type + ".cache");
+    }
+
+    @SuppressWarnings("checkstyle:returncount")
+    public boolean filesCached(final List<Path> srcPaths) throws IOException {
+        final Map<String, Long> cachedFiles = readCache();
+
+        if (srcPaths.size() != cachedFiles.size()) {
+            return false;
         }
-        cacheFile = Paths.get(".jobt/file.cache");
-        if (Files.exists(cacheFile)) {
-            final List<String> strings = Files.readAllLines(cacheFile);
-            for (final String string : strings) {
-                final String[] split = string.split("\t");
-                cachedFiles.put(split[0], Long.valueOf(split[1]));
+
+        for (final Path srcPath : srcPaths) {
+            final Long cachedMtime = cachedFiles.remove(srcPath.toString());
+            if (cachedMtime == null) {
+                return false;
+            }
+            final FileTime lastModifiedTime = Files.getLastModifiedTime(srcPath);
+            if (!cachedMtime.equals(lastModifiedTime.toMillis())) {
+                return false;
             }
         }
+
+        return cachedFiles.isEmpty();
     }
 
-    public boolean notCached(final Path f) {
-        final Long lastMod = cachedFiles.get(f.toString());
-        try {
-            return lastMod == null || Files.getLastModifiedTime(f).toMillis() != lastMod;
-        } catch (final IOException e) {
-            return true;
+    private Map<String, Long> readCache() throws IOException {
+        if (Files.notExists(cacheFile)) {
+            return Collections.emptyMap();
         }
+
+        final List<String> strings = Files.readAllLines(cacheFile);
+        return strings.stream()
+            .map(s -> s.split("\t"))
+            .collect(Collectors.toMap(split -> split[0], split -> Long.valueOf(split[1])));
     }
 
-    public void cacheFiles(final List<Path> srcFiles) throws IOException {
-        for (final Path srcFile : srcFiles) {
+    public void cacheFiles(final List<Path> srcPaths) throws IOException {
+        final Map<String, Long> cachedFiles = new HashMap<>();
+
+        for (final Path srcFile : srcPaths) {
             cachedFiles.put(srcFile.toString(), Files.getLastModifiedTime(srcFile).toMillis());
         }
 
@@ -48,10 +66,6 @@ public class FileCacher {
             .collect(Collectors.toList());
 
         Files.write(cacheFile, stringStream);
-    }
-
-    public boolean isCacheEmpty() {
-        return cachedFiles.isEmpty();
     }
 
 }

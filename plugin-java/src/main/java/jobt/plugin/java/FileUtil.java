@@ -13,10 +13,10 @@ public final class FileUtil {
     private FileUtil() {
     }
 
-    public static void deleteDirectoryRecursively(final Path dir) {
-        assertDirectory(dir);
+    public static void deleteDirectoryRecursively(final Path parent, final boolean parentItself) {
+        assertDirectory(parent);
         try {
-            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(parent, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
                     throws IOException {
@@ -27,7 +27,9 @@ public final class FileUtil {
                 @Override
                 public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
                     throws IOException {
-                    Files.delete(dir);
+                    if (parentItself || !dir.equals(parent)) {
+                        Files.delete(dir);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
             });

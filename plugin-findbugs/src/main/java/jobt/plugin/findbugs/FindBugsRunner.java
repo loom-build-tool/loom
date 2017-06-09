@@ -11,8 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
@@ -24,15 +26,19 @@ import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.Plugin;
+import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
+import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
 import jobt.util.Util;
 
 public class FindBugsRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(FindBugsRunner.class);
+
+    private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
 
     private static final int BUG_PRIORITY = Priorities.NORMAL_PRIORITY;
 
@@ -63,13 +69,14 @@ public class FindBugsRunner {
 
         System.out.println("NEW STYLE INVOKER @ work");
 
+
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
         // This is a dirty workaround, but unfortunately there is no other way to make Findbugs generate english messages only - see SONARJAVA-380
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        final Collection<Plugin> customPlugins = null;
+        List<Plugin> customPlugins = null;
         try (PrintStream outputStream = new PrintStream(getTargetXMLReport(), "UTF-8")) {
             final FindBugs2 engine = new FindBugs2();
             final Project project = getFindbugsProject();
@@ -79,7 +86,13 @@ public class FindBugsRunner {
             //                return new ArrayList<>();
             //            }
 
-            //            customPlugins = loadFindbugsPlugins(useFbContrib,useFindSecBugs);
+            customPlugins = loadFindbugsPlugin();
+
+            if (!customPlugins.isEmpty()) {
+                System.out.println("Using findbugs custom plugins: ");
+                customPlugins.stream().map(p -> p.getPluginId()).forEach(id -> System.out.println(" " + id));
+//                        customPlugins = loadFindbugsPlugins(useFbContrib,useFindSecBugs);
+            }
 
             disableUpdateChecksOnEveryPlugin();
             engine.setProject(project);
@@ -112,10 +125,44 @@ public class FindBugsRunner {
         } finally {
             // we set back the original security manager BEFORE shutting down the executor service, otherwise there's a problem with Java 5
             System.setSecurityManager(currentSecurityManager);
-            //            resetCustomPluginList(customPlugins);
+                        resetCustomPluginList(customPlugins);
 //            Thread.currentThread().setContextClassLoader(initialClassLoader);
             Locale.setDefault(initialLocale);
         }
+    }
+
+    private List<Plugin> loadFindbugsPlugin() {
+
+        final ClassLoader contextClassLoader = FindBugs2.class.getClassLoader();
+
+        try {
+
+            return
+            Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
+            .peek(url -> System.out.println(" url= " +url))
+            .map(url -> normalizeUrl(url))
+            .map(Paths::get).filter(p -> Files.exists(p))
+            .map(Path::toUri)
+            .map(uri -> {
+                try {
+                    return Optional.of(Plugin.addCustomPlugin(uri, contextClassLoader));
+                } catch (final PluginException e) {
+                    throw new IllegalStateException("Error loading plugin " + uri, e);
+                } catch (final DuplicatePluginIdException e) {
+                    if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
+                        throw new IllegalStateException("Duplicate findbugs plugin "+e.getPluginId());
+                    }
+                    return Optional.<Plugin>empty();
+                }
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+
+        } catch (final IOException e) {
+            throw new RuntimeException(e); // FIXME
+        }
+
     }
 
     public File getTargetXMLReport() {
@@ -187,8 +234,12 @@ public class FindBugsRunner {
 //    }
 
 
-    private String normalizeUrl(final URL url) throws URISyntaxException {
-        return StringUtils.removeStart(StringUtils.substringBefore(url.toURI().getSchemeSpecificPart(), "!"), "file:");
+    public static String normalizeUrl(final URL url) {
+        try {
+            return StringUtils.removeStart(StringUtils.substringBefore(url.toURI().getSchemeSpecificPart(), "!"), "file:");
+        } catch (final URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
 
@@ -239,26 +290,11 @@ public class FindBugsRunner {
         auxClasspath.stream().map(url -> url.getFile())
             .forEach(findbugsProject::addAuxClasspathEntry);
 
-        System.out.println("configure files to "+findbugsProject.getFileList());
-        System.out.println("configure auxpath to "+findbugsProject.getAuxClasspathEntryList());
-
-
         if (findbugsProject.getFileList().isEmpty()) {
             throw new RuntimeException("no source files");
         }
-//
-//        if (hasJspFiles && !hasPrecompiledJsp) {
-//            LOG.warn("JSP files were found in the current (sub)project ({}) but FindBugs requires their precompiled form. " +
-//                "For more information on how to configure JSP precompilation : https://github.com/find-sec-bugs/find-sec-bugs/wiki/JSP-precompilation",
-//                fileSystem.baseDir().getPath());
-//        }
 
 //        copyLibs();
-//        if (annotationsLib != null) {
-//            // Findbugs dependencies are packaged by Maven. They are not available during execution of unit tests.
-//            findbugsProject.addAuxClasspathEntry(annotationsLib.getCanonicalPath());
-//            findbugsProject.addAuxClasspathEntry(jsr305Lib.getCanonicalPath());
-//        }
         findbugsProject.setCurrentWorkingDirectory(workDir());
         return findbugsProject;
     }
@@ -302,7 +338,7 @@ public class FindBugsRunner {
         }
     }
 
-    private void resetCustomPluginList(final Collection<Plugin> customPlugins) {
+    private static void resetCustomPluginList(final Collection<Plugin> customPlugins) {
         if (customPlugins != null) {
             for (final Plugin plugin : customPlugins) {
                 Plugin.removeCustomPlugin(plugin);

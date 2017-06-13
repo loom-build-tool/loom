@@ -5,16 +5,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
 import jobt.api.ExecutionContext;
-import jobt.util.UncheckedExecutionException;
+import jobt.api.JobtExecutor;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
     // compile/test scope dependencies
-    final CompletableFuture<List<Path>> compileDependenciesPromise = new CompletableFuture<>();
-    final CompletableFuture<List<Path>> testDependenciesPromise = new CompletableFuture<>();
+    private final CompletableFuture<List<Path>> compileDependenciesPromise =
+        new CompletableFuture<>();
+    private final CompletableFuture<List<Path>> testDependenciesPromise = new CompletableFuture<>();
     private final CountDownLatch compileClassPathLatch = new CountDownLatch(1);
     private final CountDownLatch testClassPathLatch = new CountDownLatch(1);
 
@@ -22,7 +22,7 @@ public class ExecutionContextImpl implements ExecutionContext {
     private volatile List<URL> testClasspath;
 
     /**
-     * Resolved by mavenresolver plugin
+     * Provided by mavenresolver plugin.
      */
     @Override
     public CompletableFuture<List<Path>> getCompileDependenciesPromise() {
@@ -30,16 +30,12 @@ public class ExecutionContextImpl implements ExecutionContext {
     }
 
     @Override
-    public List<Path> getResolvedCompileDependencies() throws InterruptedException {
-        try {
-            return compileDependenciesPromise.get();
-        } catch (final ExecutionException e) {
-            throw new UncheckedExecutionException(e);
-        }
+    public List<Path> getResolvedCompileDependencies() {
+        return JobtExecutor.waitAndGet(compileDependenciesPromise);
     }
 
     /**
-     * Resolved by mavenresolver plugin
+     * Provided by mavenresolver plugin.
      */
     @Override
     public CompletableFuture<List<Path>> getTestDependenciesPromise() {
@@ -47,12 +43,8 @@ public class ExecutionContextImpl implements ExecutionContext {
     }
 
     @Override
-    public List<Path> getResolvedTestDependencies() throws InterruptedException {
-        try {
-            return testDependenciesPromise.get();
-        } catch (final ExecutionException e) {
-            throw new UncheckedExecutionException(e);
-        }
+    public List<Path> getResolvedTestDependencies() {
+        return JobtExecutor.waitAndGet(testDependenciesPromise);
     }
 
     @Override

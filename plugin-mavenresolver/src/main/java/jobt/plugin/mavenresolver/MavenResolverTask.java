@@ -16,7 +16,7 @@ public class MavenResolverTask implements Task {
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
-    private final DependencyResolver mavenResolver = new MavenResolver();
+    private final MavenResolver mavenResolver = new MavenResolver();
 
     public MavenResolverTask(
         final DependencyScope dependencyScope,
@@ -43,9 +43,9 @@ public class MavenResolverTask implements Task {
             case TEST:
                 JobtExecutor.submit(testScope());
                 return TaskStatus.OK;
+            default:
+                throw new IllegalStateException();
         }
-
-        throw new IllegalStateException();
     }
 
     private Callable<?> compileScope() throws Exception {

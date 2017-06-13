@@ -9,11 +9,11 @@ public interface ExecutionContext {
 
     CompletableFuture<List<Path>> getCompileDependenciesPromise();
 
-    List<Path> getResolvedCompileDependencies() throws InterruptedException;
+    List<Path> getResolvedCompileDependencies();
 
     CompletableFuture<List<Path>> getTestDependenciesPromise();
 
-    List<Path> getResolvedTestDependencies() throws InterruptedException;
+    List<Path> getResolvedTestDependencies();
 
     List<URL> getCompileClasspath() throws InterruptedException;
 
@@ -22,6 +22,5 @@ public interface ExecutionContext {
     List<URL> getTestClasspath() throws InterruptedException;
 
     void setTestClasspath(List<URL> testClasspath);
-
 
 }

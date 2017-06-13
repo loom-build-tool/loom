@@ -98,7 +98,7 @@ public class MavenResolver implements DependencyResolver {
 
     @Override
     public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope)
-        throws IOException{
+        throws IOException {
 
         if (!initialized) {
             synchronized (this) {
@@ -125,7 +125,8 @@ public class MavenResolver implements DependencyResolver {
         return paths;
     }
 
-    private List<Path> readCache(final List<String> deps, final DependencyScope scope) throws IOException {
+    private List<Path> readCache(final List<String> deps, final DependencyScope scope)
+        throws IOException {
         final Path path = Paths.get(".jobt", scope.name().toLowerCase() + "-dependencies");
         if (Files.exists(path)) {
             final List<String> strings = Files.readAllLines(path);
@@ -189,7 +190,7 @@ public class MavenResolver implements DependencyResolver {
             case TEST:
                 return "test";
             default:
-                throw new IllegalStateException("Unknown scope <"+scope+">");
+                throw new IllegalStateException("Unknown scope: " + scope);
         }
     }
 
@@ -202,7 +203,8 @@ public class MavenResolver implements DependencyResolver {
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
-        Files.write(Paths.get(".jobt", dependencyScope.name().toLowerCase() + "-dependencies"), Collections.singletonList(sb),
+        Files.write(Paths.get(".jobt", dependencyScope.name().toLowerCase() + "-dependencies"),
+            Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 

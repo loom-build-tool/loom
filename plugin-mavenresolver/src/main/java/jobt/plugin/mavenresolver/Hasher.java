@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
-// FIXME consolidate with jobt.Hasher
 public final class Hasher {
 
     private static final int MASK = 0xff;

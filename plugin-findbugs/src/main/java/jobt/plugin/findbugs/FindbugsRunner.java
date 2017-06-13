@@ -37,26 +37,23 @@ import jobt.util.Util;
 
 public class FindbugsRunner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
+    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.LOW_PRIORITY;
 
-    private static final int BUG_PRIORITY = Priorities.NORMAL_PRIORITY;
+    private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
 
     private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
 
-    public static final String EFFORT_MIN = "min";
-
-    public static final String EFFORT_DEFAULT = "default";
-
-    public static final String EFFORT_MAX = "max";
+    private static final String EFFORT_DEFAULT = "default";
 
     private final Path classesDir;
     private final List<URL> auxClasspath;
 
     private final List<String> sourceFiles;
 
+    private final Optional<Integer> priorityThreshold;
+
     private final static CountDownLatch customPluginsInitLatch = new CountDownLatch(1);
     private static List<Plugin> customPlugins = null;
-
 
     public static synchronized void startupFindbugsAsync() {
         if (customPlugins != null) {
@@ -76,11 +73,13 @@ public class FindbugsRunner {
     public FindbugsRunner(
         final Path sourcesDir,
         final Path classesDir,
-        final List<URL> auxClasspath) {
+        final List<URL> auxClasspath,
+        final Optional<Integer> priorityThreshold) {
 
         this.classesDir = classesDir;
         this.auxClasspath = auxClasspath;
         sourceFiles = getSourceFiles(sourcesDir);
+        this.priorityThreshold = priorityThreshold;
     }
 
     public List<BugInstance> findMyBugs() {
@@ -113,14 +112,15 @@ public class FindbugsRunner {
             engine.setProject(project);
 
             final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
-            xmlBugReporter.setPriorityThreshold(BUG_PRIORITY); // TODO
+            xmlBugReporter.setPriorityThreshold(
+                priorityThreshold.orElse(DEFAULT_PRIORITY_THRESHOLD));
             xmlBugReporter.setAddMessages(true);
             xmlBugReporter.setOutputStream(outputStream);
 
             engine.setBugReporter(xmlBugReporter);
 
             final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
-            userPreferences.setEffort(EFFORT_MAX); // TODO make configurable
+            userPreferences.setEffort(EFFORT_DEFAULT);
             engine.setUserPreferences(userPreferences);
 
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());

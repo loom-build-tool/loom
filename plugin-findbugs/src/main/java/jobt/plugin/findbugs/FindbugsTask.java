@@ -1,5 +1,6 @@
 package jobt.plugin.findbugs;
 
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,13 +8,20 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.BugInstance;
+import edu.umd.cs.findbugs.Priorities;
+import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
 import jobt.api.Task;
@@ -31,6 +39,8 @@ public class FindbugsTask implements Task {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
     public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
 
+    private static Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
+
     private final ExecutionContext executionContext;
     private final Path sourceDir;
     private final Path classesDir;
@@ -43,11 +53,18 @@ public class FindbugsTask implements Task {
         return thread;
     });
 
+    private Optional<Integer> priorityThreshold;
 
-    public FindbugsTask(final CompileTarget compileTarget,
+
+
+    public FindbugsTask(
+        final BuildConfig buildConfig,
+        final CompileTarget compileTarget,
         final ExecutionContext executionContext) {
-        this.executionContext = executionContext;
-        this.compileTarget = compileTarget;
+
+        readBuildConfig(Objects.requireNonNull(buildConfig));
+        this.executionContext = Objects.requireNonNull(executionContext);
+        this.compileTarget = Objects.requireNonNull(compileTarget);
 
         switch (compileTarget) {
             case MAIN:
@@ -64,13 +81,21 @@ public class FindbugsTask implements Task {
 
     }
 
+    private void readBuildConfig(final BuildConfig buildConfig) {
+
+        priorityThreshold = Optional.ofNullable(
+            buildConfig.getConfiguration().get("findbugsPriorityThreshold"))
+            .map(PRIORITIES_MAP::get)
+            .map(prio -> Objects.requireNonNull(prio, "Invalid priority thresold " + prio));
+
+    }
+
     @Override
     public void prepare() throws Exception {
 
         pool.submit(FindbugsRunner::startupFindbugsAsync);
 
     }
-
 
     @Override
     public TaskStatus run() throws Exception {
@@ -81,7 +106,9 @@ public class FindbugsTask implements Task {
         final List<BugInstance> bugs = new FindbugsRunner(
             sourceDir,
             compileOutput.getSingleEntry(),
-            calcClasspath())
+            calcClasspath(),
+            priorityThreshold
+            )
             .findMyBugs();
 
         for (final BugInstance bug : bugs) {
@@ -109,6 +136,23 @@ public class FindbugsTask implements Task {
         } catch (final InterruptedException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private static Map<String, Integer> buildPrioritiesMap() {
+        final Field[] fields = Priorities.class.getDeclaredFields();
+
+        return
+            Stream.of(fields)
+            .filter(f -> f.getType().equals(int.class))
+            .collect(Collectors.toMap(
+                f -> f.getName().replaceAll("_PRIORITY", ""),
+                f -> {
+                    try {
+                        return f.getInt(null);
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }));
     }
 
     private void checkDirs() {

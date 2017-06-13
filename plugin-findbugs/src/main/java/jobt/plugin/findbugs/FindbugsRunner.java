@@ -35,17 +35,13 @@ import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
 import jobt.util.Preconditions;
 import jobt.util.Util;
 
-public class FindBugsRunner {
+public class FindbugsRunner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindBugsRunner.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
 
     private static final int BUG_PRIORITY = Priorities.NORMAL_PRIORITY;
 
     private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
-
-    private final boolean useFbContrib = true;
-    private final boolean useFindSecBugs = true;
 
     public static final String EFFORT_MIN = "min";
 
@@ -56,13 +52,13 @@ public class FindBugsRunner {
     private final Path classesDir;
     private final List<URL> auxClasspath;
 
-    private final Iterable<String> sourceFiles;
+    private final List<String> sourceFiles;
 
     private final static CountDownLatch customPluginsInitLatch = new CountDownLatch(1);
     private static List<Plugin> customPlugins = null;
 
 
-    public static synchronized void initFindBugs() {
+    public static synchronized void startupFindbugsAsync() {
         if (customPlugins != null) {
             return;
         }
@@ -77,12 +73,13 @@ public class FindBugsRunner {
 
     }
 
-    public FindBugsRunner(
+    public FindbugsRunner(
         final Path sourcesDir,
-        final Path classesDir, final List<URL> auxClasspath) {
+        final Path classesDir,
+        final List<URL> auxClasspath) {
+
         this.classesDir = classesDir;
         this.auxClasspath = auxClasspath;
-
         sourceFiles = getSourceFiles(sourcesDir);
     }
 
@@ -90,7 +87,13 @@ public class FindBugsRunner {
 
         waitForPluginInit();
 
-        cleanupPreviousFindbugsRun();
+        try {
+            LOG.debug("Prepare/cleanup findbugs environment...");
+            prepareEnvironment();
+            LOG.debug("...cleanup done");
+        } catch (final IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
@@ -139,11 +142,9 @@ public class FindBugsRunner {
         }
     }
 
-    private void cleanupPreviousFindbugsRun() {
-        try {
-            Files.deleteIfExists(getTargetXMLReport());
-        } catch (final IOException e) {
-        }
+    private void prepareEnvironment() throws IOException {
+        Files.deleteIfExists(getTargetXMLReport());
+        Files.createDirectories(FindbugsTask.REPORT_PATH);
     }
 
 
@@ -217,13 +218,13 @@ public class FindBugsRunner {
      */
     private static List<Plugin> loadFindbugsPlugin() {
 
-        final ClassLoader contextClassLoader = FindBugsRunner.class.getClassLoader();
+        final ClassLoader contextClassLoader = FindbugsRunner.class.getClassLoader();
 
         try {
 
             return
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-            .map(url -> FindBugsRunner.normalizeUrl(url))
+            .map(url -> FindbugsRunner.normalizeUrl(url))
             .map(Paths::get).filter(p -> Files.exists(p))
             .map(Path::toUri)
             .map(uri -> {

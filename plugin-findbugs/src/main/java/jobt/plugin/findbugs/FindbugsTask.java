@@ -67,10 +67,7 @@ public class FindbugsTask implements Task {
     @Override
     public void prepare() throws Exception {
 
-        pool.submit(() -> {
-            FindBugsRunner.initFindBugs();
-
-        });
+        pool.submit(FindbugsRunner::startupFindbugsAsync);
 
     }
 
@@ -81,7 +78,7 @@ public class FindbugsTask implements Task {
 
         final Classpath compileOutput = new Classpath(Collections.singletonList(classesDir));
 
-        final List<BugInstance> bugs = new FindBugsRunner(
+        final List<BugInstance> bugs = new FindbugsRunner(
             sourceDir,
             compileOutput.getSingleEntry(),
             calcClasspath())
@@ -89,7 +86,7 @@ public class FindbugsTask implements Task {
 
         for (final BugInstance bug : bugs) {
 
-            System.out.println("bug #"+bug.getMessage());
+            System.out.println("bug >>> " + bug.getMessage());
 
         }
 

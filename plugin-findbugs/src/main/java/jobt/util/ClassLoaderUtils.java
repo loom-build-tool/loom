@@ -5,7 +5,7 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import jobt.plugin.findbugs.FindBugsPlugin;
+import jobt.plugin.findbugs.FindbugsPlugin;
 
 public final class ClassLoaderUtils {
 
@@ -14,7 +14,7 @@ public final class ClassLoaderUtils {
 
 
     public static ClassLoader getInitialClassLoader() {
-        final ClassLoader extClassLoader = FindBugsPlugin.class.getClassLoader().getParent();
+        final ClassLoader extClassLoader = FindbugsPlugin.class.getClassLoader().getParent();
         // must be sun.misc.Launcher$ExtClassLoader
         Preconditions.checkState(extClassLoader.getClass().getSimpleName().equals("ExtClassLoader"));
         return extClassLoader;

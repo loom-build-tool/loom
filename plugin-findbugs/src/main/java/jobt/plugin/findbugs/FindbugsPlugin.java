@@ -9,9 +9,9 @@ import jobt.api.TaskRegistry;
 import jobt.api.TaskTemplate;
 
 
-public class FindBugsPlugin extends AbstractPlugin {
+public class FindbugsPlugin extends AbstractPlugin {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindBugsPlugin.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FindbugsPlugin.class);
 
     @Override
     public void configure(final TaskRegistry taskRegistry) {

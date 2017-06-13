@@ -97,7 +97,7 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> resolve(final List<String> deps, final DependencyScope scope)
+    public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope)
         throws IOException{
 
         if (!initialized) {

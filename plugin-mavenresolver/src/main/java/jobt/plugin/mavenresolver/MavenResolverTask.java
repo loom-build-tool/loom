@@ -1,11 +1,9 @@
 package jobt.plugin.mavenresolver;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,11 +37,11 @@ public class MavenResolverTask implements Task {
         final DependencyScope dependencyScope,
         final BuildConfig buildConfig,
         final ExecutionContext executionContext) {
+
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
         this.executionContext = executionContext;
 
-        System.out.println("CONS MavenResolverTask ("+dependencyScope+")");
     }
 
     @Override
@@ -52,16 +50,6 @@ public class MavenResolverTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-
-        System.out.println("Run MavenResolverTask...");
-
-        final List<String> dependencies = new ArrayList<>();
-
-        if (buildConfig.getDependencies() != null) {
-            dependencies.addAll(buildConfig.getDependencies());
-        }
-
-        final CompletableFuture<List<Path>> promise;
 
         switch (dependencyScope) {
             case COMPILE:
@@ -72,21 +60,11 @@ public class MavenResolverTask implements Task {
                 return TaskStatus.OK;
         }
 
-
-        // TODO support test
-        //        buildConfig.getTestDependencies()
-
-
-        //        final Future<List<Path>> resolving = mavenResolver.resolveDependencies(dependencies, "compile");
-
-        //        executionContext.setResolvingCompileDependencies(resolving);
-
         throw new IllegalStateException();
     }
 
 
     private Callable<?> compileScope() throws DependencyCollectionException, DependencyResolutionException, IOException {
-
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -95,12 +73,12 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-        executionContext.getCompileDependenciesPromise().complete(mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
+            executionContext.getCompileDependenciesPromise()
+            .complete(mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
 
     }
 
     private Callable<?> testScope() throws DependencyCollectionException, DependencyResolutionException, IOException {
-
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -113,7 +91,8 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-        executionContext.getTestDependenciesPromise().complete(mavenResolver.resolve(dependencies, DependencyScope.TEST));
+            executionContext.getTestDependenciesPromise()
+            .complete(mavenResolver.resolve(dependencies, DependencyScope.TEST));
 
     }
 

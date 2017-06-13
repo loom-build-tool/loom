@@ -21,7 +21,9 @@ public class ExecutionContextImpl implements ExecutionContext {
     private volatile List<URL> compileClasspath;
     private volatile List<URL> testClasspath;
 
-    // for resolvers only!!!
+    /**
+     * Resolved by mavenresolver plugin
+     */
     @Override
     public CompletableFuture<List<Path>> getCompileDependenciesPromise() {
         return compileDependenciesPromise;
@@ -36,7 +38,9 @@ public class ExecutionContextImpl implements ExecutionContext {
         }
     }
 
-    // for resolvers only!!!
+    /**
+     * Resolved by mavenresolver plugin
+     */
     @Override
     public CompletableFuture<List<Path>> getTestDependenciesPromise() {
         return testDependenciesPromise;

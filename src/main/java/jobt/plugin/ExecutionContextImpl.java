@@ -1,18 +1,55 @@
 package jobt.plugin;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import jobt.api.ExecutionContext;
+import jobt.util.UncheckedExecutionException;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
+    // compile/test scope dependencies
+    final CompletableFuture<List<Path>> compileDependenciesPromise = new CompletableFuture<>();
+    final CompletableFuture<List<Path>> testDependenciesPromise = new CompletableFuture<>();
     private final CountDownLatch compileClassPathLatch = new CountDownLatch(1);
     private final CountDownLatch testClassPathLatch = new CountDownLatch(1);
 
     private volatile List<URL> compileClasspath;
     private volatile List<URL> testClasspath;
+
+    // for resolvers only!!!
+    @Override
+    public CompletableFuture<List<Path>> getCompileDependenciesPromise() {
+        return compileDependenciesPromise;
+    }
+
+    @Override
+    public List<Path> getResolvedCompileDependencies() throws InterruptedException {
+        try {
+            return compileDependenciesPromise.get();
+        } catch (final ExecutionException e) {
+            throw new UncheckedExecutionException(e);
+        }
+    }
+
+    // for resolvers only!!!
+    @Override
+    public CompletableFuture<List<Path>> getTestDependenciesPromise() {
+        return testDependenciesPromise;
+    }
+
+    @Override
+    public List<Path> getResolvedTestDependencies() throws InterruptedException {
+        try {
+            return testDependenciesPromise.get();
+        } catch (final ExecutionException e) {
+            throw new UncheckedExecutionException(e);
+        }
+    }
 
     @Override
     public List<URL> getCompileClasspath() throws InterruptedException {

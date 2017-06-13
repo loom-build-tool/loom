@@ -6,6 +6,6 @@ import java.util.concurrent.Future;
 
 public interface DependencyResolver {
 
-    Future<List<Path>> resolveDependencies(List<String> dependencies, String scope);
+    Future<List<Path>> resolveDependencies(List<String> deps, DependencyScope dependencyScope);
 
 }

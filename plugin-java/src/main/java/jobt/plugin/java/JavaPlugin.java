@@ -19,9 +19,9 @@ public class JavaPlugin extends AbstractPlugin {
         final DependencyResolver dependencyResolver = getDependencyResolver();
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.MAIN, dependencyResolver));
+            runtimeConfiguration, executionContext, CompileTarget.MAIN));
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.TEST, dependencyResolver));
+            runtimeConfiguration, executionContext, CompileTarget.TEST));
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
@@ -32,7 +32,8 @@ public class JavaPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("compileJava");
+        taskTemplate.task("compileJava").dependsOn(
+            taskTemplate.task("resolveCompileDependencies"));
 
         taskTemplate.task("processResources");
 
@@ -43,7 +44,9 @@ public class JavaPlugin extends AbstractPlugin {
         taskTemplate.task("javadoc").dependsOn(
             taskTemplate.task("classes"));
 
+        // TODO add dependency to mavenresolver plugin
         taskTemplate.task("compileTestJava").dependsOn(
+            taskTemplate.task("resolveTestDependencies"),
             taskTemplate.task("classes"));
 
         taskTemplate.task("processTestResources");

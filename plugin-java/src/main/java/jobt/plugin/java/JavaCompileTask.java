@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticCollector;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
@@ -56,22 +54,23 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private final DependencyResolver dependencyResolver;
+//    private final DependencyResolver dependencyResolver;
     private final List<String> dependencies;
     private final String dependencyScope;
 
-    private Future<List<Path>> resolvedDependencies;
+//    private Future<List<Path>> resolvedDependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
                            final ExecutionContext executionContext,
-                           final CompileTarget compileTarget,
-                           final DependencyResolver dependencyResolver) {
+                           final CompileTarget compileTarget
+//                           final DependencyResolver dependencyResolver
+                           ) {
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
-        this.dependencyResolver = Objects.requireNonNull(dependencyResolver);
+//        this.dependencyResolver = Objects.requireNonNull(dependencyResolver);
 
         dependencies = new ArrayList<>();
         if (buildConfig.getDependencies() != null) {
@@ -105,8 +104,10 @@ public class JavaCompileTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-        resolvedDependencies =
-            dependencyResolver.resolveDependencies(dependencies, dependencyScope);
+
+        // FIXME remove
+//        resolvedDependencies =
+//            dependencyResolver.resolveDependencies(dependencies, dependencyScope);
     }
 
     @Override
@@ -115,7 +116,11 @@ public class JavaCompileTask implements Task {
             return TaskStatus.SKIP;
         }
 
-        final List<Path> classpath = new ArrayList<>(resolvedDependencies.get());
+//        System.out.println("GET dependencies from mavenresolver plugin...");
+//        final List<Path> resolvedDependencies = executionContext.getResolvedCompileDependencies();
+//        resolvedDependencies.forEach(p -> System.out.println(" - " + p));
+
+        final List<Path> classpath = new ArrayList<>();
         classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
@@ -126,9 +131,11 @@ public class JavaCompileTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
+                classpath.addAll(executionContext.getResolvedCompileDependencies());
                 executionContext.setCompileClasspath(urls);
                 break;
             case TEST:
+                classpath.addAll(executionContext.getResolvedTestDependencies());
                 executionContext.setTestClasspath(urls);
                 break;
             default:

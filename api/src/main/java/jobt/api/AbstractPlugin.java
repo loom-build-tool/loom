@@ -35,10 +35,10 @@ public abstract class AbstractPlugin implements Plugin {
         return executionContext;
     }
 
-    @Override
-    public void setDependencyResolver(final DependencyResolver dependencyResolver) {
-        this.dependencyResolver = dependencyResolver;
-    }
+//    @Override
+//    public void setDependencyResolver(final DependencyResolver dependencyResolver) {
+//        this.dependencyResolver = dependencyResolver;
+//    }
 
     public DependencyResolver getDependencyResolver() {
         return dependencyResolver;

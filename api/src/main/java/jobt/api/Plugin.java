@@ -15,7 +15,7 @@ public interface Plugin {
 
     void setExecutionContext(ExecutionContext executionContext);
 
-    void setDependencyResolver(DependencyResolver dependencyResolver);
+//    void setDependencyResolver(DependencyResolver dependencyResolver);
 
     void configure(TaskRegistry taskRegistry);
 

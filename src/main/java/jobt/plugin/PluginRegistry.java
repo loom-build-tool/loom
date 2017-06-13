@@ -59,6 +59,7 @@ public class PluginRegistry {
 
         final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
         plugins.add("java");
+        plugins.add("mavenresolver");
 
         final ExecutorService executorService = Executors.newWorkStealingPool();
         for (final String plugin : plugins) {

@@ -1,32 +1,17 @@
 package jobt.plugin.mavenresolver;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonatype.aether.collection.DependencyCollectionException;
-import org.sonatype.aether.resolution.DependencyResolutionException;
 
 import jobt.api.BuildConfig;
 import jobt.api.DependencyScope;
 import jobt.api.ExecutionContext;
+import jobt.api.JobtExecutor;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
 public class MavenResolverTask implements Task {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MavenResolverTask.class);
-
-    private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
-        final Thread thread = new Thread(r);
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
@@ -53,18 +38,17 @@ public class MavenResolverTask implements Task {
 
         switch (dependencyScope) {
             case COMPILE:
-                pool.submit(compileScope());
+                JobtExecutor.submit(compileScope());
                 return TaskStatus.OK;
             case TEST:
-                pool.submit(testScope());
+                JobtExecutor.submit(testScope());
                 return TaskStatus.OK;
         }
 
         throw new IllegalStateException();
     }
 
-
-    private Callable<?> compileScope() throws DependencyCollectionException, DependencyResolutionException, IOException {
+    private Callable<?> compileScope() throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -78,7 +62,7 @@ public class MavenResolverTask implements Task {
 
     }
 
-    private Callable<?> testScope() throws DependencyCollectionException, DependencyResolutionException, IOException {
+    private Callable<?> testScope() throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 

@@ -35,12 +35,13 @@ import jobt.api.TaskStatus;
 
 public class JavaCompileTask implements Task {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
+
     public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
     public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
     private static final int DEFAULT_JAVA_PLATFORM = 8;
 
     // The first Java version which supports the --release flag

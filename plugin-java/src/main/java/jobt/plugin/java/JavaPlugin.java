@@ -44,7 +44,6 @@ public class JavaPlugin extends AbstractPlugin {
         taskTemplate.task("javadoc").dependsOn(
             taskTemplate.task("classes"));
 
-        // TODO add dependency to mavenresolver plugin
         taskTemplate.task("compileTestJava").dependsOn(
             taskTemplate.task("resolveTestDependencies"),
             taskTemplate.task("classes"));

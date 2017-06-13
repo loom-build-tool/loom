@@ -3,7 +3,6 @@ package jobt.plugin.java;
 import jobt.api.AbstractPlugin;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskRegistry;
@@ -16,7 +15,6 @@ public class JavaPlugin extends AbstractPlugin {
         final BuildConfig buildConfig = getBuildConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
         final ExecutionContext executionContext = getExecutionContext();
-        final DependencyResolver dependencyResolver = getDependencyResolver();
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, executionContext, CompileTarget.MAIN));

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -44,7 +43,6 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
-import jobt.api.DependencyResolver;
 import jobt.api.DependencyScope;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -99,13 +97,8 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public Future<List<Path>> resolveDependencies(final List<String> deps, final DependencyScope scope) {
-        return pool.submit(() -> resolve(deps, scope));
-    }
-
-    // FIXME
     public List<Path> resolve(final List<String> deps, final DependencyScope scope)
-        throws IOException, DependencyCollectionException, DependencyResolutionException {
+        throws IOException{
 
         if (!initialized) {
             synchronized (this) {
@@ -149,7 +142,7 @@ public class MavenResolver implements DependencyResolver {
     }
 
     private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope)
-        throws DependencyCollectionException, DependencyResolutionException, IOException {
+        throws IOException {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
@@ -162,22 +155,31 @@ public class MavenResolver implements DependencyResolver {
 
         collectRequest.setDependencies(dependencies);
         collectRequest.addRepository(mavenRepository);
-        final DependencyNode node =
-            system.collectDependencies(session, collectRequest).getRoot();
 
-        final DependencyRequest dependencyRequest = new DependencyRequest();
-        dependencyRequest.setRoot(node);
+        try {
+            final DependencyNode node =
+                system.collectDependencies(session, collectRequest).getRoot();
 
-        system.resolveDependencies(session, dependencyRequest);
+            final DependencyRequest dependencyRequest = new DependencyRequest();
+            dependencyRequest.setRoot(node);
 
-        final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-        node.accept(nlg);
+            system.resolveDependencies(session, dependencyRequest);
 
-        final List<Path> libs = nlg.getFiles().stream()
-            .map(File::toPath)
-            .collect(Collectors.toList());
+            final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+            node.accept(nlg);
 
-        return Collections.unmodifiableList(libs);
+            final List<Path> libs = nlg.getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toList());
+
+            return Collections.unmodifiableList(libs);
+        } catch (final DependencyCollectionException  e) {
+            throw new RuntimeException(e);
+        } catch (final DependencyResolutionException e) {
+            throw new IllegalStateException(
+                String.format("Unresolvable dependencies for scope <%s>: %s",
+                    scope, e.getMessage()));
+        }
     }
 
     private String mavenScope(final DependencyScope scope) {

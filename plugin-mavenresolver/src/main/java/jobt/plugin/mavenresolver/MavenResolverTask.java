@@ -16,7 +16,7 @@ public class MavenResolverTask implements Task {
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
-    private final MavenResolver mavenResolver = new MavenResolver();
+    private final DependencyResolver mavenResolver = new MavenResolver();
 
     public MavenResolverTask(
         final DependencyScope dependencyScope,

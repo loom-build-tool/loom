@@ -70,9 +70,12 @@ public class FindBugsRunner {
 
         customPlugins = loadFindbugsPlugin();
         disableUpdateChecksOnEveryPlugin();
-        customPluginsInitLatch.countDown();
-    }
 
+        LOG.info("Using findbugs custom plugins: {}", Plugin.getAllPluginIds());
+
+        customPluginsInitLatch.countDown();
+
+    }
 
     public FindBugsRunner(
         final Path sourcesDir,
@@ -87,9 +90,7 @@ public class FindBugsRunner {
 
         waitForPluginInit();
 
-        System.out.println("Using findbugs custom plugins: ");
-        Plugin.getAllPluginIds().stream().forEach(id -> System.out.println(" " + id));
-
+        cleanupPreviousFindbugsRun();
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
@@ -97,17 +98,14 @@ public class FindBugsRunner {
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        try (PrintStream outputStream = new PrintStream(getTargetXMLReport(), "UTF-8")) {
+        try (PrintStream outputStream = new PrintStream(getTargetXMLReport().toFile(), "UTF-8")) {
             final FindBugs2 engine = new FindBugs2();
             final Project project = getFindbugsProject();
 
-            //            if(project.getFileCount() == 0) {
-            //                LOG.info("Findbugs analysis skipped for this project.");
-            //                return new ArrayList<>();
-            //            }
-
-//            customPlugins = loadFindbugsPlugin();
-
+            if (project.getFileCount() == 0) {
+                LOG.info("Findbugs analysis skipped for this project.");
+                return new ArrayList<>();
+            }
 
             engine.setProject(project);
 
@@ -132,18 +130,22 @@ public class FindBugsRunner {
             final ArrayList<BugInstance> bugs = new ArrayList<>();
             xmlBugReporter.getBugCollection().forEach(bugs::add);
             return bugs;
-            //            return toReportedBugs(xmlBugReporter.getBugCollection());
+
         } catch (final Throwable e) {
-            System.out.println("FINDBUGS expection ...");
-            throw new IllegalStateException("Can not execute Findbugs", e);
+            throw new IllegalStateException("Error execution Findbugs", e);
         } finally {
-            // we set back the original security manager BEFORE shutting down the executor service, otherwise there's a problem with Java 5
             System.setSecurityManager(currentSecurityManager);
-//            resetCustomPluginList(customPlugins);
-//            Thread.currentThread().setContextClassLoader(initialClassLoader);
             Locale.setDefault(initialLocale);
         }
     }
+
+    private void cleanupPreviousFindbugsRun() {
+        try {
+            Files.deleteIfExists(getTargetXMLReport());
+        } catch (final IOException e) {
+        }
+    }
+
 
     private static void waitForPluginInit() {
         try {
@@ -154,75 +156,9 @@ public class FindBugsRunner {
 
     }
 
-    // FIXME move to report dir + make sure, it gets not overwritten
-    public File getTargetXMLReport() {
-        return Paths.get("findbugs-result.xml").toFile();
+    public Path getTargetXMLReport() {
+        return FindbugsTask.REPORT_PATH.resolve("findbugs-result.xml");
     }
-
-    //    private Collection<Plugin> loadFindbugsPlugins(boolean useFbContrib,boolean useFindSecBugs) {
-    //        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    //
-    //        List<String> pluginJarPathList = Lists.newArrayList();
-    //        try {
-    //            Enumeration<URL> urls = contextClassLoader.getResources("findbugs.xml");
-    //            while (urls.hasMoreElements()) {
-    //                URL url = urls.nextElement();
-    //                pluginJarPathList.add(normalizeUrl(url));
-    //            }
-    //            //Add fb-contrib plugin.
-    //            if (useFbContrib && configuration.getFbContribJar() != null) {
-    //                // fb-contrib plugin is packaged by Maven. It is not available during execution of unit tests.
-    //                pluginJarPathList.add(configuration.getFbContribJar().getAbsolutePath());
-    //            }
-    //            //Add find-sec-bugs plugin. (same as fb-contrib)
-    //            if (useFindSecBugs && configuration.getFindSecBugsJar() != null) {
-    //                pluginJarPathList.add(configuration.getFindSecBugsJar().getAbsolutePath());
-    //            }
-    //        } catch (IOException e) {
-    //            throw new IllegalStateException(e);
-    //        } catch (URISyntaxException e) {
-    //            throw new IllegalStateException(e);
-    //        }
-    //        List<Plugin> customPluginList = Lists.newArrayList();
-    //
-    //        for (String path : pluginJarPathList) {
-    //            try {
-    //                Plugin plugin = Plugin.addCustomPlugin(new File(path).toURI(), contextClassLoader);
-    //                if (plugin != null) {
-    //                    customPluginList.add(plugin);
-    //                    LOG.info("Loading findbugs plugin: " + path);
-    //                }
-    //            } catch (PluginException e) {
-    //                LOG.warn("Failed to load plugin for custom detector: " + path);
-    //                LOG.debug("Cause of failure", e);
-    //            } catch (DuplicatePluginIdException e) {
-    //                // FB Core plugin is always loaded, so we'll get an exception for it always
-    //                if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-    //                    // log only if it's not the FV Core plugin
-    //                    LOG.debug("Plugin already loaded: exception ignored: " + e.getMessage(), e);
-    //                }
-    //            }
-    //        }
-    //
-    //        return customPluginList;
-    //    }
-//    private static Collection<ReportedBug> toReportedBugs(final BugCollection bugCollection) {
-//        // We need to retrieve information such as the message before we shut everything down as we will lose any custom
-//        // bug messages
-//        final Collection<ReportedBug> bugs = new ArrayList<ReportedBug>();
-//
-//        for (final BugInstance bugInstance : bugCollection) {
-//            if (bugInstance.getPrimarySourceLineAnnotation() == null) {
-//                LOG.warn("No source line for " + bugInstance.getType());
-//                continue;
-//            }
-//
-//            bugs.add(new ReportedBug(bugInstance));
-//        }
-//        return bugs;
-//
-//    }
-
 
     public static String normalizeUrl(final URL url) {
         try {
@@ -240,37 +176,6 @@ public class FindBugsRunner {
                 findbugsProject.addFile(fileName);
         }
 
-//        final List<File> classFilesToAnalyze = new ArrayList<>(javaResourceLocator.classFilesToAnalyze());
-//        final List<File> classFilesToAnalyze = new ArrayList<>();
-
-//        for (final File file : javaResourceLocator.classpath()) {
-//            //Will capture additional classes including precompiled JSP
-//            if(file.isDirectory()) { // will include "/target/classes" and other non-standard folders
-//                classFilesToAnalyze.addAll(scanForAdditionalClasses(file));
-//            }
-//
-//            //Auxiliary dependencies
-//            findbugsProject.addAuxClasspathEntry(file.getCanonicalPath());
-//        }
-
-//        classFilesToAnalyze.addAll(classFiles);
-
-//        final boolean hasJspFiles = fileSystem.hasFiles(fileSystem.predicates().hasLanguage("jsp"));
-//        boolean hasPrecompiledJsp = false;
-//        for (final File classToAnalyze : classFilesToAnalyze) {
-//            final String absolutePath = classToAnalyze.getCanonicalPath();
-//            if(hasJspFiles && !hasPrecompiledJsp
-//                && (absolutePath.endsWith("_jsp.class") || //Jasper
-//                    absolutePath.contains("/jsp_servlet/")) //WebLogic
-//                ) {
-//                hasPrecompiledJsp = true;
-//            }
-//            findbugsProject.addFile(absolutePath);
-//        }
-
-        // TODO
-//        final Path classesDir = baseDir.resolve(Paths.get("jobtbuild/classes/main"));
-
         Files.walk(classesDir)
             .filter(p -> "class".equals(Util.getFileExtension(p.getFileName().toString())))
             .map(p -> p.toAbsolutePath().normalize())
@@ -284,28 +189,16 @@ public class FindBugsRunner {
             throw new RuntimeException("no source files");
         }
 
-//        copyLibs();
         findbugsProject.setCurrentWorkingDirectory(workDir());
         return findbugsProject;
     }
-
-
 
     private File workDir() {
         return Paths.get("work").toFile();
     }
 
-//    File saveIncludeConfigXml() throws IOException {
-//      StringWriter conf = new StringWriter();
-//      exporter.exportProfile(profile, conf);
-//      File file = new File(fileSystem.workDir(), "findbugs-include.xml");
-//      FileUtils.write(file, conf.toString(), CharEncoding.UTF_8);
-//      return file;
-//    }
-
     private static List<String> getSourceFiles(final Path sourcesDir) {
         try {
-            // FIXME
             return
                 Files.list(sourcesDir).filter(p -> Files.isRegularFile(p))
                 .filter(p -> "java".equals(Util.getFileExtension(p.getFileName().toString())))
@@ -316,7 +209,6 @@ public class FindBugsRunner {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        //        ));
     }
 
 
@@ -331,7 +223,6 @@ public class FindBugsRunner {
 
             return
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-            .peek(url -> System.out.println(" url= " +url+ "  " + Thread.currentThread()))
             .map(url -> FindBugsRunner.normalizeUrl(url))
             .map(Paths::get).filter(p -> Files.exists(p))
             .map(Path::toUri)
@@ -366,16 +257,5 @@ public class FindBugsRunner {
         }
     }
 
-
-    private static void resetCustomPluginList(final List<Plugin> customPlugins) {
-        if (customPlugins != null) {
-            for (final Plugin plugin : customPlugins) {
-                Plugin.removeCustomPlugin(plugin);
-
-                System.out.println("remove plugin "+plugin.getPluginId());
-
-            }
-        }
-    }
 
 }

@@ -29,6 +29,7 @@ public class FindbugsTask implements Task {
     public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
+    public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
 
     private final ExecutionContext executionContext;
     private final Path sourceDir;

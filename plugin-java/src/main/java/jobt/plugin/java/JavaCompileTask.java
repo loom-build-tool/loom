@@ -55,7 +55,6 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private final List<String> dependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
@@ -66,11 +65,6 @@ public class JavaCompileTask implements Task {
         this.runtimeConfiguration = runtimeConfiguration;
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
-
-        dependencies = new ArrayList<>();
-        if (buildConfig.getDependencies() != null) {
-            dependencies.addAll(buildConfig.getDependencies());
-        }
 
         switch (compileTarget) {
             case MAIN:
@@ -85,10 +79,6 @@ public class JavaCompileTask implements Task {
                 subdirName = "test";
                 classpathAppendix.add(srcPath);
                 classpathAppendix.add(BUILD_MAIN_PATH);
-
-                if (buildConfig.getTestDependencies() != null) {
-                    dependencies.addAll(buildConfig.getTestDependencies());
-                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);

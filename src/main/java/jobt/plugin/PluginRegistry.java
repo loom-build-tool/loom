@@ -37,7 +37,6 @@ public class PluginRegistry {
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
-//    private final MavenResolver dependencyResolver = new MavenResolver();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
     private final Stopwatch stopwatch;
 
@@ -122,7 +121,6 @@ public class PluginRegistry {
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         regPlugin.setExecutionContext(executionContext);
-//        regPlugin.setDependencyResolver(dependencyResolver);
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 

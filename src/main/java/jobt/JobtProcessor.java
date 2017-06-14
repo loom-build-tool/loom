@@ -25,12 +25,7 @@ import jobt.config.BuildConfigImpl;
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JobtProcessor {
 
-    private final Stopwatch stopwatch;
     private TaskTemplateImpl taskTemplate;
-
-    public JobtProcessor(final Stopwatch stopwatch) {
-        this.stopwatch = stopwatch;
-    }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
     public void configureLogger() {
@@ -86,9 +81,9 @@ public class JobtProcessor {
 
     public void init(final BuildConfigImpl buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
-        stopwatch.startProcess("Initialize plugins");
-        taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration, stopwatch);
-        stopwatch.stopProcess("Initialize plugins");
+        Stopwatch.startProcess("Initialize plugins");
+        taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration);
+        Stopwatch.stopProcess("Initialize plugins");
     }
 
     public void execute(final String taskName) throws Exception {

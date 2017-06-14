@@ -119,10 +119,8 @@ public class JavaCompileTask implements Task {
         classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
-            .map(JavaCompileTask::buildUrl).collect(Collectors.toList());
-
-        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacher(subdirName) : null;
+            .map(JavaCompileTask::buildUrl)
+            .collect(Collectors.toList());
 
         switch (compileTarget) {
             case MAIN:
@@ -139,6 +137,9 @@ public class JavaCompileTask implements Task {
             .filter(Files::isRegularFile)
             .filter(f -> f.toString().endsWith(".java"))
             .collect(Collectors.toList());
+
+        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
+            ? new FileCacher(subdirName) : null;
 
         if (fileCacher != null && fileCacher.filesCached(srcPaths)) {
             return TaskStatus.UP_TO_DATE;
@@ -275,7 +276,7 @@ public class JavaCompileTask implements Task {
             "-source", platformVersion.toString(),
             "-target", platformVersion.toString(),
             "-bootclasspath", getBootstrapClasspath(),
-            "-extdirs", getExtdirs()
+            "-extdirs", getExtDirs()
         );
     }
 
@@ -283,7 +284,7 @@ public class JavaCompileTask implements Task {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_BOOTSTRAPCLASSPATH");
     }
 
-    public String getExtdirs() {
+    public String getExtDirs() {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_EXTDIRS");
     }
 

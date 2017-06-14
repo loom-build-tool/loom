@@ -7,11 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -32,10 +27,9 @@ public class TaskTemplateImpl implements TaskTemplate {
     private final List<String> tasksExecuted = new ArrayList<>();
 
     public TaskTemplateImpl(final BuildConfigImpl buildConfig,
-                            final RuntimeConfigurationImpl runtimeConfiguration,
-                            final Stopwatch stopwatch) {
+                            final RuntimeConfigurationImpl runtimeConfiguration) {
         this.pluginRegistry =
-            new PluginRegistry(buildConfig, runtimeConfiguration, this, stopwatch);
+            new PluginRegistry(buildConfig, runtimeConfiguration, this);
     }
 
     @Override
@@ -50,7 +44,6 @@ public class TaskTemplateImpl implements TaskTemplate {
         return newTask;
     }
 
-    @SuppressWarnings("checkstyle:illegalcatch")
     public void execute(final String task) throws Exception {
         final Set<String> resolvedTasks = resolveTasks(task);
         resolvedTasks.removeAll(tasksExecuted);
@@ -63,43 +56,17 @@ public class TaskTemplateImpl implements TaskTemplate {
             resolvedTasks.stream().collect(Collectors.joining(" > ")));
 
         final Collection<Job> jobs = buildJobs(resolvedTasks);
+        final JobPool jobPool = new JobPool();
 
         for (final String resolvedTask : resolvedTasks) {
             pluginRegistry.warmup(resolvedTask);
         }
 
-        final AtomicReference<Throwable> firstException = new AtomicReference<>();
-
-        final ExecutorService executor = Executors.newWorkStealingPool();
-
         for (final Job job : jobs) {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    job.call();
-                } catch (final Throwable e) {
-                    firstException.compareAndSet(null, e);
-                    if (!(e instanceof InterruptedException)) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                    executor.shutdownNow();
-                }
-            }, executor);
-
-            if (executor.isShutdown()) {
-                break;
-            }
+            jobPool.submitJob(job);
         }
 
-        LOG.debug("Shutting down Job Pool");
-        executor.shutdown();
-
-        LOG.debug("Awaiting Job Pool shutdown");
-        executor.awaitTermination(1, TimeUnit.HOURS);
-        LOG.debug("Job Pool has shut down");
-
-        if (firstException.get() != null) {
-            throw new IllegalStateException(firstException.get());
-        }
+        jobPool.shutdown();
 
         tasksExecuted.addAll(resolvedTasks);
     }

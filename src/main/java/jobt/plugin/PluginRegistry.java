@@ -40,17 +40,14 @@ public class PluginRegistry {
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
     private final MavenResolver dependencyResolver = new MavenResolver();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
-    private final Stopwatch stopwatch;
 
     public PluginRegistry(final BuildConfigImpl buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
-                          final TaskTemplateImpl taskTemplate,
-                          final Stopwatch stopwatch) {
+                          final TaskTemplateImpl taskTemplate) {
 
         this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
         this.taskTemplate = taskTemplate;
-        this.stopwatch = stopwatch;
 
         initPlugins();
     }
@@ -152,7 +149,7 @@ public class PluginRegistry {
         }
 
         final String stopwatchProcess = "Task " + phase;
-        stopwatch.startProcess(stopwatchProcess);
+        Stopwatch.startProcess(stopwatchProcess);
 
         final Set<TaskStatus> statuses = new HashSet<>();
 
@@ -171,7 +168,7 @@ public class PluginRegistry {
                 ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
         }
 
-        stopwatch.stopProcess(stopwatchProcess);
+        Stopwatch.stopProcess(stopwatchProcess);
         return ret;
     }
 

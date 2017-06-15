@@ -28,6 +28,7 @@ import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
+import edu.umd.cs.findbugs.NoOpFindBugsProgress;
 import edu.umd.cs.findbugs.Plugin;
 import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.Priorities;
@@ -114,6 +115,8 @@ public class FindbugsRunner {
 
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
             engine.setAnalysisFeatureSettings(FindBugs.DEFAULT_EFFORT);
+
+            engine.setProgressCallback(new NoOpFindBugsProgress());
 
             engine.finishSettings();
 

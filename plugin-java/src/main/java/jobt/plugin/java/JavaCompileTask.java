@@ -104,10 +104,6 @@ public class JavaCompileTask implements Task {
         }
 
         final List<Path> classpath = new ArrayList<>(resolvedDependencies.get());
-//        classpath.addAll(classpathAppendix);
-
-        // FIXME
-        System.out.println("classpathAppendix="+classpathAppendix);
 
         final List<URL> urls = classpath.stream()
             .map(JavaCompileTask::buildUrl).collect(Collectors.toList());

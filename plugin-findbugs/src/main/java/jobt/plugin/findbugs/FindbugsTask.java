@@ -118,7 +118,7 @@ public class FindbugsTask implements Task {
             return TaskStatus.OK;
         } else {
             throw new IllegalStateException(
-                String.format("Findbugs reported %s bugs!", bugs.isEmpty()));
+                String.format("Findbugs reported %i bugs!", bugs.size()));
         }
     }
 

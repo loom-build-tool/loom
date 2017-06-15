@@ -134,7 +134,7 @@ public class PluginRegistry {
     private URL findPluginUrl(final String name) throws IOException {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".jobt", "binary",
             Version.getVersion(), "plugin-" + name);
-        return buildUrl(baseDir.resolve("plugin-"+name+".jar"));
+        return buildUrl(baseDir.resolve("plugin-" + name + ".jar"));
     }
 
     private static URL buildUrl(final Path f) {

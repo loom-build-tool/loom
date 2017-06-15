@@ -84,7 +84,7 @@ public class JavaAssembleTask implements Task {
         private final Path sourceDir;
         private final JarOutputStream os;
 
-        public CreateJarFileVisitor(final Path sourceDir, final JarOutputStream os) {
+        CreateJarFileVisitor(final Path sourceDir, final JarOutputStream os) {
             this.sourceDir = sourceDir;
             this.os = os;
         }

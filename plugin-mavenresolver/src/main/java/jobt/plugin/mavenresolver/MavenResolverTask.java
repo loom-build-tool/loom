@@ -7,7 +7,6 @@ import java.util.concurrent.Callable;
 import jobt.api.BuildConfig;
 import jobt.api.DependencyScope;
 import jobt.api.ExecutionContext;
-import jobt.api.JobtExecutor;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
@@ -38,10 +37,10 @@ public class MavenResolverTask implements Task {
 
         switch (dependencyScope) {
             case COMPILE:
-                JobtExecutor.submit(compileScope());
+                MavenExecutor.submit(compileScope());
                 return TaskStatus.OK;
             case TEST:
-                JobtExecutor.submit(testScope());
+                MavenExecutor.submit(testScope());
                 return TaskStatus.OK;
             default:
                 throw new IllegalStateException();

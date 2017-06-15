@@ -127,7 +127,7 @@ public class MavenResolver implements DependencyResolver {
 
     private List<Path> readCache(final List<String> deps, final DependencyScope scope)
         throws IOException {
-        final Path path = Paths.get(".jobt", scope.name().toLowerCase() + "-dependencies");
+        final Path path = Paths.get(".jobt", mavenScope(scope) + "-dependencies");
         if (Files.exists(path)) {
             final List<String> strings = Files.readAllLines(path);
             final String[] split = strings.get(0).split("\t");
@@ -175,7 +175,7 @@ public class MavenResolver implements DependencyResolver {
 
             return Collections.unmodifiableList(libs);
         } catch (final DependencyCollectionException  e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         } catch (final DependencyResolutionException e) {
             throw new IllegalStateException(
                 String.format("Unresolvable dependencies for scope <%s>: %s",
@@ -183,7 +183,7 @@ public class MavenResolver implements DependencyResolver {
         }
     }
 
-    private String mavenScope(final DependencyScope scope) {
+    private static String mavenScope(final DependencyScope scope) {
         switch (scope) {
             case COMPILE:
                 return "compile";
@@ -194,7 +194,7 @@ public class MavenResolver implements DependencyResolver {
         }
     }
 
-    private void writeCache(final List<String> deps, final DependencyScope dependencyScope,
+    private void writeCache(final List<String> deps, final DependencyScope scope,
                             final List<Path> files) throws IOException {
         final Path buildDir = Paths.get(".jobt");
         Files.createDirectories(buildDir);
@@ -203,7 +203,7 @@ public class MavenResolver implements DependencyResolver {
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
-        Files.write(Paths.get(".jobt", dependencyScope.name().toLowerCase() + "-dependencies"),
+        Files.write(Paths.get(".jobt", mavenScope(scope) + "-dependencies"),
             Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }

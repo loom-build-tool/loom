@@ -1,6 +1,9 @@
 package jobt.util;
 
-public class Preconditions {
+public final class Preconditions {
+
+    private Preconditions() {
+    }
 
     public static void checkState(final boolean expression) {
         if (!expression) {

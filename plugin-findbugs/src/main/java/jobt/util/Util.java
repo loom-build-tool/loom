@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 public final class Util {
 
-    private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    private static final RuntimeMXBean MX_BEAN = ManagementFactory.getRuntimeMXBean();
 
     private static final char EXTENSION_SEPARATOR = '.';
 
@@ -31,7 +31,7 @@ public final class Util {
      * Returns the uptime of the Java virtual machine in milliseconds.
      */
     public static long jvmUptime() {
-        return runtimeMXBean.getUptime();
+        return MX_BEAN.getUptime();
     }
 
     public static String getFileExtension(final String filename) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -135,7 +136,11 @@ public class PluginRegistry {
     private URL findPluginUrl(final String name) throws IOException {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".jobt", "binary",
             Version.getVersion(), "plugin-" + name);
-        return buildUrl(baseDir.resolve("plugin-"+name+".jar"));
+        final Path jar = baseDir.resolve("plugin-" + name + ".jar");
+        if (!Files.isRegularFile(jar)) {
+            throw new IllegalStateException("Plugin jar does not exist: " + jar);
+        }
+        return buildUrl(jar);
     }
 
     private static URL buildUrl(final Path f) {

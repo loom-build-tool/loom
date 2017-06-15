@@ -28,10 +28,7 @@ import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.util.Preconditions;
 
-
 public class FindbugsTask implements Task {
-
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
 
     public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
     public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
@@ -39,23 +36,23 @@ public class FindbugsTask implements Task {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
     public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
 
-    private static Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
+    private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
+
+    private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
 
     private final ExecutionContext executionContext;
     private final Path sourceDir;
     private final Path classesDir;
     private final CompileTarget compileTarget;
 
-
     private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
         final Thread thread = new Thread(r);
+        thread.setName("findbugs");
         thread.setDaemon(true);
         return thread;
     });
 
     private Optional<Integer> priorityThreshold;
-
-
 
     public FindbugsTask(
         final BuildConfig buildConfig,
@@ -117,13 +114,19 @@ public class FindbugsTask implements Task {
 
         }
 
-        return TaskStatus.OK;
+        if (bugs.isEmpty()) {
+            return TaskStatus.OK;
+        } else {
+            throw new IllegalStateException(
+                String.format("Findbugs reported %s bugs!", bugs.isEmpty()));
+        }
     }
 
     private List<URL> calcClasspath() {
         try {
             final List<URL> classpathElements = new ArrayList<>();
-            switch(compileTarget) {
+
+            switch (compileTarget) {
                 case MAIN:
                     classpathElements.addAll(executionContext.getCompileClasspath());
                     break;
@@ -131,6 +134,8 @@ public class FindbugsTask implements Task {
                     classpathElements.addAll(executionContext.getCompileClasspath());
                     classpathElements.addAll(executionContext.getTestClasspath());
                     break;
+                default:
+                    throw new IllegalArgumentException("Unknown target: " + compileTarget);
             }
             return classpathElements;
         } catch (final InterruptedException e) {
@@ -149,7 +154,7 @@ public class FindbugsTask implements Task {
                 f -> {
                     try {
                         return f.getInt(null);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                    } catch (final IllegalArgumentException | IllegalAccessException e) {
                         throw new IllegalStateException(e);
                     }
                 }));

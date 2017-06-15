@@ -8,7 +8,6 @@ import jobt.api.CompileTarget;
 import jobt.api.TaskRegistry;
 import jobt.api.TaskTemplate;
 
-
 public class FindbugsPlugin extends AbstractPlugin {
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsPlugin.class);
@@ -33,17 +32,14 @@ public class FindbugsPlugin extends AbstractPlugin {
             .dependsOn(taskTemplate.task("classes"));
 
         taskTemplate.task("findbugsTest")
-        .dependsOn(
-            taskTemplate.task("classes"),
-            taskTemplate.task("testClasses")
-            );
+            .dependsOn(
+                taskTemplate.task("classes"),
+                taskTemplate.task("testClasses"));
 
         taskTemplate.task("check").dependsOn(
             taskTemplate.task("findbugsMain"),
             taskTemplate.task("findbugsTest"));
 
     }
-
-
 
 }

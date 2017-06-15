@@ -1,23 +1,26 @@
 package jobt.plugin.findbugs;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +35,9 @@ import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
-import jobt.util.Preconditions;
 import jobt.util.Util;
 
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class FindbugsRunner {
 
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.LOW_PRIORITY;
@@ -45,30 +48,13 @@ public class FindbugsRunner {
 
     private static final String EFFORT_DEFAULT = "default";
 
+    private static final CountDownLatch CUSTOM_PLUGINS_INITLATCH = new CountDownLatch(1);
+
+    private final Path sourcesDir;
     private final Path classesDir;
     private final List<URL> auxClasspath;
 
-    private final List<String> sourceFiles;
-
     private final Optional<Integer> priorityThreshold;
-
-    private final static CountDownLatch customPluginsInitLatch = new CountDownLatch(1);
-    private static List<Plugin> customPlugins = null;
-
-    public static synchronized void startupFindbugsAsync() {
-        if (customPlugins != null) {
-            return;
-        }
-        Preconditions.checkState(customPluginsInitLatch.getCount() == 1);
-
-        customPlugins = loadFindbugsPlugin();
-        disableUpdateChecksOnEveryPlugin();
-
-        LOG.info("Using findbugs custom plugins: {}", Plugin.getAllPluginIds());
-
-        customPluginsInitLatch.countDown();
-
-    }
 
     public FindbugsRunner(
         final Path sourcesDir,
@@ -76,9 +62,10 @@ public class FindbugsRunner {
         final List<URL> auxClasspath,
         final Optional<Integer> priorityThreshold) {
 
+        this.sourcesDir = sourcesDir;
         this.classesDir = classesDir;
         this.auxClasspath = auxClasspath;
-        sourceFiles = getSourceFiles(sourcesDir);
+
         this.priorityThreshold = priorityThreshold;
     }
 
@@ -96,13 +83,13 @@ public class FindbugsRunner {
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
-        // This is a dirty workaround, but unfortunately there is no other way to make Findbugs generate english messages only - see SONARJAVA-380
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        try (PrintStream outputStream = new PrintStream(getTargetXMLReport().toFile(), "UTF-8")) {
+        try (PrintStream outputStream =
+            new PrintStream(getTargetXMLReport().toFile(), "UTF-8")) {
             final FindBugs2 engine = new FindBugs2();
-            final Project project = getFindbugsProject();
+            final Project project = createFindbugsProject();
 
             if (project.getFileCount() == 0) {
                 LOG.info("Findbugs analysis skipped for this project.");
@@ -119,6 +106,8 @@ public class FindbugsRunner {
 
             engine.setBugReporter(xmlBugReporter);
 
+            engine.setNoClassOk(true);
+
             final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
             userPreferences.setEffort(EFFORT_DEFAULT);
             engine.setUserPreferences(userPreferences);
@@ -134,7 +123,7 @@ public class FindbugsRunner {
             xmlBugReporter.getBugCollection().forEach(bugs::add);
             return bugs;
 
-        } catch (final Throwable e) {
+        } catch (final InterruptedException | IOException e) {
             throw new IllegalStateException("Error execution Findbugs", e);
         } finally {
             System.setSecurityManager(currentSecurityManager);
@@ -142,15 +131,28 @@ public class FindbugsRunner {
         }
     }
 
+    public static synchronized void startupFindbugsAsync() {
+        if (CUSTOM_PLUGINS_INITLATCH.getCount() == 0) {
+            return;
+        }
+
+        loadFindbugsPlugin();
+        disableUpdateChecksOnEveryPlugin();
+
+        LOG.info("Using findbugs custom plugins: {}", Plugin.getAllPluginIds());
+
+        CUSTOM_PLUGINS_INITLATCH.countDown();
+
+    }
+
     private void prepareEnvironment() throws IOException {
         Files.deleteIfExists(getTargetXMLReport());
         Files.createDirectories(FindbugsTask.REPORT_PATH);
     }
 
-
     private static void waitForPluginInit() {
         try {
-            customPluginsInitLatch.await();
+            CUSTOM_PLUGINS_INITLATCH.await();
         } catch (final InterruptedException e) {
             throw new IllegalStateException("Findbugs Plugin init aborted!", e);
         }
@@ -162,49 +164,69 @@ public class FindbugsRunner {
     }
 
     public static String normalizeUrl(final URL url) {
-        try {
-            return StringUtils.removeStart(StringUtils.substringBefore(url.toURI().getSchemeSpecificPart(), "!"), "file:");
-        } catch (final URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return url.getPath().split("!")[0].replace("file:", "");
     }
 
-
-    public Project getFindbugsProject() throws IOException {
+    private Project createFindbugsProject() throws IOException {
         final Project findbugsProject = new Project();
 
-        for (final String fileName : sourceFiles) { //The original source file are look at by some detectors
-                findbugsProject.addFile(fileName);
-        }
+        getSourceFiles(sourcesDir).stream()
+            .peek(p -> LOG.debug(" +source {}", p))
+            .forEach(findbugsProject::addFile);
 
-        Files.walk(classesDir)
-            .filter(p -> "class".equals(Util.getFileExtension(p.getFileName().toString())))
-            .map(p -> p.toAbsolutePath().normalize())
-            .map(Path::toString)
+        getClassesToScan(classesDir).stream()
+            .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
         auxClasspath.stream().map(url -> url.getFile())
+            .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);
 
         if (findbugsProject.getFileList().isEmpty()) {
             throw new RuntimeException("no source files");
         }
 
-        findbugsProject.setCurrentWorkingDirectory(workDir());
         return findbugsProject;
     }
 
-    private File workDir() {
-        return Paths.get("work").toFile();
+    private static List<String> getClassesToScan(final Path classesDir) throws IOException {
+        return
+        Files.walk(classesDir)
+            .filter(filterByExtension("class"))
+            .map(FindbugsRunner::pathToString)
+            .collect(Collectors.toList());
+    }
+
+    private static Predicate<Path> filterByExtension(final String extension) {
+        Objects.requireNonNull(extension);
+        return p ->
+            Files.isReadable(p)
+            && extension.equals(Util.getFileExtension(p.getFileName().toString()));
+    }
+
+    private static String pathToString(final Path file) {
+        return file.toAbsolutePath().normalize().toString();
     }
 
     private static List<String> getSourceFiles(final Path sourcesDir) {
         try {
+            final List<Path> javaFiles = new ArrayList<>();
+            final FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                    throws IOException {
+                    if (filterByExtension("java").test(file)) {
+                        javaFiles.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            };
+
+            Files.walkFileTree(sourcesDir, visitor);
+
             return
-                Files.list(sourcesDir).filter(p -> Files.isRegularFile(p))
-                .filter(p -> "java".equals(Util.getFileExtension(p.getFileName().toString())))
-                .filter(p -> !p.getFileName().toString().equals("package-info.java"))
-                .map(p -> p.toAbsolutePath().toString())
+                javaFiles.stream()
+                .map(FindbugsRunner::pathToString)
                 .collect(Collectors.toList());
 
         } catch (final IOException e) {
@@ -234,7 +256,8 @@ public class FindbugsRunner {
                     throw new IllegalStateException("Error loading plugin " + uri, e);
                 } catch (final DuplicatePluginIdException e) {
                     if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-                        throw new IllegalStateException("Duplicate findbugs plugin "+e.getPluginId());
+                        throw new IllegalStateException(
+                            "Duplicate findbugs plugin " + e.getPluginId());
                     }
                     return Optional.<Plugin>empty();
                 }
@@ -244,10 +267,11 @@ public class FindbugsRunner {
             .collect(Collectors.toList());
 
         } catch (final IOException e) {
-            throw new RuntimeException(e); // FIXME
+            throw new RuntimeException(e);
         }
 
     }
+
 
     /**
      * Disable the update check for every plugin. See http://findbugs.sourceforge.net/updateChecking.html
@@ -257,6 +281,5 @@ public class FindbugsRunner {
             plugin.setMyGlobalOption("noUpdateChecks", "true");
         }
     }
-
 
 }

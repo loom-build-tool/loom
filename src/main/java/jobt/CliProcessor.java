@@ -33,9 +33,7 @@ public class CliProcessor {
     public void run(final CommandLine cmd) throws Exception {
         final long startTime = System.nanoTime();
 
-        final Stopwatch stopwatch = new Stopwatch();
-
-        final JobtProcessor jobtProcessor = new JobtProcessor(stopwatch);
+        final JobtProcessor jobtProcessor = new JobtProcessor();
 
         if (cmd.hasOption("clean")) {
             System.out.println("Cleaning...");
@@ -47,17 +45,20 @@ public class CliProcessor {
             return;
         }
 
+        final RuntimeConfigurationImpl runtimeConfiguration =
+            new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
+
         jobtProcessor.configureLogger();
 
-        stopwatch.startProcess("Read configuration");
-        final BuildConfigImpl buildConfig = ConfigReader.readConfig();
-        stopwatch.stopProcess("Read configuration");
+        Stopwatch.startProcess("Read configuration");
+        final BuildConfigImpl buildConfig = ConfigReader.readConfig(runtimeConfiguration);
+        Stopwatch.stopProcess("Read configuration");
 
         System.out.printf("Initialized configuration for %s version %s%n",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion());
 
-        jobtProcessor.init(buildConfig);
+        jobtProcessor.init(buildConfig, runtimeConfiguration);
 
         for (final String taskName : cmd.getArgs()) {
             System.out.println("Executing " + taskName + "...");
@@ -65,28 +66,28 @@ public class CliProcessor {
         }
 
         if (cmd.hasOption("stat")) {
-            printExecutionStatistics(stopwatch);
+            printExecutionStatistics();
         }
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
         System.out.printf(PASTA + "  Cooked your pasta in %.2fs%n", duration);
     }
 
-    private void printExecutionStatistics(final Stopwatch stopwatch) {
+    private void printExecutionStatistics() {
         System.out.println();
         System.out.println("Execution statistics:");
         System.out.println();
 
-        final int longestKey = stopwatch.getWatches().keySet().stream()
+        final int longestKey = Stopwatch.getWatches().keySet().stream()
             .mapToInt(String::length)
             .max()
             .orElse(10);
 
-        final Stream<Map.Entry<String, Watch>> sorted = stopwatch.getWatches().entrySet().stream()
+        final Stream<Map.Entry<String, Watch>> sorted = Stopwatch.getWatches().entrySet().stream()
             .sorted((o1, o2) ->
                 Long.compare(o2.getValue().getDuration(), o1.getValue().getDuration()));
 
-        final long totalDuration = stopwatch.getTotalDuration().get();
+        final long totalDuration = Stopwatch.getTotalDuration();
 
         sorted.forEach(stringWatchEntry -> {
             final String name = stringWatchEntry.getKey();

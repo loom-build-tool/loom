@@ -5,16 +5,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import jobt.api.CompileTarget;
+import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 
 public class ResourcesTask implements Task {
 
+    private final RuntimeConfiguration runtimeConfiguration;
     private final String subdirName;
     private final Path srcPath;
     private final Path destPath;
 
-    ResourcesTask(final CompileTarget compileTarget) {
+    ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
+                  final CompileTarget compileTarget) {
+
+        this.runtimeConfiguration = runtimeConfiguration;
+
         switch (compileTarget) {
             case MAIN:
                 subdirName = "main";
@@ -44,7 +50,7 @@ public class ResourcesTask implements Task {
         assertDirectoryOrMissing(destPath);
 
         if (Files.notExists(srcPath) && Files.exists(destPath)) {
-            FileUtil.deleteDirectoryRecursively(destPath);
+            FileUtil.deleteDirectoryRecursively(destPath, true);
             return TaskStatus.OK;
         }
 
@@ -53,7 +59,9 @@ public class ResourcesTask implements Task {
         final Path cacheFile =
             Paths.get(".jobt", "cache", "java", "resource-" + subdirName + ".cache");
 
-        final KeyValueCache cache = new KeyValueCache(cacheFile);
+        final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
+            ? new DiskKeyValueCache(cacheFile)
+            : new NullKeyValueCache();
 
         Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache));
         Files.walkFileTree(destPath, new DeleteObsoleteFileVisitor(srcPath, cache));

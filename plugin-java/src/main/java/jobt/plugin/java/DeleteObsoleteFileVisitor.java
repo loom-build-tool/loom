@@ -25,7 +25,7 @@ class DeleteObsoleteFileVisitor extends SimpleFileVisitor<Path> {
         if (targetBasePath == null) {
             targetBasePath = dir;
         } else if (Files.notExists(sourceBasePath.resolve(targetBasePath.relativize(dir)))) {
-            FileUtil.deleteDirectoryRecursively(dir);
+            FileUtil.deleteDirectoryRecursively(dir, true);
             return FileVisitResult.SKIP_SUBTREE;
         }
 

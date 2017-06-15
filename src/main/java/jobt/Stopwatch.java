@@ -5,30 +5,33 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Stopwatch {
+public final class Stopwatch {
 
-    private Map<String, Watch> watches = new ConcurrentHashMap<>();
-    private AtomicLong totalDuration = new AtomicLong();
+    private static final Map<String, Watch> WATCHES = new ConcurrentHashMap<>();
+    private static final AtomicLong TOTAL_DURATION = new AtomicLong();
 
-    public void startProcess(final String name) {
-        final Watch put = watches.put(name, new Watch());
+    private Stopwatch() {
+    }
+
+    public static void startProcess(final String name) {
+        final Watch put = WATCHES.put(name, new Watch());
         if (put != null) {
             throw new IllegalStateException("Watch for " + name + " already existed");
         }
     }
 
-    public void stopProcess(final String name) {
-        final Watch watch = watches.get(name);
+    public static void stopProcess(final String name) {
+        final Watch watch = WATCHES.get(name);
         watch.stop();
-        totalDuration.addAndGet(watch.getDuration());
+        TOTAL_DURATION.addAndGet(watch.getDuration());
     }
 
-    public AtomicLong getTotalDuration() {
-        return totalDuration;
+    public static long getTotalDuration() {
+        return TOTAL_DURATION.get();
     }
 
-    public Map<String, Watch> getWatches() {
-        return Collections.unmodifiableMap(watches);
+    public static Map<String, Watch> getWatches() {
+        return Collections.unmodifiableMap(WATCHES);
     }
 
 }

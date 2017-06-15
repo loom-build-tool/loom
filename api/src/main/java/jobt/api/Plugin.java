@@ -11,6 +11,8 @@ public interface Plugin {
 
     void setBuildConfig(BuildConfig buildConfig);
 
+    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+
     void setExecutionContext(ExecutionContext executionContext);
 
     void setDependencyResolver(DependencyResolver dependencyResolver);

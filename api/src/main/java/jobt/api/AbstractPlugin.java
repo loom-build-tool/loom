@@ -4,6 +4,7 @@ package jobt.api;
 public abstract class AbstractPlugin implements Plugin {
 
     private BuildConfig buildConfig;
+    private RuntimeConfiguration runtimeConfiguration;
     private ExecutionContext executionContext;
     private DependencyResolver dependencyResolver;
 
@@ -14,6 +15,15 @@ public abstract class AbstractPlugin implements Plugin {
 
     public BuildConfig getBuildConfig() {
         return buildConfig;
+    }
+
+    @Override
+    public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+        this.runtimeConfiguration = runtimeConfiguration;
+    }
+
+    public RuntimeConfiguration getRuntimeConfiguration() {
+        return runtimeConfiguration;
     }
 
     @Override

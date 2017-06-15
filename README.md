@@ -14,7 +14,7 @@ What is jobt **not**?
 
 # Prerequisites
 
-- JDK 9
+- JDK 8
 
 
 
@@ -27,7 +27,7 @@ project:
   version: 1.0.0-SNAPSHOT
 ```
 
-This builds a project without any dependencies targeting Java 9.
+This builds a project without any dependencies targeting Java 8.
 
 
 # More comprehensive build.yml
@@ -39,14 +39,14 @@ project:
 plugins:
   - checkstyle
 configuration:
-  javaPlatformVersion: 8
+  javaPlatformVersion: 6
 dependencies:
   - com.google.guava:guava:21.0
 testDependencies:
   - junit:junit:4.12
 ```
 
-This builds a project with a few dependencies (compile & test), checking sources with Checktsyle, targeting Java 8.
+This builds a project with a few dependencies (compile & test), checking sources with Checktsyle, targeting Java 6.
 
 
 # Install jobt to your project

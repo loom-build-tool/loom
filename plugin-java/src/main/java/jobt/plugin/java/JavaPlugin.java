@@ -5,6 +5,7 @@ import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
+import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskRegistry;
 import jobt.api.TaskTemplate;
 
@@ -13,16 +14,19 @@ public class JavaPlugin extends AbstractPlugin {
     @Override
     public void configure(final TaskRegistry taskRegistry) {
         final BuildConfig buildConfig = getBuildConfig();
+        final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
         final ExecutionContext executionContext = getExecutionContext();
         final DependencyResolver dependencyResolver = getDependencyResolver();
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            executionContext, CompileTarget.MAIN, dependencyResolver));
+            runtimeConfiguration, executionContext, CompileTarget.MAIN, dependencyResolver));
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            executionContext, CompileTarget.TEST, dependencyResolver));
+            runtimeConfiguration, executionContext, CompileTarget.TEST, dependencyResolver));
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
-        taskRegistry.register("processResources", new ResourcesTask(CompileTarget.MAIN));
-        taskRegistry.register("processTestResources", new ResourcesTask(CompileTarget.TEST));
+        taskRegistry.register("processResources",
+            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
+        taskRegistry.register("processTestResources",
+            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST));
         taskRegistry.register("test", new JavaTestTask(executionContext));
     }
 

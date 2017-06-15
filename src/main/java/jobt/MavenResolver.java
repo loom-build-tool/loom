@@ -181,9 +181,7 @@ public class MavenResolver implements DependencyResolver {
     private void writeCache(final List<String> deps, final String scope,
                             final List<Path> files) throws IOException {
         final Path buildDir = Paths.get(".jobt");
-        if (Files.notExists(buildDir)) {
-            Files.createDirectories(buildDir);
-        }
+        Files.createDirectories(buildDir);
 
         final String sb = Hasher.hash(deps) + '\t' + files.stream()
             .map(f -> f.toAbsolutePath().toString())

@@ -110,7 +110,7 @@ public class FindbugsTask implements Task {
 
         for (final BugInstance bug : bugs) {
 
-            System.out.println("bug >>> " + bug.getMessage());
+            LOG.warn("bug >>> " + bug.getMessage());
 
         }
 
@@ -118,7 +118,7 @@ public class FindbugsTask implements Task {
             return TaskStatus.OK;
         } else {
             throw new IllegalStateException(
-                String.format("Findbugs reported %i bugs!", bugs.size()));
+                String.format("Findbugs reported %d bugs!", bugs.size()));
         }
     }
 

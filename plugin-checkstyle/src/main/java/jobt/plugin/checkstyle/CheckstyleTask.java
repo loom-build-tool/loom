@@ -34,8 +34,8 @@ public class CheckstyleTask implements Task {
     private final CompileTarget compileTarget;
     private final ExecutionContext executionContext;
 
-    private String configLocation = "config/checkstyle/checkstyle.xml";
-    private boolean omitIgnoredModules = true;
+    private final String configLocation = "config/checkstyle/checkstyle.xml";
+    private final boolean omitIgnoredModules = true;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final ExecutionContext executionContext) {
@@ -82,7 +82,7 @@ public class CheckstyleTask implements Task {
             return TaskStatus.OK;
         }
 
-        throw new IllegalStateException();
+        throw new IllegalStateException("Checkstyle reported errors!");
     }
 
     private RootModule createRootModule()

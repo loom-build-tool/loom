@@ -6,10 +6,15 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jobt.api.ExecutionContext;
 import jobt.api.JobtExecutor;
 
 public class ExecutionContextImpl implements ExecutionContext {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutionContextImpl.class);
 
     // compile/test scope dependencies
     private final CompletableFuture<List<Path>> compileDependenciesPromise =

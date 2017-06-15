@@ -6,7 +6,6 @@ public abstract class AbstractPlugin implements Plugin {
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
     private ExecutionContext executionContext;
-    private DependencyResolver dependencyResolver;
 
     @Override
     public void setBuildConfig(final BuildConfig buildConfig) {
@@ -33,15 +32,6 @@ public abstract class AbstractPlugin implements Plugin {
 
     public ExecutionContext getExecutionContext() {
         return executionContext;
-    }
-
-    @Override
-    public void setDependencyResolver(final DependencyResolver dependencyResolver) {
-        this.dependencyResolver = dependencyResolver;
-    }
-
-    public DependencyResolver getDependencyResolver() {
-        return dependencyResolver;
     }
 
 }

@@ -1,4 +1,4 @@
-package jobt;
+package jobt.plugin.mavenresolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -44,7 +43,7 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
-import jobt.api.DependencyResolver;
+import jobt.api.DependencyScope;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver implements DependencyResolver {
@@ -98,12 +97,8 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public Future<List<Path>> resolveDependencies(final List<String> deps, final String scope) {
-        return pool.submit(() -> resolve(deps, scope));
-    }
-
-    private List<Path> resolve(final List<String> deps, final String scope)
-        throws IOException, DependencyCollectionException, DependencyResolutionException {
+    public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope)
+        throws IOException {
 
         if (!initialized) {
             synchronized (this) {
@@ -130,8 +125,9 @@ public class MavenResolver implements DependencyResolver {
         return paths;
     }
 
-    private List<Path> readCache(final List<String> deps, final String scope) throws IOException {
-        final Path path = Paths.get(".jobt", scope + "-dependencies");
+    private List<Path> readCache(final List<String> deps, final DependencyScope scope)
+        throws IOException {
+        final Path path = Paths.get(".jobt", mavenScope(scope) + "-dependencies");
         if (Files.exists(path)) {
             final List<String> strings = Files.readAllLines(path);
             final String[] split = strings.get(0).split("\t");
@@ -146,8 +142,8 @@ public class MavenResolver implements DependencyResolver {
         return Collections.emptyList();
     }
 
-    private List<Path> resolveRemote(final List<String> deps, final String scope)
-        throws DependencyCollectionException, DependencyResolutionException, IOException {
+    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope)
+        throws IOException {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
@@ -155,30 +151,50 @@ public class MavenResolver implements DependencyResolver {
         final CollectRequest collectRequest = new CollectRequest();
 
         final List<Dependency> dependencies = deps.stream()
-            .map(a -> new Dependency(new DefaultArtifact(a), scope))
+            .map(a -> new Dependency(new DefaultArtifact(a), mavenScope(scope)))
             .collect(Collectors.toList());
 
         collectRequest.setDependencies(dependencies);
         collectRequest.addRepository(mavenRepository);
-        final DependencyNode node =
-            system.collectDependencies(session, collectRequest).getRoot();
 
-        final DependencyRequest dependencyRequest = new DependencyRequest();
-        dependencyRequest.setRoot(node);
+        try {
+            final DependencyNode node =
+                system.collectDependencies(session, collectRequest).getRoot();
 
-        system.resolveDependencies(session, dependencyRequest);
+            final DependencyRequest dependencyRequest = new DependencyRequest();
+            dependencyRequest.setRoot(node);
 
-        final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
-        node.accept(nlg);
+            system.resolveDependencies(session, dependencyRequest);
 
-        final List<Path> libs = nlg.getFiles().stream()
-            .map(File::toPath)
-            .collect(Collectors.toList());
+            final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+            node.accept(nlg);
 
-        return Collections.unmodifiableList(libs);
+            final List<Path> libs = nlg.getFiles().stream()
+                .map(File::toPath)
+                .collect(Collectors.toList());
+
+            return Collections.unmodifiableList(libs);
+        } catch (final DependencyCollectionException  e) {
+            throw new IllegalStateException(e);
+        } catch (final DependencyResolutionException e) {
+            throw new IllegalStateException(
+                String.format("Unresolvable dependencies for scope <%s>: %s",
+                    scope, e.getMessage()));
+        }
     }
 
-    private void writeCache(final List<String> deps, final String scope,
+    private static String mavenScope(final DependencyScope scope) {
+        switch (scope) {
+            case COMPILE:
+                return "compile";
+            case TEST:
+                return "test";
+            default:
+                throw new IllegalStateException("Unknown scope: " + scope);
+        }
+    }
+
+    private void writeCache(final List<String> deps, final DependencyScope scope,
                             final List<Path> files) throws IOException {
         final Path buildDir = Paths.get(".jobt");
         Files.createDirectories(buildDir);
@@ -187,7 +203,8 @@ public class MavenResolver implements DependencyResolver {
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
-        Files.write(Paths.get(".jobt", scope + "-dependencies"), Collections.singletonList(sb),
+        Files.write(Paths.get(".jobt", mavenScope(scope) + "-dependencies"),
+            Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 

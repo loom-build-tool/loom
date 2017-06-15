@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticCollector;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
@@ -56,22 +54,17 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private final DependencyResolver dependencyResolver;
     private final List<String> dependencies;
-    private final String dependencyScope;
-
-    private Future<List<Path>> resolvedDependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
                            final ExecutionContext executionContext,
-                           final CompileTarget compileTarget,
-                           final DependencyResolver dependencyResolver) {
+                           final CompileTarget compileTarget
+                           ) {
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
-        this.dependencyResolver = Objects.requireNonNull(dependencyResolver);
 
         dependencies = new ArrayList<>();
         if (buildConfig.getDependencies() != null) {
@@ -83,20 +76,14 @@ public class JavaCompileTask implements Task {
                 srcPath = SRC_MAIN_PATH;
                 buildDir = BUILD_MAIN_PATH;
                 subdirName = "main";
-                dependencyScope = "compile";
                 classpathAppendix.add(srcPath);
                 break;
             case TEST:
                 srcPath = SRC_TEST_PATH;
                 buildDir = BUILD_TEST_PATH;
                 subdirName = "test";
-                dependencyScope = "test";
                 classpathAppendix.add(srcPath);
                 classpathAppendix.add(BUILD_MAIN_PATH);
-
-                if (buildConfig.getTestDependencies() != null) {
-                    dependencies.addAll(buildConfig.getTestDependencies());
-                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
@@ -105,13 +92,16 @@ public class JavaCompileTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-        resolvedDependencies =
-            dependencyResolver.resolveDependencies(dependencies, dependencyScope);
+
     }
 
     @Override
     public TaskStatus run() throws Exception {
-        final List<Path> classpath = new ArrayList<>(resolvedDependencies.get());
+        if (Files.notExists(srcPath)) {
+            return TaskStatus.SKIP;
+        }
+
+        final List<Path> classpath = new ArrayList<>();
         classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
@@ -120,9 +110,11 @@ public class JavaCompileTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
+                classpath.addAll(executionContext.getResolvedCompileDependencies());
                 executionContext.setCompileClasspath(urls);
                 break;
             case TEST:
+                classpath.addAll(executionContext.getResolvedTestDependencies());
                 executionContext.setTestClasspath(urls);
                 break;
             default:

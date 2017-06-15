@@ -77,7 +77,7 @@ public final class ConfigReader {
             return null;
         }
 
-        try (final ObjectInputStream out = new ObjectInputStream(
+        try (ObjectInputStream out = new ObjectInputStream(
             Files.newInputStream(cacheFile))) {
             return (BuildConfigImpl) out.readObject();
         } catch (final Exception e) {
@@ -101,7 +101,7 @@ public final class ConfigReader {
                                          final BuildConfigImpl buildConfig) throws IOException {
         Files.deleteIfExists(hashFile);
 
-        try (final ObjectOutputStream out =
+        try (ObjectOutputStream out =
                  new ObjectOutputStream(Files.newOutputStream(cacheFile))) {
             out.writeObject(buildConfig);
         }

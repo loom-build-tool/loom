@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jobt.MavenResolver;
 import jobt.RuntimeConfigurationImpl;
 import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
@@ -37,7 +36,6 @@ public class PluginRegistry {
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
-    private final MavenResolver dependencyResolver = new MavenResolver();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
 
     public PluginRegistry(final BuildConfigImpl buildConfig,
@@ -56,6 +54,7 @@ public class PluginRegistry {
 
         final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
         plugins.add("java");
+        plugins.add("mavenresolver");
 
         final ExecutorService executorService = Executors.newWorkStealingPool();
         for (final String plugin : plugins) {
@@ -94,6 +93,9 @@ public class PluginRegistry {
             case "java":
                 pluginClassname = "jobt.plugin.java.JavaPlugin";
                 break;
+            case "mavenresolver":
+                pluginClassname = "jobt.plugin.mavenresolver.MavenResolverPlugin";
+                break;
             case "checkstyle":
                 pluginClassname = "jobt.plugin.checkstyle.CheckstylePlugin";
                 break;
@@ -120,7 +122,6 @@ public class PluginRegistry {
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         regPlugin.setExecutionContext(executionContext);
-        regPlugin.setDependencyResolver(dependencyResolver);
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 

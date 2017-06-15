@@ -30,17 +30,10 @@ public class JavaAssembleTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        final Path buildDir = Paths.get("jobtbuild/libs");
+        final Path buildDir = Paths.get("jobtbuild", "libs");
         Files.createDirectories(buildDir);
 
-        final Manifest manifest = new Manifest();
-        final Attributes mainAttributes = manifest.getMainAttributes();
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-
-        final String mainClassName = buildConfig.getConfiguration().get("mainClassName");
-        if (mainClassName != null) {
-            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName);
-        }
+        final Manifest manifest = prepareManifest();
 
         final String jarName = String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
@@ -61,6 +54,23 @@ public class JavaAssembleTask implements Task {
         }
 
         return TaskStatus.OK;
+    }
+
+    private Manifest prepareManifest() {
+        final Manifest manifest = new Manifest();
+        final Attributes mainAttributes = manifest.getMainAttributes();
+        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        mainAttributes.put(new Attributes.Name("Created-By"),
+            "Jobt " + System.getProperty("jobt.version"));
+        mainAttributes.put(new Attributes.Name("Build-Jdk"),
+            String.format("%s (%s)", System.getProperty("java.version"),
+                System.getProperty("java.vendor")));
+
+        final String mainClassName = buildConfig.getConfiguration().get("mainClassName");
+        if (mainClassName != null) {
+            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName);
+        }
+        return manifest;
     }
 
     private static void add(final String name, final Path source, final JarOutputStream target)

@@ -106,7 +106,7 @@ public class FindbugsTask implements Task {
             calcClasspath(),
             priorityThreshold
             )
-            .findMyBugs();
+            .executeFindbugs();
 
         for (final BugInstance bug : bugs) {
 

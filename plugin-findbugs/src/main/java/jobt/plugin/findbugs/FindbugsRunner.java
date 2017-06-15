@@ -70,17 +70,12 @@ public class FindbugsRunner {
         this.priorityThreshold = priorityThreshold;
     }
 
-    public List<BugInstance> findMyBugs() {
+    @SuppressWarnings("checkstyle:executablestatementcount")
+    public List<BugInstance> executeFindbugs() {
 
         waitForPluginInit();
 
-        try {
-            LOG.debug("Prepare/cleanup findbugs environment...");
-            prepareEnvironment();
-            LOG.debug("...cleanup done");
-        } catch (final IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
+        prepareEnvironment();
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
@@ -148,9 +143,15 @@ public class FindbugsRunner {
 
     }
 
-    private void prepareEnvironment() throws IOException {
-        Files.deleteIfExists(getTargetXMLReport());
-        Files.createDirectories(FindbugsTask.REPORT_PATH);
+    private void prepareEnvironment() {
+        try {
+            LOG.debug("Prepare/cleanup findbugs environment...");
+            Files.deleteIfExists(getTargetXMLReport());
+            Files.createDirectories(FindbugsTask.REPORT_PATH);
+            LOG.debug("...cleanup done");
+        } catch (final IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
     private static void waitForPluginInit() {

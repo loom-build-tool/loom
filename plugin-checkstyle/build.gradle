@@ -10,3 +10,11 @@ dependencies {
     compile('com.puppycrawl.tools:checkstyle:7.8')
     compile('org.slf4j:jcl-over-slf4j:1.7.22')
 }
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

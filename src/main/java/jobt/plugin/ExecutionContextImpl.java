@@ -49,6 +49,7 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     @Override
     public List<URL> getCompileClasspath() throws InterruptedException {
+        LOG.info("Wait for latch to getCompileClasspath");
         compileClassPathLatch.await();
         return compileClasspath;
     }
@@ -61,6 +62,7 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     @Override
     public List<URL> getTestClasspath() throws InterruptedException {
+        LOG.info("Wait for latch to getTestClasspath");
         testClassPathLatch.await();
         return testClasspath;
     }

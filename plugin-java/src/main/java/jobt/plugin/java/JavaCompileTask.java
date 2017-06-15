@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticCollector;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
+import jobt.api.DependencyResolver;
 import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
@@ -35,13 +37,12 @@ import jobt.api.TaskStatus;
 
 public class JavaCompileTask implements Task {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
-    public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
+    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
+    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
-
     private static final int DEFAULT_JAVA_PLATFORM = 8;
 
     // The first Java version which supports the --release flag
@@ -55,6 +56,11 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
+    private final DependencyResolver dependencyResolver;
+    private final List<String> dependencies;
+    private final String dependencyScope;
+
+    private Future<List<Path>> resolvedDependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
@@ -65,6 +71,12 @@ public class JavaCompileTask implements Task {
         this.runtimeConfiguration = runtimeConfiguration;
         this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
+        this.dependencyResolver = Objects.requireNonNull(dependencyResolver);
+
+        dependencies = new ArrayList<>();
+        if (buildConfig.getDependencies() != null) {
+            dependencies.addAll(buildConfig.getDependencies());
+        }
 
         switch (compileTarget) {
             case MAIN:
@@ -100,10 +112,8 @@ public class JavaCompileTask implements Task {
         classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
-            .map(JavaCompileTask::buildUrl).collect(Collectors.toList());
-
-        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacher(subdirName) : null;
+            .map(JavaCompileTask::buildUrl)
+            .collect(Collectors.toList());
 
         switch (compileTarget) {
             case MAIN:
@@ -118,10 +128,17 @@ public class JavaCompileTask implements Task {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
+        if (Files.notExists(srcPath)) {
+            return TaskStatus.SKIP;
+        }
+
         final List<Path> srcPaths = Files.walk(srcPath)
             .filter(Files::isRegularFile)
             .filter(f -> f.toString().endsWith(".java"))
             .collect(Collectors.toList());
+
+        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
+            ? new FileCacher(subdirName) : null;
 
         if (fileCacher != null && fileCacher.filesCached(srcPaths)) {
             return TaskStatus.UP_TO_DATE;
@@ -258,7 +275,7 @@ public class JavaCompileTask implements Task {
             "-source", platformVersion.toString(),
             "-target", platformVersion.toString(),
             "-bootclasspath", getBootstrapClasspath(),
-            "-extdirs", getExtdirs()
+            "-extdirs", getExtDirs()
         );
     }
 
@@ -266,7 +283,7 @@ public class JavaCompileTask implements Task {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_BOOTSTRAPCLASSPATH");
     }
 
-    public String getExtdirs() {
+    public String getExtDirs() {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_EXTDIRS");
     }
 

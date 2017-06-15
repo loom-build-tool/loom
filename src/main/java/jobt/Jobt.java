@@ -14,8 +14,8 @@ public class Jobt {
 
     public static void main(final String[] args) {
         final String javaVersion = System.getProperty("java.version");
-        System.out.println("Java Optimized Build Tool v" + Version.getVersion()
-            + " (on Java " + javaVersion + ")");
+        System.out.printf("Java Optimized Build Tool v%s (on Java %s)%n",
+            Version.getVersion(), javaVersion);
 
         if (ToolProvider.getSystemJavaCompiler() == null) {
             System.err.println("JDK required (running inside of JRE)");

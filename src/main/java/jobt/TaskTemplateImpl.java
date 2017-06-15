@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class TaskTemplateImpl implements TaskTemplate {
     private static final Logger LOG = LoggerFactory.getLogger(TaskTemplateImpl.class);
 
     private final PluginRegistry pluginRegistry;
-    private final Map<String, TaskGraphNodeImpl> tasks = new HashMap<>();
+    private final Map<String, TaskGraphNodeImpl> tasks = new ConcurrentHashMap<>();
     private final List<String> tasksExecuted = new ArrayList<>();
 
     public TaskTemplateImpl(final BuildConfigImpl buildConfig,
@@ -34,14 +35,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
     @Override
     public TaskGraphNode task(final String name) {
-        final TaskGraphNode taskGraphNode = tasks.get(name);
-        if (taskGraphNode != null) {
-            return taskGraphNode;
-        }
-
-        final TaskGraphNodeImpl newTask = new TaskGraphNodeImpl(name);
-        tasks.put(name, newTask);
-        return newTask;
+        return tasks.computeIfAbsent(name, TaskGraphNodeImpl::new);
     }
 
     public void execute(final String task) throws Exception {

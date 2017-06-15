@@ -27,6 +27,10 @@ public class JobtProcessor {
 
     private TaskTemplateImpl taskTemplate;
 
+    static {
+        System.setProperty("jobt.version", Version.getVersion());
+    }
+
     @SuppressWarnings("checkstyle:executablestatementcount")
     public void configureLogger() {
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();

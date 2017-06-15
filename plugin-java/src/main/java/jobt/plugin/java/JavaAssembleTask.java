@@ -1,16 +1,16 @@
 package jobt.plugin.java;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.List;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 
 import jobt.api.BuildConfig;
 import jobt.api.Task;
@@ -35,25 +35,24 @@ public class JavaAssembleTask implements Task {
 
         final Manifest manifest = prepareManifest();
 
-        final String jarName = String.format("%s-%s.jar",
+        final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion());
+            buildConfig.getProject().getVersion()));
+        createJar(JavaCompileTask.BUILD_MAIN_PATH, jarFile, manifest);
 
-        try (final JarOutputStream os = new JarOutputStream(
-            Files.newOutputStream(buildDir.resolve(jarName)), manifest)) {
-            final Path baseDir = JavaCompileTask.BUILD_MAIN_PATH;
-
-            final List<Path> paths = Files.walk(baseDir)
-                .sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            for (final Path path : paths) {
-                final String fileName = baseDir.relativize(path).toString();
-                if (!fileName.isEmpty()) {
-                    add(fileName, path, os);
-                }
-            }
-        }
+        final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
+            buildConfig.getProject().getArtifactId(),
+            buildConfig.getProject().getVersion()));
+        createJar(JavaCompileTask.SRC_MAIN_PATH, sourceJarFile, null);
 
         return TaskStatus.OK;
+    }
+
+    private void createJar(final Path sourceDir, final Path targetFile, final Manifest manifest)
+        throws IOException {
+        try (final JarOutputStream os = newJarOutputStream(targetFile, manifest)) {
+            Files.walkFileTree(sourceDir, new CreateJarFileVisitor(sourceDir, os));
+        }
     }
 
     private Manifest prepareManifest() {
@@ -73,27 +72,52 @@ public class JavaAssembleTask implements Task {
         return manifest;
     }
 
-    private static void add(final String name, final Path source, final JarOutputStream target)
+    private JarOutputStream newJarOutputStream(final Path targetFile, final Manifest manifest)
         throws IOException {
-
-        final JarEntry entry;
-
-        if (Files.isDirectory(source)) {
-            entry = new JarEntry(name + "/");
-        } else if (Files.isRegularFile(source)) {
-            entry = new JarEntry(name);
-        } else {
-            throw new IllegalStateException();
-        }
-
-        entry.setTime(Files.getLastModifiedTime(source).toMillis());
-        target.putNextEntry(entry);
-
-        if (Files.isRegularFile(source)) {
-            Files.copy(source, target);
-        }
-
-        target.closeEntry();
+        return manifest == null
+            ? new JarOutputStream(Files.newOutputStream(targetFile))
+            : new JarOutputStream(Files.newOutputStream(targetFile), manifest);
     }
 
+    private static class CreateJarFileVisitor extends SimpleFileVisitor<Path> {
+
+        private final Path sourceDir;
+        private final JarOutputStream os;
+
+        public CreateJarFileVisitor(final Path sourceDir, final JarOutputStream os) {
+            this.sourceDir = sourceDir;
+            this.os = os;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir,
+                                                 final BasicFileAttributes attrs)
+            throws IOException {
+
+            if (dir.equals(sourceDir)) {
+                return FileVisitResult.CONTINUE;
+            }
+
+            final JarEntry entry = new JarEntry(sourceDir.relativize(dir).toString() + "/");
+            entry.setTime(attrs.lastModifiedTime().toMillis());
+            os.putNextEntry(entry);
+            os.closeEntry();
+
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(final Path file,
+                                         final BasicFileAttributes attrs)
+            throws IOException {
+
+            final JarEntry entry = new JarEntry(sourceDir.relativize(file).toString());
+            entry.setTime(attrs.lastModifiedTime().toMillis());
+            os.putNextEntry(entry);
+            Files.copy(file, os);
+            os.closeEntry();
+            return FileVisitResult.CONTINUE;
+        }
+
+    }
 }

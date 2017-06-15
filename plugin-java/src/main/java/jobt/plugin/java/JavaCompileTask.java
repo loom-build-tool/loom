@@ -1,6 +1,7 @@
 package jobt.plugin.java;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -97,10 +98,6 @@ public class JavaCompileTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(srcPath)) {
-            return TaskStatus.SKIP;
-        }
-
         final List<Path> classpath = new ArrayList<>();
         classpath.addAll(classpathAppendix);
 
@@ -147,6 +144,24 @@ public class JavaCompileTask implements Task {
             .map(Path::toFile)
             .collect(Collectors.toList());
 
+        compile(classpath, srcFiles);
+
+        if (fileCacher != null) {
+            fileCacher.cacheFiles(srcPaths);
+        }
+
+        return TaskStatus.OK;
+    }
+
+    private static URL buildUrl(final Path f) {
+        try {
+            return f.toUri().toURL();
+        } catch (final MalformedURLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
 
@@ -174,20 +189,6 @@ public class JavaCompileTask implements Task {
 
                 throw new IllegalStateException(collect);
             }
-        }
-
-        if (fileCacher != null) {
-            fileCacher.cacheFiles(srcPaths);
-        }
-
-        return TaskStatus.OK;
-    }
-
-    private static URL buildUrl(final Path f) {
-        try {
-            return f.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalStateException(e);
         }
     }
 

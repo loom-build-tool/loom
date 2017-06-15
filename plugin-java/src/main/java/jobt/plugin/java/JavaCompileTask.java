@@ -37,8 +37,8 @@ import jobt.api.TaskStatus;
 
 public class JavaCompileTask implements Task {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
-    public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
+    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
+    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
@@ -111,10 +111,6 @@ public class JavaCompileTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(srcPath)) {
-            return TaskStatus.SKIP;
-        }
-
         final List<Path> classpath = new ArrayList<>(resolvedDependencies.get());
         classpath.addAll(classpathAppendix);
 
@@ -131,6 +127,10 @@ public class JavaCompileTask implements Task {
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
+
+        if (Files.notExists(srcPath)) {
+            return TaskStatus.SKIP;
         }
 
         final List<Path> srcPaths = Files.walk(srcPath)

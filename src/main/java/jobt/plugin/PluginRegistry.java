@@ -145,6 +145,7 @@ public class PluginRegistry {
         final List<Task> tasks = taskRegistry.getTasks(phase);
 
         if (tasks.isEmpty()) {
+            LOG.debug("No task for {} registered", phase);
             return TaskStatus.SKIP;
         }
 

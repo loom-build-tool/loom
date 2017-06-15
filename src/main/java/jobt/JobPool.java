@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.TaskStatus;
+
 public class JobPool {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobPool.class);
@@ -33,10 +35,14 @@ public class JobPool {
             throw new IllegalStateException("Pool already shut down");
         }
 
+        LOG.debug("Submit job {}", job.getName());
+
         CompletableFuture.runAsync(() -> {
+            LOG.info("Start job {}", job.getName());
             try {
                 currentJobs.put(job.getName(), job);
-                job.call();
+                final TaskStatus status = job.call();
+                LOG.info("Job {} resulted with {}", job.getName(), status);
             } catch (final Throwable e) {
                 firstException.compareAndSet(null, e);
                 if (!(e instanceof InterruptedException)) {

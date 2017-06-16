@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import jobt.api.DependencyScope;
 
 
+// FIXME remove
 public class MavenResolveMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolveMain.class);

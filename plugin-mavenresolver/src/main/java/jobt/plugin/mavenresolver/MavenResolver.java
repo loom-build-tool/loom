@@ -22,6 +22,9 @@ import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.aether.AbstractRepositoryListener;
+import org.sonatype.aether.RepositoryEvent;
+import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
@@ -33,6 +36,7 @@ import org.sonatype.aether.graph.DependencyNode;
 import org.sonatype.aether.impl.ArtifactDescriptorReader;
 import org.sonatype.aether.impl.VersionRangeResolver;
 import org.sonatype.aether.impl.VersionResolver;
+import org.sonatype.aether.impl.internal.DefaultRepositorySystem;
 import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.LocalRepositoryManager;
@@ -40,6 +44,9 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
+import org.sonatype.aether.transfer.AbstractTransferListener;
+import org.sonatype.aether.transfer.TransferCancelledException;
+import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
@@ -69,6 +76,15 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
+        locator.setServices(RepositoryListener.class, new AbstractRepositoryListener() {
+            @Override
+            public void artifactDownloading(final RepositoryEvent event) {
+
+                System.out.println("Downlaoding... ");
+                System.out.println(" artifact " + event.getArtifact().toString());
+                System.out.println(" from " + event.getRepository().getId());
+            }
+        });
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {
@@ -147,8 +163,31 @@ public class MavenResolver implements DependencyResolver {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
+        session.setTransferListener(new AbstractTransferListener() {
+
+            @Override
+            public void transferStarted(final TransferEvent event) throws TransferCancelledException {
+                System.out.println(" start download .. " + event.getResource().getResourceName());
+            }
+
+            @Override
+            public void transferProgressed(final TransferEvent event) throws TransferCancelledException {
+//                System.out.println(" bytes downloaded .. " + event.getTransferredBytes());
+            }
+
+            @Override
+            public void transferSucceeded(final TransferEvent event) {
+                System.out.println(" success downloaded .. " + event.getTransferredBytes());
+            }
+
+        });
 
         final CollectRequest collectRequest = new CollectRequest();
+//        final RequestTrace trace = new DefaultRequestTrace(null); //data:null
+//        collectRequest.setTrace(trace);
+
+        final long start = System.currentTimeMillis();
+
 
         final List<Dependency> dependencies = deps.stream()
             .map(a -> new Dependency(new DefaultArtifact(a), mavenScope(scope)))

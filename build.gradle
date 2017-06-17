@@ -1,13 +1,14 @@
 apply plugin: 'java'
 
-group = 'jobt'
 archivesBaseName = 'jobt'
-version = '1.0.0'
 
 allprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'pmd'
+
+    group = 'jobt'
+    version = '1.0.0'
 
     sourceCompatibility = 1.8
 

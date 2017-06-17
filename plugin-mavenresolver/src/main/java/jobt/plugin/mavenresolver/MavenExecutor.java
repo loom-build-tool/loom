@@ -8,11 +8,10 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// FIXME move executor close to resolver
 public final class MavenExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenExecutor.class);
-
-    private static final int THREAD_COUNT = 2;
 
     private static final ExecutorService POOL;
 
@@ -21,10 +20,9 @@ public final class MavenExecutor {
 
     static {
 
-        LOG.info("Configure thread pool with {} threds", THREAD_COUNT);
-
-        POOL = Executors.newFixedThreadPool(
-            THREAD_COUNT, r -> {
+        // execute maven resolution in a streamlined manner
+        POOL = Executors.newSingleThreadExecutor(
+            r -> {
                 final Thread thread = new Thread(r);
                 thread.setName("thread-" + MavenExecutor.class.getSimpleName());
                 thread.setDaemon(true);

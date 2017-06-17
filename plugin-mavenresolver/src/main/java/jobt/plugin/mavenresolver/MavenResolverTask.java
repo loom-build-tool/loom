@@ -43,17 +43,17 @@ public class MavenResolverTask implements Task {
 
         switch (dependencyScope) {
             case COMPILE:
-                MavenExecutor.submit(compileScope());
+                MavenExecutor.submit(compileScope(mavenResolver));
                 return TaskStatus.OK;
             case TEST:
-                MavenExecutor.submit(testScope());
+                MavenExecutor.submit(testScope(mavenResolver));
                 return TaskStatus.OK;
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private Callable<?> compileScope() throws Exception {
+    private Callable<?> compileScope(final MavenResolver mavenResolver) throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -67,7 +67,7 @@ public class MavenResolverTask implements Task {
 
     }
 
-    private Callable<?> testScope() throws Exception {
+    private Callable<?> testScope(final MavenResolver mavenResolver) throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 

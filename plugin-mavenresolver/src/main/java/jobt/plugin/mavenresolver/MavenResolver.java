@@ -63,7 +63,7 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
-        locator.setServices(RepositoryListener.class, new ProgressLoggingRepositoryListener());
+        locator.setServices(RepositoryListener.class, new ProgressLoggingRepositoryListener(progressIndicator));
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {
@@ -91,8 +91,12 @@ public class MavenResolver implements DependencyResolver {
         LOG.debug("MavenResolver initialized");
     }
 
+    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
+        this.progressIndicator = progressIndicator;
+    }
+
     @Override
-    public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope)
+    public List<Path> resolve(final List<String> deps, final DependencyScope scope)
         throws IOException {
 
         if (!initialized) {
@@ -105,6 +109,7 @@ public class MavenResolver implements DependencyResolver {
         }
 
         LOG.info("Resolve {} dependencies: {}", scope, deps);
+        progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
         final List<Path> files = readCache(deps, scope);
 
@@ -142,7 +147,7 @@ public class MavenResolver implements DependencyResolver {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
-        session.setTransferListener(new ProgressLoggingTransferListener());
+        session.setTransferListener(new ProgressLoggingTransferListener(progressIndicator));
 
         final CollectRequest collectRequest = new CollectRequest();
 
@@ -202,10 +207,6 @@ public class MavenResolver implements DependencyResolver {
         Files.write(Paths.get(".jobt", mavenScope(scope) + "-dependencies"),
             Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-    }
-
-    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
-        this.progressIndicator = progressIndicator;
     }
 
 }

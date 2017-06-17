@@ -245,8 +245,6 @@ public class JavaCompileTask implements Task {
                 }
             };
 
-        new Thread().destroy();
-
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 

@@ -9,8 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -55,12 +53,6 @@ public class MavenResolver implements DependencyResolver {
     private RepositorySystem system;
     private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
-
-    private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
-        final Thread thread = new Thread(r);
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private void init() {
         LOG.debug("Initialize MavenResolver");

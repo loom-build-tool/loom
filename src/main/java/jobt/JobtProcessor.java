@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.config.BuildConfigImpl;
+import jobt.util.Stopwatch;
 
 public class JobtProcessor {
 

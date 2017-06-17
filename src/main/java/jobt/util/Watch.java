@@ -1,4 +1,4 @@
-package jobt;
+package jobt.util;
 
 public class Watch {
 

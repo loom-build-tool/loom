@@ -19,13 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.RuntimeConfigurationImpl;
-import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.config.BuildConfigImpl;
+import jobt.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:illegalcatch"})
 public class PluginRegistry {

@@ -1,4 +1,4 @@
-package jobt;
+package jobt.util;
 
 import java.util.Collections;
 import java.util.Map;

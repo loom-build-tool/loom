@@ -8,6 +8,8 @@ import org.apache.commons.cli.CommandLine;
 
 import jobt.config.BuildConfigImpl;
 import jobt.config.ConfigReader;
+import jobt.util.Stopwatch;
+import jobt.util.Watch;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public class CliProcessor {

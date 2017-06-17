@@ -254,18 +254,17 @@ public class FindbugsRunner {
                 .filter(Files::exists)
                 .map(Path::toUri)
                 .forEach(pluginUri -> {
-                        try {
-                            Plugin.addCustomPlugin(pluginUri, contextClassLoader);
-                        } catch (final PluginException e) {
-                            throw new IllegalStateException("Error loading plugin " + pluginUri, e);
-                        } catch (final DuplicatePluginIdException e) {
-                            if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-                                throw new IllegalStateException(
-                                    "Duplicate findbugs plugin " + e.getPluginId());
-                            }
+                    try {
+                        Plugin.addCustomPlugin(pluginUri, contextClassLoader);
+                    } catch (final PluginException e) {
+                        throw new IllegalStateException("Error loading plugin " + pluginUri, e);
+                    } catch (final DuplicatePluginIdException e) {
+                        if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
+                            throw new IllegalStateException(
+                                "Duplicate findbugs plugin " + e.getPluginId());
                         }
                     }
-                );
+                });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

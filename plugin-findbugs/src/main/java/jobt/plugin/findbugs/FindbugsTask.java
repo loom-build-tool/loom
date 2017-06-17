@@ -30,8 +30,8 @@ import jobt.util.Preconditions;
 
 public class FindbugsTask implements Task {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src/main/java");
-    public static final Path SRC_TEST_PATH = Paths.get("src/test/java");
+    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
+    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
     public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
@@ -110,16 +110,15 @@ public class FindbugsTask implements Task {
 
         for (final BugInstance bug : bugs) {
 
-            LOG.warn("bug >>> " + bug.getMessage());
+            LOG.warn("bug >>> {}", bug.getMessage());
 
         }
 
-        if (bugs.isEmpty()) {
-            return TaskStatus.OK;
-        } else {
+        if (!bugs.isEmpty()) {
             throw new IllegalStateException(
                 String.format("Findbugs reported %d bugs!", bugs.size()));
         }
+        return TaskStatus.OK;
     }
 
     private List<URL> calcClasspath() {
@@ -154,7 +153,7 @@ public class FindbugsTask implements Task {
                 f -> {
                     try {
                         return f.getInt(null);
-                    } catch (final IllegalArgumentException | IllegalAccessException e) {
+                    } catch (final IllegalAccessException e) {
                         throw new IllegalStateException(e);
                     }
                 }));

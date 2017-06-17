@@ -128,7 +128,6 @@ public class PluginRegistry {
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 
-
         LOG.info("Plugin {} initialized", plugin);
     }
 

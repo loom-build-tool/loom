@@ -23,7 +23,7 @@ public final class Util {
         try {
             return file.toUri().toURL();
         } catch (final MalformedURLException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 

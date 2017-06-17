@@ -89,7 +89,7 @@ public class FindbugsRunner {
 
             if (project.getFileCount() == 0) {
                 LOG.info("Findbugs analysis skipped for this project.");
-                return new ArrayList<>();
+                return Collections.emptyList();
             }
 
             engine.setProject(project);
@@ -122,6 +122,7 @@ public class FindbugsRunner {
             return bugs;
 
         } catch (final InterruptedException | IOException e) {
+            Thread.currentThread().interrupt();
             throw new IllegalStateException("Error execution Findbugs", e);
         } finally {
             System.setSecurityManager(currentSecurityManager);
@@ -144,20 +145,21 @@ public class FindbugsRunner {
     }
 
     private void prepareEnvironment() {
+        LOG.debug("Prepare/cleanup findbugs environment...");
         try {
-            LOG.debug("Prepare/cleanup findbugs environment...");
             Files.deleteIfExists(getTargetXMLReport());
             Files.createDirectories(FindbugsTask.REPORT_PATH);
-            LOG.debug("...cleanup done");
         } catch (final IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
+        LOG.debug("...cleanup done");
     }
 
     private static void waitForPluginInit() {
         try {
             CUSTOM_PLUGINS_INITLATCH.await();
         } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new IllegalStateException("Findbugs Plugin init aborted!", e);
         }
 
@@ -187,7 +189,7 @@ public class FindbugsRunner {
             .forEach(findbugsProject::addAuxClasspathEntry);
 
         if (findbugsProject.getFileList().isEmpty()) {
-            throw new RuntimeException("no source files");
+            throw new IllegalStateException("no source files");
         }
 
         return findbugsProject;
@@ -203,9 +205,7 @@ public class FindbugsRunner {
 
     private static Predicate<Path> filterByExtension(final String extension) {
         Objects.requireNonNull(extension);
-        return p ->
-            Files.isReadable(p)
-            && extension.equals(Util.getFileExtension(p.getFileName().toString()));
+        return p -> extension.equals(Util.getFileExtension(p.getFileName().toString()));
     }
 
     private static String pathToString(final Path file) {
@@ -271,7 +271,7 @@ public class FindbugsRunner {
             .collect(Collectors.toList());
 
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
 
     }

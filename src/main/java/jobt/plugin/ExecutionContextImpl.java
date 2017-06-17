@@ -4,7 +4,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -25,11 +24,9 @@ public class ExecutionContextImpl implements ExecutionContext {
     private final CompletableFuture<List<Path>> compileDependenciesPromise =
         new CompletableFuture<>();
     private final CompletableFuture<List<Path>> testDependenciesPromise = new CompletableFuture<>();
-    private final CountDownLatch compileClassPathLatch = new CountDownLatch(1);
-    private final CountDownLatch testClassPathLatch = new CountDownLatch(1);
 
-    private volatile List<URL> compileClasspath;
-    private volatile List<URL> testClasspath;
+    private final CompletableFuture<List<URL>> compileClasspath = new CompletableFuture<>();
+    private final CompletableFuture<List<URL>> testClasspath = new CompletableFuture<>();
 
     /**
      * Provided by mavenresolver plugin.
@@ -59,28 +56,22 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     @Override
     public List<URL> getCompileClasspath() throws InterruptedException {
-        LOG.info("Wait for latch to getCompileClasspath");
-        compileClassPathLatch.await();
-        return compileClasspath;
+        return waitAndGet(compileClasspath);
     }
 
     @Override
     public void setCompileClasspath(final List<URL> compileClasspath) {
-        this.compileClasspath = compileClasspath;
-        compileClassPathLatch.countDown();
+        this.compileClasspath.complete(compileClasspath);
     }
 
     @Override
     public List<URL> getTestClasspath() throws InterruptedException {
-        LOG.info("Wait for latch to getTestClasspath");
-        testClassPathLatch.await();
-        return testClasspath;
+        return waitAndGet(testClasspath);
     }
 
     @Override
     public void setTestClasspath(final List<URL> testClasspath) {
-        this.testClasspath = testClasspath;
-        testClassPathLatch.countDown();
+        this.testClasspath.complete(testClasspath);
     }
 
     private static <T> T waitAndGet(final Future<T> future) {

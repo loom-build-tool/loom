@@ -1,6 +1,7 @@
 package jobt.plugin.java;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -12,11 +13,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.tools.DiagnosticCollector;
+import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -54,22 +54,15 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
-    private final List<String> dependencies;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
                            final ExecutionContext executionContext,
-                           final CompileTarget compileTarget
-                           ) {
-        this.buildConfig = Objects.requireNonNull(buildConfig);
+                           final CompileTarget compileTarget) {
+        this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
-        this.executionContext = Objects.requireNonNull(executionContext);
-        this.compileTarget = Objects.requireNonNull(compileTarget);
-
-        dependencies = new ArrayList<>();
-        if (buildConfig.getDependencies() != null) {
-            dependencies.addAll(buildConfig.getDependencies());
-        }
+        this.executionContext = executionContext;
+        this.compileTarget = compileTarget;
 
         switch (compileTarget) {
             case MAIN:
@@ -92,15 +85,10 @@ public class JavaCompileTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-
     }
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(srcPath)) {
-            return TaskStatus.SKIP;
-        }
-
         final List<Path> classpath = new ArrayList<>();
         classpath.addAll(classpathAppendix);
 
@@ -131,9 +119,9 @@ public class JavaCompileTask implements Task {
             .collect(Collectors.toList());
 
         final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacher(subdirName) : null;
+            ? new FileCacherImpl(subdirName) : new NullCacher();
 
-        if (fileCacher != null && fileCacher.filesCached(srcPaths)) {
+        if (fileCacher.filesCached(srcPaths)) {
             return TaskStatus.UP_TO_DATE;
         }
 
@@ -147,8 +135,25 @@ public class JavaCompileTask implements Task {
             .map(Path::toFile)
             .collect(Collectors.toList());
 
+        compile(classpath, srcFiles);
+
+        fileCacher.cacheFiles(srcPaths);
+
+        return TaskStatus.OK;
+    }
+
+    private static URL buildUrl(final Path f) {
+        try {
+            return f.toUri().toURL();
+        } catch (final MalformedURLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        final DiagnosticCollector<JavaFileObject> diagnosticListener = new DiagnosticCollector<>();
+        final DiagnosticListener<JavaFileObject> diagnosticListener =
+            diagnostic -> LOG.error(diagnostic.toString());
 
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
@@ -165,29 +170,12 @@ public class JavaCompileTask implements Task {
 
             LOG.info("Compile {} sources with options {}", srcFiles.size(), options);
 
-            if (!compiler.getTask(null, fileManager, diagnosticListener,
-                options, null, compUnits).call()) {
+            final JavaCompiler.CompilationTask compilerTask = compiler
+                .getTask(null, fileManager, diagnosticListener, options, null, compUnits);
 
-                final String collect = diagnosticListener.getDiagnostics().stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining("\n"));
-
-                throw new IllegalStateException(collect);
+            if (!compilerTask.call()) {
+                throw new IllegalStateException("Java compile failed");
             }
-        }
-
-        if (fileCacher != null) {
-            fileCacher.cacheFiles(srcPaths);
-        }
-
-        return TaskStatus.OK;
-    }
-
-    private static URL buildUrl(final Path f) {
-        try {
-            return f.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalStateException(e);
         }
     }
 
@@ -213,7 +201,7 @@ public class JavaCompileTask implements Task {
         return options;
     }
 
-    private List<String> configuredPlatformVersion(final String versionString) {
+    private static List<String> configuredPlatformVersion(final String versionString) {
         final String javaSpecVersion = System.getProperty("java.specification.version");
 
         if (javaSpecVersion == null) {
@@ -222,8 +210,7 @@ public class JavaCompileTask implements Task {
 
         final int parsedJavaSpecVersion = parseJavaVersion(javaSpecVersion);
 
-        final int platformVersion =
-            Optional.ofNullable(versionString)
+        final int platformVersion = Optional.ofNullable(versionString)
                 .map(JavaCompileTask::parseJavaVersion)
                 .orElse(DEFAULT_JAVA_PLATFORM);
 
@@ -259,11 +246,11 @@ public class JavaCompileTask implements Task {
         }
     }
 
-    private List<String> crossCompileWithReleaseFlag(final Integer platformVersion) {
+    private static List<String> crossCompileWithReleaseFlag(final Integer platformVersion) {
         return Arrays.asList("--release", platformVersion.toString());
     }
 
-    private List<String> crossCompileWithSourceTargetFlags(final Integer platformVersion) {
+    private static List<String> crossCompileWithSourceTargetFlags(final Integer platformVersion) {
         return Arrays.asList(
             "-source", platformVersion.toString(),
             "-target", platformVersion.toString(),
@@ -272,15 +259,15 @@ public class JavaCompileTask implements Task {
         );
     }
 
-    public String getBootstrapClasspath() {
+    public static String getBootstrapClasspath() {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_BOOTSTRAPCLASSPATH");
     }
 
-    public String getExtDirs() {
+    public static String getExtDirs() {
         return requireEnv("JOBT_JAVA_CROSS_COMPILE_EXTDIRS");
     }
 
-    private String requireEnv(final String envName) {
+    private static String requireEnv(final String envName) {
         final String env = System.getenv(envName);
         if (env == null) {
             throw new IllegalStateException("System environment variable <"

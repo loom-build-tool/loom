@@ -10,19 +10,11 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.ExecutionException;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.filter.ThresholdFilter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
-import ch.qos.logback.core.FileAppender;
 import jobt.config.BuildConfigImpl;
 
-@SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JobtProcessor {
 
     private TaskTemplateImpl taskTemplate;
@@ -31,63 +23,11 @@ public class JobtProcessor {
         System.setProperty("jobt.version", Version.getVersion());
     }
 
-    @SuppressWarnings("checkstyle:executablestatementcount")
-    public void configureLogger() {
-        final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        lc.start();
-
-        final PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-        encoder.setContext(lc);
-        encoder.setPattern("%date %level [%thread] %logger - %msg%n");
-        encoder.start();
-
-        final PatternLayoutEncoder consoleEncoder = new PatternLayoutEncoder();
-        consoleEncoder.setContext(lc);
-        consoleEncoder.setPattern("%level %logger - %msg%n");
-        consoleEncoder.start();
-
-        final ThresholdFilter filter = new ThresholdFilter();
-        filter.setContext(lc);
-        filter.setName("Jobt ThresholdFilter");
-        filter.setLevel("WARN");
-        filter.start();
-
-        final ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
-        consoleAppender.setContext(lc);
-        consoleAppender.setName("Jobt Console Appender");
-        consoleAppender.setTarget("System.err");
-        consoleAppender.setEncoder(consoleEncoder);
-        consoleAppender.addFilter(filter);
-        consoleAppender.start();
-
-        final FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
-        fileAppender.setContext(lc);
-        fileAppender.setName("Jobt File Appender");
-        fileAppender.setFile(".jobt/build.log");
-        fileAppender.setAppend(false);
-        fileAppender.setEncoder(encoder);
-        fileAppender.start();
-
-        final Logger jobtLogger = lc.getLogger("jobt");
-        jobtLogger.setAdditive(false);
-        jobtLogger.setLevel(Level.DEBUG);
-        jobtLogger.detachAppender("console");
-        jobtLogger.addAppender(consoleAppender);
-        jobtLogger.addAppender(fileAppender);
-
-        final Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
-        rootLogger.setAdditive(false);
-        rootLogger.setLevel(Level.ERROR);
-        rootLogger.detachAppender("console");
-        rootLogger.addAppender(consoleAppender);
-        rootLogger.addAppender(fileAppender);
-    }
-
     public void init(final BuildConfigImpl buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
         Stopwatch.startProcess("Initialize plugins");
         taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration);
-        Stopwatch.stopProcess("Initialize plugins");
+        Stopwatch.stopProcess();
     }
 
     public void execute(final String taskName) throws Exception {
@@ -123,6 +63,19 @@ public class JobtProcessor {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public void logMemoryUsage() {
+        final Logger log = LoggerFactory.getLogger(JobtProcessor.class);
+
+        final Runtime rt = Runtime.getRuntime();
+        final long maxMemory = rt.maxMemory();
+        final long totalMemory = rt.totalMemory();
+        final long freeMemory = rt.freeMemory();
+        final long memUsed = totalMemory - freeMemory;
+
+        log.debug("Memory max={}, total={}, free={}, used={}",
+            maxMemory, totalMemory, freeMemory, memUsed);
     }
 
 }

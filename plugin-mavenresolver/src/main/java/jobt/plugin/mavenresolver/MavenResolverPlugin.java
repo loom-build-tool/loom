@@ -15,7 +15,8 @@ public class MavenResolverPlugin extends AbstractPlugin {
                 getExecutionContext()));
 
         taskRegistry.register("resolveTestDependencies",
-            new MavenResolverTask(DependencyScope.TEST, getBuildConfig(), getExecutionContext()));
+            new MavenResolverTask(DependencyScope.TEST, getBuildConfig(),
+                getExecutionContext()));
 
     }
 

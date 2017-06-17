@@ -15,7 +15,7 @@ public class MavenResolverTask implements Task {
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
-    private final MavenResolver mavenResolver = new MavenResolver();
+
 
     public MavenResolverTask(
         final DependencyScope dependencyScope,
@@ -34,6 +34,12 @@ public class MavenResolverTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
+        // FIXME
+        final ProgressIndicator progressIndicator =
+            new ProgressIndicator(getClass().getSimpleName());
+
+        final MavenResolver mavenResolver = new MavenResolver();
+        mavenResolver.setProgressIndicator(progressIndicator);
 
         switch (dependencyScope) {
             case COMPILE:

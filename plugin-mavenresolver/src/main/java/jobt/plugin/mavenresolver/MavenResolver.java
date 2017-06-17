@@ -53,6 +53,7 @@ public class MavenResolver implements DependencyResolver {
     private RepositorySystem system;
     private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
+    private ProgressIndicator progressIndicator;
 
     private void init() {
         LOG.debug("Initialize MavenResolver");
@@ -201,6 +202,10 @@ public class MavenResolver implements DependencyResolver {
         Files.write(Paths.get(".jobt", mavenScope(scope) + "-dependencies"),
             Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
+        this.progressIndicator = progressIndicator;
     }
 
 }

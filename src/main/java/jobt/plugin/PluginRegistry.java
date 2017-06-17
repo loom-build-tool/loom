@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jobt.MavenResolver;
 import jobt.RuntimeConfigurationImpl;
 import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
@@ -38,7 +36,6 @@ public class PluginRegistry {
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
-    private final MavenResolver dependencyResolver = new MavenResolver();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
 
     public PluginRegistry(final BuildConfigImpl buildConfig,
@@ -128,7 +125,6 @@ public class PluginRegistry {
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         regPlugin.setExecutionContext(executionContext);
-        regPlugin.setDependencyResolver(dependencyResolver);
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 

@@ -35,8 +35,9 @@ allprojects {
 dependencies {
     compile project(':api')
     runtimeOnly project(':plugin-java')
-    runtimeOnly project(':plugin-mavenresolver')
     runtimeOnly project(':plugin-checkstyle')
+    runtimeOnly project(':plugin-findbugs')
+    runtimeOnly project(':plugin-mavenresolver')
     compile('ch.qos.logback:logback-classic:1.1.7')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')

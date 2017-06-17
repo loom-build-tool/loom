@@ -50,13 +50,13 @@ public class CliProcessor {
 
         Stopwatch.startProcess("Configure logging");
         LogConfiguration.configureLogger();
-        Stopwatch.stopProcess("Configure logging");
+        Stopwatch.stopProcess();
 
         jobtProcessor.logMemoryUsage();
 
         Stopwatch.startProcess("Read configuration");
         final BuildConfigImpl buildConfig = ConfigReader.readConfig(runtimeConfiguration);
-        Stopwatch.stopProcess("Read configuration");
+        Stopwatch.stopProcess();
 
         System.out.printf("Initialized configuration for %s version %s%n",
             buildConfig.getProject().getArtifactId(),

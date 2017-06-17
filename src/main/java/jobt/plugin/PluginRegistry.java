@@ -172,7 +172,7 @@ public class PluginRegistry {
                 ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
         }
 
-        Stopwatch.stopProcess(stopwatchProcess);
+        Stopwatch.stopProcess();
         return ret;
     }
 

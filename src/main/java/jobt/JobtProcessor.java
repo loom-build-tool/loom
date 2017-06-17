@@ -27,7 +27,7 @@ public class JobtProcessor {
                      final RuntimeConfigurationImpl runtimeConfiguration) {
         Stopwatch.startProcess("Initialize plugins");
         taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration);
-        Stopwatch.stopProcess("Initialize plugins");
+        Stopwatch.stopProcess();
     }
 
     public void execute(final String taskName) throws Exception {

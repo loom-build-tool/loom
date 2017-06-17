@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import javax.tools.DiagnosticCollector;
+import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -138,9 +138,9 @@ public class JavaCompileTask implements Task {
             .collect(Collectors.toList());
 
         final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacher(subdirName) : null;
+            ? new FileCacherImpl(subdirName) : new NullCacher();
 
-        if (fileCacher != null && fileCacher.filesCached(srcPaths)) {
+        if (fileCacher.filesCached(srcPaths)) {
             return TaskStatus.UP_TO_DATE;
         }
 

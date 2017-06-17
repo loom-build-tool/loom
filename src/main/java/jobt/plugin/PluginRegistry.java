@@ -57,6 +57,7 @@ public class PluginRegistry {
 
         final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
         plugins.add("java");
+        plugins.add("mavenresolver");
 
         final ExecutorService executorService = Executors.newWorkStealingPool();
         for (final String plugin : plugins) {
@@ -94,6 +95,9 @@ public class PluginRegistry {
         switch (plugin) {
             case "java":
                 pluginClassname = "jobt.plugin.java.JavaPlugin";
+                break;
+            case "mavenresolver":
+                pluginClassname = "jobt.plugin.mavenresolver.MavenResolverPlugin";
                 break;
             case "checkstyle":
                 pluginClassname = "jobt.plugin.checkstyle.CheckstylePlugin";
@@ -139,11 +143,7 @@ public class PluginRegistry {
     private URL findPluginUrl(final String name) throws IOException {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".jobt", "binary",
             Version.getVersion(), "plugin-" + name);
-        final Path jar = baseDir.resolve("plugin-" + name + ".jar");
-        if (!Files.isRegularFile(jar)) {
-            throw new IllegalStateException("Plugin jar does not exist: " + jar);
-        }
-        return buildUrl(jar);
+        return buildUrl(baseDir.resolve("plugin-" + name + ".jar"));
     }
 
     private static URL buildUrl(final Path f) {
@@ -154,25 +154,23 @@ public class PluginRegistry {
         }
     }
 
-    public TaskStatus trigger(final String phase) throws Exception {
-        final List<Task> tasks = taskRegistry.getTasks(phase);
+    public TaskStatus trigger(final String taskName) throws Exception {
+        final Optional<Task> task = taskRegistry.getTasks(taskName);
 
-        if (tasks.isEmpty()) {
-            LOG.debug("No task for {} registered", phase);
+        if (!task.isPresent()) {
+            LOG.debug("No task for {} registered", taskName);
             return TaskStatus.SKIP;
         }
 
-        final String stopwatchProcess = "Task " + phase;
+        final String stopwatchProcess = "Task " + taskName;
         Stopwatch.startProcess(stopwatchProcess);
 
         final Set<TaskStatus> statuses = new HashSet<>();
 
-        for (final Task task : tasks) {
-            LOG.info("Start task {}", phase);
-            final TaskStatus status = task.run();
-            LOG.info("Task {} resulted with {}", phase, status);
-            statuses.add(status);
-        }
+        LOG.info("Start task {}", taskName);
+        final TaskStatus status = task.get().run();
+        LOG.info("Task {} resulted with {}", taskName, status);
+        statuses.add(status);
 
         final TaskStatus ret;
         if (statuses.size() == 1) {
@@ -182,13 +180,14 @@ public class PluginRegistry {
                 ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
         }
 
-        Stopwatch.stopProcess(stopwatchProcess);
+        Stopwatch.stopProcess();
         return ret;
     }
 
-    public void warmup(final String phase) throws Exception {
-        for (final Task task : taskRegistry.getTasks(phase)) {
-            task.prepare();
+    public void warmup(final String taskName) throws Exception {
+        final Optional<Task> task = taskRegistry.getTasks(taskName);
+        if (task.isPresent()) {
+            task.get().prepare();
         }
     }
 

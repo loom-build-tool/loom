@@ -30,12 +30,12 @@ import jobt.api.TaskStatus;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask implements Task {
 
+    private static final String CONFIG_LOCATION = "config/checkstyle/checkstyle.xml";
+    private static final boolean OMIT_IGNORED_MODULES = true;
+
     private final Path srcBaseDir;
     private final CompileTarget compileTarget;
     private final ExecutionContext executionContext;
-
-    private String configLocation = "config/checkstyle/checkstyle.xml";
-    private boolean omitIgnoredModules = true;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final ExecutionContext executionContext) {
@@ -82,7 +82,7 @@ public class CheckstyleTask implements Task {
             return TaskStatus.OK;
         }
 
-        throw new IllegalStateException();
+        throw new IllegalStateException("Checkstyle reported errors!");
     }
 
     private RootModule createRootModule()
@@ -94,9 +94,9 @@ public class CheckstyleTask implements Task {
             final Properties props = createOverridingProperties();
             final Configuration config =
                 ConfigurationLoader.loadConfiguration(
-                    configLocation,
+                    CONFIG_LOCATION,
                     new PropertiesExpander(props),
-                    omitIgnoredModules);
+                    OMIT_IGNORED_MODULES);
 
             final ClassLoader moduleClassLoader =
                 Checker.class.getClassLoader();
@@ -117,7 +117,7 @@ public class CheckstyleTask implements Task {
         } catch (final CheckstyleException ex) {
             throw new IllegalStateException(String.format(Locale.ROOT,
                 "Unable to create Root Module: "
-                    + "configLocation {%s}, classpath {%s}.", configLocation, classpath), ex);
+                    + "configLocation {%s}, classpath {%s}.", CONFIG_LOCATION, classpath), ex);
 //            throw new BuildException(String.format(Locale.ROOT, "Unable to create Root Module: "
 //                + "configLocation {%s}, classpath {%s}.", configLocation, classpath), ex);
         }

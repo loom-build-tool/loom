@@ -43,7 +43,7 @@ public class JavaTestTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(Paths.get("jobtbuild/classes/test"))) {
+        if (Files.notExists(Paths.get("jobtbuild", "classes", "test"))) {
             return TaskStatus.SKIP;
         }
 
@@ -69,10 +69,10 @@ public class JavaTestTask implements Task {
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
         final List<URL> urls = new ArrayList<>(executionContext.getTestClasspath());
-        urls.add(Paths.get("jobtbuild/classes/test").toUri().toURL());
-        urls.add(Paths.get("jobtbuild/classes/main").toUri().toURL());
-        urls.add(Paths.get("jobtbuild/resources/test").toUri().toURL());
-        urls.add(Paths.get("jobtbuild/resources/main").toUri().toURL());
+        urls.add(Paths.get("jobtbuild", "classes", "test").toUri().toURL());
+        urls.add(Paths.get("jobtbuild", "classes", "main").toUri().toURL());
+        urls.add(Paths.get("jobtbuild", "resources", "test").toUri().toURL());
+        urls.add(Paths.get("jobtbuild", "resources", "main").toUri().toURL());
         return new URLClassLoader(urls.toArray(new URL[] {}));
     }
 
@@ -81,7 +81,7 @@ public class JavaTestTask implements Task {
 
         final List<Class<?>> classes = new ArrayList<>();
 
-        final Path rootPath = Paths.get("jobtbuild/classes/test");
+        final Path rootPath = Paths.get("jobtbuild", "classes", "test");
         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)

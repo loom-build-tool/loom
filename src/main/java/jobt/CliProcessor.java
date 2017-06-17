@@ -48,11 +48,15 @@ public class CliProcessor {
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
 
-        jobtProcessor.configureLogger();
+        Stopwatch.startProcess("Configure logging");
+        LogConfiguration.configureLogger();
+        Stopwatch.stopProcess();
+
+        jobtProcessor.logMemoryUsage();
 
         Stopwatch.startProcess("Read configuration");
         final BuildConfigImpl buildConfig = ConfigReader.readConfig(runtimeConfiguration);
-        Stopwatch.stopProcess("Read configuration");
+        Stopwatch.stopProcess();
 
         System.out.printf("Initialized configuration for %s version %s%n",
             buildConfig.getProject().getArtifactId(),
@@ -68,6 +72,8 @@ public class CliProcessor {
         if (cmd.hasOption("stat")) {
             printExecutionStatistics();
         }
+
+        jobtProcessor.logMemoryUsage();
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
         System.out.printf(PASTA + "  Cooked your pasta in %.2fs%n", duration);

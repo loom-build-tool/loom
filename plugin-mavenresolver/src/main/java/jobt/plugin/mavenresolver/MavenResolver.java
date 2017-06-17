@@ -152,11 +152,6 @@ public class MavenResolver implements DependencyResolver {
         session.setTransferListener(new ProgressLoggingTransferListener());
 
         final CollectRequest collectRequest = new CollectRequest();
-//        final RequestTrace trace = new DefaultRequestTrace(null); //data:null
-//        collectRequest.setTrace(trace);
-
-        final long start = System.currentTimeMillis();
-
 
         final List<Dependency> dependencies = deps.stream()
             .map(a -> new Dependency(new DefaultArtifact(a), mavenScope(scope)))

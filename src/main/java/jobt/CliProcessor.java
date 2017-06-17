@@ -48,7 +48,11 @@ public class CliProcessor {
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
 
-        jobtProcessor.configureLogger();
+        Stopwatch.startProcess("Configure logging");
+        LogConfiguration.configureLogger();
+        Stopwatch.stopProcess("Configure logging");
+
+        jobtProcessor.logMemoryUsage();
 
         Stopwatch.startProcess("Read configuration");
         final BuildConfigImpl buildConfig = ConfigReader.readConfig(runtimeConfiguration);
@@ -68,6 +72,8 @@ public class CliProcessor {
         if (cmd.hasOption("stat")) {
             printExecutionStatistics();
         }
+
+        jobtProcessor.logMemoryUsage();
 
         final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
         System.out.printf(PASTA + "  Cooked your pasta in %.2fs%n", duration);

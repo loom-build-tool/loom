@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -59,10 +60,11 @@ public class JavaCompileTask implements Task {
                            final RuntimeConfiguration runtimeConfiguration,
                            final ExecutionContext executionContext,
                            final CompileTarget compileTarget) {
-        this.buildConfig = buildConfig;
+        this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
-        this.executionContext = executionContext;
-        this.compileTarget = compileTarget;
+        this.executionContext = Objects.requireNonNull(executionContext);
+        this.compileTarget = Objects.requireNonNull(compileTarget);
+
 
         switch (compileTarget) {
             case MAIN:
@@ -173,7 +175,6 @@ public class JavaCompileTask implements Task {
     @Override
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
-        classpath.addAll(classpathAppendix);
 
         final List<URL> urls = classpath.stream()
             .map(JavaCompileTask::buildUrl)

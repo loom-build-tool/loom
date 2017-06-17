@@ -184,7 +184,7 @@ public class FindbugsRunner {
             .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
-        auxClasspath.stream().map(url -> url.getFile())
+        auxClasspath.stream().map(URL::getFile)
             .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);
 
@@ -242,34 +242,30 @@ public class FindbugsRunner {
     /**
      * Note: findbugs plugins are registered in a static map and thus has many concurrency issues.
      */
-    private static List<Plugin> loadFindbugsPlugin() {
+    private static void loadFindbugsPlugin() {
 
         final ClassLoader contextClassLoader = FindbugsRunner.class.getClassLoader();
 
         try {
 
-            return
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-            .map(url -> FindbugsRunner.normalizeUrl(url))
-            .map(Paths::get).filter(p -> Files.exists(p))
-            .map(Path::toUri)
-            .map(uri -> {
-                try {
-                    return Optional.of(Plugin.addCustomPlugin(uri, contextClassLoader));
-                } catch (final PluginException e) {
-                    throw new IllegalStateException("Error loading plugin " + uri, e);
-                } catch (final DuplicatePluginIdException e) {
-                    if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-                        throw new IllegalStateException(
-                            "Duplicate findbugs plugin " + e.getPluginId());
+                .map(FindbugsRunner::normalizeUrl)
+                .map(Paths::get)
+                .filter(Files::exists)
+                .map(Path::toUri)
+                .forEach(pluginUri -> {
+                        try {
+                            Plugin.addCustomPlugin(pluginUri, contextClassLoader);
+                        } catch (final PluginException e) {
+                            throw new IllegalStateException("Error loading plugin " + pluginUri, e);
+                        } catch (final DuplicatePluginIdException e) {
+                            if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
+                                throw new IllegalStateException(
+                                    "Duplicate findbugs plugin " + e.getPluginId());
+                            }
+                        }
                     }
-                    return Optional.<Plugin>empty();
-                }
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-
+                );
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

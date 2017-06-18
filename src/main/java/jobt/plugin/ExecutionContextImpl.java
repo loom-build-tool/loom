@@ -39,25 +39,25 @@ public class ExecutionContextImpl implements ExecutionContext {
     private final CompletableFuture<List<URL>> compileClasspath = new CompletableFuture<>();
     private final CompletableFuture<List<URL>> testClasspath = new CompletableFuture<>();
 
-    @Override
-    public void setCompileClasspath(final List<URL> compileClasspath) {
-        complete(this.compileClasspath, compileClasspath);
-    }
-
-    @Override
-    public List<URL> getCompileClasspath() {
-        return waitAndGet(compileClasspath);
-    }
-
-    @Override
-    public void setTestClasspath(final List<URL> testClasspath) {
-        complete(this.testClasspath, testClasspath);
-    }
-
-    @Override
-    public List<URL> getTestClasspath() {
-        return waitAndGet(testClasspath);
-    }
+//    @Override
+//    public void setCompileClasspath(final List<URL> compileClasspath) {
+//        complete(this.compileClasspath, compileClasspath);
+//    }
+//
+//    @Override
+//    public List<URL> getCompileClasspath() {
+//        return waitAndGet(compileClasspath);
+//    }
+//
+//    @Override
+//    public void setTestClasspath(final List<URL> testClasspath) {
+//        complete(this.testClasspath, testClasspath);
+//    }
+//
+//    @Override
+//    public List<URL> getTestClasspath() {
+//        return waitAndGet(testClasspath);
+//    }
 
 //    @Override
 //    public void setCompileDependencies(final List<Path> compileDependencies) {

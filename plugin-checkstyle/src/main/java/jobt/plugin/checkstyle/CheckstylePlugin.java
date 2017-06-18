@@ -13,10 +13,12 @@ public class CheckstylePlugin extends AbstractPlugin {
         final ExecutionContext executionContext = getExecutionContext();
 
         taskRegistry.register("checkstyleMain",
-            new CheckstyleTask(CompileTarget.MAIN, executionContext));
+            new CheckstyleTask(CompileTarget.MAIN,
+                uses("compileClasspath"), provides()));
 
         taskRegistry.register("checkstyleTest",
-            new CheckstyleTask(CompileTarget.TEST, executionContext));
+            new CheckstyleTask(CompileTarget.TEST,
+                uses("testClasspath"), provides()));
     }
 
     @Override

@@ -23,9 +23,10 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import jobt.api.CompileTarget;
-import jobt.api.ExecutionContext;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask implements Task {
@@ -35,13 +36,15 @@ public class CheckstyleTask implements Task {
 
     private final Path srcBaseDir;
     private final CompileTarget compileTarget;
-    private final ExecutionContext executionContext;
+    private final UsedProducts input;
+    private final ProvidedProducts output;
 
     public CheckstyleTask(final CompileTarget compileTarget,
-                          final ExecutionContext executionContext) {
+        final UsedProducts input, final ProvidedProducts output) {
 
         this.compileTarget = compileTarget;
-        this.executionContext = executionContext;
+        this.input = input;
+        this.output = output;
 
         switch (compileTarget) {
             case MAIN:
@@ -147,10 +150,10 @@ public class CheckstyleTask implements Task {
         final List<URL> classpath;
         switch (compileTarget) {
             case MAIN:
-                classpath = executionContext.getCompileClasspath();
+                classpath = input.readProduct("compileClasspath", List.class);
                 break;
             case TEST:
-                classpath = executionContext.getTestClasspath();
+                classpath = input.readProduct("testClasspath", List.class);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

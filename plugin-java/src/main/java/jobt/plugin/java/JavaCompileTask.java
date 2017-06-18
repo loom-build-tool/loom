@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.ExecutionContext;
 import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
@@ -51,7 +50,7 @@ public class JavaCompileTask implements Task {
 
     private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
-    private final ExecutionContext executionContext;
+//    private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
     private final Path srcPath;
     private final Path buildDir;
@@ -62,14 +61,13 @@ public class JavaCompileTask implements Task {
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
-                           final ExecutionContext executionContext,
                            final UsedProducts input, final ProvidedProducts output,
+                           // FIXME reorder
                            final CompileTarget compileTarget) {
         this.input = input;
         this.output = output;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
-        this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
 
@@ -191,11 +189,11 @@ public class JavaCompileTask implements Task {
             case MAIN:
                 // TODO cast
                 classpath.addAll(input.readProduct("compileDependencies", List.class));
-                executionContext.setCompileClasspath(urls);
+                output.complete("compileClasspath", urls);
                 break;
             case TEST:
                 classpath.addAll(input.readProduct("testDependencies", List.class));
-                executionContext.setTestClasspath(urls);
+                output.complete("testClasspath", urls);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

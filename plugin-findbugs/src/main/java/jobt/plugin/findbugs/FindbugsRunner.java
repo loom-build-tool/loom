@@ -4,13 +4,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -215,25 +211,11 @@ public class FindbugsRunner {
 
     private static List<String> getSourceFiles(final Path sourcesDir) {
         try {
-            final List<Path> javaFiles = new ArrayList<>();
-            final FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                    throws IOException {
-                    if (filterByExtension("java").test(file)) {
-                        javaFiles.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            };
-
-            Files.walkFileTree(sourcesDir, visitor);
-
-            return
-                javaFiles.stream()
+            return Files.walk(sourcesDir)
+                .filter(Files::isRegularFile)
+                .filter(filterByExtension("java"))
                 .map(FindbugsRunner::pathToString)
                 .collect(Collectors.toList());
-
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

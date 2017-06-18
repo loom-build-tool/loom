@@ -1,13 +1,14 @@
 apply plugin: 'java'
 
-group = 'jobt'
 archivesBaseName = 'jobt'
-version = '1.0.0'
 
 allprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'pmd'
+
+    group = 'jobt'
+    version = '1.0.0'
 
     sourceCompatibility = 1.8
 
@@ -36,6 +37,7 @@ dependencies {
     compile project(':api')
     runtimeOnly project(':plugin-java')
     runtimeOnly project(':plugin-checkstyle')
+    runtimeOnly project(':plugin-findbugs')
     runtimeOnly project(':plugin-mavenresolver')
     compile('ch.qos.logback:logback-classic:1.1.7')
     compile('org.yaml:snakeyaml:1.18')
@@ -61,13 +63,17 @@ task zip(type: Zip) {
         from project(':plugin-java').configurations.runtime.allArtifacts.files
         from project(':plugin-java').configurations.runtime
     }
+    into("plugin-mavenresolver") {
+        from project(':plugin-mavenresolver').configurations.runtime.allArtifacts.files
+        from project(':plugin-mavenresolver').configurations.runtime
+    }
     into("plugin-checkstyle") {
         from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
         from project(':plugin-checkstyle').configurations.runtime
     }
-    into("plugin-mavenresolver") {
-        from project(':plugin-mavenresolver').configurations.runtime.allArtifacts.files
-        from project(':plugin-mavenresolver').configurations.runtime
+    into("plugin-findbugs") {
+        from project(':plugin-findbugs').configurations.runtime.allArtifacts.files
+        from project(':plugin-findbugs').configurations.runtime
     }
     into("scripts") {
         from 'scripts/build.yml'

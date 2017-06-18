@@ -6,7 +6,10 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -19,24 +22,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.RuntimeConfigurationImpl;
-import jobt.Stopwatch;
 import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.config.BuildConfigImpl;
+import jobt.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:illegalcatch"})
 public class PluginRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginRegistry.class);
 
+    private static final Map<String, String> INTERNAL_PLUGINS;
+    private static final Set<String> DEFAULT_PLUGINS;
+
     private final BuildConfigImpl buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
     private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+
+    static {
+        final Map<String, String> internalPlugins = new HashMap<>();
+        internalPlugins.put("java", "jobt.plugin.java.JavaPlugin");
+        internalPlugins.put("mavenresolver", "jobt.plugin.mavenresolver.MavenResolverPlugin");
+        internalPlugins.put("checkstyle", "jobt.plugin.checkstyle.CheckstylePlugin");
+        internalPlugins.put("findbugs", "jobt.plugin.findbugs.FindbugsPlugin");
+        INTERNAL_PLUGINS = Collections.unmodifiableMap(internalPlugins);
+
+        final Set<String> defaultPlugins = new HashSet<>();
+        defaultPlugins.add("java");
+        defaultPlugins.add("mavenresolver");
+        DEFAULT_PLUGINS = Collections.unmodifiableSet(defaultPlugins);
+    }
 
     public PluginRegistry(final BuildConfigImpl buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
@@ -52,9 +72,8 @@ public class PluginRegistry {
     private void initPlugins() {
         final AtomicReference<Throwable> firstException = new AtomicReference<>();
 
-        final Set<String> plugins = new HashSet<>(buildConfig.getPlugins());
-        plugins.add("java");
-        plugins.add("mavenresolver");
+        final Set<String> plugins = new HashSet<>(DEFAULT_PLUGINS);
+        plugins.addAll(buildConfig.getPlugins());
 
         final ExecutorService executorService = Executors.newWorkStealingPool();
         for (final String plugin : plugins) {
@@ -88,19 +107,9 @@ public class PluginRegistry {
         throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
         LOG.info("Initialize plugin {}", plugin);
-        final String pluginClassname;
-        switch (plugin) {
-            case "java":
-                pluginClassname = "jobt.plugin.java.JavaPlugin";
-                break;
-            case "mavenresolver":
-                pluginClassname = "jobt.plugin.mavenresolver.MavenResolverPlugin";
-                break;
-            case "checkstyle":
-                pluginClassname = "jobt.plugin.checkstyle.CheckstylePlugin";
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown plugin: " + plugin);
+        final String pluginClassname = INTERNAL_PLUGINS.get(plugin);
+        if (pluginClassname == null) {
+            throw new IllegalArgumentException("Unknown plugin: " + plugin);
         }
 
         final URL pluginJarUrl = findPluginUrl(plugin);
@@ -135,7 +144,8 @@ public class PluginRegistry {
     private URL findPluginUrl(final String name) throws IOException {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".jobt", "binary",
             Version.getVersion(), "plugin-" + name);
-        return buildUrl(baseDir.resolve("plugin-" + name + ".jar"));
+        return buildUrl(baseDir.resolve(
+            String.format("plugin-%s-%s.jar", name, Version.getVersion())));
     }
 
     private static URL buildUrl(final Path f) {

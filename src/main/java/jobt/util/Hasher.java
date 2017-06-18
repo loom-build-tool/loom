@@ -1,4 +1,4 @@
-package jobt;
+package jobt.util;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

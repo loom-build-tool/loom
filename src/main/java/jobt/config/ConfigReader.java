@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import jobt.Hasher;
 import jobt.RuntimeConfigurationImpl;
+import jobt.util.Hasher;
 
 public final class ConfigReader {
 

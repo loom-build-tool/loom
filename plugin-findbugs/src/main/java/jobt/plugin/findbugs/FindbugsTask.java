@@ -1,7 +1,6 @@
 package jobt.plugin.findbugs;
 
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -121,25 +120,20 @@ public class FindbugsTask implements Task {
         return TaskStatus.OK;
     }
 
-    private List<URL> calcClasspath() {
-        try {
-            final List<URL> classpathElements = new ArrayList<>();
+    private List<Path> calcClasspath() {
+        final List<Path> classpathElements = new ArrayList<>();
 
-            switch (compileTarget) {
-                case MAIN:
-                    classpathElements.addAll(executionContext.getCompileClasspath());
-                    break;
-                case TEST:
-                    classpathElements.addAll(executionContext.getCompileClasspath());
-                    classpathElements.addAll(executionContext.getTestClasspath());
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown target: " + compileTarget);
-            }
-            return classpathElements;
-        } catch (final InterruptedException e) {
-            throw new IllegalStateException(e);
+        switch (compileTarget) {
+            case MAIN:
+                classpathElements.addAll(executionContext.getResolvedCompileDependencies());
+                break;
+            case TEST:
+                classpathElements.addAll(executionContext.getResolvedTestDependencies());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }
+        return classpathElements;
     }
 
     private static Map<String, Integer> buildPrioritiesMap() {

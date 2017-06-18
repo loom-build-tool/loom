@@ -2,6 +2,7 @@ package jobt.plugin.mavenresolver;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -89,8 +90,7 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> resolve(final List<String> deps, final DependencyScope scope)
-        throws IOException {
+    public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
 
         if (!initialized) {
             synchronized (this) {
@@ -103,18 +103,26 @@ public class MavenResolver implements DependencyResolver {
 
         LOG.info("Resolve {} dependencies: {}", scope, deps);
 
-        final List<Path> files = readCache(deps, scope);
+        try {
 
-        if (!files.isEmpty()) {
-            LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
-            return Collections.unmodifiableList(files);
+            final List<Path> files = readCache(deps, scope);
+
+            if (!files.isEmpty()) {
+                LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
+                return Collections.unmodifiableList(files);
+            }
+
+            final List<Path> paths = resolveRemote(deps, scope);
+            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+            writeCache(deps, scope, paths);
+
+            return paths;
+
+        } catch (final IOException ioe) {
+            throw new UncheckedIOException(
+                String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
         }
 
-        final List<Path> paths = resolveRemote(deps, scope);
-        LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
-        writeCache(deps, scope, paths);
-
-        return paths;
     }
 
     private List<Path> readCache(final List<String> deps, final DependencyScope scope)

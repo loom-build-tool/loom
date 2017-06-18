@@ -53,14 +53,14 @@ public class FindbugsRunner {
 
     private final Path sourcesDir;
     private final Path classesDir;
-    private final List<URL> auxClasspath;
+    private final List<Path> auxClasspath;
 
     private final Optional<Integer> priorityThreshold;
 
     public FindbugsRunner(
         final Path sourcesDir,
         final Path classesDir,
-        final List<URL> auxClasspath,
+        final List<Path> auxClasspath,
         final Optional<Integer> priorityThreshold) {
 
         this.sourcesDir = sourcesDir;
@@ -184,7 +184,8 @@ public class FindbugsRunner {
             .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
-        auxClasspath.stream().map(URL::getFile)
+        auxClasspath.stream()
+            .map(FindbugsRunner::pathToString)
             .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);
 

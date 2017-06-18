@@ -27,13 +27,15 @@ public class UsedProducts {
     public <T> T readProduct(final String productId, final Class<T> clazz) {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(clazz);
-        if (!allowedProductIds.contains(productId)) {
-            throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
-        }
 
         final ProductPromise productPromise =
             Objects.requireNonNull(
                 executionContext.getProducts().get(productId), "No product found by id <"+productId+">");
+
+        if (!allowedProductIds.contains(productId)) {
+            throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
+        }
+
 
         LOG.debug("Requesting product <{}> ...", productId);
         final Object value = productPromise.get();

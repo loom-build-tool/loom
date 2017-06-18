@@ -26,7 +26,9 @@ public class ProvidedProducts {
     }
 
     private void registerProducts() {
+
         for (final String productId : producedProductIds) {
+
             if (executionContext.getProducts().containsKey(productId)) {
                 throw new IllegalStateException(
                     "Product <"+productId+"> already registered");

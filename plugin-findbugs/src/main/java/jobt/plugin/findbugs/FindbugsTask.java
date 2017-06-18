@@ -125,10 +125,10 @@ public class FindbugsTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                classpathElements.addAll(executionContext.getResolvedCompileDependencies());
+                classpathElements.addAll(executionContext.getCompileDependencies());
                 break;
             case TEST:
-                classpathElements.addAll(executionContext.getResolvedTestDependencies());
+                classpathElements.addAll(executionContext.getTestDependencies());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);

@@ -65,8 +65,8 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-            executionContext.getCompileDependenciesPromise()
-            .complete(mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
+            executionContext.setCompileDependencies(
+                mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
 
     }
 
@@ -83,8 +83,7 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-            executionContext.getTestDependenciesPromise()
-            .complete(mavenResolver.resolve(dependencies, DependencyScope.TEST));
+            executionContext.setTestDependencies(mavenResolver.resolve(dependencies, DependencyScope.TEST));
 
     }
 

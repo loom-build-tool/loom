@@ -21,57 +21,58 @@ public class ExecutionContextImpl implements ExecutionContext {
     private static final int FUTURE_WAIT_THRESHOLD = 30;
 
     // compile/test scope dependencies
-    private final CompletableFuture<List<Path>> compileDependenciesPromise =
+    private final CompletableFuture<List<Path>> compileDependencies =
         new CompletableFuture<>();
-    private final CompletableFuture<List<Path>> testDependenciesPromise = new CompletableFuture<>();
+    private final CompletableFuture<List<Path>> testDependencies = new CompletableFuture<>();
 
     private final CompletableFuture<List<URL>> compileClasspath = new CompletableFuture<>();
     private final CompletableFuture<List<URL>> testClasspath = new CompletableFuture<>();
 
-    /**
-     * Provided by mavenresolver plugin.
-     */
     @Override
-    public CompletableFuture<List<Path>> getCompileDependenciesPromise() {
-        return compileDependenciesPromise;
+    public void setCompileClasspath(final List<URL> compileClasspath) {
+        complete(this.compileClasspath, compileClasspath);
     }
 
     @Override
-    public List<Path> getResolvedCompileDependencies() {
-        return waitAndGet(compileDependenciesPromise);
-    }
-
-    /**
-     * Provided by mavenresolver plugin.
-     */
-    @Override
-    public CompletableFuture<List<Path>> getTestDependenciesPromise() {
-        return testDependenciesPromise;
-    }
-
-    @Override
-    public List<Path> getResolvedTestDependencies() {
-        return waitAndGet(testDependenciesPromise);
-    }
-
-    @Override
-    public List<URL> getCompileClasspath() throws InterruptedException {
+    public List<URL> getCompileClasspath() {
         return waitAndGet(compileClasspath);
     }
 
     @Override
-    public void setCompileClasspath(final List<URL> compileClasspath) {
-        this.compileClasspath.complete(compileClasspath);
+    public void setTestClasspath(final List<URL> testClasspath) {
+        complete(this.testClasspath, testClasspath);
     }
 
     @Override
-    public List<URL> getTestClasspath() throws InterruptedException {
+    public List<URL> getTestClasspath() {
         return waitAndGet(testClasspath);
     }
 
     @Override
-    public void setTestClasspath(final List<URL> testClasspath) {
-        this.testClasspath.complete(testClasspath);
+    public void setCompileDependencies(final List<Path> compileDependencies) {
+        complete(this.compileDependencies, compileDependencies);
+    }
+
+    @Override
+    public List<Path> getCompileDependencies() {
+        return waitAndGet(compileDependencies);
+    }
+
+    @Override
+    public void setTestDependencies(final List<Path> testDependencies) {
+        complete(this.testDependencies, testDependencies);
+    }
+
+    @Override
+    public List<Path> getTestDependencies() {
+        return waitAndGet(testDependencies);
+    }
+
+    private <T> void complete(final CompletableFuture<T> promise, final T withValue) {
+        final boolean completed = promise.complete(withValue);
+        if (!completed) {
+            throw new IllegalStateException("Future already completed!");
+        }
     }
 
     private static <T> T waitAndGet(final Future<T> future) {

@@ -182,11 +182,11 @@ public class JavaCompileTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                classpath.addAll(executionContext.getResolvedCompileDependencies());
+                classpath.addAll(executionContext.getCompileDependencies());
                 executionContext.setCompileClasspath(urls);
                 break;
             case TEST:
-                classpath.addAll(executionContext.getResolvedTestDependencies());
+                classpath.addAll(executionContext.getTestDependencies());
                 executionContext.setTestClasspath(urls);
                 break;
             default:

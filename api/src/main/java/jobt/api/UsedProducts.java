@@ -6,6 +6,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.util.Preconditions;
+
 /**
  * Read-only view to products.
  */
@@ -20,6 +22,12 @@ public class UsedProducts {
     public UsedProducts(
         final Set<String> allowedProductIds,
         final ExecutionContext executionContext) {
+        allowedProductIds.forEach(id ->
+            Preconditions.checkState(
+                ProvidedProducts.PATTERN.matcher(id).matches(),
+                "Invalid format of product id <%s>", id));
+        Objects.requireNonNull(allowedProductIds);
+        Objects.requireNonNull(executionContext);
         this.allowedProductIds = allowedProductIds;
         this.executionContext = executionContext;
     }

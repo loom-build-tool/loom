@@ -2,9 +2,12 @@ package jobt.api;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jobt.util.Preconditions;
 
 /**
  * Sink for provided products from upstream task.
@@ -17,9 +20,17 @@ public class ProvidedProducts {
 
     private final Set<String> producedProductIds;
 
+    public final static Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
+
     public ProvidedProducts(
         final Set<String> producedProductIds,
         final ExecutionContext executionContext) {
+        producedProductIds.forEach(id ->
+            Preconditions.checkState(
+                PATTERN.matcher(id).matches(),
+                "Invalid format of product id <%s>", id));
+        Objects.requireNonNull(producedProductIds);
+        Objects.requireNonNull(executionContext);
         this.producedProductIds = producedProductIds;
         this.executionContext = executionContext;
         registerProducts();

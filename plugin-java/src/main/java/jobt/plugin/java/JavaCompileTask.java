@@ -61,9 +61,9 @@ public class JavaCompileTask implements Task {
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
-                           final UsedProducts input, final ProvidedProducts output,
-                           // FIXME reorder
-                           final CompileTarget compileTarget) {
+                           final CompileTarget compileTarget,
+                           final UsedProducts input, final ProvidedProducts output
+                           ) {
         this.input = input;
         this.output = output;
         this.buildConfig = Objects.requireNonNull(buildConfig);

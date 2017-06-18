@@ -30,10 +30,8 @@ public class MavenResolverTask implements Task {
     private final ProvidedProducts output;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig,
-                             final UsedProducts input, final ProvidedProducts output,
-                             // FIXME move to end
-                             final MavenResolver mavenResolver) {
+                             final BuildConfig buildConfig, final MavenResolver mavenResolver,
+                             final UsedProducts input, final ProvidedProducts output) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;

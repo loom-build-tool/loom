@@ -15,7 +15,7 @@ public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
 
-    private static final int FUTURE_WAIT_THRESHOLD = 30;
+    private static final int FUTURE_WAIT_THRESHOLD = 10;
 
     private final CompletableFuture<Object> promise = new CompletableFuture<>();
 
@@ -32,19 +32,29 @@ public final class ProductPromise {
         }
     }
 
-    public Object get() {
+    public Object getAndWaitForProduct() {
         return waitAndGet(promise);
     }
 
     private Object waitAndGet(final Future<Object> future) {
+
+        LOG.debug("Requesting product <{}> ...", productId);
+
         try {
-            return future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
+            final Object product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
+
+            LOG.debug("Return product <{}> with value: {}", productId, product);
+
+            return product;
         } catch (final ExecutionException | InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         } catch (final TimeoutException e) {
+
+            LOG.warn("Blocked for {} seconds waiting for product <{}> - continue",
+                FUTURE_WAIT_THRESHOLD, productId);
+
             try {
-                LOG.warn("Already waiting for {} seconds for <{}> - continue",
-                    FUTURE_WAIT_THRESHOLD, productId);
                 return future.get();
             } catch (final ExecutionException e1) {
                 throw new IllegalStateException(e1);

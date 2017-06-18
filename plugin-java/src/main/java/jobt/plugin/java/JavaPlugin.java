@@ -15,13 +15,11 @@ public class JavaPlugin extends AbstractPlugin {
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration,
-            uses("compileDependencies"), provides("compileClasspath"),
-            CompileTarget.MAIN));
+            runtimeConfiguration, CompileTarget.MAIN,
+            uses("compileDependencies"), provides("compileClasspath")));
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration,
-            uses("testDependencies"), provides("testClasspath"),
-            CompileTarget.TEST));
+            runtimeConfiguration, CompileTarget.TEST,
+            uses("testDependencies"), provides("testClasspath")));
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));

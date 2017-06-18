@@ -36,11 +36,7 @@ public class UsedProducts {
             throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
         }
 
-
-        LOG.debug("Requesting product <{}> ...", productId);
-        final Object value = productPromise.get();
-
-        LOG.debug("Return product <{}> with value: {}", productId, value);
+        final Object value = productPromise.getAndWaitForProduct();
 
         return clazz.cast(value);
     }

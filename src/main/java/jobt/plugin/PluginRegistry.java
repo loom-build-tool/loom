@@ -67,6 +67,15 @@ public class PluginRegistry {
         this.taskTemplate = taskTemplate;
 
         initPlugins();
+        debugPlugins();
+    }
+
+    private void debugPlugins() {
+
+        final Set<String> productIds = executionContext.getProducts().keySet();
+
+        LOG.info("Products provided by registered tasks: {}", productIds);
+
     }
 
     private void initPlugins() {

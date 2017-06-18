@@ -28,7 +28,7 @@ public final class ProductPromise {
     public void complete(final Object withValue) {
         final boolean completed = promise.complete(withValue);
         if (!completed) {
-            throw new IllegalStateException("Future <"+productId+"> already completed!");
+            throw new IllegalStateException("Product promise <"+productId+"> already completed");
         }
     }
 

@@ -14,14 +14,11 @@ import org.junit.Test;
 public class ProductsTest {
 
     private final ExecutionContext executionContext = new ExecutionContext() {
-
         private final Map<String, ProductPromise> products = new HashMap<>();
-
         @Override
         public Map<String, ProductPromise> getProducts() {
             return products;
         }
-
     };
 
     @Test
@@ -36,6 +33,23 @@ public class ProductsTest {
         assertEquals("foo", usedProducts.readProduct("a", String.class));
 
     }
+
+    @Test
+    public void failDoubleComplete() {
+
+        final ProvidedProducts providedProducts = provides("a");
+
+        providedProducts.complete("a", "result");
+
+        try {
+            providedProducts.complete("a", "result-double");
+            fail();
+        } catch(final IllegalStateException e) {
+            assertEquals("Product promise <a> already completed", e.getMessage());
+        }
+
+    }
+
 
     @Test(expected = IllegalStateException.class)
     public void invalidFormat() {
@@ -54,6 +68,7 @@ public class ProductsTest {
 
     @Test
     public void failOnUnknownProduct() {
+
         try {
             final UsedProducts uses = uses("x");
             uses.readProduct("x", String.class);

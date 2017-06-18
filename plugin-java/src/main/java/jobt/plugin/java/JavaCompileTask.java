@@ -30,9 +30,11 @@ import org.slf4j.LoggerFactory;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
+import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
 
 public class JavaCompileTask implements Task {
 
@@ -55,11 +57,16 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final List<Path> classpathAppendix = new ArrayList<>();
+    private final UsedProducts input;
+    private final ProvidedProducts output;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
                            final ExecutionContext executionContext,
+                           final UsedProducts input, final ProvidedProducts output,
                            final CompileTarget compileTarget) {
+        this.input = input;
+        this.output = output;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.executionContext = Objects.requireNonNull(executionContext);
@@ -182,11 +189,12 @@ public class JavaCompileTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                classpath.addAll(executionContext.getCompileDependencies());
+                // TODO cast
+                classpath.addAll(input.readProduct("compileDependencies", List.class));
                 executionContext.setCompileClasspath(urls);
                 break;
             case TEST:
-                classpath.addAll(executionContext.getTestDependencies());
+                classpath.addAll(input.readProduct("testDependencies", List.class));
                 executionContext.setTestClasspath(urls);
                 break;
             default:

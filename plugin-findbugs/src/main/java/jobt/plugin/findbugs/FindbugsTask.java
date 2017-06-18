@@ -22,9 +22,10 @@ import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.ExecutionContext;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
 import jobt.util.Preconditions;
 
 public class FindbugsTask implements Task {
@@ -39,7 +40,6 @@ public class FindbugsTask implements Task {
 
     private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
 
-    private final ExecutionContext executionContext;
     private final Path sourceDir;
     private final Path classesDir;
     private final CompileTarget compileTarget;
@@ -52,14 +52,17 @@ public class FindbugsTask implements Task {
     });
 
     private Optional<Integer> priorityThreshold;
+    private final UsedProducts input;
+    private final ProvidedProducts output;
 
     public FindbugsTask(
-        final BuildConfig buildConfig,
-        final CompileTarget compileTarget,
-        final ExecutionContext executionContext) {
+        final BuildConfig buildConfig, final CompileTarget compileTarget,
+        final UsedProducts input, final ProvidedProducts output) {
+
+        this.input = input;
+        this.output = output;
 
         readBuildConfig(Objects.requireNonNull(buildConfig));
-        this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
         switch (compileTarget) {
@@ -125,10 +128,11 @@ public class FindbugsTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                classpathElements.addAll(executionContext.getCompileDependencies());
+                // FIXME
+                classpathElements.addAll(input.readProduct("compileDependencies", List.class));
                 break;
             case TEST:
-                classpathElements.addAll(executionContext.getTestDependencies());
+                classpathElements.addAll(input.readProduct("testDependencies", List.class));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);

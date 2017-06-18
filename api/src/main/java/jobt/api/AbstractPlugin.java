@@ -1,5 +1,8 @@
 package jobt.api;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin implements Plugin {
 
@@ -32,6 +35,16 @@ public abstract class AbstractPlugin implements Plugin {
 
     public ExecutionContext getExecutionContext() {
         return executionContext;
+    }
+
+    public final UsedProducts uses(final String... productIdLists) {
+        return new UsedProducts(
+            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
+    }
+
+    public final ProvidedProducts provides(final String... productIdLists) {
+        return new ProvidedProducts(
+            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
     }
 
 }

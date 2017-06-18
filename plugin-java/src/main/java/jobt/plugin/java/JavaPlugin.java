@@ -17,9 +17,13 @@ public class JavaPlugin extends AbstractPlugin {
         final ExecutionContext executionContext = getExecutionContext();
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.MAIN));
+            runtimeConfiguration, executionContext,
+            uses("compileDependencies"), provides(),
+            CompileTarget.MAIN));
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.TEST));
+            runtimeConfiguration, executionContext,
+            uses("testDependencies"), provides(),
+            CompileTarget.TEST));
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
@@ -30,8 +34,8 @@ public class JavaPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("compileJava").dependsOn(
-            taskTemplate.task("resolveCompileDependencies"));
+        taskTemplate.task("compileJava")
+            .dependsOn(taskTemplate.task("resolveCompileDependencies"));
 
         taskTemplate.task("processResources");
 

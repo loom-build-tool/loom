@@ -7,9 +7,10 @@ import java.util.concurrent.Executors;
 
 import jobt.api.BuildConfig;
 import jobt.api.DependencyScope;
-import jobt.api.ExecutionContext;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
 
 public class MavenResolverTask implements Task {
 
@@ -23,17 +24,21 @@ public class MavenResolverTask implements Task {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
-    private final ExecutionContext executionContext;
     private final MavenResolver mavenResolver;
+
+    private final UsedProducts input;
+    private final ProvidedProducts output;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
                              final BuildConfig buildConfig,
-                             final ExecutionContext executionContext,
+                             final UsedProducts input, final ProvidedProducts output,
+                             // FIXME move to end
                              final MavenResolver mavenResolver) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
-        this.executionContext = executionContext;
+        this.input = input;
+        this.output = output;
         this.mavenResolver = mavenResolver;
     }
 
@@ -65,7 +70,7 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-            executionContext.setCompileDependencies(
+            output.complete("compileDependencies",
                 mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
 
     }
@@ -83,7 +88,8 @@ public class MavenResolverTask implements Task {
         }
 
         return () ->
-            executionContext.setTestDependencies(mavenResolver.resolve(dependencies, DependencyScope.TEST));
+            output.complete("testDependencies",
+                mavenResolver.resolve(dependencies, DependencyScope.TEST));
 
     }
 

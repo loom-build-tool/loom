@@ -1,8 +1,8 @@
 package jobt.api;
 
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 public interface ExecutionContext {
 
@@ -12,10 +12,13 @@ public interface ExecutionContext {
     void setTestClasspath(List<URL> testClasspath);
     List<URL> getTestClasspath() throws InterruptedException;
 
-    void setCompileDependencies(List<Path> compileDependencies);
-    List<Path> getCompileDependencies();
+//    void setCompileDependencies(List<Path> compileDependencies);
+//    List<Path> getCompileDependencies();
 
-    void setTestDependencies(List<Path> testDependencies);
-    List<Path> getTestDependencies();
+//    void setTestDependencies(List<Path> testDependencies);
+//    List<Path> getTestDependencies();
+
+
+    Map<String, ProductPromise> getProducts();
 
 }

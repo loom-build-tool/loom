@@ -59,5 +59,10 @@ public final class Classpath {
         return entries.get(0);
     }
 
+    @Override
+    public String toString() {
+        return entries.toString();
+    }
+
 
 }

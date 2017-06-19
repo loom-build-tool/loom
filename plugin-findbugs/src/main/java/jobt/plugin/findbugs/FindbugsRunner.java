@@ -54,7 +54,7 @@ public class FindbugsRunner {
 
     private final Path sourcesDir;
     private final Path classesDir;
-    private final Classpath auxClasspath;
+    private final Classpath classpath;
 
     private final Optional<Integer> priorityThreshold;
 
@@ -66,7 +66,7 @@ public class FindbugsRunner {
 
         this.sourcesDir = sourcesDir;
         this.classesDir = classesDir;
-        this.auxClasspath = classpath;
+        this.classpath = classpath;
 
         this.priorityThreshold = priorityThreshold;
     }
@@ -185,7 +185,7 @@ public class FindbugsRunner {
             .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
-        auxClasspath.getEntries().stream()
+        classpath.getEntries().stream()
             .map(FindbugsRunner::pathToString)
             .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);

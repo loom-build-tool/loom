@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,11 @@ public class FindbugsTask implements Task {
             case MAIN:
                 return input.readProduct("compileDependencies", Classpath.class);
             case TEST:
-                return input.readProduct("testDependencies", Classpath.class);
+                final List<Path> classpath = new ArrayList<>();
+                classpath.add(BUILD_MAIN_PATH);
+                classpath.addAll(
+                    input.readProduct("testDependencies", Classpath.class).getEntries());
+                return new Classpath(classpath);
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }

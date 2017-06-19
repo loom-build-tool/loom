@@ -45,10 +45,10 @@ public class CheckstyleTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                this.srcBaseDir = Paths.get("src/main/java");
+                this.srcBaseDir = Paths.get("src", "main", "java");
                 break;
             case TEST:
-                this.srcBaseDir = Paths.get("src/test/java");
+                this.srcBaseDir = Paths.get("src", "test", "java");
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

@@ -128,6 +128,7 @@ public class FindbugsTask implements Task {
                 classpathElements.addAll(executionContext.getCompileDependencies());
                 break;
             case TEST:
+                classpathElements.add(BUILD_MAIN_PATH);
                 classpathElements.addAll(executionContext.getTestDependencies());
                 break;
             default:

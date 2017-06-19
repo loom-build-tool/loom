@@ -25,20 +25,18 @@ public class MavenResolverTask implements Task {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
-    private final MavenResolver mavenResolver;
 
     private final UsedProducts input;
     private final ProvidedProducts output;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig, final MavenResolver mavenResolver,
+                             final BuildConfig buildConfig,
                              final UsedProducts input, final ProvidedProducts output) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
         this.input = input;
         this.output = output;
-        this.mavenResolver = mavenResolver;
     }
 
     @Override
@@ -47,20 +45,26 @@ public class MavenResolverTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
+        // FIXME
+        final ProgressIndicator progressIndicator =
+            new ProgressIndicator(getClass().getSimpleName());
+
+        final MavenResolver mavenResolver = new MavenResolver();
+        mavenResolver.setProgressIndicator(progressIndicator);
 
         switch (dependencyScope) {
             case COMPILE:
-                WORKER.execute(compileScope());
+                WORKER.execute(compileScope(mavenResolver));
                 return TaskStatus.OK;
             case TEST:
-                WORKER.execute(testScope());
+                WORKER.execute(testScope(mavenResolver));
                 return TaskStatus.OK;
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private Runnable compileScope() throws Exception {
+    private Runnable compileScope(final MavenResolver mavenResolver) throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -74,7 +78,7 @@ public class MavenResolverTask implements Task {
 
     }
 
-    private Runnable testScope() throws Exception {
+    private Runnable testScope(final MavenResolver mavenResolver) throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 

@@ -181,6 +181,7 @@ public class JavaCompileTask implements Task {
     @Override
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
+        classpath.addAll(classpathAppendix);
 
         switch (compileTarget) {
             case MAIN:

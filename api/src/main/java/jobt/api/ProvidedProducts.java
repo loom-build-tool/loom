@@ -53,7 +53,9 @@ public class ProvidedProducts {
 
     public <T> void complete(final String productId, final T value) {
         Objects.requireNonNull(productId);
-        Objects.requireNonNull(value);
+        if (value == null) {
+            throw new IllegalArgumentException("Must not complete product <"+productId+"> with null value");
+        }
         if (!producedProductIds.contains(productId)) {
             throw new IllegalAccessError("Not allowed to resolve productId <"+productId+">");
         }
@@ -61,7 +63,7 @@ public class ProvidedProducts {
 
         productPromise.complete(value);
 
-        LOG.debug("Product promise <{}> completed with value: {}", productId, value);
+        LOG.debug("Product promise <{}> completed with value (type {}): {}", productId, value.getClass().getSimpleName(), value);
 
     }
 

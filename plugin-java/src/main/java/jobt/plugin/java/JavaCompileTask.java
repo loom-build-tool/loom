@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
+import jobt.api.Classpath;
 import jobt.api.CompileTarget;
 import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
@@ -181,19 +182,21 @@ public class JavaCompileTask implements Task {
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
 
-        final List<URL> urls = classpath.stream()
-            .map(JavaCompileTask::buildUrl)
-            .collect(Collectors.toList());
-
         switch (compileTarget) {
             case MAIN:
                 // TODO cast
-                classpath.addAll(input.readProduct("compileDependencies", List.class));
-                output.complete("compileClasspath", urls);
+                classpath.addAll(input.readProduct("compileDependencies", Classpath.class).getEntries());
+//                output.complete("compileClasspath",
+//                    classpath.stream()
+//                    .map(JavaCompileTask::buildUrl)
+//                    .collect(Collectors.toList()));
                 break;
             case TEST:
-                classpath.addAll(input.readProduct("testDependencies", List.class));
-                output.complete("testClasspath", urls);
+                classpath.addAll(input.readProduct("testDependencies", Classpath.class).getEntries());
+//                output.complete("testClasspath",
+//                    classpath.stream()
+//                    .map(JavaCompileTask::buildUrl)
+//                    .collect(Collectors.toList()));
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

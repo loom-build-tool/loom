@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.BuildConfig;
+import jobt.api.Classpath;
 import jobt.api.CompileTarget;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
@@ -123,21 +123,15 @@ public class FindbugsTask implements Task {
         return TaskStatus.OK;
     }
 
-    private List<Path> calcClasspath() {
-        final List<Path> classpathElements = new ArrayList<>();
-
+    private Classpath calcClasspath() {
         switch (compileTarget) {
             case MAIN:
-                // FIXME
-                classpathElements.addAll(input.readProduct("compileDependencies", List.class));
-                break;
+                return input.readProduct("compileDependencies", Classpath.class);
             case TEST:
-                classpathElements.addAll(input.readProduct("testDependencies", List.class));
-                break;
+                return input.readProduct("testDependencies", Classpath.class);
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }
-        return classpathElements;
     }
 
     private static Map<String, Integer> buildPrioritiesMap() {

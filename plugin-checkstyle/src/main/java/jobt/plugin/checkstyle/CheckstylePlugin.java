@@ -12,15 +12,25 @@ public class CheckstylePlugin extends AbstractPlugin {
 
         taskRegistry.register("checkstyleMain",
             new CheckstyleTask(CompileTarget.MAIN,
-                uses("compileClasspath"), provides()));
+                uses("compileDependencies"), provides()));
 
         taskRegistry.register("checkstyleTest",
             new CheckstyleTask(CompileTarget.TEST,
-                uses("testClasspath"), provides()));
+                uses("testDependencies"), provides()));
     }
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
+        taskTemplate.task("checkstyleMain").dependsOn(
+            taskTemplate.task("resolveCompileDependencies"),
+            taskTemplate.task("compileJava")
+            );
+
+        taskTemplate.task("checkstyleTest").dependsOn(
+            taskTemplate.task("resolveTestDependencies"),
+            taskTemplate.task("compileTestJava")
+            );
+
         taskTemplate.task("check").dependsOn(
             taskTemplate.task("checkstyleMain"),
             taskTemplate.task("checkstyleTest"));

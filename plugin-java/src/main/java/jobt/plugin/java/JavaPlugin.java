@@ -16,16 +16,21 @@ public class JavaPlugin extends AbstractPlugin {
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.MAIN,
-            uses("compileDependencies"), provides("compileClasspath")));
+            uses("compileDependencies"), provides()));
+
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.TEST,
-            uses("testDependencies"), provides("testClasspath")));
+            uses("testDependencies"), provides()));
+
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
+
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
+
         taskRegistry.register("processTestResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.TEST));
-        taskRegistry.register("test", new JavaTestTask(uses("testClasspath"), provides()));
+
+        taskRegistry.register("test", new JavaTestTask(uses("testDependencies"), provides()));
     }
 
     @Override

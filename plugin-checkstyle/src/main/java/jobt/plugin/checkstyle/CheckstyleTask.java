@@ -2,7 +2,6 @@ package jobt.plugin.checkstyle;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +21,7 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
+import jobt.api.Classpath;
 import jobt.api.CompileTarget;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
@@ -147,19 +147,21 @@ public class CheckstyleTask implements Task {
     private URLClassLoader buildClassLoader()
         throws MalformedURLException, ExecutionException, InterruptedException {
 
-        final List<URL> classpath;
+        final Classpath classpath;
         switch (compileTarget) {
             case MAIN:
-                classpath = input.readProduct("compileClasspath", List.class);
+                classpath = input.readProduct("compileDependencies", Classpath.class);
                 break;
             case TEST:
-                classpath = input.readProduct("testClasspath", List.class);
+                classpath = input.readProduct("testDependencies", Classpath.class);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        return new URLClassLoader(classpath.toArray(new URL[]{}));
+
+        return new URLClassLoader(classpath.getEntriesAsUrlArray());
     }
+
 
 }

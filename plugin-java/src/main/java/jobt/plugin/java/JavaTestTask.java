@@ -23,6 +23,7 @@ import org.junit.runner.notification.Failure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.Classpath;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
@@ -71,7 +72,8 @@ public class JavaTestTask implements Task {
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
-        final List<URL> urls = new ArrayList<>(input.readProduct("testClasspath", List.class));
+        final List<URL> urls = new ArrayList<>(
+            input.readProduct("testDependencies", Classpath.class).getEntriesAsUrls());
         urls.add(Paths.get("jobtbuild", "classes", "test").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "classes", "main").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "resources", "test").toUri().toURL());

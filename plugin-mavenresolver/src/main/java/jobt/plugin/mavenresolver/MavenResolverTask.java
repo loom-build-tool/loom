@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import jobt.api.BuildConfig;
+import jobt.api.Classpath;
 import jobt.api.DependencyScope;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
@@ -69,7 +70,7 @@ public class MavenResolverTask implements Task {
 
         return () ->
             output.complete("compileDependencies",
-                mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
+                new Classpath(mavenResolver.resolve(dependencies, DependencyScope.COMPILE)));
 
     }
 
@@ -87,7 +88,7 @@ public class MavenResolverTask implements Task {
 
         return () ->
             output.complete("testDependencies",
-                mavenResolver.resolve(dependencies, DependencyScope.TEST));
+                new Classpath(mavenResolver.resolve(dependencies, DependencyScope.TEST)));
 
     }
 

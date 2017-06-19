@@ -50,6 +50,17 @@ public class ProductsTest {
 
     }
 
+    @Test
+    public void failCompleteWithNull() {
+
+        final ProvidedProducts providedProducts = provides("a");
+
+        try {
+            providedProducts.complete("a", null);
+        } catch(final IllegalArgumentException e) {
+            assertEquals("Must not complete product <a> with null value", e.getMessage());
+        }
+    }
 
     @Test(expected = IllegalStateException.class)
     public void invalidFormat() {

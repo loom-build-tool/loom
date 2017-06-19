@@ -184,19 +184,10 @@ public class JavaCompileTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                // TODO cast
                 classpath.addAll(input.readProduct("compileDependencies", Classpath.class).getEntries());
-//                output.complete("compileClasspath",
-//                    classpath.stream()
-//                    .map(JavaCompileTask::buildUrl)
-//                    .collect(Collectors.toList()));
                 break;
             case TEST:
                 classpath.addAll(input.readProduct("testDependencies", Classpath.class).getEntries());
-//                output.complete("testClasspath",
-//                    classpath.stream()
-//                    .map(JavaCompileTask::buildUrl)
-//                    .collect(Collectors.toList()));
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

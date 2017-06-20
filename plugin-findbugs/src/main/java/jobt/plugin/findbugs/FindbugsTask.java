@@ -111,17 +111,20 @@ public class FindbugsTask implements Task {
             )
             .executeFindbugs();
 
+
+        if (bugs.isEmpty()) {
+            return TaskStatus.OK;
+        }
+
+        final StringBuffer report = new StringBuffer();
         for (final BugInstance bug : bugs) {
-
-            LOG.warn("bug >>> {}", bug.getMessage());
-
+            report.append(String.format(" >>> %s: ", bug.getMessage()));
+            report.append('\n');
         }
+        LOG.warn("Findbugs report for {}: \n{}", compileTarget, report.toString());
 
-        if (!bugs.isEmpty()) {
-            throw new IllegalStateException(
-                String.format("Findbugs reported %d bugs!", bugs.size()));
-        }
-        return TaskStatus.OK;
+        throw new IllegalStateException(
+            String.format("Findbugs reported %d bugs!", bugs.size()));
     }
 
     private Classpath calcClasspath() {

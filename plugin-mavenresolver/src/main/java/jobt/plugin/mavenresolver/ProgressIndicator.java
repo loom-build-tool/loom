@@ -28,7 +28,6 @@ public class ProgressIndicator {
     synchronized public void reportProgress(final String progressMessage) {
         LOG.debug("Got progress message for <{}>: {}",
             taskDescription, progressMessage);
-        System.out.println("PROGRESS ("+ taskDescription +", " + Thread.currentThread() +" ): " + progressMessage);
         currentProgressMessage.set(progressMessage);
     }
 

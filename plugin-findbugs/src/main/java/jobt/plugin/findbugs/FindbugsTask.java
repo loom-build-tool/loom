@@ -118,7 +118,7 @@ public class FindbugsTask implements Task {
 
         final StringBuffer report = new StringBuffer();
         for (final BugInstance bug : bugs) {
-            report.append(String.format(" >>> %s: ", bug.getMessage()));
+            report.append(String.format(" >>> %s ", bug.getMessage()));
             report.append('\n');
         }
         LOG.warn("Findbugs report for {}: \n{}", compileTarget, report.toString());

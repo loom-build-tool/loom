@@ -2,6 +2,7 @@ package jobt;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,8 +26,8 @@ public class Job implements Callable<TaskStatus> {
     private CountDownLatch countDownLatch = new CountDownLatch(1);
 
     Job(final String name, final Task task) {
-        this.name = name;
-        this.task = task;
+        this.name = Objects.requireNonNull(name, "name required");
+        this.task = Objects.requireNonNull(task, "task required");
     }
 
     public String getName() {
@@ -51,12 +52,15 @@ public class Job implements Callable<TaskStatus> {
 
         prepareTask();
 
+        status.set(JobStatus.WAITING);
         waitForDependencies();
 
         status.set(JobStatus.RUNNING);
         final TaskStatus taskStatus = runTask();
+
         countDownLatch.countDown();
         status.set(JobStatus.STOPPED);
+
         return taskStatus;
     }
 
@@ -78,7 +82,6 @@ public class Job implements Callable<TaskStatus> {
 
         LOG.info("Task {} waits for dependencies {}", name, dependencies);
 
-        status.set(JobStatus.WAITING);
         final long startWait = System.nanoTime();
         for (final Job dependency : dependencies) {
             dependency.waitForCompletion();

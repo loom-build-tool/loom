@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.Task;
 import jobt.api.TaskGraphNode;
+import jobt.api.TaskStatus;
 import jobt.api.TaskTemplate;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
@@ -67,18 +67,13 @@ public class TaskTemplateImpl implements TaskTemplate {
         final Map<String, Job> jobs = new LinkedHashMap<>();
         for (final String resolvedTask : resolvedTasks) {
             final Optional<Task> task = pluginRegistry.getTask(resolvedTask);
-            if (task.isPresent()) {
-                jobs.put(resolvedTask, new Job(resolvedTask, task.get()));
-            } else {
-                LOG.debug("No task registered for {}", resolvedTask);
-            }
+            jobs.put(resolvedTask, new Job(resolvedTask, task.orElse(new DummyTask(resolvedTask))));
         }
         for (final Map.Entry<String, Job> stringJobEntry : jobs.entrySet()) {
             final TaskGraphNodeImpl taskGraphNode = tasks.get(stringJobEntry.getKey());
             final List<Job> dependentJobs = taskGraphNode.getDependentNodes().stream()
                 .map(TaskGraphNode::getName)
                 .map(jobs::get)
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
             stringJobEntry.getValue().setDependencies(dependentJobs);
         }
@@ -101,6 +96,28 @@ public class TaskTemplateImpl implements TaskTemplate {
             resolveTasks(resolvedTasks, node.getName());
         }
         resolvedTasks.add(taskGraphNode.getName());
+    }
+
+    private static class DummyTask implements Task {
+
+        private static final Logger LOG = LoggerFactory.getLogger(DummyTask.class);
+        private final String taskName;
+
+        public DummyTask(final String taskName) {
+            this.taskName = taskName;
+        }
+
+        @Override
+        public void prepare() throws Exception {
+            LOG.debug("Nothing to prepare for {}", taskName);
+        }
+
+        @Override
+        public TaskStatus run() throws Exception {
+            LOG.debug("Nothing to run for {}", taskName);
+            return TaskStatus.OK;
+        }
+
     }
 
 }

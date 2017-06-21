@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,13 +41,6 @@ public class FindbugsTask implements Task {
     private final Path sourceDir;
     private final Path classesDir;
     private final CompileTarget compileTarget;
-
-    private final ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
-        final Thread thread = new Thread(r);
-        thread.setName("findbugs");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private Optional<Integer> priorityThreshold;
 
@@ -88,9 +79,7 @@ public class FindbugsTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-
-        pool.submit(FindbugsRunner::startupFindbugsAsync);
-
+        FindbugsRunner.startupFindbugsAsync();
     }
 
     @Override

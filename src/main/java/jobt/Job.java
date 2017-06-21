@@ -1,5 +1,6 @@
 package jobt;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -8,7 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.util.Stopwatch;
 
 public class Job implements Callable<TaskStatus> {
 
@@ -16,14 +19,14 @@ public class Job implements Callable<TaskStatus> {
 
     private final String name;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
-    private final Callable<TaskStatus> callable;
+    private final Task task;
 
-    private List<Job> dependencies;
+    private List<Job> dependencies = Collections.emptyList();
     private CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    Job(final String name, final Callable<TaskStatus> callable) {
+    Job(final String name, final Task task) {
         this.name = name;
-        this.callable = callable;
+        this.task = task;
     }
 
     public String getName() {
@@ -45,6 +48,11 @@ public class Job implements Callable<TaskStatus> {
     @Override
     public TaskStatus call() throws Exception {
         status.set(JobStatus.PREPARING);
+
+        Stopwatch.startProcess("Task " + name + " > init");
+        task.prepare();
+        Stopwatch.stopProcess();
+
         if (!dependencies.isEmpty()) {
             LOG.info("Task {} waits for dependencies {}", name, dependencies);
 
@@ -63,9 +71,20 @@ public class Job implements Callable<TaskStatus> {
         }
 
         status.set(JobStatus.RUNNING);
-        final TaskStatus taskStatus = callable.call();
+        final TaskStatus taskStatus = trigger();
         countDownLatch.countDown();
         status.set(JobStatus.STOPPED);
+        return taskStatus;
+    }
+
+    public TaskStatus trigger() throws Exception {
+        Stopwatch.startProcess("Task " + name + " > run");
+
+        LOG.info("Start task {}", name);
+        final TaskStatus taskStatus = task.run();
+        LOG.info("Task {} resulted with {}", name, taskStatus);
+
+        Stopwatch.stopProcess();
         return taskStatus;
     }
 

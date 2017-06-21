@@ -36,6 +36,7 @@ public class CheckstyleTask implements Task {
     private final Path srcBaseDir;
     private final CompileTarget compileTarget;
     private final ExecutionContext executionContext;
+    private RootModule checker;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final ExecutionContext executionContext) {
@@ -57,6 +58,7 @@ public class CheckstyleTask implements Task {
 
     @Override
     public void prepare() throws Exception {
+        checker = createRootModule();
     }
 
     @Override
@@ -72,7 +74,6 @@ public class CheckstyleTask implements Task {
 
         final LoggingAuditListener listener = new LoggingAuditListener();
 
-        final RootModule checker = createRootModule();
         checker.addListener(listener);
 
         final int errors = checker.process(collect);

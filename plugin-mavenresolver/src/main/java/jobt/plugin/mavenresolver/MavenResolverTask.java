@@ -2,8 +2,6 @@ package jobt.plugin.mavenresolver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import jobt.api.BuildConfig;
 import jobt.api.DependencyScope;
@@ -12,14 +10,6 @@ import jobt.api.Task;
 import jobt.api.TaskStatus;
 
 public class MavenResolverTask implements Task {
-
-    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(
-        r -> {
-            final Thread thread = new Thread(r);
-            thread.setName("thread-mavenresolver");
-            thread.setDaemon(true);
-            return thread;
-        });
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
@@ -46,17 +36,17 @@ public class MavenResolverTask implements Task {
 
         switch (dependencyScope) {
             case COMPILE:
-                WORKER.execute(compileScope());
+                compileScope();
                 return TaskStatus.OK;
             case TEST:
-                WORKER.execute(testScope());
+                testScope();
                 return TaskStatus.OK;
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private Runnable compileScope() throws Exception {
+    private void compileScope() throws Exception {
 
         final List<String> dependencies = new ArrayList<>();
 
@@ -64,14 +54,11 @@ public class MavenResolverTask implements Task {
             dependencies.addAll(buildConfig.getDependencies());
         }
 
-        return () ->
-            executionContext.setCompileDependencies(
-                mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
-
+        executionContext.setCompileDependencies(
+            mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
     }
 
-    private Runnable testScope() throws Exception {
-
+    private void testScope() throws Exception {
         final List<String> dependencies = new ArrayList<>();
 
         if (buildConfig.getDependencies() != null) {
@@ -82,9 +69,8 @@ public class MavenResolverTask implements Task {
             dependencies.addAll(buildConfig.getTestDependencies());
         }
 
-        return () ->
-            executionContext.setTestDependencies(mavenResolver.resolve(dependencies, DependencyScope.TEST));
-
+        executionContext.setTestDependencies(mavenResolver.resolve(dependencies,
+            DependencyScope.TEST));
     }
 
 }

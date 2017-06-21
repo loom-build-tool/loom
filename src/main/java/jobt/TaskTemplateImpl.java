@@ -2,10 +2,12 @@ package jobt;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.Task;
 import jobt.api.TaskGraphNode;
 import jobt.api.TaskTemplate;
 import jobt.config.BuildConfigImpl;
@@ -52,13 +55,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         final Collection<Job> jobs = buildJobs(resolvedTasks);
         final JobPool jobPool = new JobPool();
 
-        for (final String resolvedTask : resolvedTasks) {
-            pluginRegistry.warmup(resolvedTask);
-        }
-
-        for (final Job job : jobs) {
-            jobPool.submitJob(job);
-        }
+        jobPool.submitAll(jobs);
 
         jobPool.shutdown();
 
@@ -66,24 +63,27 @@ public class TaskTemplateImpl implements TaskTemplate {
     }
 
     private Collection<Job> buildJobs(final Set<String> resolvedTasks) {
-        final Map<String, Job> jobs = new HashMap<>();
+        // LinkedHashMap to guaranty same order to support single thread execution
+        final Map<String, Job> jobs = new LinkedHashMap<>();
         for (final String resolvedTask : resolvedTasks) {
-            jobs.put(resolvedTask, new Job(resolvedTask,
-                () -> pluginRegistry.trigger(resolvedTask)));
+            final Optional<Task> task = pluginRegistry.getTask(resolvedTask);
+            if (task.isPresent()) {
+                jobs.put(resolvedTask, new Job(resolvedTask, task.get()));
+            } else {
+                LOG.debug("No task registered for {}", resolvedTask);
+            }
         }
         for (final Map.Entry<String, Job> stringJobEntry : jobs.entrySet()) {
             final TaskGraphNodeImpl taskGraphNode = tasks.get(stringJobEntry.getKey());
             final List<Job> dependentJobs = taskGraphNode.getDependentNodes().stream()
                 .map(TaskGraphNode::getName)
                 .map(jobs::get)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
             stringJobEntry.getValue().setDependencies(dependentJobs);
         }
 
-        // guaranty same order to support single thread execution
-        return resolvedTasks.stream()
-            .map(jobs::get)
-            .collect(Collectors.toList());
+        return jobs.values();
     }
 
     private Set<String> resolveTasks(final String task) {

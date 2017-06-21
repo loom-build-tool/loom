@@ -21,6 +21,7 @@ import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
@@ -62,6 +63,7 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
+        locator.setServices(RepositoryListener.class, new ProgressLoggingRepositoryListener());
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {
@@ -147,6 +149,7 @@ public class MavenResolver implements DependencyResolver {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
+        session.setTransferListener(new ProgressLoggingTransferListener());
 
         final CollectRequest collectRequest = new CollectRequest();
 

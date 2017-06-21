@@ -49,42 +49,55 @@ public class Job implements Callable<TaskStatus> {
     public TaskStatus call() throws Exception {
         status.set(JobStatus.PREPARING);
 
-        Stopwatch.startProcess("Task " + name + " > init");
-        task.prepare();
-        Stopwatch.stopProcess();
+        prepareTask();
 
-        if (!dependencies.isEmpty()) {
-            LOG.info("Task {} waits for dependencies {}", name, dependencies);
-
-            status.set(JobStatus.WAITING);
-            final long startWait = System.nanoTime();
-            for (final Job dependency : dependencies) {
-                dependency.waitForCompletion();
-            }
-            final long stopWait = System.nanoTime();
-
-            final double duration = (stopWait - startWait) / 1_000_000_000D;
-            LOG.info(String.format("Execute task %s - dependencies met: %s"
-                + " - waited for %.2fs", name, dependencies, duration));
-        } else {
-            LOG.info("Execute task {} (no dependencies)", name);
-        }
+        waitForDependencies();
 
         status.set(JobStatus.RUNNING);
-        final TaskStatus taskStatus = trigger();
+        final TaskStatus taskStatus = runTask();
         countDownLatch.countDown();
         status.set(JobStatus.STOPPED);
         return taskStatus;
     }
 
-    public TaskStatus trigger() throws Exception {
-        Stopwatch.startProcess("Task " + name + " > run");
+    private void prepareTask() throws Exception {
+        LOG.info("Prepare task {}", name);
 
-        LOG.info("Start task {}", name);
-        final TaskStatus taskStatus = task.run();
-        LOG.info("Task {} resulted with {}", name, taskStatus);
-
+        Stopwatch.startProcess("Task " + name + " > init");
+        task.prepare();
         Stopwatch.stopProcess();
+
+        LOG.info("Prepared task {}", name);
+    }
+
+    private void waitForDependencies() throws InterruptedException {
+        if (dependencies.isEmpty()) {
+            LOG.info("Execute task {} (no dependencies)", name);
+            return;
+        }
+
+        LOG.info("Task {} waits for dependencies {}", name, dependencies);
+
+        status.set(JobStatus.WAITING);
+        final long startWait = System.nanoTime();
+        for (final Job dependency : dependencies) {
+            dependency.waitForCompletion();
+        }
+        final long stopWait = System.nanoTime();
+
+        final double duration = (stopWait - startWait) / 1_000_000_000D;
+        LOG.info(String.format("Execute task %s - dependencies met: %s"
+            + " - waited for %.2fs", name, dependencies, duration));
+    }
+
+    public TaskStatus runTask() throws Exception {
+        LOG.info("Start task {}", name);
+
+        Stopwatch.startProcess("Task " + name + " > run");
+        final TaskStatus taskStatus = task.run();
+        Stopwatch.stopProcess();
+
+        LOG.info("Task {} resulted with {}", name, taskStatus);
         return taskStatus;
     }
 

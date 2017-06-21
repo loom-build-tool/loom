@@ -29,11 +29,11 @@ public class MavenResolverTask implements Task {
 
     @Override
     public void prepare() throws Exception {
+        mavenResolver.init();
     }
 
     @Override
     public TaskStatus run() throws Exception {
-
         switch (dependencyScope) {
             case COMPILE:
                 compileScope();
@@ -42,32 +42,19 @@ public class MavenResolverTask implements Task {
                 testScope();
                 return TaskStatus.OK;
             default:
-                throw new IllegalStateException();
+                throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
     }
 
     private void compileScope() throws Exception {
-
-        final List<String> dependencies = new ArrayList<>();
-
-        if (buildConfig.getDependencies() != null) {
-            dependencies.addAll(buildConfig.getDependencies());
-        }
-
-        executionContext.setCompileDependencies(
-            mavenResolver.resolve(dependencies, DependencyScope.COMPILE));
+        final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
+        executionContext.setCompileDependencies(mavenResolver.resolve(dependencies,
+            DependencyScope.COMPILE));
     }
 
     private void testScope() throws Exception {
-        final List<String> dependencies = new ArrayList<>();
-
-        if (buildConfig.getDependencies() != null) {
-            dependencies.addAll(buildConfig.getDependencies());
-        }
-
-        if (buildConfig.getTestDependencies() != null) {
-            dependencies.addAll(buildConfig.getTestDependencies());
-        }
+        final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
+        dependencies.addAll(buildConfig.getTestDependencies());
 
         executionContext.setTestDependencies(mavenResolver.resolve(dependencies,
             DependencyScope.TEST));

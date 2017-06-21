@@ -9,8 +9,8 @@ public class MavenResolverPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskRegistry taskRegistry) {
-
         final MavenResolver mavenResolver = new MavenResolver();
+
         taskRegistry.register("resolveCompileDependencies",
             new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig(),
                 getExecutionContext(), mavenResolver));
@@ -18,12 +18,12 @@ public class MavenResolverPlugin extends AbstractPlugin {
         taskRegistry.register("resolveTestDependencies",
             new MavenResolverTask(DependencyScope.TEST, getBuildConfig(),
                 getExecutionContext(), mavenResolver));
-
     }
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-
+        taskTemplate.task("resolveTestDependencies")
+            .dependsOn(taskTemplate.task("resolveCompileDependencies"));
     }
 
 }

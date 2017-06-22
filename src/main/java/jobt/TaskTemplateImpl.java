@@ -103,7 +103,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         private static final Logger LOG = LoggerFactory.getLogger(DummyTask.class);
         private final String taskName;
 
-        public DummyTask(final String taskName) {
+        DummyTask(final String taskName) {
             this.taskName = taskName;
         }
 

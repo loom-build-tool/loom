@@ -6,16 +6,20 @@ import java.util.List;
 
 public interface ExecutionContext {
 
-    void setCompileClasspath(List<URL> compileClasspath);
     List<URL> getCompileClasspath() throws InterruptedException;
 
-    void setTestClasspath(List<URL> testClasspath);
+    void setCompileClasspath(List<URL> compileClasspath);
+
     List<URL> getTestClasspath() throws InterruptedException;
 
-    void setCompileDependencies(List<Path> compileDependencies);
+    void setTestClasspath(List<URL> testClasspath);
+
     List<Path> getCompileDependencies();
 
-    void setTestDependencies(List<Path> testDependencies);
+    void setCompileDependencies(List<Path> compileDependencies);
+
     List<Path> getTestDependencies();
+
+    void setTestDependencies(List<Path> testDependencies);
 
 }

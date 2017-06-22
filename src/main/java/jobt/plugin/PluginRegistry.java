@@ -26,9 +26,8 @@ import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.Task;
-import jobt.api.TaskStatus;
 import jobt.config.BuildConfigImpl;
-import jobt.util.Stopwatch;
+import jobt.util.ThreadUtil;
 
 @SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:illegalcatch"})
 public class PluginRegistry {
@@ -75,7 +74,9 @@ public class PluginRegistry {
         final Set<String> plugins = new HashSet<>(DEFAULT_PLUGINS);
         plugins.addAll(buildConfig.getPlugins());
 
-        final ExecutorService executorService = Executors.newWorkStealingPool();
+        final ExecutorService executorService = Executors.newCachedThreadPool(
+            ThreadUtil.newThreadFactory("plugin-init"));
+
         for (final String plugin : plugins) {
             if (firstException.get() != null) {
                 break;
@@ -156,41 +157,8 @@ public class PluginRegistry {
         }
     }
 
-    public TaskStatus trigger(final String taskName) throws Exception {
-        final Optional<Task> task = taskRegistry.getTasks(taskName);
-
-        if (!task.isPresent()) {
-            LOG.debug("No task for {} registered", taskName);
-            return TaskStatus.SKIP;
-        }
-
-        final String stopwatchProcess = "Task " + taskName;
-        Stopwatch.startProcess(stopwatchProcess);
-
-        final Set<TaskStatus> statuses = new HashSet<>();
-
-        LOG.info("Start task {}", taskName);
-        final TaskStatus status = task.get().run();
-        LOG.info("Task {} resulted with {}", taskName, status);
-        statuses.add(status);
-
-        final TaskStatus ret;
-        if (statuses.size() == 1) {
-            ret = statuses.iterator().next();
-        } else {
-            ret = statuses.stream().anyMatch(s -> s == TaskStatus.OK)
-                ? TaskStatus.OK : TaskStatus.UP_TO_DATE;
-        }
-
-        Stopwatch.stopProcess();
-        return ret;
-    }
-
-    public void warmup(final String taskName) throws Exception {
-        final Optional<Task> task = taskRegistry.getTasks(taskName);
-        if (task.isPresent()) {
-            task.get().prepare();
-        }
+    public Optional<Task> getTask(final String taskName) {
+        return taskRegistry.getTasks(taskName);
     }
 
 }

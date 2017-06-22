@@ -3,6 +3,7 @@ package jobt;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,22 @@ public class TaskTemplateImpl implements TaskTemplate {
     @Override
     public TaskGraphNode task(final String name) {
         return tasks.computeIfAbsent(name, TaskGraphNodeImpl::new);
+    }
+
+    public Set<String> getAvailableTaskNames() {
+        final LinkedList<String> foo = new LinkedList<>();
+        for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
+            final String taskName = entry.getKey();
+            final Set<String> dependencies = resolveTasks(taskName);
+            dependencies.remove(taskName);
+
+            if (dependencies.isEmpty()) {
+                foo.addFirst(taskName + " (no dependencies)");
+            } else {
+                foo.addLast(taskName + " (depends on: " + dependencies + ")");
+            }
+        }
+        return new LinkedHashSet<>(foo);
     }
 
     public void execute(final String[] taskNames) throws Exception {

@@ -51,6 +51,7 @@ public class Jobt {
         final Options options = new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
+            .addOption("t", "tasks", false, "Show available tasks")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)");
 
         if (args.length == 0) {
@@ -117,11 +118,6 @@ public class Jobt {
             jobtProcessor.clean();
         }
 
-        if (cmd.getArgList().isEmpty()) {
-            // We're done
-            return;
-        }
-
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
 
@@ -140,6 +136,22 @@ public class Jobt {
             buildConfig.getProject().getVersion());
 
         jobtProcessor.init(buildConfig, runtimeConfiguration);
+
+        if (cmd.hasOption("tasks")) {
+            System.out.println();
+            System.out.println("Available tasks:");
+            System.out.println();
+            for (final String task : jobtProcessor.getAvailableTaskNames()) {
+                System.out.println(task);
+            }
+            System.out.println();
+            System.exit(0);
+        }
+
+        if (cmd.getArgList().isEmpty()) {
+            // We're done
+            return;
+        }
 
         jobtProcessor.execute(cmd.getArgs());
 

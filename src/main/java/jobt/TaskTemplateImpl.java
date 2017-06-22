@@ -1,6 +1,5 @@
 package jobt;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -21,14 +20,13 @@ import jobt.api.TaskTemplate;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
 
-@SuppressWarnings("checkstyle:regexpmultiline")
+@SuppressWarnings({"checkstyle:regexpmultiline", "checkstyle:classdataabstractioncoupling"})
 public class TaskTemplateImpl implements TaskTemplate {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskTemplateImpl.class);
 
     private final PluginRegistry pluginRegistry;
     private final Map<String, TaskGraphNodeImpl> tasks = new ConcurrentHashMap<>();
-    private final List<String> tasksExecuted = new ArrayList<>();
 
     public TaskTemplateImpl(final BuildConfigImpl buildConfig,
                             final RuntimeConfigurationImpl runtimeConfiguration) {
@@ -41,25 +39,22 @@ public class TaskTemplateImpl implements TaskTemplate {
         return tasks.computeIfAbsent(name, TaskGraphNodeImpl::new);
     }
 
-    public void execute(final String task) throws Exception {
-        final Set<String> resolvedTasks = resolveTasks(task);
-        resolvedTasks.removeAll(tasksExecuted);
+    public void execute(final String[] taskNames) throws Exception {
+        final Set<String> resolvedTasks = new LinkedHashSet<>();
+        for (final String taskName : taskNames) {
+            resolvedTasks.addAll(resolveTasks(taskName));
+        }
 
         if (resolvedTasks.isEmpty()) {
             return;
         }
 
-        LOG.info("Will execute {}",
-            resolvedTasks.stream().collect(Collectors.joining(" > ")));
+        System.out.println("Execute "
+            + resolvedTasks.stream().collect(Collectors.joining(" > ")));
 
-        final Collection<Job> jobs = buildJobs(resolvedTasks);
         final JobPool jobPool = new JobPool();
-
-        jobPool.submitAll(jobs);
-
+        jobPool.submitAll(buildJobs(resolvedTasks));
         jobPool.shutdown();
-
-        tasksExecuted.addAll(resolvedTasks);
     }
 
     private Collection<Job> buildJobs(final Set<String> resolvedTasks) {

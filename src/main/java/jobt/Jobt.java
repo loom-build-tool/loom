@@ -141,10 +141,7 @@ public class Jobt {
 
         jobtProcessor.init(buildConfig, runtimeConfiguration);
 
-        for (final String taskName : cmd.getArgs()) {
-            System.out.println("Executing " + taskName + "...");
-            jobtProcessor.execute(taskName);
-        }
+        jobtProcessor.execute(cmd.getArgs());
 
         printExecutionStatistics();
 

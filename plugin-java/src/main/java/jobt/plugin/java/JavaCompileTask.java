@@ -2,8 +2,6 @@ package jobt.plugin.java;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,9 +27,11 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.BuildConfig;
 import jobt.api.Classpath;
+import jobt.api.Compilation;
 import jobt.api.CompileTarget;
 import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
+import jobt.api.SourceTree;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
@@ -51,12 +51,9 @@ public class JavaCompileTask implements Task {
 
     private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
-//    private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
-    private final Path srcPath;
     private final Path buildDir;
     private final String subdirName;
-    private final List<Path> classpathAppendix = new ArrayList<>();
     private final UsedProducts input;
     private final ProvidedProducts output;
 
@@ -71,31 +68,17 @@ public class JavaCompileTask implements Task {
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
-
         switch (compileTarget) {
             case MAIN:
-                srcPath = SRC_MAIN_PATH;
                 buildDir = BUILD_MAIN_PATH;
                 subdirName = "main";
-                classpathAppendix.add(srcPath);
                 break;
             case TEST:
-                srcPath = SRC_TEST_PATH;
                 buildDir = BUILD_TEST_PATH;
                 subdirName = "test";
-                classpathAppendix.add(srcPath);
-                classpathAppendix.add(BUILD_MAIN_PATH);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
-        }
-    }
-
-    private static URL buildUrl(final Path f) {
-        try {
-            return f.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalStateException(e);
         }
     }
 
@@ -181,13 +164,18 @@ public class JavaCompileTask implements Task {
     @Override
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
-        classpath.addAll(classpathAppendix);
 
+        Path srcPath;
         switch (compileTarget) {
             case MAIN:
+                srcPath = input.readProduct("source", SourceTree.class).getSrcDir();
+                classpath.add(srcPath);
                 classpath.addAll(input.readProduct("compileDependencies", Classpath.class).getEntries());
                 break;
             case TEST:
+                srcPath = input.readProduct("testSource", SourceTree.class).getSrcDir();
+                classpath.add(srcPath);
+                classpath.add(input.readProduct("compilation", SourceTree.class).getSrcDir());
                 classpath.addAll(input.readProduct("testDependencies", Classpath.class).getEntries());
                 break;
             default:
@@ -195,7 +183,7 @@ public class JavaCompileTask implements Task {
         }
 
         if (Files.notExists(srcPath)) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         final List<Path> srcPaths = Files.walk(srcPath)
@@ -207,7 +195,7 @@ public class JavaCompileTask implements Task {
             ? new FileCacherImpl(subdirName) : new NullCacher();
 
         if (fileCacher.filesCached(srcPaths)) {
-            return TaskStatus.UP_TO_DATE;
+            return  complete(TaskStatus.UP_TO_DATE);
         }
 
         if (Files.notExists(buildDir)) {
@@ -224,7 +212,20 @@ public class JavaCompileTask implements Task {
 
         fileCacher.cacheFiles(srcPaths);
 
-        return TaskStatus.OK;
+        return  complete(TaskStatus.OK);
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch(compileTarget) {
+            case MAIN:
+                output.complete("compilation", new Compilation(buildDir));
+                return status;
+            case TEST:
+                output.complete("testCompilation", new Compilation(buildDir));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {

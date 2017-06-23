@@ -4,22 +4,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import jobt.api.ProcessedResource;
 import jobt.api.CompileTarget;
+import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
+import jobt.api.SourceTree;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
 
 public class ResourcesTask implements Task {
 
     private final RuntimeConfiguration runtimeConfiguration;
     private final String subdirName;
-    private final Path srcPath;
     private final Path destPath;
+    private final UsedProducts input;
+    private final ProvidedProducts output;
+    private final CompileTarget compileTarget;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
-                  final CompileTarget compileTarget) {
+                  final CompileTarget compileTarget,
+                  final UsedProducts input, final ProvidedProducts output) {
 
         this.runtimeConfiguration = runtimeConfiguration;
+        this.compileTarget = compileTarget;
+        this.input = input;
+        this.output = output;
 
         switch (compileTarget) {
             case MAIN:
@@ -32,7 +42,6 @@ public class ResourcesTask implements Task {
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
         }
 
-        srcPath = Paths.get("src", subdirName, "resources");
         destPath = Paths.get("jobtbuild", "resources", subdirName);
     }
 
@@ -42,8 +51,12 @@ public class ResourcesTask implements Task {
 
     @Override
     public TaskStatus run() throws Exception {
+
+        final SourceTree source = input.readProduct("source", SourceTree.class);
+        final Path srcPath = source.getSrcDir();
+
         if (Files.notExists(srcPath) && Files.notExists(destPath)) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         assertDirectoryOrMissing(srcPath);
@@ -51,7 +64,7 @@ public class ResourcesTask implements Task {
 
         if (Files.notExists(srcPath) && Files.exists(destPath)) {
             FileUtil.deleteDirectoryRecursively(destPath, true);
-            return TaskStatus.OK;
+            return complete(TaskStatus.OK);
         }
 
         FileUtil.assertDirectory(srcPath);
@@ -68,7 +81,20 @@ public class ResourcesTask implements Task {
 
         cache.saveCache();
 
-        return TaskStatus.OK;
+        return complete(TaskStatus.OK);
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch(compileTarget) {
+            case MAIN:
+                output.complete("processedResources", new ProcessedResource(destPath));
+                return status;
+            case TEST:
+                output.complete("processedTestResources", new ProcessedResource(destPath));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private void assertDirectoryOrMissing(final Path path) {

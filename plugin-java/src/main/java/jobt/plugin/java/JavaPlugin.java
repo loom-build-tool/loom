@@ -14,9 +14,19 @@ public class JavaPlugin extends AbstractPlugin {
         final BuildConfig buildConfig = getBuildConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
+        taskRegistry.register("provideSource",
+            new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN,
+            uses(), provides("source"))
+            );
+
+        taskRegistry.register("provideTestSource",
+            new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST,
+            uses(), provides("testSource"))
+            );
+
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.MAIN,
-            uses("compileDependencies"), provides()));
+            uses("source", "compileDependencies"), provides("compilation")));
 
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.TEST,
@@ -25,18 +35,23 @@ public class JavaPlugin extends AbstractPlugin {
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
 
         taskRegistry.register("processResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
+            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN,
+                uses("resources"), provides("processedResources")));
 
         taskRegistry.register("processTestResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST));
+            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST,
+                uses("testResources"), provides("processedTestResources")));
 
         taskRegistry.register("test", new JavaTestTask(uses("testDependencies"), provides()));
     }
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
+
         taskTemplate.task("compileJava")
-            .dependsOn(taskTemplate.task("resolveCompileDependencies"));
+            .dependsOn(
+                taskTemplate.task("provideSource"),
+                taskTemplate.task("resolveCompileDependencies"));
 
         taskTemplate.task("processResources");
 
@@ -48,6 +63,7 @@ public class JavaPlugin extends AbstractPlugin {
             taskTemplate.task("classes"));
 
         taskTemplate.task("compileTestJava").dependsOn(
+            taskTemplate.task("provideTestSource"),
             taskTemplate.task("resolveTestDependencies"),
             taskTemplate.task("classes"));
 

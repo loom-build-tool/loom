@@ -84,4 +84,8 @@ public class JobtProcessor {
         return taskTemplate.getAvailableTaskNames();
     }
 
+    public void generateDotTaskOverview() {
+        taskTemplate.generateDotTaskOverview();
+    }
+
 }

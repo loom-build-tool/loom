@@ -16,6 +16,7 @@ import javax.tools.ToolProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -51,8 +52,15 @@ public class Jobt {
         final Options options = new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
-            .addOption("t", "tasks", false, "Show available tasks")
-            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)");
+            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
+            .addOption(
+                Option.builder("t")
+                    .longOpt("tasks")
+                    .numberOfArgs(1)
+                    .optionalArg(true)
+                    .argName("format")
+                    .desc("Show available tasks (formats: text [default], dot)")
+                    .build());
 
         if (args.length == 0) {
             System.err.println("Nothing to do!");
@@ -138,13 +146,22 @@ public class Jobt {
         jobtProcessor.init(buildConfig, runtimeConfiguration);
 
         if (cmd.hasOption("tasks")) {
-            System.out.println();
-            System.out.println("Available tasks:");
-            System.out.println();
-            for (final String task : jobtProcessor.getAvailableTaskNames()) {
-                System.out.println(task);
+            final String format = cmd.getOptionValue("tasks");
+
+            if (format == null || "text".equals(format)) {
+                System.out.println();
+                System.out.println("Available tasks:");
+                System.out.println();
+                jobtProcessor.getAvailableTaskNames().stream().sorted()
+                    .forEach(System.out::println);
+                System.out.println();
+            } else if ("dot".equals(format)) {
+                jobtProcessor.generateDotTaskOverview();
+            } else {
+                System.err.println("Unknown format: " + format);
+                System.exit(1);
             }
-            System.out.println();
+
             System.exit(0);
         }
 

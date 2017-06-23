@@ -85,7 +85,7 @@ public class JobtProcessor {
     }
 
     public void generateDotTaskOverview() {
-        taskTemplate.generateDotTaskOverview();
+        GraphvizOutput.generateDot(taskTemplate.getTasks());
     }
 
 }

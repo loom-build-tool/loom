@@ -1,6 +1,7 @@
 package jobt;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,12 +40,12 @@ public class TaskTemplateImpl implements TaskTemplate {
         return tasks.computeIfAbsent(name, TaskGraphNodeImpl::new);
     }
 
-    public Set<String> getAvailableTaskNames() {
-        return tasks.keySet();
+    public Map<String, TaskGraphNodeImpl> getTasks() {
+        return Collections.unmodifiableMap(tasks);
     }
 
-    public void generateDotTaskOverview() {
-        GraphvizOutput.generateDot(tasks);
+    public Set<String> getAvailableTaskNames() {
+        return Collections.unmodifiableSet(tasks.keySet());
     }
 
     public void execute(final String[] taskNames) throws Exception {

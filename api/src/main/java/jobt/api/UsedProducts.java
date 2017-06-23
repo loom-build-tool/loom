@@ -32,7 +32,7 @@ public class UsedProducts {
         this.executionContext = executionContext;
     }
 
-    public <T> T readProduct(final String productId, final Class<T> clazz) {
+    public <T extends Product> T readProduct(final String productId, final Class<T> clazz) {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(clazz);
 

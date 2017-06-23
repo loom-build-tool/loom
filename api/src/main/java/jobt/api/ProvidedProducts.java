@@ -51,7 +51,7 @@ public class ProvidedProducts {
 
     }
 
-    public <T> void complete(final String productId, final T value) {
+    public <T extends Product> void complete(final String productId, final T value) {
         Objects.requireNonNull(productId);
         if (value == null) {
             throw new IllegalArgumentException("Must not complete product <"+productId+"> with null value");

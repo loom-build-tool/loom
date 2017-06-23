@@ -38,6 +38,7 @@ public class CheckstyleTask implements Task {
     private final CompileTarget compileTarget;
     private final UsedProducts input;
     private final ProvidedProducts output;
+    private RootModule checker;
 
     public CheckstyleTask(final CompileTarget compileTarget,
         final UsedProducts input, final ProvidedProducts output) {
@@ -48,18 +49,20 @@ public class CheckstyleTask implements Task {
 
         switch (compileTarget) {
             case MAIN:
-                this.srcBaseDir = Paths.get("src/main/java");
+                this.srcBaseDir = Paths.get("src", "main", "java");
                 break;
             case TEST:
-                this.srcBaseDir = Paths.get("src/test/java");
+                this.srcBaseDir = Paths.get("src", "test", "java");
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
     }
 
+
     @Override
     public void prepare() throws Exception {
+        checker = createRootModule();
     }
 
     @Override
@@ -75,7 +78,6 @@ public class CheckstyleTask implements Task {
 
         final LoggingAuditListener listener = new LoggingAuditListener();
 
-        final RootModule checker = createRootModule();
         checker.addListener(listener);
 
         final int errors = checker.process(collect);
@@ -162,6 +164,5 @@ public class CheckstyleTask implements Task {
 
         return new URLClassLoader(classpath.getEntriesAsUrlArray());
     }
-
 
 }

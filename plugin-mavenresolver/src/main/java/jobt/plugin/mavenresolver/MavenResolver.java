@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -50,13 +51,18 @@ public class MavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
 
-    private volatile boolean initialized;
+    private static final CountDownLatch CUSTOM_PLUGINS_INITLATCH = new CountDownLatch(1);
+
     private RepositorySystem system;
     private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
     private ProgressIndicator progressIndicator;
 
-    private void init() {
+    public synchronized void init() {
+        if (CUSTOM_PLUGINS_INITLATCH.getCount() == 0) {
+            return;
+        }
+
         LOG.debug("Initialize MavenResolver");
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
@@ -90,6 +96,8 @@ public class MavenResolver implements DependencyResolver {
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
         LOG.debug("MavenResolver initialized");
+
+        CUSTOM_PLUGINS_INITLATCH.countDown();
     }
 
     public void setProgressIndicator(final ProgressIndicator progressIndicator) {
@@ -98,16 +106,6 @@ public class MavenResolver implements DependencyResolver {
 
     @Override
     public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
-
-        if (!initialized) {
-            synchronized (this) {
-                if (!initialized) {
-                    init();
-                    initialized = true;
-                }
-            }
-        }
-
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 

@@ -19,6 +19,7 @@ import jobt.api.TaskStatus;
 public class JavaAssembleTask implements Task {
 
     private final BuildConfig buildConfig;
+    private Manifest preparedManifest;
 
     public JavaAssembleTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
@@ -26,6 +27,7 @@ public class JavaAssembleTask implements Task {
 
     @Override
     public void prepare() throws Exception {
+        preparedManifest = prepareManifest();
     }
 
     @Override
@@ -33,12 +35,10 @@ public class JavaAssembleTask implements Task {
         final Path buildDir = Paths.get("jobtbuild", "libs");
         Files.createDirectories(buildDir);
 
-        final Manifest manifest = prepareManifest();
-
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        createJar(JavaCompileTask.BUILD_MAIN_PATH, jarFile, manifest);
+        createJar(JavaCompileTask.BUILD_MAIN_PATH, jarFile, preparedManifest);
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
@@ -56,8 +56,8 @@ public class JavaAssembleTask implements Task {
     }
 
     private Manifest prepareManifest() {
-        final Manifest manifest = new Manifest();
-        final Attributes mainAttributes = manifest.getMainAttributes();
+        final Manifest newManifest = new Manifest();
+        final Attributes mainAttributes = newManifest.getMainAttributes();
         mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         mainAttributes.put(new Attributes.Name("Created-By"),
             "Jobt " + System.getProperty("jobt.version"));
@@ -69,7 +69,7 @@ public class JavaAssembleTask implements Task {
         if (mainClassName != null) {
             mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName);
         }
-        return manifest;
+        return newManifest;
     }
 
     private JarOutputStream newJarOutputStream(final Path targetFile, final Manifest manifest)

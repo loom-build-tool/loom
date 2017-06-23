@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,39 +57,44 @@ public final class GraphvizOutput {
         }
 
         for (final String standaloneTask : standaloneTasks) {
-            pw.print("    ");
-            pw.print(standaloneTask);
-            pw.println(";");
+            writeKeyValue(pw, standaloneTask, Collections.emptyList());
         }
 
         for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
-            final List<TaskGraphNode> dependentNodes = entry.getValue().getDependentNodes();
-            if (!dependentNodes.isEmpty()) {
-                pw.print("    ");
-                pw.print(entry.getKey());
-                pw.print(" -> ");
-                pw.println(constructValue(dependentNodes));
+            final List<String> dependencies = entry.getValue().getDependentNodes().stream()
+                .map(TaskGraphNode::getName)
+                .collect(Collectors.toList());
+
+            if (!dependencies.isEmpty()) {
+                writeKeyValue(pw, entry.getKey(), dependencies);
             }
         }
         pw.println("}");
     }
 
-    private static String constructValue(final List<TaskGraphNode> dependentNodes) {
-        final StringBuilder sb = new StringBuilder();
+    private static void writeKeyValue(final PrintWriter pw, final String key,
+                                      final List<String> values) {
+        pw.print("    ");
+        pw.print(key);
+        if (!values.isEmpty()) {
+            pw.print(" -> ");
+            pw.print(constructValue(values));
+        }
+        pw.println(";");
+    }
 
-        if (dependentNodes.size() > 1) {
-            sb.append("{");
+    private static String constructValue(final List<String> dependentNodes) {
+        if (dependentNodes == null || dependentNodes.isEmpty()) {
+            throw new IllegalArgumentException("dependentNodes must be > 0");
         }
 
-        sb.append(dependentNodes.stream()
-            .map(TaskGraphNode::getName)
-            .collect(Collectors.joining(", ")));
-
-        if (dependentNodes.size() > 1) {
-            sb.append("}");
+        if (dependentNodes.size() == 1) {
+            return dependentNodes.get(0);
         }
 
-        return sb.toString();
+        return "{" + dependentNodes.stream()
+            .collect(Collectors.joining(", "))
+            + "}";
     }
 
 }

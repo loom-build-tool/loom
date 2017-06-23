@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
@@ -77,6 +78,14 @@ public class JobtProcessor {
 
         log.debug("Memory max={}, total={}, free={}, used={}",
             maxMemory, totalMemory, freeMemory, memUsed);
+    }
+
+    public Set<String> getAvailableTaskNames() {
+        return taskTemplate.getAvailableTaskNames();
+    }
+
+    public void generateDotTaskOverview() {
+        GraphvizOutput.generateDot(taskTemplate.getTasks());
     }
 
 }

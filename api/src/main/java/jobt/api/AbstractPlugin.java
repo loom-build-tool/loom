@@ -42,9 +42,19 @@ public abstract class AbstractPlugin implements Plugin {
             new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
     }
 
-    public final ProvidedProducts provides(final String... productIdLists) {
+    public final ProvidedProducts provides() {
+        // FIXME
         return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
+            new HashSet<>(), getExecutionContext(),
+            null);
+    }
+
+    public final ProvidedProducts provides(
+        final Class<? extends Product> expectedType, final String... productIdLists) {
+
+        return new ProvidedProducts(
+            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext(),
+            expectedType);
     }
 
 }

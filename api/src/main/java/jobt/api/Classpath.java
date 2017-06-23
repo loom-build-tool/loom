@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Must be immutable!
  */
-public final class Classpath {
+public final class Classpath implements Product {
 
     private final List<Path> entries;
 

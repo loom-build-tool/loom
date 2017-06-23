@@ -1,6 +1,7 @@
 package jobt.plugin.mavenresolver;
 
 import jobt.api.AbstractPlugin;
+import jobt.api.Classpath;
 import jobt.api.DependencyScope;
 import jobt.api.TaskRegistry;
 import jobt.api.TaskTemplate;
@@ -17,12 +18,12 @@ public class MavenResolverPlugin extends AbstractPlugin {
         taskRegistry.register("resolveCompileDependencies",
             new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig(),
                 mavenResolver,
-                uses(), provides("compileDependencies")));
+                uses(), provides(Classpath.class, "compileDependencies")));
 
         taskRegistry.register("resolveTestDependencies",
             new MavenResolverTask(DependencyScope.TEST, getBuildConfig(),
                 mavenResolver,
-                uses(), provides("testDependencies")));
+                uses(), provides(Classpath.class, "testDependencies")));
 
     }
 

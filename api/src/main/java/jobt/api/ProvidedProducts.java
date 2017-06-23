@@ -22,9 +22,12 @@ public class ProvidedProducts {
 
     public final static Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
 
+    private final Class<? extends Product> expectedType;
+
     public ProvidedProducts(
         final Set<String> producedProductIds,
-        final ExecutionContext executionContext) {
+        final ExecutionContext executionContext,
+        final Class<? extends Product> expectedType) {
         producedProductIds.forEach(id ->
             Preconditions.checkState(
                 PATTERN.matcher(id).matches(),
@@ -33,11 +36,12 @@ public class ProvidedProducts {
         Objects.requireNonNull(executionContext);
         this.producedProductIds = producedProductIds;
         this.executionContext = executionContext;
+        this.expectedType = expectedType;
+
         registerProducts();
     }
 
     private void registerProducts() {
-
         for (final String productId : producedProductIds) {
 
             if (executionContext.getProducts().containsKey(productId)) {
@@ -56,6 +60,11 @@ public class ProvidedProducts {
         if (value == null) {
             throw new IllegalArgumentException("Must not complete product <"+productId+"> with null value");
         }
+
+        Preconditions.checkState(expectedType.isInstance(value),
+            "Trying to complete value of wrong type; expect <%s> but got <%s>",
+            expectedType, value.getClass());
+
         if (!producedProductIds.contains(productId)) {
             throw new IllegalAccessError("Not allowed to resolve productId <"+productId+">");
         }

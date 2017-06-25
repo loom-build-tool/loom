@@ -97,7 +97,7 @@ public class IdeaTask implements Task {
         throws IOException, SAXException, TransformerException {
 
         final Path miscFile = ideaDirectory.resolve("misc.xml");
-        try (final InputStream resourceAsStream = readResource("/misc.xml")) {
+        try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
             final Document doc = documentBuilder.parse(resourceAsStream);
             final Element component = (Element) doc.getElementsByTagName("component").item(0);
 

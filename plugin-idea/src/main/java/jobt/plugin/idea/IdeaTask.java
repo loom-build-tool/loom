@@ -11,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 
 import jobt.api.BuildConfig;
 import jobt.api.ExecutionContext;
+import jobt.api.JavaVersion;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import nu.xom.Attribute;
@@ -78,23 +79,15 @@ public class IdeaTask implements Task {
 
             final String languageLevel;
             final String projectJdkName;
-            final int javaPlatformVersion = parseJavaVersion(buildConfig.getConfiguration()
-                .getOrDefault("javaPlatformVersion", "8"));
-            switch (javaPlatformVersion) {
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                    languageLevel = "JDK_1_" + javaPlatformVersion;
-                    projectJdkName = "1." + javaPlatformVersion;
-                    break;
-                case 9:
-                    languageLevel = "JDK_1_9";
-                    projectJdkName = "9";
-                    break;
-                default:
-                    throw new IllegalStateException("Unsupported javaPlatformVersion: "
-                        + javaPlatformVersion);
+            final int javaPlatformVersion = JavaVersion.ofVersion(
+                buildConfig.getConfiguration().getOrDefault("javaPlatformVersion", "8"))
+                .getNumericVersion();
+
+            languageLevel = "JDK_1_" + javaPlatformVersion;
+            if (javaPlatformVersion < 9) {
+                projectJdkName = "1." + javaPlatformVersion;
+            } else {
+                projectJdkName = "" + javaPlatformVersion;
             }
 
             component.addAttribute(new Attribute("languageLevel", languageLevel));
@@ -171,29 +164,6 @@ public class IdeaTask implements Task {
         orderEntry.appendChild(library);
 
         item.appendChild(orderEntry);
-    }
-
-    @SuppressWarnings({"checkstyle:magicnumber", "checkstyle:returncount"})
-    private static int parseJavaVersion(final String javaVersion) {
-        switch (javaVersion) {
-            case "9":
-                return 9;
-            case "8":
-            case "1.8":
-                return 8;
-            case "7":
-            case "1.7":
-                return 7;
-            case "6":
-            case "1.6":
-                return 6;
-            case "5":
-            case "1.5":
-                return 5;
-            default:
-                throw new IllegalStateException("Java Platform Version <" + javaVersion + "> is "
-                    + "unsupported");
-        }
     }
 
 }

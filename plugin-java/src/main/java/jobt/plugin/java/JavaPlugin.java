@@ -15,13 +15,11 @@ public class JavaPlugin extends AbstractPlugin {
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         taskRegistry.register("provideSource",
-            new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN,
-            uses()), provides("source")
+            new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN), provides("source")
             );
 
         taskRegistry.register("provideTestSource",
-            new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST,
-            uses()), provides("testSource")
+            new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST), provides("testSource")
             );
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,

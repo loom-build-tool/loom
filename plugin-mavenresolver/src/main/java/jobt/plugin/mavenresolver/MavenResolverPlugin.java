@@ -16,13 +16,11 @@ public class MavenResolverPlugin extends AbstractPlugin {
 
         taskRegistry.register("resolveCompileDependencies",
             new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig(),
-                mavenResolver,
-                uses()), provides("compileDependencies"));
+                mavenResolver), provides("compileDependencies"));
 
         taskRegistry.register("resolveTestDependencies",
             new MavenResolverTask(DependencyScope.TEST, getBuildConfig(),
-                mavenResolver,
-                uses()), provides("testDependencies"));
+                mavenResolver), provides("testDependencies"));
 
     }
 

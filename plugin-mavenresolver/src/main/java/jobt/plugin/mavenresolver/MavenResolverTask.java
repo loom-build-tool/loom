@@ -8,25 +8,21 @@ import jobt.api.BuildConfig;
 import jobt.api.Classpath;
 import jobt.api.DependencyScope;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 public class MavenResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
 
-    private final UsedProducts input;
     private final MavenResolver mavenResolver;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
                              final BuildConfig buildConfig,
-                             final MavenResolver mavenResolver,
-                             final UsedProducts input) {
+                             final MavenResolver mavenResolver) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
         this.mavenResolver = mavenResolver;
-        this.input = input;
     }
 
     @Override

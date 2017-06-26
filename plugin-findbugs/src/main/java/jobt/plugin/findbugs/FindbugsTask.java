@@ -23,7 +23,6 @@ import jobt.api.BuildConfig;
 import jobt.api.Classpath;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 import jobt.util.Preconditions;
 
 public class FindbugsTask extends AbstractTask {
@@ -43,13 +42,9 @@ public class FindbugsTask extends AbstractTask {
     private final CompileTarget compileTarget;
 
     private Optional<Integer> priorityThreshold;
-    private final UsedProducts input;
 
     public FindbugsTask(
-        final BuildConfig buildConfig, final CompileTarget compileTarget,
-        final UsedProducts input) {
-
-        this.input = input;
+        final BuildConfig buildConfig, final CompileTarget compileTarget) {
 
         readBuildConfig(Objects.requireNonNull(buildConfig));
         this.compileTarget = Objects.requireNonNull(compileTarget);
@@ -116,12 +111,12 @@ public class FindbugsTask extends AbstractTask {
     private Classpath calcClasspath() {
         switch (compileTarget) {
             case MAIN:
-                return input.readProduct("compileDependencies", Classpath.class);
+                return getUsedProducts().readProduct("compileDependencies", Classpath.class);
             case TEST:
                 final List<Path> classpath = new ArrayList<>();
                 classpath.add(BUILD_MAIN_PATH);
                 classpath.addAll(
-                    input.readProduct("testDependencies", Classpath.class).getEntries());
+                    getUsedProducts().readProduct("testDependencies", Classpath.class).getEntries());
                 return new Classpath(classpath);
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);

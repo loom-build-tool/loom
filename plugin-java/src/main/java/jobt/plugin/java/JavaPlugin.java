@@ -25,32 +25,26 @@ public class JavaPlugin extends AbstractPlugin {
             );
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, CompileTarget.MAIN,
-            uses("source", "compileDependencies")), provides("compilation"));
+            runtimeConfiguration, CompileTarget.MAIN), provides("compilation"));
 
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, CompileTarget.TEST,
-            uses("compilation", "testSource", "testDependencies")), provides("testCompilation"));
+            runtimeConfiguration, CompileTarget.TEST), provides("testCompilation"));
 
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig), provides());
 
         taskRegistry.register("provideResources",
-            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN,
-                uses()), provides("resources"));
+            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN), provides("resources"));
 
         taskRegistry.register("provideTestResources",
-            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST,
-                uses()), provides("testResources"));
+            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST), provides("testResources"));
 
         taskRegistry.register("processResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN,
-                uses("resources")), provides("processedResources"));
+            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN), provides("processedResources"));
 
         taskRegistry.register("processTestResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST,
-                uses("testResources")), provides("processedTestResources"));
+            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST), provides("processedTestResources"));
 
-        taskRegistry.register("test", new JavaTestTask(uses("testDependencies")), provides());
+        taskRegistry.register("test", new JavaTestTask(), provides());
     }
 
     @Override

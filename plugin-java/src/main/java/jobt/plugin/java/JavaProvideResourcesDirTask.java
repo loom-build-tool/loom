@@ -8,7 +8,6 @@ import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ResourcesTree;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 
 public class JavaProvideResourcesDirTask extends AbstractTask {
@@ -17,12 +16,10 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
     private final CompileTarget compileTarget;
-    private final UsedProducts input;
 
-    public JavaProvideResourcesDirTask(final BuildConfig buildConfig, final CompileTarget compileTarget, final UsedProducts input) {
+    public JavaProvideResourcesDirTask(final BuildConfig buildConfig, final CompileTarget compileTarget) {
             this.buildConfig = buildConfig;
             this.compileTarget = compileTarget;
-            this.input = input;
     }
 
     @Override

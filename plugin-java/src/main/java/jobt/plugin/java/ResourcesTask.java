@@ -10,22 +10,18 @@ import jobt.api.ProcessedResource;
 import jobt.api.ResourcesTree;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 public class ResourcesTask extends AbstractTask {
 
     private final RuntimeConfiguration runtimeConfiguration;
     private final Path destPath;
-    private final UsedProducts input;
     private final CompileTarget compileTarget;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
-                  final CompileTarget compileTarget,
-                  final UsedProducts input) {
+                  final CompileTarget compileTarget) {
 
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = compileTarget;
-        this.input = input;
 
         destPath = Paths.get("jobtbuild", "resources", compileTarget.name().toLowerCase());
     }
@@ -41,10 +37,10 @@ public class ResourcesTask extends AbstractTask {
 
         switch (compileTarget) {
             case MAIN:
-                srcPath = input.readProduct("resources", ResourcesTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("resources", ResourcesTree.class).getSrcDir();
                 break;
             case TEST:
-                srcPath = input.readProduct("testResources", ResourcesTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("testResources", ResourcesTree.class).getSrcDir();
                 break;
             default:
                 throw new IllegalStateException();

@@ -26,16 +26,12 @@ import org.slf4j.LoggerFactory;
 import jobt.api.AbstractTask;
 import jobt.api.Classpath;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 public class JavaTestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
 
-    private final UsedProducts input;
-
-    public JavaTestTask(final UsedProducts input) {
-        this.input = input;
+    public JavaTestTask() {
     }
 
     @Override
@@ -70,7 +66,7 @@ public class JavaTestTask extends AbstractTask {
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
         final List<URL> urls = new ArrayList<>(
-            input.readProduct("testDependencies", Classpath.class).getEntriesAsUrls());
+            getUsedProducts().readProduct("testDependencies", Classpath.class).getEntriesAsUrls());
         urls.add(Paths.get("jobtbuild", "classes", "test").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "classes", "main").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "resources", "test").toUri().toURL());

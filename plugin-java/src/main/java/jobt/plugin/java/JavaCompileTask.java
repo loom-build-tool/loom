@@ -33,7 +33,6 @@ import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.SourceTree;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 public class JavaCompileTask extends AbstractTask {
 
@@ -53,14 +52,11 @@ public class JavaCompileTask extends AbstractTask {
     private final CompileTarget compileTarget;
     private final Path buildDir;
     private final String subdirName;
-    private final UsedProducts input;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
-                           final CompileTarget compileTarget,
-                           final UsedProducts input
+                           final CompileTarget compileTarget
                            ) {
-        this.input = input;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
@@ -165,15 +161,15 @@ public class JavaCompileTask extends AbstractTask {
         Path srcPath;
         switch (compileTarget) {
             case MAIN:
-                srcPath = input.readProduct("source", SourceTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("source", SourceTree.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.addAll(input.readProduct("compileDependencies", Classpath.class).getEntries());
+                classpath.addAll(getUsedProducts().readProduct("compileDependencies", Classpath.class).getEntries());
                 break;
             case TEST:
-                srcPath = input.readProduct("testSource", SourceTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("testSource", SourceTree.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.add(input.readProduct("compilation", Compilation.class).getClassesDir());
-                classpath.addAll(input.readProduct("testDependencies", Classpath.class).getEntries());
+                classpath.add(getUsedProducts().readProduct("compilation", Compilation.class).getClassesDir());
+                classpath.addAll(getUsedProducts().readProduct("testDependencies", Classpath.class).getEntries());
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

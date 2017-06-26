@@ -25,7 +25,6 @@ import jobt.api.AbstractTask;
 import jobt.api.Classpath;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
-import jobt.api.UsedProducts;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
@@ -35,14 +34,11 @@ public class CheckstyleTask extends AbstractTask {
 
     private final Path srcBaseDir;
     private final CompileTarget compileTarget;
-    private final UsedProducts input;
     private RootModule checker;
 
-    public CheckstyleTask(final CompileTarget compileTarget,
-        final UsedProducts input) {
+    public CheckstyleTask(final CompileTarget compileTarget) {
 
         this.compileTarget = compileTarget;
-        this.input = input;
 
         switch (compileTarget) {
             case MAIN:
@@ -149,10 +145,10 @@ public class CheckstyleTask extends AbstractTask {
         final Classpath classpath;
         switch (compileTarget) {
             case MAIN:
-                classpath = input.readProduct("compileDependencies", Classpath.class);
+                classpath = getUsedProducts().readProduct("compileDependencies", Classpath.class);
                 break;
             case TEST:
-                classpath = input.readProduct("testDependencies", Classpath.class);
+                classpath = getUsedProducts().readProduct("testDependencies", Classpath.class);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

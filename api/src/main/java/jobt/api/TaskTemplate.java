@@ -6,4 +6,6 @@ public interface TaskTemplate {
 
     ProductGraphNode product(String productId);
 
+    TaskGraphNode virtualProduct(String productId);
+
 }

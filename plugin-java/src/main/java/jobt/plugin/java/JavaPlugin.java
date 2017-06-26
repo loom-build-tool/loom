@@ -59,10 +59,17 @@ public class JavaPlugin extends AbstractPlugin {
             .uses(
                 taskTemplate.product("resources"));
 
-        taskTemplate.task("classes").dependsOn(
-            taskTemplate.task("compileJava"),
-            taskTemplate.task("processResources"));
 
+        taskTemplate.virtualProduct("classes")
+            .uses(
+                taskTemplate.product("compilation"),
+                taskTemplate.product("testCompilation"));
+
+//        taskTemplate.task("classes").dependsOn(
+//            taskTemplate.task("compileJava"),
+//            taskTemplate.task("processResources"));
+
+        // TODO
         taskTemplate.task("javadoc").dependsOn(
             taskTemplate.task("classes"));
 
@@ -75,24 +82,27 @@ public class JavaPlugin extends AbstractPlugin {
             .uses(
                 taskTemplate.product("testResources"));
 
-        taskTemplate.task("testClasses").dependsOn(
-            taskTemplate.task("compileTestJava"),
-            taskTemplate.task("processTestResources"));
+//        taskTemplate.task("testClasses").dependsOn(
+//            taskTemplate.task("compileTestJava"),
+//            taskTemplate.task("processTestResources"));
 
         taskTemplate.task("test").uses(
             taskTemplate.product("testDependencies"));
 
-        taskTemplate.task("check").dependsOn(
-            taskTemplate.task("test"));
+//        taskTemplate.task("check").dependsOn(
+//            taskTemplate.task("test"));
 
-        taskTemplate.task("jar").dependsOn(
-            taskTemplate.task("classes"));
+        // TODO add product for jar
+        taskTemplate.task("jar").uses(
+            taskTemplate.product("compilation"));
 
-        taskTemplate.task("uploadArchives").dependsOn(
-            taskTemplate.task("jar"));
+        // TODO add product
+//        taskTemplate.task("uploadArchives").dependsOn(
+//            taskTemplate.task("jar"));
 
-        taskTemplate.task("assemble").dependsOn(
-            taskTemplate.task("jar"));
+        // TODO add product
+//        taskTemplate.task("assemble").dependsOn(
+//            taskTemplate.task("jar"));
 
         taskTemplate.task("build").dependsOn(
             taskTemplate.task("check"),

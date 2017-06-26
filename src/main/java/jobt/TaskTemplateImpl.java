@@ -29,6 +29,7 @@ import jobt.api.TaskTemplate;
 import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
+import jobt.util.Preconditions;
 
 @SuppressWarnings({"checkstyle:regexpmultiline", "checkstyle:classdataabstractioncoupling"})
 public class TaskTemplateImpl implements TaskTemplate {
@@ -57,6 +58,18 @@ public class TaskTemplateImpl implements TaskTemplate {
     @Override
     public ProductGraphNode product(final String productId) {
         return taskProducts.computeIfAbsent(productId, ProductGraphNodeImpl::new);
+    }
+
+    /**
+     * Create a task with a fake product of same name - making it runnable.
+     */
+    @Override
+    public TaskGraphNode virtualProduct(final String productId) {
+        Preconditions.checkState(
+            !tasks.containsKey(productId),"Connot use <%s> as virtual product id because a task with same name already exists", productId);
+        final TaskGraphNodeImpl task = (TaskGraphNodeImpl) task(productId);
+        task.setProvidedProducts(product(productId));
+        return task;
     }
 
     public Set<String> getAvailableTaskNames() {

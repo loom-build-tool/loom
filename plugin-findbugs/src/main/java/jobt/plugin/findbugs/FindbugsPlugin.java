@@ -31,16 +31,13 @@ public class FindbugsPlugin extends AbstractPlugin {
     public void configure(final TaskTemplate taskTemplate) {
 
         taskTemplate.task("findbugsMain")
-            .dependsOn(taskTemplate.task("classes"));
+            .uses(taskTemplate.product("compilation"));
 
         taskTemplate.task("findbugsTest")
-            .dependsOn(
-                taskTemplate.task("classes"),
-                taskTemplate.task("testClasses"));
-
-        taskTemplate.task("check").dependsOn(
-            taskTemplate.task("findbugsMain"),
-            taskTemplate.task("findbugsTest"));
+        .uses(
+            taskTemplate.product("compilation"),
+            taskTemplate.product("testCompilation")
+            );
 
     }
 

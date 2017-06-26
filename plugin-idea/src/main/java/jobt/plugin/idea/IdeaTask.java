@@ -80,7 +80,7 @@ public class IdeaTask implements Task {
 
         final String imlFilename = fileName.toString() + ".iml";
         createModulesFile(ideaDirectory, imlFilename);
-        createImlFile(ideaDirectory, imlFilename);
+        createImlFile(currentDir.resolve(imlFilename));
 
         return TaskStatus.OK;
     }
@@ -159,10 +159,9 @@ public class IdeaTask implements Task {
         }
     }
 
-    private void createImlFile(final Path ideaDirectory, final String imlFilename)
+    private void createImlFile(final Path imlFile)
         throws IOException, SAXException, TransformerException {
 
-        final Path imlFile = ideaDirectory.resolve(imlFilename);
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
             final Document doc = documentBuilder.parse(resourceAsStream);
             final Node component = doc.getElementsByTagName("component").item(0);

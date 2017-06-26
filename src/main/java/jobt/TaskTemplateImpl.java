@@ -63,9 +63,14 @@ public class TaskTemplateImpl implements TaskTemplate {
         return Collections.unmodifiableSet(tasks.keySet());
     }
 
+    public Set<String> getAvailableProductIds() {
+        return Collections.unmodifiableSet(taskProducts.keySet());
+    }
+
     public void execute(final String[] taskNames) throws Exception {
 
-        final List<String> resolvedTasks = calcRequiredTasks(new HashSet<>(Arrays.asList(taskNames)));
+        final List<String> resolvedTasks = calcRequiredTasks(
+            calcTasksForProducts(new HashSet<>(Arrays.asList(taskNames))));
 
         // TODO cleanup
 
@@ -140,6 +145,20 @@ public class TaskTemplateImpl implements TaskTemplate {
         LOG.info("calcRequiredTasks={}", resolvedTasks);
 
         return resolvedTasks;
+    }
+
+    private Set<String> calcTasksForProducts(final Set<String> requestedProducts) {
+
+        final Map<String, String> producersMap = buildInvertedProducersMap();
+        System.out.println("producersMap="+producersMap);
+
+        return
+        requestedProducts.stream()
+            .peek(productId -> jobt.util.Preconditions.checkState(producersMap.containsKey(productId),
+                "No such product: %s (available products: %s)", productId, getAvailableProductIds()))
+            .map(productId -> producersMap.get(productId))
+            .collect(Collectors.toSet());
+
     }
 
     public Map<String, String> buildInvertedProducersMap() {

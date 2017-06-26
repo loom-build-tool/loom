@@ -13,7 +13,10 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import jobt.api.AbstractTask;
+import jobt.api.Assembly;
 import jobt.api.BuildConfig;
+import jobt.api.Compilation;
+import jobt.api.SourceTree;
 import jobt.api.TaskStatus;
 
 public class JavaAssembleTask extends AbstractTask {
@@ -38,12 +41,16 @@ public class JavaAssembleTask extends AbstractTask {
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        createJar(JavaCompileTask.BUILD_MAIN_PATH, jarFile, preparedManifest);
+        final Compilation compilation = getUsedProducts().readProduct("compilation", Compilation.class);
+        createJar(compilation.getClassesDir(), jarFile, preparedManifest);
+        getProvidedProducts().complete("jar", new Assembly(jarFile));
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        createJar(JavaCompileTask.SRC_MAIN_PATH, sourceJarFile, null);
+        final SourceTree sourceTree = getUsedProducts().readProduct("source", SourceTree.class);
+        createJar(sourceTree.getSrcDir(), sourceJarFile, null);
+        getProvidedProducts().complete("sourcesJar", new Assembly(sourceJarFile));
 
         return TaskStatus.OK;
     }

@@ -28,7 +28,7 @@ public class JavaPlugin extends AbstractPlugin {
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.TEST), provides("testCompilation"));
 
-        taskRegistry.register("jar", new JavaAssembleTask(buildConfig), provides());
+        taskRegistry.register("assemble", new JavaAssembleTask(buildConfig), provides("jar", "sourcesJar"));
 
         taskRegistry.register("provideResources",
             new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN), provides("resources"));
@@ -91,8 +91,10 @@ public class JavaPlugin extends AbstractPlugin {
 //            taskTemplate.task("test"));
 
         // TODO add product for jar
-        taskTemplate.task("jar").uses(
-            taskTemplate.product("compilation"));
+        taskTemplate.task("assemble").uses(
+            taskTemplate.product("source"),
+            taskTemplate.product("compilation")
+            );
 
         // TODO add product
 //        taskTemplate.task("uploadArchives").dependsOn(

@@ -175,7 +175,7 @@ public class JavaCompileTask implements Task {
             case TEST:
                 srcPath = input.readProduct("testSource", SourceTree.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.add(input.readProduct("compilation", SourceTree.class).getSrcDir());
+                classpath.add(input.readProduct("compilation", Compilation.class).getClassesDir());
                 classpath.addAll(input.readProduct("testDependencies", Classpath.class).getEntries());
                 break;
             default:

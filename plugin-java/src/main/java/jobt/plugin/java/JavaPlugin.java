@@ -30,9 +30,17 @@ public class JavaPlugin extends AbstractPlugin {
 
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.TEST,
-            uses("testDependencies"), provides()));
+            uses("compilation", "testSource", "testDependencies"), provides("testCompilation")));
 
         taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
+
+        taskRegistry.register("provideResources",
+            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN,
+                uses(), provides("resources")));
+
+        taskRegistry.register("provideTestResources",
+            new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST,
+                uses(), provides("testResources")));
 
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN,
@@ -53,7 +61,9 @@ public class JavaPlugin extends AbstractPlugin {
                 taskTemplate.task("provideSource"),
                 taskTemplate.task("resolveCompileDependencies"));
 
-        taskTemplate.task("processResources");
+        taskTemplate.task("processResources")
+            .dependsOn(
+                taskTemplate.task("provideResources"));
 
         taskTemplate.task("classes").dependsOn(
             taskTemplate.task("compileJava"),
@@ -67,7 +77,9 @@ public class JavaPlugin extends AbstractPlugin {
             taskTemplate.task("resolveTestDependencies"),
             taskTemplate.task("classes"));
 
-        taskTemplate.task("processTestResources");
+        taskTemplate.task("processTestResources")
+            .dependsOn(
+                taskTemplate.task("provideTestResources"));
 
         taskTemplate.task("testClasses").dependsOn(
             taskTemplate.task("compileTestJava"),

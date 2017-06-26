@@ -28,9 +28,9 @@ public class ProductsTest {
 
         final UsedProducts usedProducts = uses("a");
 
-        providedProducts.complete("a", "foo");
+        providedProducts.complete("a", new StringProduct("foo"));
 
-        assertEquals("foo", usedProducts.readProduct("a", String.class));
+        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class).toString());
 
     }
 
@@ -39,10 +39,10 @@ public class ProductsTest {
 
         final ProvidedProducts providedProducts = provides("a");
 
-        providedProducts.complete("a", "result");
+        providedProducts.complete("a", new StringProduct("result"));
 
         try {
-            providedProducts.complete("a", "result-double");
+            providedProducts.complete("a", new StringProduct("result-double"));
             fail();
         } catch(final IllegalStateException e) {
             assertEquals("Product promise <a> already completed", e.getMessage());
@@ -82,7 +82,7 @@ public class ProductsTest {
 
         try {
             final UsedProducts uses = uses("x");
-            uses.readProduct("x", String.class);
+            uses.readProduct("x", StringProduct.class);
             fail();
         } catch(final NullPointerException npe) {
             assertEquals("No product found by id <x>", npe.getMessage());
@@ -98,5 +98,19 @@ public class ProductsTest {
     private final ProvidedProducts provides(final String... productIdLists) {
         return new ProvidedProducts(
             new HashSet<>(Arrays.asList(productIdLists)), executionContext);
+    }
+
+    static class StringProduct implements Product {
+
+        private final String str;
+
+        public StringProduct(final String str) {
+            this.str = str;
+        }
+
+        @Override
+        public String toString() {
+            return str;
+        }
     }
 }

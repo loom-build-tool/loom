@@ -16,54 +16,54 @@ public class JavaPlugin extends AbstractPlugin {
 
         taskRegistry.register("provideSource",
             new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN,
-            uses(), provides("source"))
+            uses()), provides("source")
             );
 
         taskRegistry.register("provideTestSource",
             new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST,
-            uses(), provides("testSource"))
+            uses()), provides("testSource")
             );
 
         taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.MAIN,
-            uses("source", "compileDependencies"), provides("compilation")));
+            uses("source", "compileDependencies")), provides("compilation"));
 
         taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
             runtimeConfiguration, CompileTarget.TEST,
-            uses("compilation", "testSource", "testDependencies"), provides("testCompilation")));
+            uses("compilation", "testSource", "testDependencies")), provides("testCompilation"));
 
-        taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
+        taskRegistry.register("jar", new JavaAssembleTask(buildConfig), provides());
 
         taskRegistry.register("provideResources",
             new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN,
-                uses(), provides("resources")));
+                uses()), provides("resources"));
 
         taskRegistry.register("provideTestResources",
             new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST,
-                uses(), provides("testResources")));
+                uses()), provides("testResources"));
 
         taskRegistry.register("processResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN,
-                uses("resources"), provides("processedResources")));
+                uses("resources")), provides("processedResources"));
 
         taskRegistry.register("processTestResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.TEST,
-                uses("testResources"), provides("processedTestResources")));
+                uses("testResources")), provides("processedTestResources"));
 
-        taskRegistry.register("test", new JavaTestTask(uses("testDependencies"), provides()));
+        taskRegistry.register("test", new JavaTestTask(uses("testDependencies")), provides());
     }
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
 
         taskTemplate.task("compileJava")
-            .dependsOn(
-                taskTemplate.task("provideSource"),
-                taskTemplate.task("resolveCompileDependencies"));
+            .uses(
+                taskTemplate.product("source"),
+                taskTemplate.product("compileDependencies"));
 
         taskTemplate.task("processResources")
-            .dependsOn(
-                taskTemplate.task("provideResources"));
+            .uses(
+                taskTemplate.product("resources"));
 
         taskTemplate.task("classes").dependsOn(
             taskTemplate.task("compileJava"),
@@ -72,22 +72,21 @@ public class JavaPlugin extends AbstractPlugin {
         taskTemplate.task("javadoc").dependsOn(
             taskTemplate.task("classes"));
 
-        taskTemplate.task("compileTestJava").dependsOn(
-            taskTemplate.task("provideTestSource"),
-            taskTemplate.task("resolveTestDependencies"),
-            taskTemplate.task("classes"));
+        taskTemplate.task("compileTestJava").uses(
+            taskTemplate.product("compilation"),
+            taskTemplate.product("testSource"),
+            taskTemplate.product("testDependencies"));
 
         taskTemplate.task("processTestResources")
-            .dependsOn(
-                taskTemplate.task("provideTestResources"));
+            .uses(
+                taskTemplate.product("testResources"));
 
         taskTemplate.task("testClasses").dependsOn(
             taskTemplate.task("compileTestJava"),
             taskTemplate.task("processTestResources"));
 
-        taskTemplate.task("test").dependsOn(
-            taskTemplate.task("classes"),
-            taskTemplate.task("testClasses"));
+        taskTemplate.task("test").uses(
+            taskTemplate.product("testDependencies"));
 
         taskTemplate.task("check").dependsOn(
             taskTemplate.task("test"));

@@ -4,31 +4,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
 import jobt.api.ProcessedResource;
-import jobt.api.ProvidedProducts;
 import jobt.api.ResourcesTree;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 
-public class ResourcesTask implements Task {
+public class ResourcesTask extends AbstractTask {
 
     private final RuntimeConfiguration runtimeConfiguration;
     private final Path destPath;
     private final UsedProducts input;
-    private final ProvidedProducts output;
     private final CompileTarget compileTarget;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
                   final CompileTarget compileTarget,
-                  final UsedProducts input, final ProvidedProducts output) {
+                  final UsedProducts input) {
 
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = compileTarget;
         this.input = input;
-        this.output = output;
 
         destPath = Paths.get("jobtbuild", "resources", compileTarget.name().toLowerCase());
     }
@@ -88,10 +85,10 @@ public class ResourcesTask implements Task {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                output.complete("processedResources", new ProcessedResource(destPath));
+                getProvidedProducts().complete("processedResources", new ProcessedResource(destPath));
                 return status;
             case TEST:
-                output.complete("processedTestResources", new ProcessedResource(destPath));
+                getProvidedProducts().complete("processedTestResources", new ProcessedResource(destPath));
                 return status;
             default:
                 throw new IllegalStateException();

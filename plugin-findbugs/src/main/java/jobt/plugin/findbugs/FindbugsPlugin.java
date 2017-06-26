@@ -18,12 +18,12 @@ public class FindbugsPlugin extends AbstractPlugin {
         taskRegistry.register(
             "findbugsMain",
             new FindbugsTask(getBuildConfig(), CompileTarget.MAIN,
-                uses("compileDependencies"), provides()));
+                uses("compileDependencies")), provides());
 
         taskRegistry.register(
             "findbugsTest",
             new FindbugsTask(getBuildConfig(), CompileTarget.TEST,
-                uses("testDependencies"), provides()));
+                uses("testDependencies")), provides());
 
     }
 

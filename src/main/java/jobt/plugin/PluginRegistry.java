@@ -17,15 +17,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.ProductGraphNodeImpl;
 import jobt.RuntimeConfigurationImpl;
+import jobt.TaskGraphNodeImpl;
 import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
+import jobt.api.ProductGraphNode;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
+import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.util.ThreadUtil;
 
@@ -66,6 +72,7 @@ public class PluginRegistry {
         this.taskTemplate = taskTemplate;
 
         initPlugins();
+        configureImplicitDependencies();
         debugPlugins();
     }
 
@@ -74,6 +81,20 @@ public class PluginRegistry {
         final Set<String> productIds = executionContext.getProducts().keySet();
 
         LOG.info("Products provided by registered tasks: {}", productIds);
+
+        // FIXME remove
+        for (final String name : taskRegistry.taskNames()) {
+            final TaskGraphNodeImpl taskNode = taskTemplate.getTasks().get(name);
+            System.out.println("TaskNode " + taskNode.getName());
+            for (final ProductGraphNode productNode : taskNode.getProvidedProductNodes()) {
+                System.out.println(" produces " + productNode.getProductId());
+            }
+            for (final ProductGraphNode productNode : taskNode.getUsedProductNodes()) {
+                System.out.println(" uses " + productNode.getProductId());
+            }
+        }
+
+        LOG.info("Inverted producers relations: {}", taskTemplate.buildInvertedProducersMap());
 
     }
 
@@ -145,6 +166,37 @@ public class PluginRegistry {
         regPlugin.configure(taskRegistry);
 
         LOG.info("Plugin {} initialized", plugin);
+    }
+
+    /**
+     * Add task.providedProducts relation to dependency graph.
+     */
+    private void configureImplicitDependencies() {
+
+        for (final String name : taskRegistry.taskNames()) {
+            final ProvidedProducts providedProducts = taskRegistry.getTaskProducts(name).get();
+            // FIXME
+            System.out.println(name+" -> providedProducts = "+providedProducts.getProducedProductIds() );
+
+            final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
+            task.setProvidedProducts(
+                providedProducts.getProducedProductIds().stream()
+                .map(taskTemplate::product)
+                .toArray(ProductGraphNodeImpl[]::new));
+        }
+
+        for (final String name : taskRegistry.taskNames()) {
+            final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
+
+            final UsedProducts usedProducts = new UsedProducts(
+                task.getUsedProductNodes().stream()
+                    .map(ProductGraphNode::getProductId)
+                    .collect(Collectors.toSet())
+                , executionContext);
+
+                taskRegistry.getTasks(name).get().setUsedProducts(usedProducts);
+        }
+
     }
 
     public static ClassLoader getPlatformClassLoader() {

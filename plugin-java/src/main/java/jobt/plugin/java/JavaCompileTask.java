@@ -25,18 +25,17 @@ import javax.tools.ToolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.Classpath;
 import jobt.api.Compilation;
 import jobt.api.CompileTarget;
-import jobt.api.ProvidedProducts;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.SourceTree;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 
-public class JavaCompileTask implements Task {
+public class JavaCompileTask extends AbstractTask {
 
     public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
     public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
@@ -55,15 +54,13 @@ public class JavaCompileTask implements Task {
     private final Path buildDir;
     private final String subdirName;
     private final UsedProducts input;
-    private final ProvidedProducts output;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
                            final CompileTarget compileTarget,
-                           final UsedProducts input, final ProvidedProducts output
+                           final UsedProducts input
                            ) {
         this.input = input;
-        this.output = output;
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
@@ -218,10 +215,10 @@ public class JavaCompileTask implements Task {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                output.complete("compilation", new Compilation(buildDir));
+                getProvidedProducts().complete("compilation", new Compilation(buildDir));
                 return status;
             case TEST:
-                output.complete("testCompilation", new Compilation(buildDir));
+                getProvidedProducts().complete("testCompilation", new Compilation(buildDir));
                 return status;
             default:
                 throw new IllegalStateException();

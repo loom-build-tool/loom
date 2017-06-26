@@ -12,11 +12,11 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 
-public class JavaAssembleTask implements Task {
+public class JavaAssembleTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
     private Manifest preparedManifest;

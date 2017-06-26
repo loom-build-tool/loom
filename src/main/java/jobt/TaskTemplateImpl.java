@@ -1,12 +1,17 @@
 package jobt;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -14,10 +19,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.ProductGraphNode;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskGraphNode;
 import jobt.api.TaskStatus;
 import jobt.api.TaskTemplate;
+import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
 
@@ -28,6 +36,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
     private final PluginRegistry pluginRegistry;
     private final Map<String, TaskGraphNodeImpl> tasks = new ConcurrentHashMap<>();
+    private final Map<String, ProductGraphNodeImpl> taskProducts = new ConcurrentHashMap<>();
 
     public TaskTemplateImpl(final BuildConfigImpl buildConfig,
                             final RuntimeConfigurationImpl runtimeConfiguration) {
@@ -44,15 +53,25 @@ public class TaskTemplateImpl implements TaskTemplate {
         return Collections.unmodifiableMap(tasks);
     }
 
+    @Override
+    public ProductGraphNode product(final String productId) {
+        return taskProducts.computeIfAbsent(productId, ProductGraphNodeImpl::new);
+    }
+
     public Set<String> getAvailableTaskNames() {
         return Collections.unmodifiableSet(tasks.keySet());
     }
 
     public void execute(final String[] taskNames) throws Exception {
-        final Set<String> resolvedTasks = new LinkedHashSet<>();
-        for (final String taskName : taskNames) {
-            resolvedTasks.addAll(resolveTasks(taskName));
-        }
+
+        final Set<String> resolvedTasks = calcRequiredTasks(new HashSet<>(Arrays.asList(taskNames)));
+
+        // TODO cleanup
+
+//        final Set<String> resolvedTasks = new LinkedHashSet<>();
+//        for (final String taskName : taskNames) {
+//            resolvedTasks.addAll(resolveTasks(taskName));
+//        }
 
         if (resolvedTasks.isEmpty()) {
             return;
@@ -73,16 +92,64 @@ public class TaskTemplateImpl implements TaskTemplate {
             final Optional<Task> task = pluginRegistry.getTask(resolvedTask);
             jobs.put(resolvedTask, new Job(resolvedTask, task.orElse(new DummyTask(resolvedTask))));
         }
-        for (final Map.Entry<String, Job> stringJobEntry : jobs.entrySet()) {
-            final TaskGraphNodeImpl taskGraphNode = tasks.get(stringJobEntry.getKey());
-            final List<Job> dependentJobs = taskGraphNode.getDependentNodes().stream()
-                .map(TaskGraphNode::getName)
-                .map(jobs::get)
-                .collect(Collectors.toList());
-            stringJobEntry.getValue().setDependencies(dependentJobs);
-        }
+        // TODO cleanup
+//        for (final Map.Entry<String, Job> stringJobEntry : jobs.entrySet()) {
+//            final TaskGraphNodeImpl taskGraphNode = tasks.get(stringJobEntry.getKey());
+//            final List<Job> dependentJobs = taskGraphNode.getDependentNodes().stream()
+//                .map(TaskGraphNode::getName)
+//                .map(jobs::get)
+//                .collect(Collectors.toList());
+//            stringJobEntry.getValue().setDependencies(dependentJobs);
+//        }
 
         return jobs.values();
+    }
+
+    private Set<String> calcRequiredTasks(final Set<String> requestedTasks) {
+        final Set<String> resolvedTasks = new LinkedHashSet<>();
+        final Set<String> products = new LinkedHashSet<>();
+
+        final Map<String, String> producersMap = buildInvertedProducersMap();
+        System.out.println("producersMap="+producersMap);
+
+        final Queue<String> working = new LinkedList<>(requestedTasks);
+
+        while (!working.isEmpty()) {
+
+            // TODO fix order of resolved tasks
+            final String name = working.remove();
+            resolvedTasks.add(name);
+
+            System.out.println("calc required for " + name);
+
+            tasks.get(name).getUsedProductNodes().stream()
+                .map(ProductGraphNode::getProductId)
+                .forEach(products::add);
+
+            tasks.get(name).getUsedProductNodes().stream()
+                .map(ProductGraphNode::getProductId)
+                .peek(productId -> jobt.util.Preconditions.checkState(producersMap.containsKey(productId), "Producer task not found for product <%s>", productId))
+                .map(producersMap::get)
+                .forEach(working::add);
+
+        }
+
+        // TODO cleanup
+        LOG.info("Current build requires products: {}", products);
+        LOG.info("calcRequiredTasks={}", resolvedTasks);
+
+        return resolvedTasks;
+    }
+
+    public Map<String, String> buildInvertedProducersMap() {
+        // productId -> taskName (producer)
+        final Map<String, String> producers = new HashMap<>();
+        for (final Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
+            entry.getValue().getProvidedProductNodes().stream()
+                .map(node -> node.getProductId())
+                .forEach(productId -> producers.put(productId, entry.getKey()));
+        }
+        return producers;
     }
 
     private Set<String> resolveTasks(final String task) {
@@ -120,6 +187,16 @@ public class TaskTemplateImpl implements TaskTemplate {
         public TaskStatus run() throws Exception {
             LOG.debug("Nothing to run for {}", taskName);
             return TaskStatus.OK;
+        }
+
+        @Override
+        public void setProvidedProducts(final ProvidedProducts providedProducts) {
+            // do nothing
+        }
+
+        @Override
+        public void setUsedProducts(final UsedProducts usedProducts) {
+            // do nothing
         }
 
     }

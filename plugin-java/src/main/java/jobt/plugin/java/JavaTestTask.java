@@ -23,22 +23,19 @@ import org.junit.runner.notification.Failure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.AbstractTask;
 import jobt.api.Classpath;
-import jobt.api.ProvidedProducts;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 
-public class JavaTestTask implements Task {
+public class JavaTestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
 
     private final UsedProducts input;
-    private final ProvidedProducts output;
 
-    public JavaTestTask(final UsedProducts input, final ProvidedProducts output) {
+    public JavaTestTask(final UsedProducts input) {
         this.input = input;
-        this.output = output;
     }
 
     @Override

@@ -21,15 +21,14 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
+import jobt.api.AbstractTask;
 import jobt.api.Classpath;
 import jobt.api.CompileTarget;
-import jobt.api.ProvidedProducts;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class CheckstyleTask implements Task {
+public class CheckstyleTask extends AbstractTask {
 
     private static final String CONFIG_LOCATION = "config/checkstyle/checkstyle.xml";
     private static final boolean OMIT_IGNORED_MODULES = true;
@@ -37,15 +36,13 @@ public class CheckstyleTask implements Task {
     private final Path srcBaseDir;
     private final CompileTarget compileTarget;
     private final UsedProducts input;
-    private final ProvidedProducts output;
     private RootModule checker;
 
     public CheckstyleTask(final CompileTarget compileTarget,
-        final UsedProducts input, final ProvidedProducts output) {
+        final UsedProducts input) {
 
         this.compileTarget = compileTarget;
         this.input = input;
-        this.output = output;
 
         switch (compileTarget) {
             case MAIN:

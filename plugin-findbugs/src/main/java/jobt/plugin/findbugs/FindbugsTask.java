@@ -18,16 +18,15 @@ import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
+import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.Classpath;
 import jobt.api.CompileTarget;
-import jobt.api.ProvidedProducts;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 import jobt.util.Preconditions;
 
-public class FindbugsTask implements Task {
+public class FindbugsTask extends AbstractTask {
 
     public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
     public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
@@ -45,14 +44,12 @@ public class FindbugsTask implements Task {
 
     private Optional<Integer> priorityThreshold;
     private final UsedProducts input;
-    private final ProvidedProducts output;
 
     public FindbugsTask(
         final BuildConfig buildConfig, final CompileTarget compileTarget,
-        final UsedProducts input, final ProvidedProducts output) {
+        final UsedProducts input) {
 
         this.input = input;
-        this.output = output;
 
         readBuildConfig(Objects.requireNonNull(buildConfig));
         this.compileTarget = Objects.requireNonNull(compileTarget);

@@ -7,7 +7,7 @@ package jobt.api;
  *
  * @see jobt.api.AbstractPlugin
  */
-public interface Task {
+public interface Task extends ProductDependenciesAware {
 
     /**
      * Prepare for run. This method might be called before the task dependencies are met.

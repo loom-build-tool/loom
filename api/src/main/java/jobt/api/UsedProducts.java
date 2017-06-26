@@ -36,6 +36,8 @@ public class UsedProducts {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(clazz);
 
+        final long start = System.currentTimeMillis();
+
         final ProductPromise productPromise =
             Objects.requireNonNull(
                 executionContext.getProducts().get(productId), "No product found by id <"+productId+">");
@@ -45,6 +47,13 @@ public class UsedProducts {
         }
 
         final Object value = productPromise.getAndWaitForProduct();
+
+        final long timeElapsed = System.currentTimeMillis() - start;
+        if (timeElapsed < 3) {
+            LOG.debug("Returned product <{}> without blocking", productId);
+        } else {
+            LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
+        }
 
         return clazz.cast(value);
     }

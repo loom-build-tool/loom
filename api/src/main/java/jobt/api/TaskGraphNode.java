@@ -6,4 +6,6 @@ public interface TaskGraphNode {
 
     void dependsOn(TaskGraphNode... tasks);
 
+    void uses(ProductGraphNode... products);
+
 }

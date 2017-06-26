@@ -1,5 +1,6 @@
 package jobt.api;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -31,7 +32,7 @@ public class ProvidedProducts {
                 "Invalid format of product id <%s>", id));
         Objects.requireNonNull(producedProductIds);
         Objects.requireNonNull(executionContext);
-        this.producedProductIds = producedProductIds;
+        this.producedProductIds = Collections.unmodifiableSet(producedProductIds);
         this.executionContext = executionContext;
 
         registerProducts();
@@ -66,6 +67,10 @@ public class ProvidedProducts {
 
         LOG.debug("Product promise <{}> completed with value (type {}): {}", productId, value.getClass().getSimpleName(), value);
 
+    }
+
+    public Set<String> getProducedProductIds() {
+        return producedProductIds;
     }
 
 }

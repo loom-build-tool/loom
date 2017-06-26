@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -64,7 +65,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
     public void execute(final String[] taskNames) throws Exception {
 
-        final Set<String> resolvedTasks = calcRequiredTasks(new HashSet<>(Arrays.asList(taskNames)));
+        final List<String> resolvedTasks = calcRequiredTasks(new HashSet<>(Arrays.asList(taskNames)));
 
         // TODO cleanup
 
@@ -85,7 +86,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         jobPool.shutdown();
     }
 
-    private Collection<Job> buildJobs(final Set<String> resolvedTasks) {
+    private Collection<Job> buildJobs(final Collection<String> resolvedTasks) {
         // LinkedHashMap to guaranty same order to support single thread execution
         final Map<String, Job> jobs = new LinkedHashMap<>();
         for (final String resolvedTask : resolvedTasks) {
@@ -105,8 +106,8 @@ public class TaskTemplateImpl implements TaskTemplate {
         return jobs.values();
     }
 
-    private Set<String> calcRequiredTasks(final Set<String> requestedTasks) {
-        final Set<String> resolvedTasks = new LinkedHashSet<>();
+    private List<String> calcRequiredTasks(final Set<String> requestedTasks) {
+        final List<String> resolvedTasks = new LinkedList<>();
         final Set<String> products = new LinkedHashSet<>();
 
         final Map<String, String> producersMap = buildInvertedProducersMap();
@@ -118,7 +119,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
             // TODO fix order of resolved tasks
             final String name = working.remove();
-            resolvedTasks.add(name);
+            resolvedTasks.add(0, name);
 
             System.out.println("calc required for " + name);
 

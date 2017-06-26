@@ -2,7 +2,7 @@ apply plugin: 'java'
 
 dependencies {
     compileOnly project(':api')
-    compile('junit:junit:4.12')
+    compile('com.io7m.xom:xom:1.2.10')
 }
 
 jar {
@@ -12,4 +12,3 @@ jar {
         )
     }
 }
-

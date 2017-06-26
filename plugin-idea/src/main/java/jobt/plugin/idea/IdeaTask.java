@@ -9,33 +9,22 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-
 import jobt.api.BuildConfig;
 import jobt.api.ExecutionContext;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import nu.xom.Attribute;
+import nu.xom.Builder;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.ParsingException;
+import nu.xom.Serializer;
 
 public class IdeaTask implements Task {
 
     private final BuildConfig buildConfig;
     private final ExecutionContext executionContext;
-    private DocumentBuilder documentBuilder;
-    private Transformer transformer;
+    private Builder parser;
 
     public IdeaTask(final BuildConfig buildConfig, final ExecutionContext executionContext) {
         this.buildConfig = buildConfig;
@@ -48,19 +37,7 @@ public class IdeaTask implements Task {
 
     @Override
     public void prepare() throws Exception {
-        documentBuilder = newDocumentBuilder();
-        transformer = newTransformer();
-    }
-
-    private DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
-        return DocumentBuilderFactory.newInstance().newDocumentBuilder();
-    }
-
-    private Transformer newTransformer() throws TransformerConfigurationException {
-        final Transformer newTransformer = TransformerFactory.newInstance().newTransformer();
-        newTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        newTransformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        return newTransformer;
+        parser = new Builder();
     }
 
     @Override
@@ -93,13 +70,11 @@ public class IdeaTask implements Task {
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private void createMiscFile(final Path ideaDirectory)
-        throws IOException, SAXException, TransformerException {
-
+    private void createMiscFile(final Path ideaDirectory) throws IOException, ParsingException {
         final Path miscFile = ideaDirectory.resolve("misc.xml");
         try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
-            final Document doc = documentBuilder.parse(resourceAsStream);
-            final Element component = (Element) doc.getElementsByTagName("component").item(0);
+            final Document doc = parser.build(resourceAsStream);
+            final Element component = doc.getRootElement().getFirstChildElement("component");
 
             final String languageLevel;
             final String projectJdkName;
@@ -122,81 +97,77 @@ public class IdeaTask implements Task {
                         + javaPlatformVersion);
             }
 
-            component.setAttribute("languageLevel", languageLevel);
-            component.setAttribute("project-jdk-name", projectJdkName);
+            component.addAttribute(new Attribute("languageLevel", languageLevel));
+            component.addAttribute(new Attribute("project-jdk-name", projectJdkName));
 
-            doc.setXmlStandalone(true);
             writeDocumentToFile(miscFile, doc);
         }
     }
 
-    private void writeDocumentToFile(final Path file, final Document doc)
-        throws IOException, TransformerException {
-
+    private void writeDocumentToFile(final Path file, final Document doc) throws IOException {
         try (final OutputStream outputStream = Files.newOutputStream(file,
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 
-            transformer.transform(new DOMSource(doc), new StreamResult(outputStream));
+            final Serializer serializer = new Serializer(outputStream, "UTF-8");
+            serializer.setIndent(2);
+            serializer.write(doc);
         }
     }
 
     private void createModulesFile(final Path ideaDirectory, final String imlFilename)
-        throws IOException, SAXException, TransformerException {
+        throws IOException, ParsingException {
 
         final Path modulesFile = ideaDirectory.resolve("modules.xml");
         try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
-            final Document doc = documentBuilder.parse(resourceAsStream);
-            final Node modules = doc.getElementsByTagName("modules").item(0);
+            final Document doc = parser.build(resourceAsStream);
+            final Element modules = doc.getRootElement().getFirstChildElement("component")
+                .getFirstChildElement("modules");
 
-            final Element module = doc.createElement("module");
-            module.setAttribute("fileurl", "file://$PROJECT_DIR$/" + imlFilename);
-            module.setAttribute("filepath", "$PROJECT_DIR$/" + imlFilename);
+            final Element module = new Element("module");
+            module.addAttribute(new Attribute("fileurl", "file://$PROJECT_DIR$/" + imlFilename));
+            module.addAttribute(new Attribute("filepath", "$PROJECT_DIR$/" + imlFilename));
             modules.appendChild(module);
-
-            doc.setXmlStandalone(true);
 
             writeDocumentToFile(modulesFile, doc);
         }
     }
 
-    private void createImlFile(final Path imlFile)
-        throws IOException, SAXException, TransformerException {
-
+    private void createImlFile(final Path imlFile) throws IOException, ParsingException {
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
-            final Document doc = documentBuilder.parse(resourceAsStream);
-            final Node component = doc.getElementsByTagName("component").item(0);
+            final Document doc = parser.build(resourceAsStream);
+            final Element component = doc.getRootElement().getFirstChildElement("component");
 
             for (final Path path : executionContext.getCompileDependencies()) {
-                appendJar(doc, component, null, path.toAbsolutePath().toString());
+                appendJar(component, null, path.toAbsolutePath().toString());
             }
 
             for (final Path path : executionContext.getTestDependencies()) {
-                appendJar(doc, component, "TEST", path.toAbsolutePath().toString());
+                appendJar(component, "TEST", path.toAbsolutePath().toString());
             }
-
-            doc.setXmlStandalone(true);
 
             writeDocumentToFile(imlFile, doc);
         }
     }
 
-    private void appendJar(final Document doc, final Node item, final String scope,
-                           final String jar) {
-
-        final Element orderEntry = doc.createElement("orderEntry");
-        orderEntry.setAttribute("type", "module-library");
+    private void appendJar(final Element item, final String scope, final String jar) {
+        final Element orderEntry = new Element("orderEntry");
+        orderEntry.addAttribute(new Attribute("type", "module-library"));
         if (scope != null) {
-            orderEntry.setAttribute("scope", scope);
+            orderEntry.addAttribute(new Attribute("scope", scope));
         }
 
-        final Element library = doc.createElement("library");
-        final Element classes = doc.createElement("CLASSES");
-        final Element root = doc.createElement("root");
-        root.setAttribute("url", String.format("jar://%s!/", jar));
+        final Element library = new Element("library");
+
+        final Element classes = new Element("CLASSES");
+        final Element root = new Element("root");
+        root.addAttribute(new Attribute("url", String.format("jar://%s!/", jar)));
         classes.appendChild(root);
-        library.appendChild(doc.createElement("JAVADOC"));
-        library.appendChild(doc.createElement("SOURCES"));
         library.appendChild(classes);
+
+        library.appendChild(new Element("SOURCES"));
+
+
+        library.appendChild(new Element("JAVADOC"));
         orderEntry.appendChild(library);
 
         item.appendChild(orderEntry);

@@ -13,12 +13,13 @@
     <allow pkg="java.util"/>
 
     <allow pkg="javax.tools"/>
-    <allow pkg="javax.xml"/>
 
     <allow pkg="com.puppycrawl.tools"/>
     <allow pkg="ch.qos.logback"/>
 
     <allow pkg="edu.umd.cs.findbugs"/>
+
+    <allow pkg="nu.xom"/>
 
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>
@@ -26,8 +27,6 @@
     <allow pkg="org.slf4j"/>
     <allow pkg="org.sonatype.aether"/>
     <allow pkg="org.junit"/>
-    <allow pkg="org.w3c"/>
-    <allow pkg="org.xml"/>
     <allow pkg="jobt"/>
 
 </import-control>

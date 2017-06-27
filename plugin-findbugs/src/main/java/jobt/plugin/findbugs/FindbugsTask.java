@@ -99,10 +99,12 @@ public class FindbugsTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("findbugsMainReport", new ReportProduct(REPORT_PATH));
+                getProvidedProducts().complete("findbugsMainReport",
+                    new ReportProduct(REPORT_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("findbugsTestReport", new ReportProduct(REPORT_PATH));
+                getProvidedProducts().complete("findbugsTestReport",
+                    new ReportProduct(REPORT_PATH));
                 return status;
             default:
                 throw new IllegalStateException();
@@ -120,7 +122,6 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
-
     private CompilationProduct getClasses() {
         switch (compileTarget) {
             case MAIN:
@@ -132,16 +133,17 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
-
     private ClasspathProduct calcClasspath() {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class);
+                return getUsedProducts().readProduct("compileDependencies",
+                    ClasspathProduct.class);
             case TEST:
                 final List<Path> classpath = new ArrayList<>();
                 classpath.add(BUILD_MAIN_PATH);
                 classpath.addAll(
-                    getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries());
+                    getUsedProducts().readProduct("testDependencies",
+                        ClasspathProduct.class).getEntries());
                 return new ClasspathProduct(classpath);
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);

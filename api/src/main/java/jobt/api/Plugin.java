@@ -13,7 +13,7 @@ public interface Plugin {
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 
-    void setExecutionContext(ExecutionContext executionContext);
+    void setProductRepository(ProductRepository productRepository);
 
     void configure(TaskRegistry taskRegistry);
 

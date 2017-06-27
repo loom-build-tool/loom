@@ -33,7 +33,7 @@ public class FindbugsPlugin extends AbstractPlugin {
                 taskTemplate.product("source"),
                 taskTemplate.product("compileDependencies"),
                 taskTemplate.product("compilation")
-                );
+            );
 
         taskTemplate.task("findbugsTest")
             .uses(

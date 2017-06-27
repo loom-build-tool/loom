@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jobt.api.ProductDependenciesAware;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskRegistry;
@@ -17,7 +16,8 @@ public class TaskRegistryImpl implements TaskRegistry {
     private final Map<String, ProvidedProducts> taskProductsMap = new ConcurrentHashMap<>();
 
     @Override
-    public void register(final String name, final Task task, final ProvidedProducts providedProducts) {
+    public void register(
+        final String name, final Task task, final ProvidedProducts providedProducts) {
         Objects.requireNonNull(task);
         Objects.requireNonNull(providedProducts);
         if (taskMap.putIfAbsent(name, task) != null) {
@@ -26,12 +26,8 @@ public class TaskRegistryImpl implements TaskRegistry {
         if (taskProductsMap.putIfAbsent(name, providedProducts) != null) {
             throw new IllegalStateException("Task with name " + name + " already configured.");
         }
-        // inject products
-        // TODO Rework
 
-        if (task instanceof ProductDependenciesAware) {
-            task.setProvidedProducts(providedProducts);
-        }
+        task.setProvidedProducts(providedProducts);
 
     }
 
@@ -39,12 +35,11 @@ public class TaskRegistryImpl implements TaskRegistry {
         return taskMap.keySet();
     }
 
-    // TODO rename -> getTask
-    Optional<Task> getTasks(final String name) {
+    Optional<Task> lookupTask(final String name) {
         return Optional.ofNullable(taskMap.get(name));
     }
 
-    Optional<ProvidedProducts> getTaskProducts(final String name) {
+    Optional<ProvidedProducts> lookupTaskProducts(final String name) {
         return Optional.ofNullable(taskProductsMap.get(name));
     }
 

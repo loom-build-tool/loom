@@ -10,7 +10,6 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
@@ -28,7 +27,8 @@ public final class ProductPromise {
     public void complete(final Object withValue) {
         final boolean completed = promise.complete(withValue);
         if (!completed) {
-            throw new IllegalStateException("Product promise <"+productId+"> already completed");
+            throw new IllegalStateException(
+                "Product promise <" + productId + "> already completed");
         }
     }
 

@@ -158,18 +158,23 @@ public class JavaCompileTask extends AbstractTask {
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
 
-        Path srcPath;
+        final Path srcPath;
         switch (compileTarget) {
             case MAIN:
-                srcPath = getUsedProducts().readProduct("source", SourceTreeProduct.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct(
+                    "source", SourceTreeProduct.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.addAll(getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class).getEntries());
+                classpath.addAll(getUsedProducts().readProduct(
+                    "compileDependencies", ClasspathProduct.class).getEntries());
                 break;
             case TEST:
-                srcPath = getUsedProducts().readProduct("testSource", SourceTreeProduct.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct(
+                    "testSource", SourceTreeProduct.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.add(getUsedProducts().readProduct("compilation", CompilationProduct.class).getClassesDir());
-                classpath.addAll(getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries());
+                classpath.add(getUsedProducts().readProduct(
+                    "compilation", CompilationProduct.class).getClassesDir());
+                classpath.addAll(getUsedProducts().readProduct(
+                    "testDependencies", ClasspathProduct.class).getEntries());
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -209,7 +214,7 @@ public class JavaCompileTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        switch(compileTarget) {
+        switch (compileTarget) {
             case MAIN:
                 getProvidedProducts().complete("compilation", new CompilationProduct(buildDir));
                 return status;

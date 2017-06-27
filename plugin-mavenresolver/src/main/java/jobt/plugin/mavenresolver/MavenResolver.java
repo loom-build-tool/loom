@@ -70,7 +70,8 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
-        locator.setServices(RepositoryListener.class, new ProgressLoggingRepositoryListener(progressIndicator));
+        locator.setServices(RepositoryListener.class,
+            new ProgressLoggingRepositoryListener(progressIndicator));
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {

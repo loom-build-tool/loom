@@ -93,13 +93,6 @@ public class TaskTemplateImpl implements TaskTemplate {
         final List<String> resolvedTasks = calcRequiredTasks(
             calcTasksForProducts(new HashSet<>(Arrays.asList(productIds))));
 
-        // TODO cleanup
-
-//        final Set<String> resolvedTasks = new LinkedHashSet<>();
-//        for (final String taskName : taskNames) {
-//            resolvedTasks.addAll(resolveTasks(taskName));
-//        }
-
         if (resolvedTasks.isEmpty()) {
             return;
         }
@@ -119,15 +112,6 @@ public class TaskTemplateImpl implements TaskTemplate {
             final Optional<Task> task = pluginRegistry.getTask(resolvedTask);
             jobs.put(resolvedTask, new Job(resolvedTask, task.orElse(new DummyTask(resolvedTask))));
         }
-        // TODO cleanup
-//        for (final Map.Entry<String, Job> stringJobEntry : jobs.entrySet()) {
-//            final TaskGraphNodeImpl taskGraphNode = tasks.get(stringJobEntry.getKey());
-//            final List<Job> dependentJobs = taskGraphNode.getDependentNodes().stream()
-//                .map(TaskGraphNode::getName)
-//                .map(jobs::get)
-//                .collect(Collectors.toList());
-//            stringJobEntry.getValue().setDependencies(dependentJobs);
-//        }
 
         return jobs.values();
     }
@@ -174,8 +158,9 @@ public class TaskTemplateImpl implements TaskTemplate {
 
         return
         requestedProducts.stream()
-            .peek(productId -> jobt.util.Preconditions.checkState(producersMap.containsKey(productId),
-                "No such product: %s (available products: %s)", productId, getAvailableProductIds()))
+            .peek(productId -> Preconditions.checkState(producersMap.containsKey(productId),
+                "No such product: %s (available products: %s)",
+                productId, getAvailableProductIds()))
             .map(productId -> producersMap.get(productId))
             .collect(Collectors.toSet());
 

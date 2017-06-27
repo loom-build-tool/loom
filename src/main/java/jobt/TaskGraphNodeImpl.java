@@ -24,12 +24,6 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
         return name;
     }
 
-    @Override
-    // TODO remove
-    public void dependsOn(final TaskGraphNode... tasks) {
-        dependentNodes.addAll(Arrays.asList(tasks));
-    }
-
     public List<TaskGraphNode> getDependentNodes() {
         return Collections.unmodifiableList(dependentNodes);
     }

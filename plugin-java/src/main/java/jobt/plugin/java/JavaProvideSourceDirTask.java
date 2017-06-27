@@ -9,7 +9,6 @@ import jobt.api.CompileTarget;
 import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
-
 public class JavaProvideSourceDirTask extends AbstractTask {
 
     private static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
@@ -18,9 +17,10 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     private final BuildConfig buildConfig;
     private final CompileTarget compileTarget;
 
-    public JavaProvideSourceDirTask(final BuildConfig buildConfig, final CompileTarget compileTarget) {
-            this.buildConfig = buildConfig;
-            this.compileTarget = compileTarget;
+    public JavaProvideSourceDirTask(
+        final BuildConfig buildConfig, final CompileTarget compileTarget) {
+        this.buildConfig = buildConfig;
+        this.compileTarget = compileTarget;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        switch(compileTarget) {
+        switch (compileTarget) {
             case MAIN:
                 getProvidedProducts().complete("source", new SourceTreeProduct(SRC_MAIN_PATH));
                 return status;

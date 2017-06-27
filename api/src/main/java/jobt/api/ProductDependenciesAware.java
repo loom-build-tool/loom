@@ -1,6 +1,5 @@
 package jobt.api;
 
-
 public interface ProductDependenciesAware {
 
     void setProvidedProducts(ProvidedProducts providedProducts);

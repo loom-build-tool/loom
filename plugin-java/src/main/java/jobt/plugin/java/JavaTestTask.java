@@ -66,7 +66,8 @@ public class JavaTestTask extends AbstractTask {
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
         final List<URL> urls = new ArrayList<>(
-            getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntriesAsUrls());
+            getUsedProducts().readProduct("testDependencies",
+                ClasspathProduct.class).getEntriesAsUrls());
         urls.add(Paths.get("jobtbuild", "classes", "test").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "classes", "main").toUri().toURL());
         urls.add(Paths.get("jobtbuild", "resources", "test").toUri().toURL());

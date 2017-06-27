@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO extract interface
 public class ProgressIndicator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProgressIndicator.class);
@@ -25,7 +24,7 @@ public class ProgressIndicator {
      * Full report:
      *  Maven Resolver (running 2,4s): downloaded 5 ....
      */
-    synchronized public void reportProgress(final String progressMessage) {
+    public synchronized void reportProgress(final String progressMessage) {
         LOG.debug("Got progress message for <{}>: {}",
             taskDescription, progressMessage);
         currentProgressMessage.set(progressMessage);

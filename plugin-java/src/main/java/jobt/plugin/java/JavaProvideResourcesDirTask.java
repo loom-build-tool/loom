@@ -9,7 +9,6 @@ import jobt.api.CompileTarget;
 import jobt.api.ResourcesTreeProduct;
 import jobt.api.TaskStatus;
 
-
 public class JavaProvideResourcesDirTask extends AbstractTask {
     private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");
     private static final Path SRC_TESTRES_PATH = Paths.get("src", "test", "resources");
@@ -17,9 +16,10 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     private final BuildConfig buildConfig;
     private final CompileTarget compileTarget;
 
-    public JavaProvideResourcesDirTask(final BuildConfig buildConfig, final CompileTarget compileTarget) {
-            this.buildConfig = buildConfig;
-            this.compileTarget = compileTarget;
+    public JavaProvideResourcesDirTask(
+        final BuildConfig buildConfig, final CompileTarget compileTarget) {
+        this.buildConfig = buildConfig;
+        this.compileTarget = compileTarget;
     }
 
     @Override
@@ -32,12 +32,14 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        switch(compileTarget) {
+        switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("resources", new ResourcesTreeProduct(SRC_RES_PATH));
+                getProvidedProducts().complete("resources",
+                    new ResourcesTreeProduct(SRC_RES_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testResources", new ResourcesTreeProduct(SRC_TESTRES_PATH));
+                getProvidedProducts().complete("testResources",
+                    new ResourcesTreeProduct(SRC_TESTRES_PATH));
                 return status;
             default:
                 throw new IllegalStateException();

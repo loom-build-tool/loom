@@ -16,63 +16,54 @@ import jobt.util.Preconditions;
  */
 public class ProvidedProducts {
 
+    public static final Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
+
     private static final Logger LOG = LoggerFactory.getLogger(ProvidedProducts.class);
 
-    private final ExecutionContext executionContext;
+    private final ProductRepository productRepository;
 
     private final Set<String> producedProductIds;
 
-    public final static Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
-
     public ProvidedProducts(
         final Set<String> producedProductIds,
-        final ExecutionContext executionContext) {
+        final ProductRepository productRepository) {
         Objects.requireNonNull(producedProductIds);
         producedProductIds.forEach(id ->
             Preconditions.checkState(
                 PATTERN.matcher(id).matches(),
                 "Invalid format of product id <%s>", id));
-        Objects.requireNonNull(executionContext);
+        Objects.requireNonNull(productRepository);
         this.producedProductIds = Collections.unmodifiableSet(
             new HashSet<>(producedProductIds));
-        this.executionContext = executionContext;
+        this.productRepository = productRepository;
 
         registerProducts();
     }
 
     private void registerProducts() {
         for (final String productId : producedProductIds) {
-
-            if (executionContext.getProducts().containsKey(productId)) {
-                throw new IllegalStateException(
-                    "Product <"+productId+"> already registered");
-            }
-
-            executionContext.getProducts().put(productId, new ProductPromise(productId));
-
+            productRepository.createProduct(productId);
         }
-
     }
 
     public <T extends Product> void complete(final String productId, final T value) {
         Objects.requireNonNull(productId);
         if (value == null) {
-            throw new IllegalArgumentException("Must not complete product <"+productId+"> with null value");
+            throw new IllegalArgumentException(
+                "Must not complete product <" + productId + "> with null value");
         }
 
         if (!producedProductIds.contains(productId)) {
-            throw new IllegalStateException("Not allowed to resolve productId <"+productId+">");
+            throw new IllegalStateException(
+                "Not allowed to resolve productId <" + productId + ">");
         }
 
-        final ProductPromise productPromise =
-            Objects.requireNonNull(
-                executionContext.getProducts().get(productId),
-                "Product not found: " +productId);
+        final ProductPromise productPromise = productRepository.lookup(productId);
 
         productPromise.complete(value);
 
-        LOG.debug("Product promise <{}> completed with value (type {}): {}", productId, value.getClass().getSimpleName(), value);
-
+        LOG.debug("Product promise <{}> completed with value (type {}): {}",
+            productId, value.getClass().getSimpleName(), value);
     }
 
     public Set<String> getProducedProductIds() {

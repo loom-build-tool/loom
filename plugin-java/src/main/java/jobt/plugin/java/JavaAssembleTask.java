@@ -41,13 +41,15 @@ public class JavaAssembleTask extends AbstractTask {
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final CompilationProduct compilation = getUsedProducts().readProduct("compilation", CompilationProduct.class);
+        final CompilationProduct compilation = getUsedProducts().readProduct(
+            "compilation", CompilationProduct.class);
         createJar(compilation.getClassesDir(), jarFile, preparedManifest);
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final SourceTreeProduct sourceTree = getUsedProducts().readProduct("source", SourceTreeProduct.class);
+        final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
+            "source", SourceTreeProduct.class);
         createJar(sourceTree.getSrcDir(), sourceJarFile, null);
 
         getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));

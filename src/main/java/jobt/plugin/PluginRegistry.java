@@ -29,13 +29,17 @@ import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.ProductGraphNode;
+import jobt.api.ProductRepository;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.util.ThreadUtil;
 
-@SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:illegalcatch"})
+@SuppressWarnings({
+    "checkstyle:classfanoutcomplexity",
+    "checkstyle:illegalcatch",
+    "checkstyle:classdataabstractioncoupling"})
 public class PluginRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginRegistry.class);
@@ -46,7 +50,7 @@ public class PluginRegistry {
     private final BuildConfigImpl buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
-    private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
+    private final ProductRepository productRepository = new ProductRepositoryImpl();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
 
     static {
@@ -78,7 +82,7 @@ public class PluginRegistry {
 
     private void debugPlugins() {
 
-        final Set<String> productIds = executionContext.getProducts().keySet();
+        final Set<String> productIds = productRepository.getProductIds();
 
         LOG.info("Products provided by registered tasks: {}", productIds);
 
@@ -149,7 +153,7 @@ public class PluginRegistry {
         final Plugin regPlugin = (Plugin) aClass.newInstance();
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
-        regPlugin.setExecutionContext(executionContext);
+        regPlugin.setProductRepository(productRepository);
         regPlugin.configure(taskTemplate);
         regPlugin.configure(taskRegistry);
 
@@ -162,7 +166,7 @@ public class PluginRegistry {
     private void configureImplicitDependencies() {
 
         for (final String name : taskRegistry.taskNames()) {
-            final ProvidedProducts providedProducts = taskRegistry.getTaskProducts(name).get();
+            final ProvidedProducts providedProducts = taskRegistry.lookupTaskProducts(name).get();
 
             final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
             task.setProvidedProducts(
@@ -177,10 +181,9 @@ public class PluginRegistry {
             final UsedProducts usedProducts = new UsedProducts(
                 task.getUsedProductNodes().stream()
                     .map(ProductGraphNode::getProductId)
-                    .collect(Collectors.toSet())
-                , executionContext);
+                    .collect(Collectors.toSet()), productRepository);
 
-                taskRegistry.getTasks(name).get().setUsedProducts(usedProducts);
+            taskRegistry.lookupTask(name).get().setUsedProducts(usedProducts);
         }
 
     }
@@ -205,7 +208,7 @@ public class PluginRegistry {
     }
 
     public Optional<Task> getTask(final String taskName) {
-        return taskRegistry.getTasks(taskName);
+        return taskRegistry.lookupTask(taskName);
     }
 
 }

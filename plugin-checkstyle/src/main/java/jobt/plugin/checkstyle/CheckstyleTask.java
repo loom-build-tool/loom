@@ -45,7 +45,6 @@ public class CheckstyleTask extends AbstractTask {
         this.compileTarget = compileTarget;
     }
 
-
     @Override
     public void prepare() throws Exception {
         checker = createRootModule();
@@ -87,10 +86,12 @@ public class CheckstyleTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("checkstyleMainReport", new ReportProduct(REPORT_PATH));
+                getProvidedProducts().complete("checkstyleMainReport",
+                    new ReportProduct(REPORT_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("checkstyleTestReport", new ReportProduct(REPORT_PATH));
+                getProvidedProducts().complete("checkstyleTestReport",
+                    new ReportProduct(REPORT_PATH));
                 return status;
             default:
                 throw new IllegalStateException();
@@ -170,10 +171,12 @@ public class CheckstyleTask extends AbstractTask {
         final ClasspathProduct classpath;
         switch (compileTarget) {
             case MAIN:
-                classpath = getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class);
+                classpath = getUsedProducts().readProduct(
+                    "compileDependencies", ClasspathProduct.class);
                 break;
             case TEST:
-                classpath = getUsedProducts().readProduct("testDependencies", ClasspathProduct.class);
+                classpath = getUsedProducts().readProduct(
+                    "testDependencies", ClasspathProduct.class);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

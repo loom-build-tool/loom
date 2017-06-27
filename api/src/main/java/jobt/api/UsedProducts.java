@@ -17,21 +17,21 @@ public class UsedProducts {
 
     private static final Logger LOG = LoggerFactory.getLogger(UsedProducts.class);
 
-    private final ExecutionContext executionContext;
+    private final ProductRepository productRepository;
 
     private final Set<String> allowedProductIds;
 
     public UsedProducts(
         final Set<String> allowedProductIds,
-        final ExecutionContext executionContext) {
+        final ProductRepository productRepository) {
         Objects.requireNonNull(allowedProductIds);
         allowedProductIds.forEach(id ->
             Preconditions.checkState(
                 ProvidedProducts.PATTERN.matcher(id).matches(),
                 "Invalid format of product id <%s>", id));
-        Objects.requireNonNull(executionContext);
+        Objects.requireNonNull(productRepository);
         this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
-        this.executionContext = executionContext;
+        this.productRepository = productRepository;
     }
 
     public <T extends Product> T readProduct(final String productId, final Class<T> clazz) {
@@ -40,34 +40,28 @@ public class UsedProducts {
 
         final long start = System.currentTimeMillis();
 
-        final ProductPromise productPromise =
-            Objects.requireNonNull(
-                executionContext.getProducts().get(productId), "No product found by id <"+productId+">");
+        final ProductPromise productPromise = productRepository.lookup(productId);
 
         if (!allowedProductIds.contains(productId)) {
-            throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
+            throw new IllegalAccessError(
+                "Access to productId <" + productId + "> not configured for task");
         }
 
         final Object value = productPromise.getAndWaitForProduct();
 
         final long timeElapsed = System.currentTimeMillis() - start;
-        if (timeElapsed < 3) {
-            LOG.debug("Returned product <{}> without blocking", productId);
-        } else {
-            LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
-        }
+        LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
 
         return clazz.cast(value);
     }
 
     public void waitForProduct(final String productId) {
 
-        final ProductPromise productPromise =
-            Objects.requireNonNull(
-                executionContext.getProducts().get(productId), "No product found by id <"+productId+">");
+        final ProductPromise productPromise = productRepository.lookup(productId);
 
         if (!allowedProductIds.contains(productId)) {
-            throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
+            throw new IllegalAccessError(
+                "Access to productId <" + productId + "> not configured for task");
         }
 
         productPromise.getAndWaitForProduct();

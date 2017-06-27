@@ -8,7 +8,7 @@ public abstract class AbstractPlugin implements Plugin {
 
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
-    private ExecutionContext executionContext;
+    private ProductRepository productRepository;
 
     @Override
     public void setBuildConfig(final BuildConfig buildConfig) {
@@ -29,22 +29,22 @@ public abstract class AbstractPlugin implements Plugin {
     }
 
     @Override
-    public void setExecutionContext(final ExecutionContext executionContext) {
-        this.executionContext = executionContext;
+    public void setProductRepository(final ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
-    public ExecutionContext getExecutionContext() {
-        return executionContext;
+    public ProductRepository getProductRepository() {
+        return productRepository;
     }
 
     public final UsedProducts uses(final String... productIdLists) {
         return new UsedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
+            new HashSet<>(Arrays.asList(productIdLists)), getProductRepository());
     }
 
     public final ProvidedProducts provides(final String... productIdLists) {
         return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), getExecutionContext());
+            new HashSet<>(Arrays.asList(productIdLists)), getProductRepository());
     }
 
 }

@@ -23,12 +23,12 @@ public class CheckstylePlugin extends AbstractPlugin {
         taskTemplate.task("checkstyleMain").uses(
             taskTemplate.product("source"),
             taskTemplate.product("compileDependencies")
-            );
+        );
 
         taskTemplate.task("checkstyleTest").uses(
             taskTemplate.product("testSource"),
             taskTemplate.product("testDependencies")
-            );
+        );
 
         taskTemplate.virtualProduct("check").uses(
             taskTemplate.product("checkstyleMainReport"),

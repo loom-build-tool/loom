@@ -37,10 +37,12 @@ public class ResourcesTask extends AbstractTask {
 
         switch (compileTarget) {
             case MAIN:
-                srcPath = getUsedProducts().readProduct("resources", ResourcesTreeProduct.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct(
+                    "resources", ResourcesTreeProduct.class).getSrcDir();
                 break;
             case TEST:
-                srcPath = getUsedProducts().readProduct("testResources", ResourcesTreeProduct.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct(
+                    "testResources", ResourcesTreeProduct.class).getSrcDir();
                 break;
             default:
                 throw new IllegalStateException();
@@ -75,16 +77,20 @@ public class ResourcesTask extends AbstractTask {
     }
 
     private Path getCacheFileName() {
-        return Paths.get(".jobt", "cache", "java", "resource-" + compileTarget.name().toLowerCase() + ".cache");
+        return Paths.get(
+            ".jobt", "cache", "java",
+            "resource-" + compileTarget.name().toLowerCase() + ".cache");
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        switch(compileTarget) {
+        switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("processedResources", new ProcessedResourceProduct(destPath));
+                getProvidedProducts().complete(
+                    "processedResources", new ProcessedResourceProduct(destPath));
                 return status;
             case TEST:
-                getProvidedProducts().complete("processedTestResources", new ProcessedResourceProduct(destPath));
+                getProvidedProducts().complete(
+                    "processedTestResources", new ProcessedResourceProduct(destPath));
                 return status;
             default:
                 throw new IllegalStateException();

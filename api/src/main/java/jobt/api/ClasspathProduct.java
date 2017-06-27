@@ -64,5 +64,4 @@ public final class ClasspathProduct implements Product {
         return entries.toString();
     }
 
-
 }

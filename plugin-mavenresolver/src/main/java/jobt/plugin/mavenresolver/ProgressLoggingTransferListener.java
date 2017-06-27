@@ -19,17 +19,22 @@ public class ProgressLoggingTransferListener extends AbstractTransferListener {
 
     @Override
     public void transferStarted(final TransferEvent event) throws TransferCancelledException {
-        progressIndicator.reportProgress("downloading resource "+event.getResource().getResourceName());
-        }
+        progressIndicator.reportProgress(
+            "downloading resource " + event.getResource().getResourceName());
+    }
 
     @Override
     public void transferProgressed(final TransferEvent event) throws TransferCancelledException {
-        progressIndicator.reportProgress("downloaded " + event.getTransferredBytes() + " bytes  for "+event.getResource().getResourceName());
+        progressIndicator.reportProgress(
+            "downloaded " + event.getTransferredBytes() + " bytes  for "
+                + event.getResource().getResourceName());
     }
 
     @Override
     public void transferSucceeded(final TransferEvent event) {
-        progressIndicator.reportProgress("finished downloading " + event.getTransferredBytes() + " bytes  for "+event.getResource().getResourceName());
+        progressIndicator.reportProgress(
+            "finished downloading " + event.getTransferredBytes()
+            + " bytes  for " + event.getResource().getResourceName());
 
         LOG.debug("Loaded {} bytes in {}ms from <{}>",
             event.getTransferredBytes(),

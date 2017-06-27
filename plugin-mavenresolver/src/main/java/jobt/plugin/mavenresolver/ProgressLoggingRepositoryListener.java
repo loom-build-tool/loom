@@ -25,14 +25,18 @@ public class ProgressLoggingRepositoryListener extends AbstractRepositoryListene
         inprogressArtifacts.add(event.getArtifact().toString());
         LOG.debug("Beginning download of artifact <{}> from {} ...",
             event.getArtifact(), event.getRepository().getId());
-        progressIndicator.reportProgress("downloading artifact #" + indexOf(event.getArtifact())+": " + event.getArtifact());
+        progressIndicator.reportProgress(
+            "downloading artifact #" + indexOf(event.getArtifact()) + ": "
+                + event.getArtifact());
     }
 
     @Override
     public void artifactDownloaded(final RepositoryEvent event) {
         LOG.debug("Successfully downloaded artifcat <{}> from {}",
             event.getArtifact(), event.getRepository().getId());
-        progressIndicator.reportProgress("just downloaded artifact #" + indexOf(event.getArtifact()) +": " + event.getArtifact());
+        progressIndicator.reportProgress(
+            "just downloaded artifact #" + indexOf(event.getArtifact()) + ": "
+                + event.getArtifact());
     }
 
     private int indexOf(final Artifact artifact) {

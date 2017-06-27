@@ -45,34 +45,32 @@ public class IdeaTask implements Task {
     public TaskStatus run() throws Exception {
         final Path currentDir = Paths.get("");
 
-        final Path fileName = currentDir.toAbsolutePath().getFileName();
+        final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
 
-        if (fileName == null) {
+        if (currentWorkDirName == null) {
             throw new IllegalStateException("Can't get current working directory");
         }
 
         final Path ideaDirectory = Files.createDirectories(currentDir.resolve(".idea"));
 
-        createEncodingsFile(ideaDirectory);
-        createMiscFile(ideaDirectory);
+        createEncodingsFile(ideaDirectory.resolve("encodings.xml"));
+        writeDocumentToFile(ideaDirectory.resolve("misc.xml"), createMiscFile());
 
-        final String imlFilename = fileName.toString() + ".iml";
-        createModulesFile(ideaDirectory, imlFilename);
-        createImlFile(currentDir.resolve(imlFilename));
+        final String imlFilename = currentWorkDirName.toString() + ".iml";
+        writeDocumentToFile(currentDir.resolve(imlFilename), createImlFile());
+        writeDocumentToFile(ideaDirectory.resolve("modules.xml"), createModulesFile(imlFilename));
 
         return TaskStatus.OK;
     }
 
-    private void createEncodingsFile(final Path ideaDirectory) throws IOException {
-        final Path encodingsFile = ideaDirectory.resolve("encodings.xml");
+    private void createEncodingsFile(final Path encodingsFile) throws IOException {
         try (final InputStream resourceAsStream = readResource("/encodings.xml")) {
             Files.copy(resourceAsStream, encodingsFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private void createMiscFile(final Path ideaDirectory) throws IOException, ParsingException {
-        final Path miscFile = ideaDirectory.resolve("misc.xml");
+    private Document createMiscFile() throws IOException, ParsingException {
         try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
@@ -93,7 +91,7 @@ public class IdeaTask implements Task {
             component.addAttribute(new Attribute("languageLevel", languageLevel));
             component.addAttribute(new Attribute("project-jdk-name", projectJdkName));
 
-            writeDocumentToFile(miscFile, doc);
+            return doc;
         }
     }
 
@@ -107,10 +105,8 @@ public class IdeaTask implements Task {
         }
     }
 
-    private void createModulesFile(final Path ideaDirectory, final String imlFilename)
+    private Document createModulesFile(final String imlFilename)
         throws IOException, ParsingException {
-
-        final Path modulesFile = ideaDirectory.resolve("modules.xml");
         try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
             final Document doc = parser.build(resourceAsStream);
             final Element modules = doc.getRootElement().getFirstChildElement("component")
@@ -121,28 +117,28 @@ public class IdeaTask implements Task {
             module.addAttribute(new Attribute("filepath", "$PROJECT_DIR$/" + imlFilename));
             modules.appendChild(module);
 
-            writeDocumentToFile(modulesFile, doc);
+            return doc;
         }
     }
 
-    private void createImlFile(final Path imlFile) throws IOException, ParsingException {
+    private Document createImlFile() throws IOException, ParsingException {
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
             for (final Path path : executionContext.getCompileDependencies()) {
-                appendJar(component, null, path.toAbsolutePath().toString());
+                component.appendChild(buildOrderEntry("COMPILE", path.toAbsolutePath().toString()));
             }
 
             for (final Path path : executionContext.getTestDependencies()) {
-                appendJar(component, "TEST", path.toAbsolutePath().toString());
+                component.appendChild(buildOrderEntry("TEST", path.toAbsolutePath().toString()));
             }
 
-            writeDocumentToFile(imlFile, doc);
+            return doc;
         }
     }
 
-    private void appendJar(final Element item, final String scope, final String jar) {
+    private Element buildOrderEntry(final String scope, final String jar) {
         final Element orderEntry = new Element("orderEntry");
         orderEntry.addAttribute(new Attribute("type", "module-library"));
         if (scope != null) {
@@ -150,20 +146,22 @@ public class IdeaTask implements Task {
         }
 
         final Element library = new Element("library");
-
-        final Element classes = new Element("CLASSES");
-        final Element root = new Element("root");
-        root.addAttribute(new Attribute("url", String.format("jar://%s!/", jar)));
-        classes.appendChild(root);
-        library.appendChild(classes);
-
-        library.appendChild(new Element("SOURCES"));
-
-
-        library.appendChild(new Element("JAVADOC"));
+        library.appendChild(buildJarElement("CLASSES", jar));
+        library.appendChild(buildJarElement("SOURCES", null));
+        library.appendChild(buildJarElement("JAVADOC", null));
         orderEntry.appendChild(library);
 
-        item.appendChild(orderEntry);
+        return orderEntry;
+    }
+
+    private Element buildJarElement(final String name, final String jar) {
+        final Element classes = new Element(name);
+        if (jar != null) {
+            final Element root = new Element("root");
+            root.addAttribute(new Attribute("url", String.format("jar://%s!/", jar)));
+            classes.appendChild(root);
+        }
+        return classes;
     }
 
 }

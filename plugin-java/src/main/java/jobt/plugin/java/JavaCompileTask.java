@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
-import jobt.api.JavaVersion;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.util.JavaVersion;
 
 public class JavaCompileTask implements Task {
 

@@ -35,6 +35,7 @@ allprojects {
 
 dependencies {
     compile project(':api')
+    compile project(':util')
     runtimeOnly project(':plugin-java')
     runtimeOnly project(':plugin-checkstyle')
     runtimeOnly project(':plugin-findbugs')

@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ExecutionContext;
+import jobt.api.JavaVersion;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
@@ -94,17 +94,11 @@ public class JavaCompileTask implements Task {
     }
 
     private static List<String> configuredPlatformVersion(final String versionString) {
-        final String javaSpecVersion = System.getProperty("java.specification.version");
+        final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
 
-        if (javaSpecVersion == null) {
-            throw new IllegalStateException("Unknown java.specification.version");
-        }
-
-        final int parsedJavaSpecVersion = parseJavaVersion(javaSpecVersion);
-
-        final int platformVersion = Optional.ofNullable(versionString)
-            .map(JavaCompileTask::parseJavaVersion)
-            .orElse(DEFAULT_JAVA_PLATFORM);
+        final int platformVersion = versionString == null
+            ? DEFAULT_JAVA_PLATFORM
+            : JavaVersion.ofVersion(versionString).getNumericVersion();
 
         if (platformVersion == parsedJavaSpecVersion) {
             return Collections.emptyList();
@@ -113,29 +107,6 @@ public class JavaCompileTask implements Task {
         return parsedJavaSpecVersion >= JAVA_VERSION_WITH_RELEASE_FLAG
             ? crossCompileWithReleaseFlag(platformVersion)
             : crossCompileWithSourceTargetFlags(platformVersion);
-    }
-
-    @SuppressWarnings({"checkstyle:magicnumber", "checkstyle:returncount"})
-    private static int parseJavaVersion(final String javaVersion) {
-        switch (javaVersion) {
-            case "9":
-                return 9;
-            case "8":
-            case "1.8":
-                return 8;
-            case "7":
-            case "1.7":
-                return 7;
-            case "6":
-            case "1.6":
-                return 6;
-            case "5":
-            case "1.5":
-                return 5;
-            default:
-                throw new IllegalStateException("Java Platform Version <" + javaVersion + "> is "
-                    + "unsupported");
-        }
     }
 
     private static List<String> crossCompileWithReleaseFlag(final Integer platformVersion) {

@@ -11,9 +11,9 @@ import java.nio.file.StandardOpenOption;
 
 import jobt.api.BuildConfig;
 import jobt.api.ExecutionContext;
-import jobt.api.JavaVersion;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.util.JavaVersion;
 import nu.xom.Attribute;
 import nu.xom.Builder;
 import nu.xom.Document;

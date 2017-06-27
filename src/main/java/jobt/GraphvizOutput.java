@@ -47,6 +47,7 @@ public final class GraphvizOutput {
 
         final Set<String> standaloneTasks = new HashSet<>(tasks.keySet());
         for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
+
             final List<TaskGraphNode> dependencies = entry.getValue().getDependentNodes();
             if (!dependencies.isEmpty()) {
                 standaloneTasks.remove(entry.getKey());

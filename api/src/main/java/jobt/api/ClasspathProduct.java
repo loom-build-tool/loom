@@ -12,17 +12,17 @@ import java.util.stream.Collectors;
 /**
  * Must be immutable!
  */
-public final class Classpath implements Product {
+public final class ClasspathProduct implements Product {
 
     private final List<Path> entries;
 
-    public Classpath(final Path entry) {
+    public ClasspathProduct(final Path entry) {
         Objects.requireNonNull(entry);
         this.entries = Collections.unmodifiableList(
             Collections.singletonList(entry));
     }
 
-    public Classpath(final List<Path> entries) {
+    public ClasspathProduct(final List<Path> entries) {
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
     }
 
@@ -33,14 +33,14 @@ public final class Classpath implements Product {
     public URL[] getEntriesAsUrlArray() {
         return
             entries.stream()
-                .map(Classpath::toURL)
+                .map(ClasspathProduct::toURL)
                 .toArray(URL[]::new);
     }
 
     public List<URL> getEntriesAsUrls() {
         return
             entries.stream()
-                .map(Classpath::toURL)
+                .map(ClasspathProduct::toURL)
                 .collect(Collectors.toList());
     }
 

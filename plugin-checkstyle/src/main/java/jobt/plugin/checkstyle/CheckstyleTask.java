@@ -22,7 +22,7 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import jobt.api.AbstractTask;
-import jobt.api.Classpath;
+import jobt.api.ClasspathProduct;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
 
@@ -142,13 +142,13 @@ public class CheckstyleTask extends AbstractTask {
     private URLClassLoader buildClassLoader()
         throws MalformedURLException, ExecutionException, InterruptedException {
 
-        final Classpath classpath;
+        final ClasspathProduct classpath;
         switch (compileTarget) {
             case MAIN:
-                classpath = getUsedProducts().readProduct("compileDependencies", Classpath.class);
+                classpath = getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class);
                 break;
             case TEST:
-                classpath = getUsedProducts().readProduct("testDependencies", Classpath.class);
+                classpath = getUsedProducts().readProduct("testDependencies", ClasspathProduct.class);
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);

@@ -1,6 +1,5 @@
 package jobt;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,10 +30,6 @@ public class Job implements Callable<TaskStatus> {
 
     public JobStatus getStatus() {
         return status.get();
-    }
-
-    void setDependencies(final List<Job> dependencies) {
-        // FIXME remove
     }
 
     @Override

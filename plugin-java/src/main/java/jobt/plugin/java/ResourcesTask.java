@@ -6,8 +6,8 @@ import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
-import jobt.api.ProcessedResource;
-import jobt.api.ResourcesTree;
+import jobt.api.ProcessedResourceProduct;
+import jobt.api.ResourcesTreeProduct;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
 
@@ -37,10 +37,10 @@ public class ResourcesTask extends AbstractTask {
 
         switch (compileTarget) {
             case MAIN:
-                srcPath = getUsedProducts().readProduct("resources", ResourcesTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("resources", ResourcesTreeProduct.class).getSrcDir();
                 break;
             case TEST:
-                srcPath = getUsedProducts().readProduct("testResources", ResourcesTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("testResources", ResourcesTreeProduct.class).getSrcDir();
                 break;
             default:
                 throw new IllegalStateException();
@@ -81,10 +81,10 @@ public class ResourcesTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("processedResources", new ProcessedResource(destPath));
+                getProvidedProducts().complete("processedResources", new ProcessedResourceProduct(destPath));
                 return status;
             case TEST:
-                getProvidedProducts().complete("processedTestResources", new ProcessedResource(destPath));
+                getProvidedProducts().complete("processedTestResources", new ProcessedResourceProduct(destPath));
                 return status;
             default:
                 throw new IllegalStateException();

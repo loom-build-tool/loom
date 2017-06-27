@@ -22,11 +22,11 @@ public class UsedProducts {
     public UsedProducts(
         final Set<String> allowedProductIds,
         final ExecutionContext executionContext) {
+        Objects.requireNonNull(allowedProductIds);
         allowedProductIds.forEach(id ->
             Preconditions.checkState(
                 ProvidedProducts.PATTERN.matcher(id).matches(),
                 "Invalid format of product id <%s>", id));
-        Objects.requireNonNull(allowedProductIds);
         Objects.requireNonNull(executionContext);
         this.allowedProductIds = allowedProductIds;
         this.executionContext = executionContext;

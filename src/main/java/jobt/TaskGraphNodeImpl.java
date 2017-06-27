@@ -2,6 +2,7 @@ package jobt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import jobt.api.ProductGraphNode;
@@ -12,8 +13,8 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
 
     private final String name;
     private final List<TaskGraphNode> dependentNodes = new ArrayList<>();
-    private final List<ProductGraphNode> providedProductNodes = new ArrayList<>();
-    private final List<ProductGraphNode> usedProductNodes = new ArrayList<>();
+    private List<ProductGraphNode> providedProductNodes;
+    private List<ProductGraphNode> usedProductNodes;
 
     public TaskGraphNodeImpl(final String name) {
         this.name = name;
@@ -30,25 +31,34 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
     }
 
     public List<TaskGraphNode> getDependentNodes() {
-        return dependentNodes;
+        return Collections.unmodifiableList(dependentNodes);
     }
 
     @Override
     public void uses(final ProductGraphNode... products) {
-        usedProductNodes.addAll(Arrays.asList(products));
+        Preconditions.checkState(
+            usedProductNodes == null, "Cannot re-assign <usedProductNodes>");
+        usedProductNodes = Arrays.asList(products);
     }
 
     public List<ProductGraphNode> getUsedProductNodes() {
-        return usedProductNodes;
+        if (usedProductNodes == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(usedProductNodes);
     }
 
     public void setProvidedProducts(final ProductGraphNode... products) {
-        Preconditions.checkState(providedProductNodes.isEmpty());
-        providedProductNodes.addAll(Arrays.asList(products));
+        Preconditions.checkState(
+            providedProductNodes == null, "Cannot re-assign <providedProductNodes>");
+        providedProductNodes = Arrays.asList(products);
     }
 
     public List<ProductGraphNode> getProvidedProductNodes() {
-        return providedProductNodes;
+        if (providedProductNodes == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(providedProductNodes);
     }
 
 }

@@ -2,11 +2,11 @@ package jobt.api;
 
 import java.nio.file.Path;
 
-public final class Compilation implements Product {
+public final class CompilationProduct implements Product {
 
     private final Path classesDir;
 
-    public Compilation(final Path classesDir) {
+    public CompilationProduct(final Path classesDir) {
         this.classesDir = classesDir;
     }
 

@@ -1,6 +1,7 @@
 package jobt.api;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -26,13 +27,14 @@ public class ProvidedProducts {
     public ProvidedProducts(
         final Set<String> producedProductIds,
         final ExecutionContext executionContext) {
+        Objects.requireNonNull(producedProductIds);
         producedProductIds.forEach(id ->
             Preconditions.checkState(
                 PATTERN.matcher(id).matches(),
                 "Invalid format of product id <%s>", id));
-        Objects.requireNonNull(producedProductIds);
         Objects.requireNonNull(executionContext);
-        this.producedProductIds = Collections.unmodifiableSet(producedProductIds);
+        this.producedProductIds = Collections.unmodifiableSet(
+            new HashSet<>(producedProductIds));
         this.executionContext = executionContext;
 
         registerProducts();
@@ -59,7 +61,7 @@ public class ProvidedProducts {
         }
 
         if (!producedProductIds.contains(productId)) {
-            throw new IllegalAccessError("Not allowed to resolve productId <"+productId+">");
+            throw new IllegalStateException("Not allowed to resolve productId <"+productId+">");
         }
         final ProductPromise productPromise = Objects.requireNonNull(executionContext.getProducts().get(productId));
 

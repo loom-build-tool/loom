@@ -46,7 +46,9 @@ public final class ProductPromise {
             LOG.debug("Return product <{}> with value: {}", productId, product);
 
             return product;
-        } catch (final ExecutionException | InterruptedException e) {
+        } catch (final ExecutionException e) {
+            throw new IllegalStateException(e);
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         } catch (final TimeoutException e) {

@@ -32,7 +32,7 @@ import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
-import jobt.api.Classpath;
+import jobt.api.ClasspathProduct;
 import jobt.util.Util;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -50,14 +50,14 @@ public class FindbugsRunner {
 
     private final Path sourcesDir;
     private final Path classesDir;
-    private final Classpath classpath;
+    private final ClasspathProduct classpath;
 
     private final Optional<Integer> priorityThreshold;
 
     public FindbugsRunner(
         final Path sourcesDir,
         final Path classesDir,
-        final Classpath classpath,
+        final ClasspathProduct classpath,
         final Optional<Integer> priorityThreshold) {
 
         this.sourcesDir = sourcesDir;

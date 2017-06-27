@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.ResourcesTree;
+import jobt.api.ResourcesTreeProduct;
 import jobt.api.TaskStatus;
 
 
@@ -34,10 +34,10 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("resources", new ResourcesTree(SRC_RES_PATH));
+                getProvidedProducts().complete("resources", new ResourcesTreeProduct(SRC_RES_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testResources", new ResourcesTree(SRC_TESTRES_PATH));
+                getProvidedProducts().complete("testResources", new ResourcesTreeProduct(SRC_TESTRES_PATH));
                 return status;
             default:
                 throw new IllegalStateException();

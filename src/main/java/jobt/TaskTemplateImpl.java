@@ -147,7 +147,7 @@ public class TaskTemplateImpl implements TaskTemplate {
 
             tasks.get(name).getUsedProductNodes().stream()
                 .map(ProductGraphNode::getProductId)
-                .peek(productId -> jobt.util.Preconditions.checkState(producersMap.containsKey(productId), "Producer task not found for product <%s>", productId))
+                .peek(productId -> Preconditions.checkState(producersMap.containsKey(productId), "Producer task not found for product <%s>", productId))
                 .map(producersMap::get)
                 .forEach(working::add);
 
@@ -178,6 +178,14 @@ public class TaskTemplateImpl implements TaskTemplate {
         // productId -> taskName (producer)
         final Map<String, String> producers = new HashMap<>();
         for (final Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
+
+            // FIXME remove
+            try {
+                entry.getValue().getProvidedProductNodes();
+            } catch(final NullPointerException npe) {
+                System.out.println("TASK= " + entry.getKey());
+            }
+
             entry.getValue().getProvidedProductNodes().stream()
                 .map(node -> node.getProductId())
                 .forEach(productId -> producers.put(productId, entry.getKey()));

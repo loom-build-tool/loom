@@ -2,11 +2,11 @@ package jobt.api;
 
 import java.nio.file.Path;
 
-public final class SourceTree implements Product {
+public final class ResourcesTreeProduct implements Product {
 
     private final Path srcDir;
 
-    public SourceTree(final Path srcDir) {
+    public ResourcesTreeProduct(final Path srcDir) {
         this.srcDir = srcDir;
     }
 

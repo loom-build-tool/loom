@@ -5,15 +5,9 @@ public final class Preconditions {
     private Preconditions() {
     }
 
-    public static void checkState(final boolean expression) {
+    public static void checkState(final boolean expression, final String errorMessage) {
         if (!expression) {
-            throw new IllegalStateException();
-        }
-    }
-
-    public static void checkState(final boolean expression, final Object errorMessage) {
-        if (!expression) {
-            throw new IllegalStateException(String.valueOf(errorMessage));
+            throw new IllegalStateException(errorMessage);
         }
     }
 

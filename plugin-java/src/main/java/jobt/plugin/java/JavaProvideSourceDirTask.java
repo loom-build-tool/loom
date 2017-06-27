@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.SourceTree;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 
@@ -35,10 +35,10 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("source", new SourceTree(SRC_MAIN_PATH));
+                getProvidedProducts().complete("source", new SourceTreeProduct(SRC_MAIN_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testSource", new SourceTree(SRC_TEST_PATH));
+                getProvidedProducts().complete("testSource", new SourceTreeProduct(SRC_TEST_PATH));
                 return status;
             default:
                 throw new IllegalStateException();

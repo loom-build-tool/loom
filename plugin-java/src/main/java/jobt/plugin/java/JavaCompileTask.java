@@ -27,11 +27,11 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.Classpath;
-import jobt.api.Compilation;
+import jobt.api.ClasspathProduct;
+import jobt.api.CompilationProduct;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.SourceTree;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 public class JavaCompileTask extends AbstractTask {
@@ -161,15 +161,15 @@ public class JavaCompileTask extends AbstractTask {
         Path srcPath;
         switch (compileTarget) {
             case MAIN:
-                srcPath = getUsedProducts().readProduct("source", SourceTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("source", SourceTreeProduct.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.addAll(getUsedProducts().readProduct("compileDependencies", Classpath.class).getEntries());
+                classpath.addAll(getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class).getEntries());
                 break;
             case TEST:
-                srcPath = getUsedProducts().readProduct("testSource", SourceTree.class).getSrcDir();
+                srcPath = getUsedProducts().readProduct("testSource", SourceTreeProduct.class).getSrcDir();
                 classpath.add(srcPath);
-                classpath.add(getUsedProducts().readProduct("compilation", Compilation.class).getClassesDir());
-                classpath.addAll(getUsedProducts().readProduct("testDependencies", Classpath.class).getEntries());
+                classpath.add(getUsedProducts().readProduct("compilation", CompilationProduct.class).getClassesDir());
+                classpath.addAll(getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries());
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -211,10 +211,10 @@ public class JavaCompileTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch(compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("compilation", new Compilation(buildDir));
+                getProvidedProducts().complete("compilation", new CompilationProduct(buildDir));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testCompilation", new Compilation(buildDir));
+                getProvidedProducts().complete("testCompilation", new CompilationProduct(buildDir));
                 return status;
             default:
                 throw new IllegalStateException();

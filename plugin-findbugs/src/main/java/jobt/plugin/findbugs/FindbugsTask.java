@@ -20,7 +20,7 @@ import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.Classpath;
+import jobt.api.ClasspathProduct;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
 import jobt.util.Preconditions;
@@ -82,7 +82,7 @@ public class FindbugsTask extends AbstractTask {
     public TaskStatus run() throws Exception {
         checkDirs();
 
-        final Classpath compileOutput = new Classpath(Collections.singletonList(classesDir));
+        final ClasspathProduct compileOutput = new ClasspathProduct(Collections.singletonList(classesDir));
 
         final List<BugInstance> bugs = new FindbugsRunner(
             sourceDir,
@@ -97,7 +97,7 @@ public class FindbugsTask extends AbstractTask {
             return TaskStatus.OK;
         }
 
-        final StringBuffer report = new StringBuffer();
+        final StringBuilder report = new StringBuilder();
         for (final BugInstance bug : bugs) {
             report.append(String.format(" >>> %s ", bug.getMessage()));
             report.append('\n');
@@ -108,16 +108,16 @@ public class FindbugsTask extends AbstractTask {
             String.format("Findbugs reported %d bugs!", bugs.size()));
     }
 
-    private Classpath calcClasspath() {
+    private ClasspathProduct calcClasspath() {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compileDependencies", Classpath.class);
+                return getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class);
             case TEST:
                 final List<Path> classpath = new ArrayList<>();
                 classpath.add(BUILD_MAIN_PATH);
                 classpath.addAll(
-                    getUsedProducts().readProduct("testDependencies", Classpath.class).getEntries());
-                return new Classpath(classpath);
+                    getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries());
+                return new ClasspathProduct(classpath);
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }

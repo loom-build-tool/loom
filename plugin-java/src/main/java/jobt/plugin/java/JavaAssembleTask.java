@@ -13,10 +13,10 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import jobt.api.AbstractTask;
-import jobt.api.Assembly;
+import jobt.api.AssemblyProduct;
 import jobt.api.BuildConfig;
-import jobt.api.Compilation;
-import jobt.api.SourceTree;
+import jobt.api.CompilationProduct;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 public class JavaAssembleTask extends AbstractTask {
@@ -41,16 +41,17 @@ public class JavaAssembleTask extends AbstractTask {
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final Compilation compilation = getUsedProducts().readProduct("compilation", Compilation.class);
+        final CompilationProduct compilation = getUsedProducts().readProduct("compilation", CompilationProduct.class);
         createJar(compilation.getClassesDir(), jarFile, preparedManifest);
-        getProvidedProducts().complete("jar", new Assembly(jarFile));
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final SourceTree sourceTree = getUsedProducts().readProduct("source", SourceTree.class);
+        final SourceTreeProduct sourceTree = getUsedProducts().readProduct("source", SourceTreeProduct.class);
         createJar(sourceTree.getSrcDir(), sourceJarFile, null);
-        getProvidedProducts().complete("sourcesJar", new Assembly(sourceJarFile));
+
+        getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));
+        getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile));
 
         return TaskStatus.OK;
     }

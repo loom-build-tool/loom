@@ -26,12 +26,9 @@ public class MavenResolverTask extends AbstractTask {
     }
 
     @Override
-    public void prepare() throws Exception {
-        mavenResolver.init();
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
+        mavenResolver.init();
+
         switch (dependencyScope) {
             case COMPILE:
                 compileScope();

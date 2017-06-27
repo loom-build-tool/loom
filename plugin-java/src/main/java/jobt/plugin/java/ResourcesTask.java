@@ -27,10 +27,6 @@ public class ResourcesTask extends AbstractTask {
     }
 
     @Override
-    public void prepare() throws Exception {
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
 
         final Path srcPath;

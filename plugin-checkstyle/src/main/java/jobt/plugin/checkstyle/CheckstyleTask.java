@@ -39,19 +39,14 @@ public class CheckstyleTask extends AbstractTask {
     private static final boolean OMIT_IGNORED_MODULES = true;
 
     private final CompileTarget compileTarget;
-    private RootModule checker;
 
     public CheckstyleTask(final CompileTarget compileTarget) {
         this.compileTarget = compileTarget;
     }
 
     @Override
-    public void prepare() throws Exception {
-        checker = createRootModule();
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
+        final RootModule checker = createRootModule();
 
         final SourceTreeProduct sourceTree = getSourceTree();
 

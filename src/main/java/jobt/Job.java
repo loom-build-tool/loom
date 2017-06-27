@@ -34,10 +34,6 @@ public class Job implements Callable<TaskStatus> {
 
     @Override
     public TaskStatus call() throws Exception {
-        status.set(JobStatus.PREPARING);
-
-        prepareTask();
-
         status.set(JobStatus.RUNNING);
         final TaskStatus taskStatus = runTask();
 
@@ -46,20 +42,10 @@ public class Job implements Callable<TaskStatus> {
         return taskStatus;
     }
 
-    private void prepareTask() throws Exception {
-        LOG.info("Prepare task {}", name);
-
-        Stopwatch.startProcess("Task " + name + " > init");
-        task.prepare();
-        Stopwatch.stopProcess();
-
-        LOG.info("Prepared task {}", name);
-    }
-
     public TaskStatus runTask() throws Exception {
         LOG.info("Start task {}", name);
 
-        Stopwatch.startProcess("Task " + name + " > run");
+        Stopwatch.startProcess("Task " + name);
         final TaskStatus taskStatus = task.run();
         Stopwatch.stopProcess();
 

@@ -40,10 +40,6 @@ public class JavaTestTask extends AbstractTask {
     }
 
     @Override
-    public void prepare() throws Exception {
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
         final CompilationProduct testCompilation = getUsedProducts().readProduct(
             "testCompilation", CompilationProduct.class);

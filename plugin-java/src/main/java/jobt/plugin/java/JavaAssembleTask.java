@@ -22,19 +22,15 @@ import jobt.api.TaskStatus;
 public class JavaAssembleTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private Manifest preparedManifest;
 
     public JavaAssembleTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
 
     @Override
-    public void prepare() throws Exception {
-        preparedManifest = prepareManifest();
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
+        final Manifest preparedManifest = prepareManifest();
+
         final Path buildDir = Paths.get("jobtbuild", "libs");
         Files.createDirectories(buildDir);
 

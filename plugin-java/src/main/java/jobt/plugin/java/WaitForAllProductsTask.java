@@ -5,10 +5,6 @@ import jobt.api.TaskStatus;
 
 public class WaitForAllProductsTask extends AbstractTask {
 
-    @Override
-    public void prepare() throws Exception {
-    }
-
     @SuppressWarnings("checkstyle:illegalcatch")
     @Override
     public TaskStatus run() throws Exception {

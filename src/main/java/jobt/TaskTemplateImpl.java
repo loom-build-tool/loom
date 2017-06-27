@@ -188,11 +188,6 @@ public class TaskTemplateImpl implements TaskTemplate {
         }
 
         @Override
-        public void prepare() throws Exception {
-            LOG.debug("Nothing to prepare for {}", taskName);
-        }
-
-        @Override
         public TaskStatus run() throws Exception {
             LOG.debug("Nothing to run for {}", taskName);
             return TaskStatus.OK;

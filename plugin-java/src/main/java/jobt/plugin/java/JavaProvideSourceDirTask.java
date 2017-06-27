@@ -24,10 +24,6 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     }
 
     @Override
-    public void prepare() throws Exception {
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
         return complete(TaskStatus.OK);
     }

@@ -58,7 +58,8 @@ public class TaskTemplateImpl implements TaskTemplate {
 
     @Override
     public ProductGraphNode product(final String productId) {
-        return taskProducts.computeIfAbsent(productId, ProductGraphNodeImpl::new);
+        return Objects.requireNonNull(
+            taskProducts.computeIfAbsent(productId, ProductGraphNodeImpl::new));
     }
 
     /**
@@ -171,9 +172,7 @@ public class TaskTemplateImpl implements TaskTemplate {
         final Map<String, String> producers = new HashMap<>();
         for (final Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
             entry.getValue().getProvidedProductNodes().stream()
-                .peek(n -> Objects.requireNonNull(n))
                 .map(node -> node.getProductId())
-                .peek(n -> Objects.requireNonNull(n))
                 .forEach(productId -> producers.put(productId, entry.getKey()));
         }
         return producers;

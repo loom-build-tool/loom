@@ -76,6 +76,7 @@ public class JavaPlugin extends AbstractPlugin {
                 taskTemplate.product("testResources"));
 
         taskTemplate.task("runTest").uses(
+            taskTemplate.product("testDependencies"),
             taskTemplate.product("processedResources"),
             taskTemplate.product("compilation"),
             taskTemplate.product("processedTestResources"),

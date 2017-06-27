@@ -42,9 +42,6 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
     }
 
     public List<ProductGraphNode> getProvidedProductNodes() {
-        if (providedProductNodes == null) {
-            return Collections.emptyList();
-        }
         return Collections.unmodifiableList(providedProductNodes);
     }
 

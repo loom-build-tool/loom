@@ -25,11 +25,16 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.AbstractTask;
 import jobt.api.ClasspathProduct;
+import jobt.api.CompilationProduct;
+import jobt.api.ProcessedResourceProduct;
+import jobt.api.ReportProduct;
 import jobt.api.TaskStatus;
 
 public class JavaTestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
+
+    private static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "tests");
 
     public JavaTestTask() {
     }
@@ -40,8 +45,11 @@ public class JavaTestTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(Paths.get("jobtbuild", "classes", "test"))) {
-            return TaskStatus.SKIP;
+        final CompilationProduct testCompilation = getUsedProducts().readProduct(
+            "testCompilation", CompilationProduct.class);
+
+        if (Files.notExists(testCompilation.getClassesDir())) {
+            return complete(TaskStatus.SKIP);
         }
 
         final Computer computer = new Computer();
@@ -54,7 +62,7 @@ public class JavaTestTask extends AbstractTask {
         final Result run = jUnitCore.run(computer, fooTest.toArray(new Class<?>[] {}));
 
         if (run.wasSuccessful()) {
-            return TaskStatus.OK;
+            return complete(TaskStatus.OK);
         }
 
         for (final Failure failure : run.getFailures()) {
@@ -65,13 +73,26 @@ public class JavaTestTask extends AbstractTask {
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
+        final CompilationProduct compilation = getUsedProducts().readProduct(
+            "compilation", CompilationProduct.class);
+
+        final CompilationProduct testCompilation = getUsedProducts().readProduct(
+            "testCompilation", CompilationProduct.class);
+
+        final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
+            "processedResources", ProcessedResourceProduct.class);
+
+        final ProcessedResourceProduct processedTestResources = getUsedProducts().readProduct(
+            "processedTestResources", ProcessedResourceProduct.class);
+
         final List<URL> urls = new ArrayList<>(
             getUsedProducts().readProduct("testDependencies",
                 ClasspathProduct.class).getEntriesAsUrls());
-        urls.add(Paths.get("jobtbuild", "classes", "test").toUri().toURL());
-        urls.add(Paths.get("jobtbuild", "classes", "main").toUri().toURL());
-        urls.add(Paths.get("jobtbuild", "resources", "test").toUri().toURL());
-        urls.add(Paths.get("jobtbuild", "resources", "main").toUri().toURL());
+
+        urls.add(testCompilation.getClassesDir().toUri().toURL());
+        urls.add(compilation.getClassesDir().toUri().toURL());
+        urls.add(processedTestResources.getSrcDir().toUri().toURL());
+        urls.add(processedResources.getSrcDir().toUri().toURL());
         return new URLClassLoader(urls.toArray(new URL[] {}));
     }
 
@@ -80,7 +101,10 @@ public class JavaTestTask extends AbstractTask {
 
         final List<Class<?>> classes = new ArrayList<>();
 
-        final Path rootPath = Paths.get("jobtbuild", "classes", "test");
+        final CompilationProduct testCompilation = getUsedProducts().readProduct(
+            "testCompilation", CompilationProduct.class);
+
+        final Path rootPath = testCompilation.getClassesDir();
         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
@@ -118,6 +142,11 @@ public class JavaTestTask extends AbstractTask {
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        getProvidedProducts().complete("test", new ReportProduct(REPORT_PATH));
+        return status;
     }
 
 }

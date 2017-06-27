@@ -2,6 +2,7 @@ apply plugin: 'java'
 
 dependencies {
     compileOnly project(':api')
+    compileOnly project(':util')
     compile('org.sonatype.aether:aether-impl:1.13.1')
     compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
     compile('org.sonatype.aether:aether-connector-file:1.13.1')

@@ -44,6 +44,7 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import jobt.api.DependencyScope;
+import jobt.util.Hasher;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver implements DependencyResolver {

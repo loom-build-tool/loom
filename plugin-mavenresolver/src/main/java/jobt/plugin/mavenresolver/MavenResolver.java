@@ -200,9 +200,6 @@ public class MavenResolver implements DependencyResolver {
 
     private void writeCache(final List<String> deps, final DependencyScope scope,
                             final List<Path> files) throws IOException {
-        final Path buildDir = Paths.get(".jobt");
-        Files.createDirectories(buildDir);
-
         final String sb = Hasher.hash(deps) + '\t' + files.stream()
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));

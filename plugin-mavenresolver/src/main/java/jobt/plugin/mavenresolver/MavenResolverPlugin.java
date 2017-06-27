@@ -26,8 +26,6 @@ public class MavenResolverPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("resolveTestDependencies")
-            .dependsOn(taskTemplate.task("resolveCompileDependencies"));
     }
 
 }

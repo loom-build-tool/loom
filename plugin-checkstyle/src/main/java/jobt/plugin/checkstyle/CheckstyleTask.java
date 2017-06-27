@@ -1,6 +1,7 @@
 package jobt.plugin.checkstyle;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
+import com.puppycrawl.tools.checkstyle.XMLLogger;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
@@ -24,32 +26,23 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 import jobt.api.AbstractTask;
 import jobt.api.ClasspathProduct;
 import jobt.api.CompileTarget;
+import jobt.api.ReportProduct;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
 
+    public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "checkstyle");
+
     private static final String CONFIG_LOCATION = "config/checkstyle/checkstyle.xml";
     private static final boolean OMIT_IGNORED_MODULES = true;
 
-    private final Path srcBaseDir;
     private final CompileTarget compileTarget;
     private RootModule checker;
 
     public CheckstyleTask(final CompileTarget compileTarget) {
-
         this.compileTarget = compileTarget;
-
-        switch (compileTarget) {
-            case MAIN:
-                this.srcBaseDir = Paths.get("src", "main", "java");
-                break;
-            case TEST:
-                this.srcBaseDir = Paths.get("src", "test", "java");
-                break;
-            default:
-                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
-        }
     }
 
 
@@ -60,27 +53,59 @@ public class CheckstyleTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        if (Files.notExists(srcBaseDir)) {
+
+        final SourceTreeProduct sourceTree = getSourceTree();
+
+        if (Files.notExists(sourceTree.getSrcDir())) {
             return TaskStatus.SKIP;
         }
 
-        final List<File> collect = Files.walk(srcBaseDir)
+        final List<File> collect = Files.walk(sourceTree.getSrcDir())
             .filter(Files::isRegularFile)
             .map(Path::toFile)
             .collect(Collectors.toList());
 
-        final LoggingAuditListener listener = new LoggingAuditListener();
 
+        final LoggingAuditListener listener = new LoggingAuditListener();
         checker.addListener(listener);
+
+        Files.createDirectories(REPORT_PATH);
+        final XMLLogger xmlLogger = new XMLLogger(
+            new PrintStream(REPORT_PATH.resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+        checker.addListener(xmlLogger);
 
         final int errors = checker.process(collect);
         checker.destroy();
 
         if (errors == 0) {
-            return TaskStatus.OK;
+            return complete(TaskStatus.OK);
         }
 
         throw new IllegalStateException("Checkstyle reported errors!");
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch (compileTarget) {
+            case MAIN:
+                getProvidedProducts().complete("checkstyleMainReport", new ReportProduct(REPORT_PATH));
+                return status;
+            case TEST:
+                getProvidedProducts().complete("checkstyleTestReport", new ReportProduct(REPORT_PATH));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+    private SourceTreeProduct getSourceTree() {
+        switch (compileTarget) {
+            case MAIN:
+                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+            case TEST:
+                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private RootModule createRootModule()

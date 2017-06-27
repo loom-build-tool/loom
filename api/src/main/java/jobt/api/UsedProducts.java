@@ -1,5 +1,7 @@
 package jobt.api;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,7 +30,7 @@ public class UsedProducts {
                 ProvidedProducts.PATTERN.matcher(id).matches(),
                 "Invalid format of product id <%s>", id));
         Objects.requireNonNull(executionContext);
-        this.allowedProductIds = allowedProductIds;
+        this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
         this.executionContext = executionContext;
     }
 
@@ -56,6 +58,23 @@ public class UsedProducts {
         }
 
         return clazz.cast(value);
+    }
+
+    public void waitForProduct(final String productId) {
+
+        final ProductPromise productPromise =
+            Objects.requireNonNull(
+                executionContext.getProducts().get(productId), "No product found by id <"+productId+">");
+
+        if (!allowedProductIds.contains(productId)) {
+            throw new IllegalAccessError("Access to productId <"+productId+"> not configured for task");
+        }
+
+        productPromise.getAndWaitForProduct();
+    }
+
+    public Set<String> getAllowedProductIds() {
+        return allowedProductIds;
     }
 
 }

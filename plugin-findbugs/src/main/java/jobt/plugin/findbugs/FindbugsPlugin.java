@@ -17,11 +17,11 @@ public class FindbugsPlugin extends AbstractPlugin {
 
         taskRegistry.register(
             "findbugsMain",
-            new FindbugsTask(getBuildConfig(), CompileTarget.MAIN), provides());
+            new FindbugsTask(getBuildConfig(), CompileTarget.MAIN), provides("findbugsMainReport"));
 
         taskRegistry.register(
             "findbugsTest",
-            new FindbugsTask(getBuildConfig(), CompileTarget.TEST), provides());
+            new FindbugsTask(getBuildConfig(), CompileTarget.TEST), provides("findbugsTestReport"));
 
     }
 
@@ -29,13 +29,23 @@ public class FindbugsPlugin extends AbstractPlugin {
     public void configure(final TaskTemplate taskTemplate) {
 
         taskTemplate.task("findbugsMain")
-            .uses(taskTemplate.product("compilation"));
+            .uses(
+                taskTemplate.product("source"),
+                taskTemplate.product("compileDependencies"),
+                taskTemplate.product("compilation")
+                );
 
         taskTemplate.task("findbugsTest")
-        .uses(
-            taskTemplate.product("compilation"),
-            taskTemplate.product("testCompilation")
+            .uses(
+                taskTemplate.product("testSource"),
+                taskTemplate.product("testDependencies"),
+                taskTemplate.product("compilation"),
+                taskTemplate.product("testCompilation")
             );
+
+        taskTemplate.virtualProduct("check").uses(
+            taskTemplate.product("findbugsMainReport"),
+            taskTemplate.product("findbugsTestReport"));
 
     }
 

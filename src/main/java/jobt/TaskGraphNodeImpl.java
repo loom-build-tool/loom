@@ -7,14 +7,13 @@ import java.util.List;
 
 import jobt.api.ProductGraphNode;
 import jobt.api.TaskGraphNode;
-import jobt.util.Preconditions;
 
 public class TaskGraphNodeImpl implements TaskGraphNode {
 
     private final String name;
     private final List<TaskGraphNode> dependentNodes = new ArrayList<>();
-    private List<ProductGraphNode> providedProductNodes;
-    private List<ProductGraphNode> usedProductNodes;
+    private final List<ProductGraphNode> providedProductNodes = new ArrayList<>();
+    private final List<ProductGraphNode> usedProductNodes = new ArrayList<>();
 
     public TaskGraphNodeImpl(final String name) {
         this.name = name;
@@ -26,6 +25,7 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
     }
 
     @Override
+    // TODO remove
     public void dependsOn(final TaskGraphNode... tasks) {
         dependentNodes.addAll(Arrays.asList(tasks));
     }
@@ -36,22 +36,15 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
 
     @Override
     public void uses(final ProductGraphNode... products) {
-        Preconditions.checkState(
-            usedProductNodes == null, "Cannot re-assign <usedProductNodes>");
-        usedProductNodes = Arrays.asList(products);
+        usedProductNodes.addAll(Arrays.asList(products));
     }
 
     public List<ProductGraphNode> getUsedProductNodes() {
-        if (usedProductNodes == null) {
-            return Collections.emptyList();
-        }
         return Collections.unmodifiableList(usedProductNodes);
     }
 
     public void setProvidedProducts(final ProductGraphNode... products) {
-        Preconditions.checkState(
-            providedProductNodes == null, "Cannot re-assign <providedProductNodes>");
-        providedProductNodes = Arrays.asList(products);
+        providedProductNodes.addAll(Arrays.asList(products));
     }
 
     public List<ProductGraphNode> getProvidedProductNodes() {

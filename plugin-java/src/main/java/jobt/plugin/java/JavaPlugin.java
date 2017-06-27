@@ -42,7 +42,11 @@ public class JavaPlugin extends AbstractPlugin {
         taskRegistry.register("processTestResources",
             new ResourcesTask(runtimeConfiguration, CompileTarget.TEST), provides("processedTestResources"));
 
-        taskRegistry.register("test", new JavaTestTask(), provides());
+        taskRegistry.register("runTest", new JavaTestTask(), provides("test"));
+
+        taskRegistry.register("check", new WaitForAllProductsTask(), provides());
+
+        taskRegistry.register("build", new WaitForAllProductsTask(), provides());
     }
 
     @Override
@@ -60,16 +64,16 @@ public class JavaPlugin extends AbstractPlugin {
 
         taskTemplate.virtualProduct("classes")
             .uses(
-                taskTemplate.product("compilation"),
-                taskTemplate.product("testCompilation"));
+                taskTemplate.product("processedResources"),
+                taskTemplate.product("compilation"));
 
 //        taskTemplate.task("classes").dependsOn(
 //            taskTemplate.task("compileJava"),
 //            taskTemplate.task("processResources"));
 
         // TODO
-        taskTemplate.task("javadoc").dependsOn(
-            taskTemplate.task("classes"));
+//        taskTemplate.task("javadoc").uses(
+//            taskTemplate.product("classes"));
 
         taskTemplate.task("compileTestJava").uses(
             taskTemplate.product("compilation"),
@@ -80,13 +84,24 @@ public class JavaPlugin extends AbstractPlugin {
             .uses(
                 taskTemplate.product("testResources"));
 
+        taskTemplate.virtualProduct("testClasses")
+            .uses(
+                taskTemplate.product("processedTestResources"),
+                taskTemplate.product("testCompilation"));
+
 //        taskTemplate.task("testClasses").dependsOn(
 //            taskTemplate.task("compileTestJava"),
 //            taskTemplate.task("processTestResources"));
 
-        taskTemplate.task("test").uses(
-            taskTemplate.product("testDependencies"));
+        taskTemplate.task("runTest").uses(
+            taskTemplate.product("processedResources"),
+            taskTemplate.product("compilation"),
+            taskTemplate.product("testClasses"),
+            taskTemplate.product("processedTestResources")
+            );
 
+        taskTemplate.virtualProduct("check")
+            .uses();
 //        taskTemplate.task("check").dependsOn(
 //            taskTemplate.task("test"));
 
@@ -104,9 +119,12 @@ public class JavaPlugin extends AbstractPlugin {
 //        taskTemplate.task("assemble").dependsOn(
 //            taskTemplate.task("jar"));
 
-        taskTemplate.task("build").dependsOn(
-            taskTemplate.task("check"),
-            taskTemplate.task("assemble"));
+        taskTemplate.virtualProduct("build").uses(
+            taskTemplate.product("jar"),
+            taskTemplate.product("sourcesJar"),
+            taskTemplate.product("test"),
+            taskTemplate.product("check")
+            );
     }
 
 }

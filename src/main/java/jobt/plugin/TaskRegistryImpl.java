@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jobt.api.ProductDependenciesAware;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskRegistry;
@@ -28,7 +29,9 @@ public class TaskRegistryImpl implements TaskRegistry {
         // inject products
         // TODO Rework
 
-        task.setProvidedProducts(providedProducts);
+        if (task instanceof ProductDependenciesAware) {
+            task.setProvidedProducts(providedProducts);
+        }
 
     }
 

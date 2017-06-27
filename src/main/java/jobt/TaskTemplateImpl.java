@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -66,10 +67,17 @@ public class TaskTemplateImpl implements TaskTemplate {
     @Override
     public TaskGraphNode virtualProduct(final String productId) {
         Preconditions.checkState(
-            !tasks.containsKey(productId),"Connot use <%s> as virtual product id because a task with same name already exists", productId);
+            !tasks.containsKey(productId) || isVirtual(productId),
+            "Connot use <%s> as virtual product id because a task with same name already exists"
+            + " - you may want to make that task to a virtual product", productId);
         final TaskGraphNodeImpl task = (TaskGraphNodeImpl) task(productId);
         task.setProvidedProducts(product(productId));
         return task;
+    }
+
+    private boolean isVirtual(final String productId) {
+        Objects.requireNonNull(productId);
+        return tasks.containsKey(productId) && taskProducts.containsKey(productId);
     }
 
     public Set<String> getAvailableTaskNames() {
@@ -135,11 +143,11 @@ public class TaskTemplateImpl implements TaskTemplate {
 
         while (!working.isEmpty()) {
 
-            // TODO fix order of resolved tasks
             final String name = working.remove();
-            resolvedTasks.add(0, name);
 
-            System.out.println("calc required for " + name);
+            if (!resolvedTasks.contains(name)) {
+                resolvedTasks.add(0, name);
+            }
 
             tasks.get(name).getUsedProductNodes().stream()
                 .map(ProductGraphNode::getProductId)

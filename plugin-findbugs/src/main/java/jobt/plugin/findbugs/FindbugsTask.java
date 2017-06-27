@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,9 +20,11 @@ import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.ClasspathProduct;
+import jobt.api.CompilationProduct;
 import jobt.api.CompileTarget;
+import jobt.api.ReportProduct;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
-import jobt.util.Preconditions;
 
 public class FindbugsTask extends AbstractTask {
 
@@ -37,8 +38,6 @@ public class FindbugsTask extends AbstractTask {
 
     private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
 
-    private final Path sourceDir;
-    private final Path classesDir;
     private final CompileTarget compileTarget;
 
     private Optional<Integer> priorityThreshold;
@@ -48,19 +47,6 @@ public class FindbugsTask extends AbstractTask {
 
         readBuildConfig(Objects.requireNonNull(buildConfig));
         this.compileTarget = Objects.requireNonNull(compileTarget);
-
-        switch (compileTarget) {
-            case MAIN:
-                this.sourceDir = SRC_MAIN_PATH;
-                this.classesDir = BUILD_MAIN_PATH;
-                break;
-            case TEST:
-                this.sourceDir = SRC_TEST_PATH;
-                this.classesDir = BUILD_TEST_PATH;
-                break;
-            default:
-                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
-        }
 
     }
 
@@ -80,13 +66,15 @@ public class FindbugsTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        checkDirs();
 
-        final ClasspathProduct compileOutput = new ClasspathProduct(Collections.singletonList(classesDir));
+        if (Files.notExists(getSourceTree().getSrcDir())
+            || Files.notExists(getClasses().getClassesDir())) {
+            return TaskStatus.SKIP;
+        }
 
         final List<BugInstance> bugs = new FindbugsRunner(
-            sourceDir,
-            compileOutput.getSingleEntry(),
+            getSourceTree().getSrcDir(),
+            getClasses().getClassesDir(),
             calcClasspath(),
             priorityThreshold
             )
@@ -94,7 +82,7 @@ public class FindbugsTask extends AbstractTask {
 
 
         if (bugs.isEmpty()) {
-            return TaskStatus.OK;
+            return complete(TaskStatus.OK);
         }
 
         final StringBuilder report = new StringBuilder();
@@ -107,6 +95,43 @@ public class FindbugsTask extends AbstractTask {
         throw new IllegalStateException(
             String.format("Findbugs reported %d bugs!", bugs.size()));
     }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch (compileTarget) {
+            case MAIN:
+                getProvidedProducts().complete("findbugsMainReport", new ReportProduct(REPORT_PATH));
+                return status;
+            case TEST:
+                getProvidedProducts().complete("findbugsTestReport", new ReportProduct(REPORT_PATH));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+    private SourceTreeProduct getSourceTree() {
+        switch (compileTarget) {
+            case MAIN:
+                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+            case TEST:
+                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+
+    private CompilationProduct getClasses() {
+        switch (compileTarget) {
+            case MAIN:
+                return getUsedProducts().readProduct("compilation", CompilationProduct.class);
+            case TEST:
+                return getUsedProducts().readProduct("testCompilation", CompilationProduct.class);
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
 
     private ClasspathProduct calcClasspath() {
         switch (compileTarget) {
@@ -138,13 +163,6 @@ public class FindbugsTask extends AbstractTask {
                         throw new IllegalStateException(e);
                     }
                 }));
-    }
-
-    private void checkDirs() {
-        Preconditions.checkState(Files.isDirectory(sourceDir),
-            "Source dir <%s> does not exist", sourceDir);
-        Preconditions.checkState(Files.isDirectory(classesDir),
-            "Classes dir <%s> does not exist", classesDir);
     }
 
 }

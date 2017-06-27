@@ -88,10 +88,10 @@ public class TaskTemplateImpl implements TaskTemplate {
         return Collections.unmodifiableSet(taskProducts.keySet());
     }
 
-    public void execute(final String[] taskNames) throws Exception {
+    public void execute(final String[] productIds) throws Exception {
 
         final List<String> resolvedTasks = calcRequiredTasks(
-            calcTasksForProducts(new HashSet<>(Arrays.asList(taskNames))));
+            calcTasksForProducts(new HashSet<>(Arrays.asList(productIds))));
 
         // TODO cleanup
 
@@ -137,7 +137,6 @@ public class TaskTemplateImpl implements TaskTemplate {
         final Set<String> products = new LinkedHashSet<>();
 
         final Map<String, String> producersMap = buildInvertedProducersMap();
-        System.out.println("producersMap="+producersMap);
 
         final Queue<String> working = new LinkedList<>(requestedTasks);
 
@@ -155,13 +154,14 @@ public class TaskTemplateImpl implements TaskTemplate {
 
             tasks.get(name).getUsedProductNodes().stream()
                 .map(ProductGraphNode::getProductId)
-                .peek(productId -> Preconditions.checkState(producersMap.containsKey(productId), "Producer task not found for product <%s>", productId))
+                .peek(productId -> Preconditions.checkState(
+                    producersMap.containsKey(productId),
+                    "Producer task not found for product <%s>", productId))
                 .map(producersMap::get)
                 .forEach(working::add);
 
         }
 
-        // TODO cleanup
         LOG.info("Current build requires products: {}", products);
         LOG.info("calcRequiredTasks={}", resolvedTasks);
 
@@ -171,7 +171,6 @@ public class TaskTemplateImpl implements TaskTemplate {
     private Set<String> calcTasksForProducts(final Set<String> requestedProducts) {
 
         final Map<String, String> producersMap = buildInvertedProducersMap();
-        System.out.println("producersMap="+producersMap);
 
         return
         requestedProducts.stream()
@@ -186,36 +185,13 @@ public class TaskTemplateImpl implements TaskTemplate {
         // productId -> taskName (producer)
         final Map<String, String> producers = new HashMap<>();
         for (final Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
-
-            // FIXME remove
-            try {
-                entry.getValue().getProvidedProductNodes();
-            } catch(final NullPointerException npe) {
-                System.out.println("TASK= " + entry.getKey());
-            }
-
             entry.getValue().getProvidedProductNodes().stream()
+                .peek(n -> Objects.requireNonNull(n))
                 .map(node -> node.getProductId())
+                .peek(n -> Objects.requireNonNull(n))
                 .forEach(productId -> producers.put(productId, entry.getKey()));
         }
         return producers;
-    }
-
-    private Set<String> resolveTasks(final String task) {
-        final Set<String> resolvedTasks = new LinkedHashSet<>();
-        resolveTasks(resolvedTasks, task);
-        return resolvedTasks;
-    }
-
-    private void resolveTasks(final Set<String> resolvedTasks, final String taskName) {
-        final TaskGraphNodeImpl taskGraphNode = tasks.get(taskName);
-        if (taskGraphNode == null) {
-            throw new IllegalArgumentException("Unknown task " + taskName);
-        }
-        for (final TaskGraphNode node : taskGraphNode.getDependentNodes()) {
-            resolveTasks(resolvedTasks, node.getName());
-        }
-        resolvedTasks.add(taskGraphNode.getName());
     }
 
     private static class DummyTask implements Task {

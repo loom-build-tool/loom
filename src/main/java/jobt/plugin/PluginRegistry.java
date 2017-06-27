@@ -82,19 +82,7 @@ public class PluginRegistry {
 
         LOG.info("Products provided by registered tasks: {}", productIds);
 
-        // FIXME remove
-        for (final String name : taskRegistry.taskNames()) {
-            final TaskGraphNodeImpl taskNode = taskTemplate.getTasks().get(name);
-            System.out.println("TaskNode " + taskNode.getName());
-            for (final ProductGraphNode productNode : taskNode.getProvidedProductNodes()) {
-                System.out.println(" produces " + productNode.getProductId());
-            }
-            for (final ProductGraphNode productNode : taskNode.getUsedProductNodes()) {
-                System.out.println(" uses " + productNode.getProductId());
-            }
-        }
-
-        LOG.info("Inverted producers relations: {}", taskTemplate.buildInvertedProducersMap());
+        LOG.info("Producers: {}", taskTemplate.buildInvertedProducersMap());
 
     }
 
@@ -175,8 +163,6 @@ public class PluginRegistry {
 
         for (final String name : taskRegistry.taskNames()) {
             final ProvidedProducts providedProducts = taskRegistry.getTaskProducts(name).get();
-            // FIXME
-            System.out.println(name+" -> providedProducts = "+providedProducts.getProducedProductIds() );
 
             final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
             task.setProvidedProducts(

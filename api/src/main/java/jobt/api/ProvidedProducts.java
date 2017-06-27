@@ -63,7 +63,11 @@ public class ProvidedProducts {
         if (!producedProductIds.contains(productId)) {
             throw new IllegalStateException("Not allowed to resolve productId <"+productId+">");
         }
-        final ProductPromise productPromise = Objects.requireNonNull(executionContext.getProducts().get(productId));
+
+        final ProductPromise productPromise =
+            Objects.requireNonNull(
+                executionContext.getProducts().get(productId),
+                "Product not found: " +productId);
 
         productPromise.complete(value);
 

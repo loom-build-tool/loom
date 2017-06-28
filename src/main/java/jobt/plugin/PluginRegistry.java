@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -167,7 +166,7 @@ public class PluginRegistry {
     private void configureImplicitDependencies() {
 
         for (final String name : taskRegistry.taskNames()) {
-            final ProvidedProducts providedProducts = taskRegistry.lookupTaskProducts(name).get();
+            final ProvidedProducts providedProducts = taskRegistry.lookupTaskProducts(name);
 
             final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
             task.setProvidedProducts(
@@ -184,7 +183,7 @@ public class PluginRegistry {
                     .map(ProductGraphNode::getProductId)
                     .collect(Collectors.toSet()), productRepository);
 
-            taskRegistry.lookupTask(name).get().setUsedProducts(usedProducts);
+            taskRegistry.lookupTask(name).setUsedProducts(usedProducts);
         }
 
     }
@@ -208,7 +207,7 @@ public class PluginRegistry {
         }
     }
 
-    public Optional<Task> getTask(final String taskName) {
+    public Task getTask(final String taskName) {
         return taskRegistry.lookupTask(taskName);
     }
 

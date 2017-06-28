@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,12 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductGraphNode;
-import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskGraphNode;
-import jobt.api.TaskStatus;
 import jobt.api.TaskTemplate;
-import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
 import jobt.util.Preconditions;
@@ -110,8 +106,8 @@ public class TaskTemplateImpl implements TaskTemplate {
         // LinkedHashMap to guaranty same order to support single thread execution
         final Map<String, Job> jobs = new LinkedHashMap<>();
         for (final String resolvedTask : resolvedTasks) {
-            final Optional<Task> task = pluginRegistry.getTask(resolvedTask);
-            jobs.put(resolvedTask, new Job(resolvedTask, task.orElse(new DummyTask(resolvedTask))));
+            final Task task = pluginRegistry.getTask(resolvedTask);
+            jobs.put(resolvedTask, new Job(resolvedTask, task));
         }
 
         return jobs.values();
@@ -176,33 +172,6 @@ public class TaskTemplateImpl implements TaskTemplate {
                 .forEach(productId -> producers.put(productId, entry.getKey()));
         }
         return producers;
-    }
-
-    private static class DummyTask implements Task {
-
-        private static final Logger LOG = LoggerFactory.getLogger(DummyTask.class);
-        private final String taskName;
-
-        DummyTask(final String taskName) {
-            this.taskName = taskName;
-        }
-
-        @Override
-        public TaskStatus run() throws Exception {
-            LOG.debug("Nothing to run for {}", taskName);
-            return TaskStatus.OK;
-        }
-
-        @Override
-        public void setProvidedProducts(final ProvidedProducts providedProducts) {
-            // do nothing
-        }
-
-        @Override
-        public void setUsedProducts(final UsedProducts usedProducts) {
-            // do nothing
-        }
-
     }
 
 }

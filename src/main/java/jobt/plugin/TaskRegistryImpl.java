@@ -3,7 +3,6 @@ package jobt.plugin;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,12 +35,12 @@ public class TaskRegistryImpl implements TaskRegistry {
         return Collections.unmodifiableSet(taskMap.keySet());
     }
 
-    Optional<Task> lookupTask(final String name) {
-        return Optional.ofNullable(taskMap.get(name));
+    Task lookupTask(final String name) {
+        return Objects.requireNonNull(taskMap.get(name));
     }
 
-    Optional<ProvidedProducts> lookupTaskProducts(final String name) {
-        return Optional.ofNullable(taskProductsMap.get(name));
+    ProvidedProducts lookupTaskProducts(final String name) {
+        return Objects.requireNonNull(taskProductsMap.get(name));
     }
 
 }

@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Read-only view to products.
+ * Read-only view to products that are required (readProduct) from tasks.
  */
 public class UsedProducts {
 

@@ -1,5 +1,6 @@
 package jobt.plugin;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public class TaskRegistryImpl implements TaskRegistry {
     }
 
     Set<String> taskNames() {
-        return taskMap.keySet();
+        return Collections.unmodifiableSet(taskMap.keySet());
     }
 
     Optional<Task> lookupTask(final String name) {

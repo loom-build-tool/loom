@@ -86,7 +86,7 @@ public class FindbugsTask extends AbstractTask {
             report.append(String.format(" >>> %s ", bug.getMessage()));
             report.append('\n');
         }
-        LOG.warn("Findbugs report for {}: \n{}", compileTarget, report.toString());
+        LOG.warn("Findbugs report for {}: \n{}", compileTarget, report);
 
         throw new IllegalStateException(
             String.format("Findbugs reported %d bugs!", bugs.size()));

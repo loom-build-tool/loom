@@ -38,7 +38,7 @@ public class UsedProducts {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(clazz);
 
-        final long start = System.currentTimeMillis();
+        final long start = System.nanoTime();
 
         final ProductPromise productPromise = productRepository.lookup(productId);
 
@@ -49,7 +49,7 @@ public class UsedProducts {
 
         final Object value = productPromise.getAndWaitForProduct();
 
-        final long timeElapsed = System.currentTimeMillis() - start;
+        final long timeElapsed = ( System.currentTimeMillis() - start ) / 1000;
         LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
 
         return clazz.cast(value);

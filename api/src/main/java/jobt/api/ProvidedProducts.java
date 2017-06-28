@@ -48,10 +48,8 @@ public class ProvidedProducts {
 
     public <T extends Product> void complete(final String productId, final T value) {
         Objects.requireNonNull(productId);
-        if (value == null) {
-            throw new IllegalArgumentException(
-                "Must not complete product <" + productId + "> with null value");
-        }
+        Objects.requireNonNull(value,
+            "Must not complete product <" + productId + "> with null value");
 
         if (!producedProductIds.contains(productId)) {
             throw new IllegalStateException(

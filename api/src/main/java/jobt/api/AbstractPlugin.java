@@ -33,18 +33,14 @@ public abstract class AbstractPlugin implements Plugin {
         this.productRepository = productRepository;
     }
 
-    public ProductRepository getProductRepository() {
-        return productRepository;
-    }
-
     public final UsedProducts uses(final String... productIdLists) {
         return new UsedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), getProductRepository());
+            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
     }
 
     public final ProvidedProducts provides(final String... productIdLists) {
         return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), getProductRepository());
+            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
     }
 
 }

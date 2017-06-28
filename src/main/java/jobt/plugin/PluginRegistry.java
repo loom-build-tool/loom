@@ -10,26 +10,35 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.ProductGraphNodeImpl;
 import jobt.RuntimeConfigurationImpl;
+import jobt.TaskGraphNodeImpl;
 import jobt.TaskTemplateImpl;
 import jobt.Version;
 import jobt.api.Plugin;
+import jobt.api.ProductGraphNode;
+import jobt.api.ProductRepository;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
+import jobt.api.UsedProducts;
 import jobt.config.BuildConfigImpl;
 import jobt.util.ThreadUtil;
 
-@SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:illegalcatch"})
+@SuppressWarnings({
+    "checkstyle:classfanoutcomplexity",
+    "checkstyle:illegalcatch",
+    "checkstyle:classdataabstractioncoupling"})
 public class PluginRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginRegistry.class);
@@ -40,7 +49,7 @@ public class PluginRegistry {
     private final BuildConfigImpl buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskTemplateImpl taskTemplate;
-    private final ExecutionContextImpl executionContext = new ExecutionContextImpl();
+    private final ProductRepository productRepository = new ProductRepositoryImpl();
     private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
 
     static {
@@ -67,6 +76,18 @@ public class PluginRegistry {
         this.taskTemplate = taskTemplate;
 
         initPlugins();
+        configureImplicitDependencies();
+        debugPlugins();
+    }
+
+    private void debugPlugins() {
+
+        final Set<String> productIds = productRepository.getProductIds();
+
+        LOG.info("Products provided by registered tasks: {}", productIds);
+
+        LOG.info("Producers: {}", taskTemplate.buildInvertedProducersMap());
+
     }
 
     private void initPlugins() {
@@ -130,13 +151,42 @@ public class PluginRegistry {
 
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
+        regPlugin.setTaskRegistry(taskRegistry);
+        regPlugin.setTaskTemplate(taskTemplate);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
-        regPlugin.setExecutionContext(executionContext);
-        regPlugin.configure(taskTemplate);
-        regPlugin.configure(taskRegistry);
+        regPlugin.setProductRepository(productRepository);
+        regPlugin.configure();
 
         LOG.info("Plugin {} initialized", plugin);
+    }
+
+    /**
+     * Add task.providedProducts relation to dependency graph.
+     */
+    private void configureImplicitDependencies() {
+
+        for (final String name : taskRegistry.taskNames()) {
+            final ProvidedProducts providedProducts = taskRegistry.lookupTaskProducts(name);
+
+            final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
+            task.setProvidedProducts(
+                providedProducts.getProducedProductIds().stream()
+                .map(taskTemplate::product)
+                .toArray(ProductGraphNodeImpl[]::new));
+        }
+
+        for (final String name : taskRegistry.taskNames()) {
+            final TaskGraphNodeImpl task = (TaskGraphNodeImpl) taskTemplate.task(name);
+
+            final UsedProducts usedProducts = new UsedProducts(
+                task.getUsedProductNodes().stream()
+                    .map(ProductGraphNode::getProductId)
+                    .collect(Collectors.toSet()), productRepository);
+
+            taskRegistry.lookupTask(name).setUsedProducts(usedProducts);
+        }
+
     }
 
     public static ClassLoader getPlatformClassLoader() {
@@ -158,8 +208,8 @@ public class PluginRegistry {
         }
     }
 
-    public Optional<Task> getTask(final String taskName) {
-        return taskRegistry.getTasks(taskName);
+    public Task getTask(final String taskName) {
+        return taskRegistry.lookupTask(taskName);
     }
 
 }

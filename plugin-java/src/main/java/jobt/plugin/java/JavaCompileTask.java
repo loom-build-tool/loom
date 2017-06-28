@@ -2,8 +2,6 @@ package jobt.plugin.java;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,15 +24,17 @@ import javax.tools.ToolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
+import jobt.api.ClasspathProduct;
+import jobt.api.CompilationProduct;
 import jobt.api.CompileTarget;
-import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.Task;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 import jobt.util.JavaVersion;
 
-public class JavaCompileTask implements Task {
+public class JavaCompileTask extends AbstractTask {
 
     public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
     public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
@@ -49,47 +49,29 @@ public class JavaCompileTask implements Task {
 
     private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
-    private final ExecutionContext executionContext;
     private final CompileTarget compileTarget;
-    private final Path srcPath;
     private final Path buildDir;
     private final String subdirName;
-    private final List<Path> classpathAppendix = new ArrayList<>();
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
-                           final ExecutionContext executionContext,
-                           final CompileTarget compileTarget) {
+                           final CompileTarget compileTarget
+                           ) {
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
-        this.executionContext = Objects.requireNonNull(executionContext);
         this.compileTarget = Objects.requireNonNull(compileTarget);
-
 
         switch (compileTarget) {
             case MAIN:
-                srcPath = SRC_MAIN_PATH;
                 buildDir = BUILD_MAIN_PATH;
                 subdirName = "main";
-                classpathAppendix.add(srcPath);
                 break;
             case TEST:
-                srcPath = SRC_TEST_PATH;
                 buildDir = BUILD_TEST_PATH;
                 subdirName = "test";
-                classpathAppendix.add(srcPath);
-                classpathAppendix.add(BUILD_MAIN_PATH);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
-        }
-    }
-
-    private static URL buildUrl(final Path f) {
-        try {
-            return f.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalStateException(e);
         }
     }
 
@@ -140,33 +122,33 @@ public class JavaCompileTask implements Task {
     }
 
     @Override
-    public void prepare() throws Exception {
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
-        classpath.addAll(classpathAppendix);
 
-        final List<URL> urls = classpath.stream()
-            .map(JavaCompileTask::buildUrl)
-            .collect(Collectors.toList());
-
+        final Path srcPath;
         switch (compileTarget) {
             case MAIN:
-                classpath.addAll(executionContext.getCompileDependencies());
-                executionContext.setCompileClasspath(urls);
+                srcPath = getUsedProducts().readProduct(
+                    "source", SourceTreeProduct.class).getSrcDir();
+                classpath.add(srcPath);
+                classpath.addAll(getUsedProducts().readProduct(
+                    "compileDependencies", ClasspathProduct.class).getEntries());
                 break;
             case TEST:
-                classpath.addAll(executionContext.getTestDependencies());
-                executionContext.setTestClasspath(urls);
+                srcPath = getUsedProducts().readProduct(
+                    "testSource", SourceTreeProduct.class).getSrcDir();
+                classpath.add(srcPath);
+                classpath.add(getUsedProducts().readProduct(
+                    "compilation", CompilationProduct.class).getClassesDir());
+                classpath.addAll(getUsedProducts().readProduct(
+                    "testDependencies", ClasspathProduct.class).getEntries());
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
         if (Files.notExists(srcPath)) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         final List<Path> srcPaths = Files.walk(srcPath)
@@ -178,7 +160,7 @@ public class JavaCompileTask implements Task {
             ? new FileCacherImpl(subdirName) : new NullCacher();
 
         if (fileCacher.filesCached(srcPaths)) {
-            return TaskStatus.UP_TO_DATE;
+            return  complete(TaskStatus.UP_TO_DATE);
         }
 
         if (Files.notExists(buildDir)) {
@@ -195,7 +177,20 @@ public class JavaCompileTask implements Task {
 
         fileCacher.cacheFiles(srcPaths);
 
-        return TaskStatus.OK;
+        return  complete(TaskStatus.OK);
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch (compileTarget) {
+            case MAIN:
+                getProvidedProducts().complete("compilation", new CompilationProduct(buildDir));
+                return status;
+            case TEST:
+                getProvidedProducts().complete("testCompilation", new CompilationProduct(buildDir));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {

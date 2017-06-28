@@ -3,74 +3,77 @@ package jobt.plugin.java;
 import jobt.api.AbstractPlugin;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
-import jobt.api.ExecutionContext;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.TaskRegistry;
-import jobt.api.TaskTemplate;
 
 public class JavaPlugin extends AbstractPlugin {
 
     @Override
-    public void configure(final TaskRegistry taskRegistry) {
+    public void configure() {
         final BuildConfig buildConfig = getBuildConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
-        final ExecutionContext executionContext = getExecutionContext();
 
-        taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.MAIN));
-        taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, executionContext, CompileTarget.TEST));
-        taskRegistry.register("jar", new JavaAssembleTask(buildConfig));
-        taskRegistry.register("processResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN));
-        taskRegistry.register("processTestResources",
-            new ResourcesTask(runtimeConfiguration, CompileTarget.TEST));
-        taskRegistry.register("test", new JavaTestTask(executionContext));
-    }
+        task("provideSource")
+            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN))
+            .provides("source")
+            .register();
 
-    @Override
-    public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("compileJava").dependsOn(
-            taskTemplate.task("resolveCompileDependencies"));
+        task("provideTestSource")
+            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST))
+            .provides("testSource")
+            .register();
 
-        taskTemplate.task("processResources");
+        task("compileJava")
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN))
+            .provides("compilation")
+            .uses("source", "compileDependencies")
+            .register();
 
-        taskTemplate.task("classes").dependsOn(
-            taskTemplate.task("compileJava"),
-            taskTemplate.task("processResources"));
+        task("compileTestJava")
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST))
+            .provides("testCompilation")
+            .uses("compilation", "testSource", "testDependencies")
+            .register();
 
-        taskTemplate.task("javadoc").dependsOn(
-            taskTemplate.task("classes"));
+        task("assemble")
+            .impl(() -> new JavaAssembleTask(buildConfig))
+            .provides("jar", "sourcesJar")
+            .uses("source", "compilation")
+            .register();
 
-        taskTemplate.task("compileTestJava").dependsOn(
-            taskTemplate.task("resolveTestDependencies"),
-            taskTemplate.task("classes"));
+        task("provideResources")
+            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN))
+            .provides("resources")
+            .register();
 
-        taskTemplate.task("processTestResources");
+        task("provideTestResources")
+            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST))
+            .provides("testResources")
+            .register();
 
-        taskTemplate.task("testClasses").dependsOn(
-            taskTemplate.task("compileTestJava"),
-            taskTemplate.task("processTestResources"));
+        task("processResources")
+            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN))
+            .uses("resources")
+            .provides("processedResources")
+            .register();
 
-        taskTemplate.task("test").dependsOn(
-            taskTemplate.task("classes"),
-            taskTemplate.task("testClasses"));
+        task("processTestResources")
+            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.TEST))
+            .provides("processedTestResources")
+            .uses("testResources")
+            .register();
 
-        taskTemplate.task("check").dependsOn(
-            taskTemplate.task("test"));
+        task("runTest")
+            .impl(JavaTestTask::new)
+            .provides("test")
+            .uses("testDependencies", "processedResources", "compilation", "processedTestResources", "testCompilation")
+            .register();
 
-        taskTemplate.task("jar").dependsOn(
-            taskTemplate.task("classes"));
+        goal("check")
+            .register();
 
-        taskTemplate.task("uploadArchives").dependsOn(
-            taskTemplate.task("jar"));
-
-        taskTemplate.task("assemble").dependsOn(
-            taskTemplate.task("jar"));
-
-        taskTemplate.task("build").dependsOn(
-            taskTemplate.task("check"),
-            taskTemplate.task("assemble"));
+        goal("build")
+            .requires("jar", "sourcesJar", "test", "check")
+            .register();
     }
 
 }

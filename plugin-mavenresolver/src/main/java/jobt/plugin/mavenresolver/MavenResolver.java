@@ -22,6 +22,7 @@ import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
@@ -56,6 +57,7 @@ public class MavenResolver implements DependencyResolver {
     private RepositorySystem system;
     private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
+    private ProgressIndicator progressIndicator;
 
     public synchronized void init() {
         if (CUSTOM_PLUGINS_INITLATCH.getCount() == 0) {
@@ -69,6 +71,8 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
+        locator.setServices(RepositoryListener.class,
+            new ProgressLoggingRepositoryListener(progressIndicator));
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {
@@ -98,9 +102,14 @@ public class MavenResolver implements DependencyResolver {
         CUSTOM_PLUGINS_INITLATCH.countDown();
     }
 
+    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
+        this.progressIndicator = progressIndicator;
+    }
+
     @Override
     public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
         LOG.info("Resolve {} dependencies: {}", scope, deps);
+        progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
         try {
 
@@ -152,6 +161,7 @@ public class MavenResolver implements DependencyResolver {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
+        session.setTransferListener(new ProgressLoggingTransferListener(progressIndicator));
 
         final CollectRequest collectRequest = new CollectRequest();
 

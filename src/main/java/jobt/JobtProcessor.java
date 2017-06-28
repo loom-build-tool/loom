@@ -32,8 +32,8 @@ public class JobtProcessor {
         Stopwatch.stopProcess();
     }
 
-    public void execute(final String[] taskNames) throws Exception {
-        taskTemplate.execute(taskNames);
+    public void execute(final String[] productIds) throws Exception {
+        taskTemplate.execute(productIds);
     }
 
     public void clean() throws ExecutionException, InterruptedException {

@@ -1,45 +1,27 @@
 package jobt.plugin.findbugs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jobt.api.AbstractPlugin;
 import jobt.api.CompileTarget;
-import jobt.api.TaskRegistry;
-import jobt.api.TaskTemplate;
 
 public class FindbugsPlugin extends AbstractPlugin {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsPlugin.class);
-
     @Override
-    public void configure(final TaskRegistry taskRegistry) {
+    public void configure() {
+        task("findbugsMain")
+            .impl(() -> new FindbugsTask(getBuildConfig(), CompileTarget.MAIN))
+            .provides("findbugsMainReport")
+            .uses("source", "compileDependencies", "compilation")
+            .register();
 
-        taskRegistry.register(
-            "findbugsMain",
-            new FindbugsTask(getBuildConfig(), CompileTarget.MAIN, getExecutionContext()));
+        task("findbugsTest")
+            .impl(() -> new FindbugsTask(getBuildConfig(), CompileTarget.TEST))
+            .provides("findbugsTestReport")
+            .uses("testSource", "testDependencies", "compilation", "testCompilation")
+            .register();
 
-        taskRegistry.register(
-            "findbugsTest",
-            new FindbugsTask(getBuildConfig(), CompileTarget.TEST, getExecutionContext()));
-
-    }
-
-    @Override
-    public void configure(final TaskTemplate taskTemplate) {
-
-        taskTemplate.task("findbugsMain")
-            .dependsOn(taskTemplate.task("classes"));
-
-        taskTemplate.task("findbugsTest")
-            .dependsOn(
-                taskTemplate.task("classes"),
-                taskTemplate.task("testClasses"));
-
-        taskTemplate.task("check").dependsOn(
-            taskTemplate.task("findbugsMain"),
-            taskTemplate.task("findbugsTest"));
-
+        goal("check")
+            .requires("findbugsMainReport", "findbugsTestReport")
+            .register();
     }
 
 }

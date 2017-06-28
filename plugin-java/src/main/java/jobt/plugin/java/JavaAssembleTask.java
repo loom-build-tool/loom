@@ -12,38 +12,44 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import jobt.api.AbstractTask;
+import jobt.api.AssemblyProduct;
 import jobt.api.BuildConfig;
-import jobt.api.Task;
+import jobt.api.CompilationProduct;
+import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
-public class JavaAssembleTask implements Task {
+public class JavaAssembleTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private Manifest preparedManifest;
 
     public JavaAssembleTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
 
     @Override
-    public void prepare() throws Exception {
-        preparedManifest = prepareManifest();
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
+        final Manifest preparedManifest = prepareManifest();
+
         final Path buildDir = Paths.get("jobtbuild", "libs");
         Files.createDirectories(buildDir);
 
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        createJar(JavaCompileTask.BUILD_MAIN_PATH, jarFile, preparedManifest);
+        final CompilationProduct compilation = getUsedProducts().readProduct(
+            "compilation", CompilationProduct.class);
+        createJar(compilation.getClassesDir(), jarFile, preparedManifest);
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        createJar(JavaCompileTask.SRC_MAIN_PATH, sourceJarFile, null);
+        final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
+            "source", SourceTreeProduct.class);
+        createJar(sourceTree.getSrcDir(), sourceJarFile, null);
+
+        getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));
+        getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile));
 
         return TaskStatus.OK;
     }

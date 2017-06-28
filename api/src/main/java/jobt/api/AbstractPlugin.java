@@ -49,11 +49,6 @@ public abstract class AbstractPlugin implements Plugin {
         this.productRepository = productRepository;
     }
 
-    public final ProvidedProducts provides(final String... productIdLists) {
-        return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
-    }
-
     protected TaskBuilder task(final String taskName) {
         return new TaskBuilder(taskName);
     }
@@ -66,20 +61,15 @@ public abstract class AbstractPlugin implements Plugin {
 
         private final String taskName;
         private Supplier<Task> taskSupplier;
-        private Set<String> usedProducts;
         private Set<String> providedProducts;
+        private Set<String> usedProducts;
 
         public TaskBuilder(final String taskName) {
-            this.taskName = Objects.requireNonNull(taskName);
+            this.taskName = taskName;
         }
 
         public TaskBuilder impl(final Supplier<Task> taskSupplier) {
             this.taskSupplier = taskSupplier;
-            return this;
-        }
-
-        public TaskBuilder uses(final String... products) {
-            usedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
             return this;
         }
 
@@ -88,7 +78,16 @@ public abstract class AbstractPlugin implements Plugin {
             return this;
         }
 
+        public TaskBuilder uses(final String... products) {
+            usedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return this;
+        }
+
         public void register() {
+            Objects.requireNonNull(taskName, "taskName must be specified");
+            Objects.requireNonNull(taskSupplier, "taskSupplier must be specified");
+            Objects.requireNonNull(providedProducts, "providedProducts must be specified");
+
             taskRegistry.registerOnce(taskName, taskSupplier.get(),
                 new ProvidedProducts(providedProducts, productRepository));
 
@@ -111,7 +110,7 @@ public abstract class AbstractPlugin implements Plugin {
         private Set<String> usedProducts;
 
         public GoalBuilder(final String goalName) {
-            this.goalName = Objects.requireNonNull(goalName);
+            this.goalName = goalName;
         }
 
         public GoalBuilder requires(final String... products) {
@@ -120,6 +119,8 @@ public abstract class AbstractPlugin implements Plugin {
         }
 
         public void register() {
+            Objects.requireNonNull(goalName, "goalName must be specified");
+
             taskRegistry.register(goalName, new WaitForAllProductsTask(),
                 new ProvidedProducts(Collections.emptySet(), productRepository));
 

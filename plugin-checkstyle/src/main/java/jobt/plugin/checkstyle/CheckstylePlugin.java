@@ -9,14 +9,14 @@ public class CheckstylePlugin extends AbstractPlugin {
     public void configure() {
         task("checkstyleMain")
             .impl(() -> new CheckstyleTask(CompileTarget.MAIN))
-            .uses("source", "compileDependencies")
             .provides("checkstyleMainReport")
+            .uses("source", "compileDependencies")
             .register();
 
         task("checkstyleTest")
             .impl(() -> new CheckstyleTask(CompileTarget.TEST))
-            .uses("testSource", "testDependencies")
             .provides("checkstyleTestReport")
+            .uses("testSource", "testDependencies")
             .register();
 
         goal("check")

@@ -24,20 +24,20 @@ public class JavaPlugin extends AbstractPlugin {
 
         task("compileJava")
             .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN))
-            .uses("source", "compileDependencies")
             .provides("compilation")
+            .uses("source", "compileDependencies")
             .register();
 
         task("compileTestJava")
             .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST))
-            .uses("compilation", "testSource", "testDependencies")
             .provides("testCompilation")
+            .uses("compilation", "testSource", "testDependencies")
             .register();
 
         task("assemble")
             .impl(() -> new JavaAssembleTask(buildConfig))
-            .uses("source", "compilation")
             .provides("jar", "sourcesJar")
+            .uses("source", "compilation")
             .register();
 
         task("provideResources")
@@ -58,14 +58,14 @@ public class JavaPlugin extends AbstractPlugin {
 
         task("processTestResources")
             .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.TEST))
-            .uses("testResources")
             .provides("processedTestResources")
+            .uses("testResources")
             .register();
 
         task("runTest")
             .impl(JavaTestTask::new)
-            .uses("testDependencies", "processedResources", "compilation", "processedTestResources", "testCompilation")
             .provides("test")
+            .uses("testDependencies", "processedResources", "compilation", "processedTestResources", "testCompilation")
             .register();
 
         goal("check")

@@ -8,8 +8,8 @@ public class IdeaPlugin extends AbstractPlugin {
     public void configure() {
         task("configureIdea")
             .impl(() -> new IdeaTask(getBuildConfig()))
-            .uses("compileDependencies", "testDependencies")
             .provides("idea")
+            .uses("compileDependencies", "testDependencies")
             .register();
     }
 

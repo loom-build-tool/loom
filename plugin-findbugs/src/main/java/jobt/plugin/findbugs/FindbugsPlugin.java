@@ -9,14 +9,14 @@ public class FindbugsPlugin extends AbstractPlugin {
     public void configure() {
         task("findbugsMain")
             .impl(() -> new FindbugsTask(getBuildConfig(), CompileTarget.MAIN))
-            .uses("source", "compileDependencies", "compilation")
             .provides("findbugsMainReport")
+            .uses("source", "compileDependencies", "compilation")
             .register();
 
         task("findbugsTest")
             .impl(() -> new FindbugsTask(getBuildConfig(), CompileTarget.TEST))
-            .uses("testSource", "testDependencies", "compilation", "testCompilation")
             .provides("findbugsTestReport")
+            .uses("testSource", "testDependencies", "compilation", "testCompilation")
             .register();
 
         goal("check")

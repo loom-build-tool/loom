@@ -15,7 +15,7 @@ public final class BiSectFilteringClassLoader extends ClassLoader {
 
     // please add DOTs
     private static final List<String> WHITELISTED_PACKAGES =
-        Arrays.asList("org.slf4j.", "jobt.api.");
+        Arrays.asList("org.slf4j.", "jobt.api.", "jobt.util.");
 
     private final ClassLoader appClassLoader;
 

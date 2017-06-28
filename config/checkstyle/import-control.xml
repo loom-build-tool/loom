@@ -16,8 +16,10 @@
 
     <allow pkg="com.puppycrawl.tools"/>
     <allow pkg="ch.qos.logback"/>
-    
+
     <allow pkg="edu.umd.cs.findbugs"/>
+
+    <allow pkg="nu.xom"/>
 
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>

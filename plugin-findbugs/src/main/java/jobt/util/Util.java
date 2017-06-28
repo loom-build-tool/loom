@@ -1,14 +1,6 @@
 package jobt.util;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Path;
-
 public final class Util {
-
-    private static final RuntimeMXBean MX_BEAN = ManagementFactory.getRuntimeMXBean();
 
     private static final char EXTENSION_SEPARATOR = '.';
 
@@ -17,21 +9,6 @@ public final class Util {
     private static final char WINDOWS_SEPARATOR = '\\';
 
     private Util() {
-    }
-
-    public static URL toUrl(final Path file) {
-        try {
-            return file.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    /**
-     * Returns the uptime of the Java virtual machine in milliseconds.
-     */
-    public static long jvmUptime() {
-        return MX_BEAN.getUptime();
     }
 
     public static String getFileExtension(final String filename) {

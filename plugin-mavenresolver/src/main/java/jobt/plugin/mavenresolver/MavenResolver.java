@@ -45,6 +45,7 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import jobt.api.DependencyScope;
+import jobt.util.Hasher;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver implements DependencyResolver {
@@ -134,9 +135,9 @@ public class MavenResolver implements DependencyResolver {
 
     private List<Path> readCache(final List<String> deps, final DependencyScope scope)
         throws IOException {
-        final Path path = Paths.get(".jobt", mavenScope(scope) + "-dependencies");
-        if (Files.exists(path)) {
-            final List<String> strings = Files.readAllLines(path);
+        final Path cacheFile = resolveCacheFile(scope);
+        if (Files.exists(cacheFile)) {
+            final List<String> strings = Files.readAllLines(cacheFile);
             final String[] split = strings.get(0).split("\t");
 
             final String hash = Hasher.hash(deps);
@@ -147,6 +148,12 @@ public class MavenResolver implements DependencyResolver {
         }
 
         return Collections.emptyList();
+    }
+
+    private Path resolveCacheFile(final DependencyScope scope) throws IOException {
+        final Path cacheDir = Files.createDirectories(
+            Paths.get(".jobt", "cache", "mavenresolver"));
+        return cacheDir.resolve(mavenScope(scope) + "-dependencies.cache");
     }
 
     private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope)
@@ -204,15 +211,11 @@ public class MavenResolver implements DependencyResolver {
 
     private void writeCache(final List<String> deps, final DependencyScope scope,
                             final List<Path> files) throws IOException {
-        final Path buildDir = Paths.get(".jobt");
-        Files.createDirectories(buildDir);
-
         final String sb = Hasher.hash(deps) + '\t' + files.stream()
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
-        Files.write(Paths.get(".jobt", mavenScope(scope) + "-dependencies"),
-            Collections.singletonList(sb),
+        Files.write(resolveCacheFile(scope), Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 

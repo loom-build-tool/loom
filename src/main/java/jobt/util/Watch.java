@@ -2,7 +2,7 @@ package jobt.util;
 
 public class Watch {
 
-    private long startTime = System.nanoTime();
+    private final long startTime = System.nanoTime();
     private long duration;
 
     public void stop() {

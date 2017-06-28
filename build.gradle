@@ -35,10 +35,12 @@ allprojects {
 
 dependencies {
     compile project(':api')
+    compile project(':util')
     runtimeOnly project(':plugin-java')
     runtimeOnly project(':plugin-checkstyle')
     runtimeOnly project(':plugin-findbugs')
     runtimeOnly project(':plugin-mavenresolver')
+    runtimeOnly project(':plugin-idea')
     compile('ch.qos.logback:logback-classic:1.1.7')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
@@ -74,6 +76,10 @@ task zip(type: Zip) {
     into("plugin-findbugs") {
         from project(':plugin-findbugs').configurations.runtime.allArtifacts.files
         from project(':plugin-findbugs').configurations.runtime
+    }
+    into("plugin-idea") {
+        from project(':plugin-idea').configurations.runtime.allArtifacts.files
+        from project(':plugin-idea').configurations.runtime
     }
     into("scripts") {
         from 'scripts/build.yml'

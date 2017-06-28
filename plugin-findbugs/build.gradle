@@ -2,6 +2,7 @@ apply plugin: 'java'
 
 dependencies {
     compileOnly project(':api')
+    compileOnly project(':util')
     compile('com.google.code.findbugs:findbugs:3.0.1')
     compile('com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0')
     compile('com.mebigfatguy.fb-contrib:fb-contrib:7.0.2')

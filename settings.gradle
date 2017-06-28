@@ -1,5 +1,7 @@
 include 'api'
+include 'util'
 include 'plugin-java'
 include 'plugin-mavenresolver'
 include 'plugin-checkstyle'
 include 'plugin-findbugs'
+include 'plugin-idea'

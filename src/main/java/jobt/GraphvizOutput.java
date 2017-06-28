@@ -6,14 +6,11 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import jobt.api.TaskGraphNode;
+import jobt.api.ProductGraphNode;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public final class GraphvizOutput {
@@ -45,31 +42,27 @@ public final class GraphvizOutput {
         pw.println("    graph [splines=ortho, nodesep=1];");
         pw.println("    node [shape=rectangle];");
 
-        final Set<String> standaloneTasks = new HashSet<>(tasks.keySet());
         for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
+            final String taskName = entry.getKey();
 
-            final List<TaskGraphNode> dependencies = entry.getValue().getDependentNodes();
-            if (!dependencies.isEmpty()) {
-                standaloneTasks.remove(entry.getKey());
-                for (final TaskGraphNode task : dependencies) {
-                    standaloneTasks.remove(task.getName());
-                }
-            }
-        }
-
-        for (final String standaloneTask : standaloneTasks) {
-            writeKeyValue(pw, standaloneTask, Collections.emptyList());
-        }
-
-        for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
-            final List<String> dependencies = entry.getValue().getDependentNodes().stream()
-                .map(TaskGraphNode::getName)
+            final List<String> providedProducts =
+                entry.getValue().getProvidedProductNodes().stream()
+                .map(n -> n.getProductId())
+                .map(p -> "product_" + p) // FIXME
                 .collect(Collectors.toList());
 
-            if (!dependencies.isEmpty()) {
-                writeKeyValue(pw, entry.getKey(), dependencies);
-            }
+            final List<String> usedProducts = entry.getValue().getUsedProductNodes().stream()
+                .map(ProductGraphNode::getProductId)
+                .map(p -> "product_" + p) // FIXME
+                .collect(Collectors.toList());
+
+            // task -> provided products
+            writeKeyValue(pw, taskName, providedProducts);
+
+            // task -> used products
+            writeKeyValue(pw, taskName, usedProducts);
         }
+
         pw.println("}");
     }
 

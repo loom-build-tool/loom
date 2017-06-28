@@ -1,6 +1,5 @@
 package jobt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,8 +11,6 @@ import jobt.api.TaskGraphNode;
 public class TaskGraphNodeImpl implements TaskGraphNode {
 
     private final String name;
-    // TODO remove
-    private final List<TaskGraphNode> dependentNodes = new ArrayList<>();
     private final List<ProductGraphNode> providedProductNodes = new CopyOnWriteArrayList<>();
     private final List<ProductGraphNode> usedProductNodes = new CopyOnWriteArrayList<>();
 
@@ -24,11 +21,6 @@ public class TaskGraphNodeImpl implements TaskGraphNode {
     @Override
     public String getName() {
         return name;
-    }
-
-    @Deprecated
-    public List<TaskGraphNode> getDependentNodes() {
-        return Collections.unmodifiableList(dependentNodes);
     }
 
     @Override

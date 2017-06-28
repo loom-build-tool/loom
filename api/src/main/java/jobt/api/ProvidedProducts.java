@@ -9,8 +9,6 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jobt.util.Preconditions;
-
 /**
  * Sink for provided products from upstream task.
  */
@@ -28,10 +26,7 @@ public class ProvidedProducts {
         final Set<String> producedProductIds,
         final ProductRepository productRepository) {
         Objects.requireNonNull(producedProductIds);
-        producedProductIds.forEach(id ->
-            Preconditions.checkState(
-                PATTERN.matcher(id).matches(),
-                "Invalid format of product id <%s>", id));
+        producedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
         this.producedProductIds = Collections.unmodifiableSet(
             new HashSet<>(producedProductIds));
@@ -68,4 +63,10 @@ public class ProvidedProducts {
         return producedProductIds;
     }
 
+    public static void validateProductIdFormat(final String id) {
+        if (!ProvidedProducts.PATTERN.matcher(id).matches()) {
+            throw new IllegalArgumentException(
+                String.format("Invalid format of product id <%s>", id));
+        }
+    }
 }

@@ -8,8 +8,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jobt.util.Preconditions;
-
 /**
  * Read-only view to products.
  */
@@ -25,10 +23,7 @@ public class UsedProducts {
         final Set<String> allowedProductIds,
         final ProductRepository productRepository) {
         Objects.requireNonNull(allowedProductIds);
-        allowedProductIds.forEach(id ->
-            Preconditions.checkState(
-                ProvidedProducts.PATTERN.matcher(id).matches(),
-                "Invalid format of product id <%s>", id));
+        allowedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
         this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
         this.productRepository = productRepository;

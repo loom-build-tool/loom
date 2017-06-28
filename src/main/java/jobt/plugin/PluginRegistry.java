@@ -151,11 +151,12 @@ public class PluginRegistry {
 
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
+        regPlugin.setTaskRegistry(taskRegistry);
+        regPlugin.setTaskTemplate(taskTemplate);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         regPlugin.setProductRepository(productRepository);
-        regPlugin.configure(taskTemplate);
-        regPlugin.configure(taskRegistry);
+        regPlugin.configure();
 
         LOG.info("Plugin {} initialized", plugin);
     }

@@ -9,14 +9,16 @@ package jobt.api;
  */
 public interface Plugin {
 
+    void setTaskRegistry(TaskRegistry taskRegistry);
+
+    void setTaskTemplate(TaskTemplate taskTemplate);
+
     void setBuildConfig(BuildConfig buildConfig);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 
     void setProductRepository(ProductRepository productRepository);
 
-    void configure(TaskRegistry taskRegistry);
-
-    void configure(TaskTemplate taskTemplate);
+    void configure();
 
 }

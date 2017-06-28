@@ -16,7 +16,7 @@ public class TaskRegistryImpl implements TaskRegistry {
     private final Map<String, ProvidedProducts> taskProductsMap = new ConcurrentHashMap<>();
 
     @Override
-    public void register(
+    public void registerOnce(
         final String name, final Task task, final ProvidedProducts providedProducts) {
         Objects.requireNonNull(task);
         Objects.requireNonNull(providedProducts);
@@ -28,7 +28,16 @@ public class TaskRegistryImpl implements TaskRegistry {
         }
 
         task.setProvidedProducts(providedProducts);
+    }
 
+    @Override
+    public void register(
+        final String name, final Task task, final ProvidedProducts providedProducts) {
+        Objects.requireNonNull(task);
+        Objects.requireNonNull(providedProducts);
+        taskMap.putIfAbsent(name, task);
+        taskProductsMap.putIfAbsent(name, providedProducts);
+        task.setProvidedProducts(providedProducts);
     }
 
     Set<String> taskNames() {

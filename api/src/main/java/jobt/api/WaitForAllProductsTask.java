@@ -1,7 +1,4 @@
-package jobt.plugin.java;
-
-import jobt.api.AbstractTask;
-import jobt.api.TaskStatus;
+package jobt.api;
 
 public class WaitForAllProductsTask extends AbstractTask {
 

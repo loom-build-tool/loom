@@ -4,99 +4,76 @@ import jobt.api.AbstractPlugin;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.TaskRegistry;
-import jobt.api.TaskTemplate;
 
 public class JavaPlugin extends AbstractPlugin {
 
     @Override
-    public void configure(final TaskRegistry taskRegistry) {
+    public void configure() {
         final BuildConfig buildConfig = getBuildConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
-        taskRegistry.register("provideSource",
-            new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN), provides("source")
-        );
+        task("provideSource")
+            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN))
+            .provides("source")
+            .register();
 
-        taskRegistry.register("provideTestSource",
-            new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST), provides("testSource")
-        );
+        task("provideTestSource")
+            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST))
+            .provides("testSource")
+            .register();
 
-        taskRegistry.register("compileJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, CompileTarget.MAIN), provides("compilation"));
+        task("compileJava")
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN))
+            .uses("source", "compileDependencies")
+            .provides("compilation")
+            .register();
 
-        taskRegistry.register("compileTestJava", new JavaCompileTask(buildConfig,
-            runtimeConfiguration, CompileTarget.TEST), provides("testCompilation"));
+        task("compileTestJava")
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST))
+            .uses("compilation", "testSource", "testDependencies")
+            .provides("testCompilation")
+            .register();
 
-        taskRegistry.register("assemble",
-            new JavaAssembleTask(buildConfig), provides("jar", "sourcesJar"));
+        task("assemble")
+            .impl(() -> new JavaAssembleTask(buildConfig))
+            .uses("source", "compilation")
+            .provides("jar", "sourcesJar")
+            .register();
 
-        taskRegistry.register("provideResources",
-            new JavaProvideResourcesDirTask(
-                buildConfig, CompileTarget.MAIN), provides("resources"));
+        task("provideResources")
+            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN))
+            .provides("resources")
+            .register();
 
-        taskRegistry.register("provideTestResources",
-            new JavaProvideResourcesDirTask(
-                buildConfig, CompileTarget.TEST), provides("testResources"));
+        task("provideTestResources")
+            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST))
+            .provides("testResources")
+            .register();
 
-        taskRegistry.register("processResources",
-            new ResourcesTask(runtimeConfiguration,
-                CompileTarget.MAIN), provides("processedResources"));
+        task("processResources")
+            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN))
+            .uses("resources")
+            .provides("processedResources")
+            .register();
 
-        taskRegistry.register("processTestResources",
-            new ResourcesTask(runtimeConfiguration,
-                CompileTarget.TEST), provides("processedTestResources"));
+        task("processTestResources")
+            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.TEST))
+            .uses("testResources")
+            .provides("processedTestResources")
+            .register();
 
-        taskRegistry.register("runTest", new JavaTestTask(), provides("test"));
+        task("runTest")
+            .impl(JavaTestTask::new)
+            .uses("testDependencies", "processedResources", "compilation", "processedTestResources", "testCompilation")
+            .provides("test")
+            .register();
 
-        taskRegistry.register("check", new WaitForAllProductsTask(), provides());
+        goal("check")
+            .register();
 
-        taskRegistry.register("build", new WaitForAllProductsTask(), provides());
-    }
-
-    @Override
-    public void configure(final TaskTemplate taskTemplate) {
-
-        taskTemplate.task("compileJava")
-            .uses(
-                taskTemplate.product("source"),
-                taskTemplate.product("compileDependencies"));
-
-        taskTemplate.task("processResources")
-            .uses(
-                taskTemplate.product("resources"));
-
-        taskTemplate.task("compileTestJava").uses(
-            taskTemplate.product("compilation"),
-            taskTemplate.product("testSource"),
-            taskTemplate.product("testDependencies"));
-
-        taskTemplate.task("processTestResources")
-            .uses(
-                taskTemplate.product("testResources"));
-
-        taskTemplate.task("runTest").uses(
-            taskTemplate.product("testDependencies"),
-            taskTemplate.product("processedResources"),
-            taskTemplate.product("compilation"),
-            taskTemplate.product("processedTestResources"),
-            taskTemplate.product("testCompilation")
-        );
-
-        taskTemplate.virtualProduct("check")
-            .uses();
-
-        taskTemplate.task("assemble").uses(
-            taskTemplate.product("source"),
-            taskTemplate.product("compilation")
-        );
-
-        taskTemplate.virtualProduct("build").uses(
-            taskTemplate.product("jar"),
-            taskTemplate.product("sourcesJar"),
-            taskTemplate.product("test"),
-            taskTemplate.product("check")
-        );
+        goal("build")
+            .requires("jar", "sourcesJar", "test", "check")
+            .register();
     }
 
 }

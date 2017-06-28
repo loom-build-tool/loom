@@ -1,9 +1,7 @@
 package jobt.plugin;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jobt.api.ProductPromise;
@@ -12,11 +10,6 @@ import jobt.api.ProductRepository;
 public class ProductRepositoryImpl implements ProductRepository {
 
     private final Map<String, ProductPromise> products = new ConcurrentHashMap<>();
-
-    @Override
-    public Set<String> getProductIds() {
-        return Collections.unmodifiableSet(products.keySet());
-    }
 
     @Override
     public ProductPromise lookup(final String productId) {

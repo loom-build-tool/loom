@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.junit.Test;
 
@@ -98,11 +97,6 @@ public class ProductsTest {
     private static class ProductRepositoryDummy implements ProductRepository {
 
         private final Map<String, ProductPromise> products = new HashMap<>();
-
-        @Override
-        public Set<String> getProductIds() {
-            return products.keySet();
-        }
 
         @Override
         public ProductPromise lookup(final String productId) {

@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
-import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.ResourcesTreeProduct;
 import jobt.api.TaskStatus;
@@ -13,12 +12,9 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");
     private static final Path SRC_TESTRES_PATH = Paths.get("src", "test", "resources");
 
-    private final BuildConfig buildConfig;
     private final CompileTarget compileTarget;
 
-    public JavaProvideResourcesDirTask(
-        final BuildConfig buildConfig, final CompileTarget compileTarget) {
-        this.buildConfig = buildConfig;
+    public JavaProvideResourcesDirTask(final CompileTarget compileTarget) {
         this.compileTarget = compileTarget;
     }
 

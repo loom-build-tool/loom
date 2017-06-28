@@ -1,6 +1,6 @@
 package jobt.api;
 
-public abstract class AbstractTask implements Task {
+public abstract class AbstractTask implements Task, ProductDependenciesAware {
 
     private ProvidedProducts providedProducts;
     private UsedProducts usedProducts;

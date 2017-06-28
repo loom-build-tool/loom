@@ -9,11 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jobt.api.ProductGraphNode;
+import jobt.plugin.ConfiguredTask;
+import jobt.plugin.TaskRegistryLookup;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public final class GraphvizOutput {
@@ -21,13 +21,13 @@ public final class GraphvizOutput {
     private GraphvizOutput() {
     }
 
-    public static void generateDot(final Map<String, TaskGraphNodeImpl> tasks) {
+    public static void generateDot(final TaskRegistryLookup taskRegistryLookup) {
         try {
             final Path reportDir = Files.createDirectories(Paths.get("jobtbuild", "reports"));
             final Path tasksFile = reportDir.resolve(Paths.get("tasks.dot"));
 
             try (PrintWriter pw = new PrintWriter(tasksFile.toFile(), "UTF-8")) {
-                writeTasks(tasks, pw);
+                writeTasks(taskRegistryLookup, pw);
             }
 
             System.out.println("Task overview written to " + tasksFile);
@@ -38,7 +38,7 @@ public final class GraphvizOutput {
         }
     }
 
-    private static void writeTasks(final Map<String, TaskGraphNodeImpl> tasks,
+    private static void writeTasks(final TaskRegistryLookup taskRegistryLookup,
                                    final PrintWriter pw) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintWriter graphBuffer = new PrintWriter(out);
@@ -48,20 +48,17 @@ public final class GraphvizOutput {
 
         final Set<String> allProducts = new HashSet<>();
 
-        for (final Map.Entry<String, TaskGraphNodeImpl> entry : tasks.entrySet()) {
-            final String taskName = entry.getKey();
-
+        final Set<String> allTaskNames = taskRegistryLookup.getTaskNames();
+        for (final String taskName : allTaskNames) {
+            final ConfiguredTask configuredTask = taskRegistryLookup.lookupTask(taskName);
             final List<String> providedProducts =
-                entry.getValue().getProvidedProductNodes().stream()
-                .map(n -> n.getProductId())
+                configuredTask.getProvidedProducts().stream()
                 .map(p -> "produced_" + p) // FIXME
                 .collect(Collectors.toList());
 
-            final List<String> usedProducts = entry.getValue().getUsedProductNodes().stream()
-                .map(ProductGraphNode::getProductId)
-                .map(p -> "product_"+taskName+"__" + p) // FIXME
+            final List<String> usedProducts = configuredTask.getUsedProducts().stream()
+                .map(p -> "product_" + taskName + "__" + p) // FIXME
                 .collect(Collectors.toList());
-
 
             allProducts.addAll(providedProducts);
             allProducts.addAll(usedProducts);
@@ -73,7 +70,7 @@ public final class GraphvizOutput {
             writeKeyValue(graphBuffer, taskName, usedProducts);
         }
 
-        pw.println("    node [shape=rectangle]; " + String.join(";", tasks.keySet()));
+        pw.println("    node [shape=rectangle]; " + String.join(";", allTaskNames));
         pw.println("    node [shape=oval]; " + String.join(";", allProducts));
 
         graphBuffer.flush();

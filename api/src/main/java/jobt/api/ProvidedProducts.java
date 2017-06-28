@@ -22,23 +22,15 @@ public class ProvidedProducts {
 
     private final Set<String> producedProductIds;
 
-    public ProvidedProducts(
-        final Set<String> producedProductIds,
-        final ProductRepository productRepository) {
+    public ProvidedProducts(final Set<String> producedProductIds,
+                            final ProductRepository productRepository) {
+
         Objects.requireNonNull(producedProductIds);
         producedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
-        this.producedProductIds = Collections.unmodifiableSet(
-            new HashSet<>(producedProductIds));
+
+        this.producedProductIds = Collections.unmodifiableSet(new HashSet<>(producedProductIds));
         this.productRepository = productRepository;
-
-        registerProducts();
-    }
-
-    private void registerProducts() {
-        for (final String productId : producedProductIds) {
-            productRepository.createProduct(productId);
-        }
     }
 
     public <T extends Product> void complete(final String productId, final T value) {

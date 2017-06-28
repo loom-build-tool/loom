@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
-import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.SourceTreeProduct;
 import jobt.api.TaskStatus;
@@ -14,12 +13,9 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     private static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
     private static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
 
-    private final BuildConfig buildConfig;
     private final CompileTarget compileTarget;
 
-    public JavaProvideSourceDirTask(
-        final BuildConfig buildConfig, final CompileTarget compileTarget) {
-        this.buildConfig = buildConfig;
+    public JavaProvideSourceDirTask(final CompileTarget compileTarget) {
         this.compileTarget = compileTarget;
     }
 

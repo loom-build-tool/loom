@@ -13,12 +13,12 @@ public class JavaPlugin extends AbstractPlugin {
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         task("provideSource")
-            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.MAIN))
+            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
             .provides("source")
             .register();
 
         task("provideTestSource")
-            .impl(() -> new JavaProvideSourceDirTask(buildConfig, CompileTarget.TEST))
+            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.TEST))
             .provides("testSource")
             .register();
 
@@ -41,12 +41,12 @@ public class JavaPlugin extends AbstractPlugin {
             .register();
 
         task("provideResources")
-            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.MAIN))
+            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.MAIN))
             .provides("resources")
             .register();
 
         task("provideTestResources")
-            .impl(() -> new JavaProvideResourcesDirTask(buildConfig, CompileTarget.TEST))
+            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.TEST))
             .provides("testResources")
             .register();
 
@@ -69,6 +69,7 @@ public class JavaPlugin extends AbstractPlugin {
             .register();
 
         goal("check")
+            .requires("test")
             .register();
 
         goal("build")

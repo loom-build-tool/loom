@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class FileCacherImpl implements FileCacher {
 
-    private Path cacheFile;
+    private final Path cacheFile;
 
     public FileCacherImpl(final String type) throws IOException {
         final Path path = Paths.get(".jobt/", "cache", "java");

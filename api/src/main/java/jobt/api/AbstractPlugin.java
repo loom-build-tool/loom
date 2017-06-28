@@ -11,19 +11,12 @@ import java.util.function.Supplier;
 public abstract class AbstractPlugin implements Plugin {
 
     private TaskRegistry taskRegistry;
-    private TaskTemplate taskTemplate;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
-    private ProductRepository productRepository;
 
     @Override
     public void setTaskRegistry(final TaskRegistry taskRegistry) {
         this.taskRegistry = taskRegistry;
-    }
-
-    @Override
-    public void setTaskTemplate(final TaskTemplate taskTemplate) {
-        this.taskTemplate = taskTemplate;
     }
 
     @Override
@@ -44,11 +37,6 @@ public abstract class AbstractPlugin implements Plugin {
         return runtimeConfiguration;
     }
 
-    @Override
-    public void setProductRepository(final ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
-
     protected TaskBuilder task(final String taskName) {
         return new TaskBuilder(taskName);
     }
@@ -62,7 +50,7 @@ public abstract class AbstractPlugin implements Plugin {
         private final String taskName;
         private Supplier<Task> taskSupplier;
         private Set<String> providedProducts;
-        private Set<String> usedProducts;
+        private Set<String> usedProducts = Collections.emptySet();
 
         public TaskBuilder(final String taskName) {
             this.taskName = taskName;
@@ -84,22 +72,7 @@ public abstract class AbstractPlugin implements Plugin {
         }
 
         public void register() {
-            Objects.requireNonNull(taskName, "taskName must be specified");
-            Objects.requireNonNull(taskSupplier, "taskSupplier must be specified");
-            Objects.requireNonNull(providedProducts, "providedProducts must be specified");
-
-            taskRegistry.registerOnce(taskName, taskSupplier.get(),
-                new ProvidedProducts(providedProducts, productRepository));
-
-            final TaskGraphNode task = taskTemplate.task(taskName);
-
-            if (usedProducts != null) {
-                final ProductGraphNode[] productGraphNodes = usedProducts.stream()
-                    .map(taskTemplate::product)
-                    .toArray(ProductGraphNode[]::new);
-
-                task.uses(productGraphNodes);
-            }
+            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
         }
 
     }
@@ -107,7 +80,7 @@ public abstract class AbstractPlugin implements Plugin {
     protected class GoalBuilder {
 
         private final String goalName;
-        private Set<String> usedProducts;
+        private Set<String> usedProducts = Collections.emptySet();
 
         public GoalBuilder(final String goalName) {
             this.goalName = goalName;
@@ -119,20 +92,7 @@ public abstract class AbstractPlugin implements Plugin {
         }
 
         public void register() {
-            Objects.requireNonNull(goalName, "goalName must be specified");
-
-            taskRegistry.register(goalName, new WaitForAllProductsTask(),
-                new ProvidedProducts(Collections.emptySet(), productRepository));
-
-            final TaskGraphNode taskGraphNode = taskTemplate.virtualProduct(goalName);
-
-            if (usedProducts != null) {
-                final ProductGraphNode[] productGraphNodes = usedProducts.stream()
-                    .map(taskTemplate::product)
-                    .toArray(ProductGraphNode[]::new);
-
-                taskGraphNode.uses(productGraphNodes);
-            }
+            taskRegistry.registerGoal(goalName, usedProducts);
         }
 
     }

@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -15,11 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.config.BuildConfigImpl;
+import jobt.plugin.PluginRegistry;
+import jobt.plugin.TaskRegistryImpl;
+import jobt.plugin.TaskRegistryLookup;
 import jobt.util.Stopwatch;
 
 public class JobtProcessor {
 
-    private TaskTemplateImpl taskTemplate;
+    private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
 
     static {
         System.setProperty("jobt.version", Version.getVersion());
@@ -28,12 +33,13 @@ public class JobtProcessor {
     public void init(final BuildConfigImpl buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
         Stopwatch.startProcess("Initialize plugins");
-        taskTemplate = new TaskTemplateImpl(buildConfig, runtimeConfiguration);
+        new PluginRegistry(buildConfig, runtimeConfiguration, taskRegistry).initPlugins();
         Stopwatch.stopProcess();
     }
 
     public void execute(final String[] productIds) throws Exception {
-        taskTemplate.execute(productIds);
+        final TaskRunner taskRunner = new TaskRunner(taskRegistry);
+        taskRunner.execute(new HashSet<>(Arrays.asList(productIds)));
     }
 
     public void clean() throws ExecutionException, InterruptedException {
@@ -81,11 +87,11 @@ public class JobtProcessor {
     }
 
     public Set<String> getAvailableTaskNames() {
-        return taskTemplate.getAvailableTaskNames();
+        return taskRegistry.getTaskNames();
     }
 
     public void generateDotTaskOverview() {
-        GraphvizOutput.generateDot(taskTemplate.getTasks());
+        GraphvizOutput.generateDot(taskRegistry);
     }
 
 }

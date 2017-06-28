@@ -36,9 +36,6 @@ public class JavaTestTask extends AbstractTask {
 
     private static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "tests");
 
-    public JavaTestTask() {
-    }
-
     @Override
     public TaskStatus run() throws Exception {
         final CompilationProduct testCompilation = getUsedProducts().readProduct(

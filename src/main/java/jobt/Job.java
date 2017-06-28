@@ -7,8 +7,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.ProductDependenciesAware;
+import jobt.api.ProductRepository;
+import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
+import jobt.api.UsedProducts;
+import jobt.plugin.ConfiguredTask;
 import jobt.util.Stopwatch;
 
 public class Job implements Callable<TaskStatus> {
@@ -17,11 +22,15 @@ public class Job implements Callable<TaskStatus> {
 
     private final String name;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
-    private final Task task;
+    private final ConfiguredTask configuredTask;
+    private final ProductRepository productRepository;
 
-    Job(final String name, final Task task) {
+    Job(final String name, final ConfiguredTask configuredTask,
+        final ProductRepository productRepository) {
         this.name = Objects.requireNonNull(name, "name required");
-        this.task = Objects.requireNonNull(task, "task required");
+        this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
+        this.productRepository =
+            Objects.requireNonNull(productRepository, "productRepository required");
     }
 
     public String getName() {
@@ -36,7 +45,6 @@ public class Job implements Callable<TaskStatus> {
     public TaskStatus call() throws Exception {
         status.set(JobStatus.RUNNING);
         final TaskStatus taskStatus = runTask();
-
         status.set(JobStatus.STOPPED);
 
         return taskStatus;
@@ -46,11 +54,23 @@ public class Job implements Callable<TaskStatus> {
         LOG.info("Start task {}", name);
 
         Stopwatch.startProcess("Task " + name);
+        final Task task = configuredTask.getTaskSupplier().get();
+        injectTaskProperties(task);
         final TaskStatus taskStatus = task.run();
         Stopwatch.stopProcess();
 
         LOG.info("Task {} resulted with {}", name, taskStatus);
         return taskStatus;
+    }
+
+    private void injectTaskProperties(final Task task) {
+        if (task instanceof ProductDependenciesAware) {
+            final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
+            pdaTask.setProvidedProducts(
+                new ProvidedProducts(configuredTask.getProvidedProducts(), productRepository));
+            pdaTask.setUsedProducts(
+                new UsedProducts(configuredTask.getUsedProducts(), productRepository));
+        }
     }
 
     @Override

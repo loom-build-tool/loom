@@ -1,11 +1,14 @@
 package jobt.api;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin implements Plugin {
 
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
-    private ExecutionContext executionContext;
+    private ProductRepository productRepository;
 
     @Override
     public void setBuildConfig(final BuildConfig buildConfig) {
@@ -26,12 +29,13 @@ public abstract class AbstractPlugin implements Plugin {
     }
 
     @Override
-    public void setExecutionContext(final ExecutionContext executionContext) {
-        this.executionContext = executionContext;
+    public void setProductRepository(final ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
-    public ExecutionContext getExecutionContext() {
-        return executionContext;
+    public final ProvidedProducts provides(final String... productIdLists) {
+        return new ProvidedProducts(
+            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
     }
 
 }

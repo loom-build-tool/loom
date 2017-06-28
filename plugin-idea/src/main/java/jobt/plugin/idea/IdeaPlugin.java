@@ -8,15 +8,16 @@ public class IdeaPlugin extends AbstractPlugin {
 
     @Override
     public void configure(final TaskRegistry taskRegistry) {
-        taskRegistry.register("idea", new IdeaTask(getBuildConfig(), getExecutionContext()));
+        taskRegistry.register(
+            "configureIdea", new IdeaTask(getBuildConfig()), provides("idea"));
     }
 
     @Override
     public void configure(final TaskTemplate taskTemplate) {
-        taskTemplate.task("idea")
-            .dependsOn(
-                taskTemplate.task("resolveCompileDependencies"),
-                taskTemplate.task("resolveTestDependencies"));
+        taskTemplate.task("configureIdea")
+            .uses(
+                taskTemplate.product("compileDependencies"),
+                taskTemplate.product("testDependencies"));
     }
 
 }

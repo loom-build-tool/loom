@@ -9,9 +9,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
+import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.ExecutionContext;
-import jobt.api.Task;
+import jobt.api.ClasspathProduct;
+import jobt.api.DummyProduct;
 import jobt.api.TaskStatus;
 import jobt.util.JavaVersion;
 import nu.xom.Attribute;
@@ -21,15 +22,13 @@ import nu.xom.Element;
 import nu.xom.ParsingException;
 import nu.xom.Serializer;
 
-public class IdeaTask implements Task {
+public class IdeaTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private final ExecutionContext executionContext;
     private Builder parser;
 
-    public IdeaTask(final BuildConfig buildConfig, final ExecutionContext executionContext) {
+    public IdeaTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
-        this.executionContext = executionContext;
     }
 
     private static InputStream readResource(final String resourceName) {
@@ -37,12 +36,8 @@ public class IdeaTask implements Task {
     }
 
     @Override
-    public void prepare() throws Exception {
-        parser = new Builder();
-    }
-
-    @Override
     public TaskStatus run() throws Exception {
+        parser = new Builder();
         final Path currentDir = Paths.get("");
 
         final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
@@ -60,7 +55,12 @@ public class IdeaTask implements Task {
         writeDocumentToFile(currentDir.resolve(imlFilename), createImlFile());
         writeDocumentToFile(ideaDirectory.resolve("modules.xml"), createModulesFile(imlFilename));
 
-        return TaskStatus.OK;
+        return complete(TaskStatus.OK);
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        getProvidedProducts().complete("idea", new DummyProduct("Idea project files"));
+        return status;
     }
 
     private void createEncodingsFile(final Path encodingsFile) throws IOException {
@@ -126,11 +126,11 @@ public class IdeaTask implements Task {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
-            for (final Path path : executionContext.getCompileDependencies()) {
+            for (final Path path : getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class).getEntries()) {
                 component.appendChild(buildOrderEntry("COMPILE", path.toAbsolutePath().toString()));
             }
 
-            for (final Path path : executionContext.getTestDependencies()) {
+            for (final Path path : getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries()) {
                 component.appendChild(buildOrderEntry("TEST", path.toAbsolutePath().toString()));
             }
 

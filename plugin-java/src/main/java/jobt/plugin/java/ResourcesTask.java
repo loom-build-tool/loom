@@ -4,46 +4,48 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
+import jobt.api.ProcessedResourceProduct;
+import jobt.api.ResourcesTreeProduct;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.Task;
 import jobt.api.TaskStatus;
 
-public class ResourcesTask implements Task {
+public class ResourcesTask extends AbstractTask {
 
     private final RuntimeConfiguration runtimeConfiguration;
-    private final String subdirName;
-    private final Path srcPath;
     private final Path destPath;
+    private final CompileTarget compileTarget;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
                   final CompileTarget compileTarget) {
 
         this.runtimeConfiguration = runtimeConfiguration;
+        this.compileTarget = compileTarget;
 
-        switch (compileTarget) {
-            case MAIN:
-                subdirName = "main";
-                break;
-            case TEST:
-                subdirName = "test";
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
-        }
-
-        srcPath = Paths.get("src", subdirName, "resources");
-        destPath = Paths.get("jobtbuild", "resources", subdirName);
-    }
-
-    @Override
-    public void prepare() throws Exception {
+        destPath = Paths.get("jobtbuild", "resources", compileTarget.name().toLowerCase());
     }
 
     @Override
     public TaskStatus run() throws Exception {
+
+        final Path srcPath;
+
+        switch (compileTarget) {
+            case MAIN:
+                srcPath = getUsedProducts().readProduct(
+                    "resources", ResourcesTreeProduct.class).getSrcDir();
+                break;
+            case TEST:
+                srcPath = getUsedProducts().readProduct(
+                    "testResources", ResourcesTreeProduct.class).getSrcDir();
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+
         if (Files.notExists(srcPath) && Files.notExists(destPath)) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         assertDirectoryOrMissing(srcPath);
@@ -51,13 +53,12 @@ public class ResourcesTask implements Task {
 
         if (Files.notExists(srcPath) && Files.exists(destPath)) {
             FileUtil.deleteDirectoryRecursively(destPath, true);
-            return TaskStatus.OK;
+            return complete(TaskStatus.OK);
         }
 
         FileUtil.assertDirectory(srcPath);
 
-        final Path cacheFile =
-            Paths.get(".jobt", "cache", "java", "resource-" + subdirName + ".cache");
+        final Path cacheFile = getCacheFileName();
 
         final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
             ? new DiskKeyValueCache(cacheFile)
@@ -68,7 +69,28 @@ public class ResourcesTask implements Task {
 
         cache.saveCache();
 
-        return TaskStatus.OK;
+        return complete(TaskStatus.OK);
+    }
+
+    private Path getCacheFileName() {
+        return Paths.get(
+            ".jobt", "cache", "java",
+            "resource-" + compileTarget.name().toLowerCase() + ".cache");
+    }
+
+    private TaskStatus complete(final TaskStatus status) {
+        switch (compileTarget) {
+            case MAIN:
+                getProvidedProducts().complete(
+                    "processedResources", new ProcessedResourceProduct(destPath));
+                return status;
+            case TEST:
+                getProvidedProducts().complete(
+                    "processedTestResources", new ProcessedResourceProduct(destPath));
+                return status;
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private void assertDirectoryOrMissing(final Path path) {

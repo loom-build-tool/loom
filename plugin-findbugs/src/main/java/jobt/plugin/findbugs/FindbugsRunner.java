@@ -32,6 +32,7 @@ import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
+import jobt.api.ClasspathProduct;
 import jobt.util.Util;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -49,19 +50,19 @@ public class FindbugsRunner {
 
     private final Path sourcesDir;
     private final Path classesDir;
-    private final List<Path> auxClasspath;
+    private final ClasspathProduct classpath;
 
     private final Optional<Integer> priorityThreshold;
 
     public FindbugsRunner(
         final Path sourcesDir,
         final Path classesDir,
-        final List<Path> auxClasspath,
+        final ClasspathProduct classpath,
         final Optional<Integer> priorityThreshold) {
 
         this.sourcesDir = sourcesDir;
         this.classesDir = classesDir;
-        this.auxClasspath = auxClasspath;
+        this.classpath = classpath;
 
         this.priorityThreshold = priorityThreshold;
     }
@@ -180,7 +181,7 @@ public class FindbugsRunner {
             .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
-        auxClasspath.stream()
+        classpath.getEntries().stream()
             .map(FindbugsRunner::pathToString)
             .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);

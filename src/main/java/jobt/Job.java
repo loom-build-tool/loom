@@ -64,9 +64,10 @@ public class Job implements Callable<TaskStatus> {
         Objects.requireNonNull(taskStatus, "Task <" + name + "> must not return null");
         Stopwatch.stopProcess();
 
+        LOG.info("Task {} resulted with {}", name, taskStatus);
+
         checkIfAllProductsCompleted();
 
-        LOG.info("Task {} resulted with {}", name, taskStatus);
         return taskStatus;
     }
 
@@ -80,7 +81,7 @@ public class Job implements Callable<TaskStatus> {
             .collect(Collectors.toSet());
 
         Preconditions.checkState(uncompletedProduct.isEmpty(),
-            "Task <%s> did not complete(provide) the following products %s after run",
+            "task.run <%s> did not complete(provide) the following products: %s",
             name, uncompletedProduct);
 
     }

@@ -90,7 +90,8 @@ public class Job implements Callable<TaskStatus> {
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             pdaTask.setProvidedProducts(
-                new ProvidedProducts(configuredTask.getProvidedProducts(), productRepository));
+                new ProvidedProducts(
+                    configuredTask.getProvidedProducts(), productRepository, name));
             pdaTask.setUsedProducts(
                 new UsedProducts(configuredTask.getUsedProducts(), productRepository));
         }

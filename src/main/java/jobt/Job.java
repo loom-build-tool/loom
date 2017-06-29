@@ -61,10 +61,13 @@ public class Job implements Callable<TaskStatus> {
         final Task task = configuredTask.getTaskSupplier().get();
         injectTaskProperties(task);
         final TaskStatus taskStatus = task.run();
-        LOG.info("Task {} resulted with {}", name, taskStatus);
         Stopwatch.stopProcess();
+
+        LOG.info("Task {} resulted with {}", name, taskStatus);
+
         Objects.requireNonNull(taskStatus, "Task <" + name + "> must not return null");
         checkIfAllProductsCompleted();
+
         return taskStatus;
     }
 

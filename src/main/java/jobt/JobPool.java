@@ -46,6 +46,8 @@ public class JobPool {
         LOG.debug("Submit job {}", jobName);
 
         CompletableFuture.runAsync(() -> {
+            Thread.currentThread().setName("job-" + jobName);
+
             LOG.info("Start job {}", jobName);
             try {
                 currentJobs.put(jobName, job);

@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -52,19 +51,14 @@ public class MavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
 
-    private static final CountDownLatch CUSTOM_PLUGINS_INITLATCH = new CountDownLatch(1);
-
     private RepositorySystem system;
     private RemoteRepository mavenRepository;
     private LocalRepositoryManager localRepositoryManager;
     private ProgressIndicator progressIndicator;
 
-    public synchronized void init() {
-        if (CUSTOM_PLUGINS_INITLATCH.getCount() == 0) {
-            return;
-        }
-
+    MavenResolver(final ProgressIndicator progressIndicator) {
         LOG.debug("Initialize MavenResolver");
+        this.progressIndicator = progressIndicator;
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
@@ -98,12 +92,6 @@ public class MavenResolver implements DependencyResolver {
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
         LOG.debug("MavenResolver initialized");
-
-        CUSTOM_PLUGINS_INITLATCH.countDown();
-    }
-
-    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
-        this.progressIndicator = progressIndicator;
     }
 
     @Override

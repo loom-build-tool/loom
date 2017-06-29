@@ -107,12 +107,13 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope) {
+    public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
         try {
 
+            // note: caches do not need extra locking, because they get isolated by the scope used
             final List<Path> files = readCache(deps, scope);
 
             if (!files.isEmpty()) {
@@ -120,8 +121,13 @@ public class MavenResolver implements DependencyResolver {
                 return Collections.unmodifiableList(files);
             }
 
-            final List<Path> paths = resolveRemote(deps, scope);
-            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+            final List<Path> paths;
+
+            synchronized (this) {
+                paths = resolveRemote(deps, scope);
+                LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+            }
+
             writeCache(deps, scope, paths);
 
             return paths;

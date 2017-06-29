@@ -65,7 +65,8 @@ public class JavaPlugin extends AbstractPlugin {
         task("runTest")
             .impl(JavaTestTask::new)
             .provides("test")
-            .uses("testDependencies", "processedResources", "compilation", "processedTestResources", "testCompilation")
+            .uses("testDependencies", "processedResources", "compilation",
+                "processedTestResources", "testCompilation")
             .register();
 
         goal("check")

@@ -32,8 +32,16 @@ public final class ProductPromise {
         }
     }
 
+    public String getProductId() {
+        return productId;
+    }
+
     public Object getAndWaitForProduct() {
         return waitAndGet(promise);
+    }
+
+    public boolean isCompleted() {
+        return promise.isDone();
     }
 
     private Object waitAndGet(final Future<Object> future) {

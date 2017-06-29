@@ -1,19 +1,23 @@
 package jobt;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductDependenciesAware;
+import jobt.api.ProductPromise;
 import jobt.api.ProductRepository;
 import jobt.api.ProvidedProducts;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
 import jobt.plugin.ConfiguredTask;
+import jobt.util.Preconditions;
 import jobt.util.Stopwatch;
 
 public class Job implements Callable<TaskStatus> {
@@ -59,8 +63,25 @@ public class Job implements Callable<TaskStatus> {
         final TaskStatus taskStatus = task.run();
         Stopwatch.stopProcess();
 
+        checkIfAllProductsCompleted();
+
         LOG.info("Task {} resulted with {}", name, taskStatus);
         return taskStatus;
+    }
+
+    private void checkIfAllProductsCompleted() {
+
+        final Set<String> uncompletedProduct =
+            configuredTask.getProvidedProducts().stream()
+            .map(productRepository::lookup)
+            .filter(product -> !product.isCompleted())
+            .map(ProductPromise::getProductId)
+            .collect(Collectors.toSet());
+
+        Preconditions.checkState(uncompletedProduct.isEmpty(),
+            "Task <%s> did not complete(provide) the following products %s after run",
+            name, uncompletedProduct);
+
     }
 
     private void injectTaskProperties(final Task task) {

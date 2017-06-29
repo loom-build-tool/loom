@@ -15,8 +15,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.ProductRepository;
 import jobt.config.BuildConfigImpl;
 import jobt.plugin.PluginRegistry;
+import jobt.plugin.ProductRepositoryImpl;
 import jobt.plugin.TaskRegistryImpl;
 import jobt.plugin.TaskRegistryLookup;
 import jobt.util.Stopwatch;
@@ -24,6 +26,7 @@ import jobt.util.Stopwatch;
 public class JobtProcessor {
 
     private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
+    private final ProductRepository productRepository = new ProductRepositoryImpl();
 
     static {
         System.setProperty("jobt.version", Version.getVersion());
@@ -37,7 +40,7 @@ public class JobtProcessor {
     }
 
     public void execute(final List<String> productIds) throws Exception {
-        final TaskRunner taskRunner = new TaskRunner(taskRegistry);
+        final TaskRunner taskRunner = new TaskRunner(taskRegistry, productRepository);
         taskRunner.execute(new HashSet<>(productIds));
     }
 
@@ -85,12 +88,13 @@ public class JobtProcessor {
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 
-    public Set<String> getAvailableTaskNames() {
-        return taskRegistry.getTaskNames();
+
+    public void generateDotProductOverview() {
+        GraphvizOutput.generateDot(taskRegistry);
     }
 
-    public void generateDotTaskOverview() {
-        GraphvizOutput.generateDot(taskRegistry);
+    public Set<String> getAvailableProducts() {
+        return productRepository.getProductNames();
     }
 
 }

@@ -1,4 +1,4 @@
-package jobt.api;
+package jobt.api.product;
 
 import java.net.MalformedURLException;
 import java.net.URL;

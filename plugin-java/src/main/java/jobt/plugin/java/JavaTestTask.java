@@ -24,10 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.AbstractTask;
-import jobt.api.ClasspathProduct;
-import jobt.api.CompilationProduct;
-import jobt.api.ProcessedResourceProduct;
-import jobt.api.ReportProduct;
+import jobt.api.product.ClasspathProduct;
+import jobt.api.product.CompilationProduct;
+import jobt.api.product.ProcessedResourceProduct;
+import jobt.api.product.ReportProduct;
 import jobt.api.TaskStatus;
 
 public class JavaTestTask extends AbstractTask {

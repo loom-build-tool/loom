@@ -11,8 +11,8 @@ import java.nio.file.StandardOpenOption;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.ClasspathProduct;
-import jobt.api.DummyProduct;
+import jobt.api.product.ClasspathProduct;
+import jobt.api.product.DummyProduct;
 import jobt.api.TaskStatus;
 import jobt.util.JavaVersion;
 import nu.xom.Attribute;
@@ -25,7 +25,7 @@ import nu.xom.Serializer;
 public class IdeaTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private Builder parser;
+    private final Builder parser = new Builder();
 
     public IdeaTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
@@ -37,7 +37,6 @@ public class IdeaTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        parser = new Builder();
         final Path currentDir = Paths.get("");
 
         final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();

@@ -24,10 +24,10 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import jobt.api.AbstractTask;
-import jobt.api.ClasspathProduct;
+import jobt.api.product.ClasspathProduct;
 import jobt.api.CompileTarget;
-import jobt.api.ReportProduct;
-import jobt.api.SourceTreeProduct;
+import jobt.api.product.ReportProduct;
+import jobt.api.product.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -46,8 +46,6 @@ public class CheckstyleTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        final RootModule checker = createRootModule();
-
         final SourceTreeProduct sourceTree = getSourceTree();
 
         if (Files.notExists(sourceTree.getSrcDir())) {
@@ -59,6 +57,7 @@ public class CheckstyleTask extends AbstractTask {
             .map(Path::toFile)
             .collect(Collectors.toList());
 
+        final RootModule checker = createRootModule();
 
         final LoggingAuditListener listener = new LoggingAuditListener();
         checker.addListener(listener);

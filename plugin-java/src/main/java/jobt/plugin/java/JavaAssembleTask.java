@@ -13,10 +13,10 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import jobt.api.AbstractTask;
-import jobt.api.AssemblyProduct;
+import jobt.api.product.AssemblyProduct;
 import jobt.api.BuildConfig;
-import jobt.api.CompilationProduct;
-import jobt.api.SourceTreeProduct;
+import jobt.api.product.CompilationProduct;
+import jobt.api.product.SourceTreeProduct;
 import jobt.api.TaskStatus;
 
 public class JavaAssembleTask extends AbstractTask {

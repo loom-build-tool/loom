@@ -3,7 +3,7 @@ package jobt.api;
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
  * configuration &ndash; even if it isn't used in the build process. Ensure quick initialization and
- * put time-consuming code in {@link Task#run()}.
+ * put time-consuming code in the {@link Task}.
  *
  * @see jobt.api.AbstractPlugin
  */

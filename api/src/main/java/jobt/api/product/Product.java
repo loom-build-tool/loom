@@ -1,4 +1,4 @@
-package jobt.api;
+package jobt.api.product;
 
 public interface Product {
 

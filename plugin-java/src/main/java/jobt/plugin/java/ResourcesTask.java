@@ -6,8 +6,8 @@ import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
-import jobt.api.ProcessedResourceProduct;
-import jobt.api.ResourcesTreeProduct;
+import jobt.api.product.ProcessedResourceProduct;
+import jobt.api.product.ResourcesTreeProduct;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
 

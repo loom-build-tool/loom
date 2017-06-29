@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
-import jobt.api.ResourcesTreeProduct;
+import jobt.api.product.ResourcesTreeProduct;
 import jobt.api.TaskStatus;
 
 public class JavaProvideResourcesDirTask extends AbstractTask {

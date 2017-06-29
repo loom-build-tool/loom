@@ -2,6 +2,8 @@ package jobt.api;
 
 import java.util.Set;
 
+import jobt.api.product.DummyProduct;
+
 public class WaitForAllProductsTask extends AbstractTask {
 
     @Override

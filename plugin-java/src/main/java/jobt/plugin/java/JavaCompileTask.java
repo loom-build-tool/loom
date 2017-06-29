@@ -26,11 +26,11 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.ClasspathProduct;
-import jobt.api.CompilationProduct;
+import jobt.api.product.ClasspathProduct;
+import jobt.api.product.CompilationProduct;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.SourceTreeProduct;
+import jobt.api.product.SourceTreeProduct;
 import jobt.api.TaskStatus;
 import jobt.util.JavaVersion;
 

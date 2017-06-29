@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
+import jobt.api.product.Product;
+
 public class ProductsTest {
 
     private final ProductRepository productRepository = new ProductRepositoryDummy();

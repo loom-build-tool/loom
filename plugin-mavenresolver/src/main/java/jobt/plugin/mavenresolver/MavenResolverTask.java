@@ -5,7 +5,7 @@ import java.util.List;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.ClasspathProduct;
+import jobt.api.product.ClasspathProduct;
 import jobt.api.DependencyScope;
 import jobt.api.TaskStatus;
 

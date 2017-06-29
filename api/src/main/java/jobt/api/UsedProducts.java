@@ -8,6 +8,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.product.Product;
+
 /**
  * Read-only view to products that are required (readProduct) from tasks.
  */

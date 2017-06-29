@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jobt.api.product.Product;
+
 /**
  * Sink for provided products from upstream task.
  */

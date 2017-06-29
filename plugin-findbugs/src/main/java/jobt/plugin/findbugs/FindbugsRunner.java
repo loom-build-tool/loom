@@ -26,7 +26,7 @@ import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
-import jobt.api.ClasspathProduct;
+import jobt.api.product.ClasspathProduct;
 import jobt.util.Util;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})

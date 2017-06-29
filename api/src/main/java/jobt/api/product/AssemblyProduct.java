@@ -1,4 +1,4 @@
-package jobt.api;
+package jobt.api.product;
 
 import java.nio.file.Path;
 

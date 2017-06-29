@@ -94,7 +94,7 @@ public class ProductsTest {
         Stream.of(productIdLists)
             .forEach(productRepository::createProduct);
         return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
+            new HashSet<>(Arrays.asList(productIdLists)), productRepository, "sampleTask");
     }
 
     private static class ProductRepositoryDummy implements ProductRepository {

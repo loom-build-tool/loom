@@ -139,7 +139,7 @@ public class PluginRegistry {
         return ClassLoader.getSystemClassLoader().getParent();
     }
 
-    private URL findPluginUrl(final String name) throws IOException {
+    private URL findPluginUrl(final String name) {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".jobt", "binary",
             Version.getVersion(), "plugin-" + name);
         return buildUrl(baseDir.resolve(

@@ -37,14 +37,14 @@ public class MavenResolverTask extends AbstractTask {
         }
     }
 
-    private void compileScope() throws Exception {
+    private void compileScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         getProvidedProducts().complete("compileDependencies",
             new ClasspathProduct(mavenResolver.resolve(dependencies,
             DependencyScope.COMPILE)));
     }
 
-    private void testScope() throws Exception {
+    private void testScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 

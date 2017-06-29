@@ -65,7 +65,7 @@ public class JavaTestTask extends AbstractTask {
         throw new IllegalStateException("Failed");
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
+    private URLClassLoader buildClassLoader() throws MalformedURLException {
         final CompilationProduct compilation = getUsedProducts().readProduct(
             "compilation", CompilationProduct.class);
 
@@ -90,7 +90,7 @@ public class JavaTestTask extends AbstractTask {
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
-        throws ClassNotFoundException, IOException {
+        throws IOException {
 
         final List<Class<?>> classes = new ArrayList<>();
 

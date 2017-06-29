@@ -51,10 +51,10 @@ public class MavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
 
-    private RepositorySystem system;
-    private RemoteRepository mavenRepository;
-    private LocalRepositoryManager localRepositoryManager;
-    private ProgressIndicator progressIndicator;
+    private final RepositorySystem system;
+    private final RemoteRepository mavenRepository;
+    private final LocalRepositoryManager localRepositoryManager;
+    private final ProgressIndicator progressIndicator;
 
     MavenResolver(final ProgressIndicator progressIndicator) {
         LOG.debug("Initialize MavenResolver");
@@ -150,8 +150,7 @@ public class MavenResolver implements DependencyResolver {
         return cacheDir.resolve(mavenScope(scope) + "-dependencies.cache");
     }
 
-    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope)
-        throws IOException {
+    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);

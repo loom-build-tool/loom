@@ -160,9 +160,7 @@ public class CheckstyleTask extends AbstractTask {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader()
-        throws MalformedURLException, ExecutionException, InterruptedException {
-
+    private URLClassLoader buildClassLoader() {
         final ClasspathProduct classpath;
         switch (compileTarget) {
             case MAIN:
@@ -176,7 +174,6 @@ public class CheckstyleTask extends AbstractTask {
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
-
 
         return new URLClassLoader(classpath.getEntriesAsUrlArray());
     }

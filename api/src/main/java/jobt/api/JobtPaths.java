@@ -8,7 +8,7 @@ public final class JobtPaths {
 
     public static final Path PROJECT_DIR;
     public static final Path SRC_MAIN_PATH;
-    public static final Path SRC_TEST_PATH ;
+    public static final Path SRC_TEST_PATH;
     public static final Path BUILD_MAIN_PATH;
     public static final Path BUILD_TEST_PATH;
     public static final Path REPORT_PATH;
@@ -26,10 +26,12 @@ public final class JobtPaths {
         checkState(Files.exists(currentDir), "Invalid current directory");
     }
 
+    private JobtPaths() {
+    }
 
-    private static void checkState(final boolean expression, final Object errorMessage) {
+    private static void checkState(final boolean expression, final String errorMessage) {
         if (!expression) {
-            throw new IllegalStateException(String.valueOf(errorMessage));
+            throw new IllegalStateException(errorMessage);
         }
     }
 

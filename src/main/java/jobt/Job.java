@@ -61,6 +61,7 @@ public class Job implements Callable<TaskStatus> {
         final Task task = configuredTask.getTaskSupplier().get();
         injectTaskProperties(task);
         final TaskStatus taskStatus = task.run();
+        Objects.requireNonNull(taskStatus, "Task <" + name + "> must not return null");
         Stopwatch.stopProcess();
 
         checkIfAllProductsCompleted();

@@ -1,7 +1,10 @@
 package jobt.plugin;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jobt.api.ProductPromise;
@@ -29,6 +32,12 @@ public class ProductRepositoryImpl implements ProductRepository {
                 "Product <" + productId + "> already registered");
         }
 
+    }
+
+    @Override
+    public Set<String> getProductNames() {
+        return
+            Collections.unmodifiableSet(new HashSet<>(products.keySet()));
     }
 
 }

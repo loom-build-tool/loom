@@ -54,12 +54,12 @@ public class Jobt {
             .addOption("c", "clean", false, "Clean before execution")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
             .addOption(
-                Option.builder("t")
-                    .longOpt("tasks")
+                Option.builder("p")
+                    .longOpt("products")
                     .numberOfArgs(1)
                     .optionalArg(true)
                     .argName("format")
-                    .desc("Show available tasks (formats: text [default], dot)")
+                    .desc("Show available products (formats: text [default], dot)")
                     .build());
 
         if (args.length == 0) {
@@ -102,7 +102,7 @@ public class Jobt {
 
     private static void printHelp(final Options options) {
         final HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("jobt [option...] [task...]", options);
+        formatter.printHelp("jobt [option...] [product...]", options);
     }
 
     private static FileLock lock() throws IOException {
@@ -145,18 +145,18 @@ public class Jobt {
 
         jobtProcessor.init(buildConfig, runtimeConfiguration);
 
-        if (cmd.hasOption("tasks")) {
-            final String format = cmd.getOptionValue("tasks");
+        if (cmd.hasOption("products")) {
+            final String format = cmd.getOptionValue("products");
 
             if (format == null || "text".equals(format)) {
                 System.out.println();
-                System.out.println("Available tasks:");
+                System.out.println("Available products:");
                 System.out.println();
-                jobtProcessor.getAvailableTaskNames().stream().sorted()
+                jobtProcessor.getAvailableProducts().stream().sorted()
                     .forEach(System.out::println);
                 System.out.println();
             } else if ("dot".equals(format)) {
-                jobtProcessor.generateDotTaskOverview();
+                jobtProcessor.generateDotProductOverview();
             } else {
                 System.err.println("Unknown format: " + format);
                 System.exit(1);

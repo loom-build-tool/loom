@@ -23,15 +23,15 @@ public final class GraphvizOutput {
     public static void generateDot(final TaskRegistryLookup taskRegistryLookup) {
         try {
             final Path reportDir = Files.createDirectories(Paths.get("jobtbuild", "reports"));
-            final Path tasksFile = reportDir.resolve(Paths.get("tasks.dot"));
+            final Path dotFile = reportDir.resolve(Paths.get("jobt-products.dot"));
 
-            try (PrintWriter pw = new PrintWriter(tasksFile.toFile(), "UTF-8")) {
+            try (PrintWriter pw = new PrintWriter(dotFile.toFile(), "UTF-8")) {
                 writeTasks(taskRegistryLookup, pw);
             }
 
-            System.out.println("Task overview written to " + tasksFile);
-            System.out.println("Use Graphviz to visualize: `dot -Tpng " + tasksFile
-                + " > tasks.png`");
+            System.out.println("Products overview written to " + dotFile);
+            System.out.println("Use Graphviz to visualize: `dot -Tpng " + dotFile
+                + " > " + dotFile.getFileName() + "`");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

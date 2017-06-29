@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductRepository;
 import jobt.plugin.ConfiguredTask;
-import jobt.plugin.ProductRepositoryImpl;
 import jobt.plugin.TaskRegistryLookup;
 
 public class TaskRunner {
@@ -23,10 +22,12 @@ public class TaskRunner {
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
     private final TaskRegistryLookup taskRegistry;
-    private final ProductRepository productRepository = new ProductRepositoryImpl();
+    private final ProductRepository productRepository;
 
-    public TaskRunner(final TaskRegistryLookup taskRegistry) {
+    public TaskRunner(final TaskRegistryLookup taskRegistry,
+        final ProductRepository productRepository) {
         this.taskRegistry = taskRegistry;
+        this.productRepository = productRepository;
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")

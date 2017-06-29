@@ -8,10 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +39,12 @@ public class JobtProcessor {
         Stopwatch.stopProcess();
     }
 
-    public void execute(final String[] productIds) throws Exception {
+    public void execute(final List<String> productIds) throws Exception {
         final TaskRunner taskRunner = new TaskRunner(taskRegistry, productRepository);
-        taskRunner.execute(new HashSet<>(Arrays.asList(productIds)));
+        taskRunner.execute(new HashSet<>(productIds));
     }
 
-    public void clean() throws ExecutionException, InterruptedException {
+    public void clean() {
         cleanDir(Paths.get("jobtbuild"));
         cleanDir(Paths.get(".jobt"));
     }

@@ -31,7 +31,7 @@ public final class GraphvizOutput {
 
             System.out.println("Products overview written to " + dotFile);
             System.out.println("Use Graphviz to visualize: `dot -Tpng " + dotFile
-                + " > " + dotFile.getFileName() + "`");
+                + " > jobt-products.png`");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

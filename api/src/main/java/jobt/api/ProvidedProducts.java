@@ -22,9 +22,12 @@ public class ProvidedProducts {
 
     private final Set<String> producedProductIds;
 
-    public ProvidedProducts(final Set<String> producedProductIds,
-                            final ProductRepository productRepository) {
+    private final String taskName;
 
+    public ProvidedProducts(final Set<String> producedProductIds,
+                            final ProductRepository productRepository, final String taskName) {
+        Objects.requireNonNull(taskName);
+        this.taskName = taskName;
         Objects.requireNonNull(producedProductIds);
         producedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
@@ -36,18 +39,25 @@ public class ProvidedProducts {
     public <T extends Product> void complete(final String productId, final T value) {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(value,
-            "Must not complete product <" + productId + "> with null value");
+            "Must not complete product <" + productId + ">"
+                + "in task <" + taskName + "> with null value");
 
         if (!producedProductIds.contains(productId)) {
             throw new IllegalStateException(
-                "Not allowed to resolve productId <" + productId + ">");
+                "Not allowed to resolve productId <" + productId + "> in task <" + taskName + ">");
         }
 
         final ProductPromise productPromise = productRepository.lookup(productId);
 
+        if (productPromise.isCompleted()) {
+            throw new IllegalStateException(
+                String.format("Task <%s> has tried to complete the already completed product <%s>",
+                    taskName, productId));
+        }
+
         productPromise.complete(value);
 
-        LOG.debug("Product promise <{}> completed with value (type {}): {}",
+        LOG.debug("Product promise <{}> completed by task <{}> with value (type {}): {}",
             productId, value.getClass().getSimpleName(), value);
     }
 

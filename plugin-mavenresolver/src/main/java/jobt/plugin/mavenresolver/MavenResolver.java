@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
@@ -52,19 +51,14 @@ public class MavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MavenResolver.class);
 
-    private static final CountDownLatch CUSTOM_PLUGINS_INITLATCH = new CountDownLatch(1);
+    private final RepositorySystem system;
+    private final RemoteRepository mavenRepository;
+    private final LocalRepositoryManager localRepositoryManager;
+    private final ProgressIndicator progressIndicator;
 
-    private RepositorySystem system;
-    private RemoteRepository mavenRepository;
-    private LocalRepositoryManager localRepositoryManager;
-    private ProgressIndicator progressIndicator;
-
-    public synchronized void init() {
-        if (CUSTOM_PLUGINS_INITLATCH.getCount() == 0) {
-            return;
-        }
-
+    MavenResolver(final ProgressIndicator progressIndicator) {
         LOG.debug("Initialize MavenResolver");
+        this.progressIndicator = progressIndicator;
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
@@ -98,21 +92,16 @@ public class MavenResolver implements DependencyResolver {
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
         LOG.debug("MavenResolver initialized");
-
-        CUSTOM_PLUGINS_INITLATCH.countDown();
-    }
-
-    public void setProgressIndicator(final ProgressIndicator progressIndicator) {
-        this.progressIndicator = progressIndicator;
     }
 
     @Override
-    public synchronized List<Path> resolve(final List<String> deps, final DependencyScope scope) {
+    public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
         try {
 
+            // note: caches do not need extra locking, because they get isolated by the scope used
             final List<Path> files = readCache(deps, scope);
 
             if (!files.isEmpty()) {
@@ -120,8 +109,13 @@ public class MavenResolver implements DependencyResolver {
                 return Collections.unmodifiableList(files);
             }
 
-            final List<Path> paths = resolveRemote(deps, scope);
-            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+            final List<Path> paths;
+
+            synchronized (this) {
+                paths = resolveRemote(deps, scope);
+                LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
+            }
+
             writeCache(deps, scope, paths);
 
             return paths;
@@ -156,8 +150,7 @@ public class MavenResolver implements DependencyResolver {
         return cacheDir.resolve(mavenScope(scope) + "-dependencies.cache");
     }
 
-    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope)
-        throws IOException {
+    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);

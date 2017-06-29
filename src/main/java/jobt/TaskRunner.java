@@ -59,6 +59,10 @@ public class TaskRunner {
 
             final String taskName = producersMap.get(workingProductId);
 
+            if (taskName == null) {
+                throw new IllegalStateException("No task found providing " + workingProductId);
+            }
+
             final ConfiguredTask configuredTask =
                 taskRegistry.lookupTask(taskName);
 

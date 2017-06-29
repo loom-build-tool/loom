@@ -61,12 +61,13 @@ public class FindbugsTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        FindbugsRunner.startupFindbugsAsync();
 
         if (Files.notExists(getSourceTree().getSrcDir())
             || Files.notExists(getClasses().getClassesDir())) {
             return TaskStatus.SKIP;
         }
+
+        FindbugsSingleton.initFindbugs();
 
         final List<BugInstance> bugs = new FindbugsRunner(
             getSourceTree().getSrcDir(),

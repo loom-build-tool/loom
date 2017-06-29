@@ -126,11 +126,13 @@ public class IdeaTask extends AbstractTask {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
-            for (final Path path : getUsedProducts().readProduct("compileDependencies", ClasspathProduct.class).getEntries()) {
+            for (final Path path : getUsedProducts().readProduct("compileDependencies",
+                ClasspathProduct.class).getEntries()) {
                 component.appendChild(buildOrderEntry("COMPILE", path.toAbsolutePath().toString()));
             }
 
-            for (final Path path : getUsedProducts().readProduct("testDependencies", ClasspathProduct.class).getEntries()) {
+            for (final Path path : getUsedProducts().readProduct("testDependencies",
+                ClasspathProduct.class).getEntries()) {
                 component.appendChild(buildOrderEntry("TEST", path.toAbsolutePath().toString()));
             }
 

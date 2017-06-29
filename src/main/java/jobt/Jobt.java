@@ -131,6 +131,7 @@ public class Jobt {
 
         Stopwatch.startProcess("Configure logging");
         LogConfiguration.configureLogger();
+        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
         Stopwatch.stopProcess();
 
         jobtProcessor.logMemoryUsage();
@@ -165,12 +166,9 @@ public class Jobt {
             System.exit(0);
         }
 
-        if (cmd.getArgList().isEmpty()) {
-            // We're done
-            return;
+        if (!cmd.getArgList().isEmpty()) {
+            jobtProcessor.execute(cmd.getArgList());
         }
-
-        jobtProcessor.execute(cmd.getArgs());
 
         printExecutionStatistics();
 

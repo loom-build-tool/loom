@@ -68,4 +68,8 @@ public final class LogConfiguration {
         rootLogger.addAppender(fileAppender);
     }
 
+    public static void stop() {
+        ((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
+    }
+
 }

@@ -7,18 +7,14 @@ public class MavenResolverPlugin extends AbstractPlugin {
 
     @Override
     public void configure() {
-        final ProgressIndicator progressIndicator = new ProgressIndicator("mavenResolver");
-
-        final MavenResolver mavenResolver = new MavenResolver();
-        mavenResolver.setProgressIndicator(progressIndicator);
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig(), mavenResolver))
+            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig()))
             .provides("compileDependencies")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, getBuildConfig(), mavenResolver))
+            .impl(() -> new MavenResolverTask(DependencyScope.TEST, getBuildConfig()))
             .provides("testDependencies")
             .register();
     }

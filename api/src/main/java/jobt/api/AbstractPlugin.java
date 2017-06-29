@@ -56,8 +56,8 @@ public abstract class AbstractPlugin implements Plugin {
             this.taskName = taskName;
         }
 
-        public TaskBuilder impl(final Supplier<Task> taskSupplier) {
-            this.taskSupplier = taskSupplier;
+        public TaskBuilder impl(final Supplier<Task> taskSupplierValue) {
+            this.taskSupplier = taskSupplierValue;
             return this;
         }
 

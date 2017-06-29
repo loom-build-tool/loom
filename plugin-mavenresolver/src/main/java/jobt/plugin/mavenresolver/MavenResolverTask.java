@@ -13,22 +13,18 @@ public class MavenResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
-
     private final MavenResolver mavenResolver;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig,
-                             final MavenResolver mavenResolver) {
+                             final BuildConfig buildConfig) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
-        this.mavenResolver = mavenResolver;
+        this.mavenResolver = MavenResolverSingleton.getInstance();
     }
 
     @Override
     public TaskStatus run() throws Exception {
-        mavenResolver.init();
-
         switch (dependencyScope) {
             case COMPILE:
                 compileScope();
@@ -41,14 +37,14 @@ public class MavenResolverTask extends AbstractTask {
         }
     }
 
-    private void compileScope() throws Exception {
+    private void compileScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         getProvidedProducts().complete("compileDependencies",
             new ClasspathProduct(mavenResolver.resolve(dependencies,
             DependencyScope.COMPILE)));
     }
 
-    private void testScope() throws Exception {
+    private void testScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 

@@ -7,7 +7,7 @@ public final class DummyProduct implements Product {
     private final String text;
 
     /**
-     * Provide a justification
+     * Provide a justification.
      */
     public DummyProduct(final String text) {
         Objects.requireNonNull(text);
@@ -22,4 +22,5 @@ public final class DummyProduct implements Product {
     public String toString() {
         return text;
     }
+
 }

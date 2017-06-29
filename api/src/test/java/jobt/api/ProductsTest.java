@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
@@ -51,12 +52,12 @@ public class ProductsTest {
 
         try {
             providedProducts.complete("a", null);
-        } catch (final IllegalArgumentException e) {
+        } catch (final NullPointerException e) {
             assertEquals("Must not complete product <a> with null value", e.getMessage());
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void invalidFormat() {
 
         provides("ZZZ");
@@ -90,8 +91,10 @@ public class ProductsTest {
     }
 
     private ProvidedProducts provides(final String... productIdLists) {
+        Stream.of(productIdLists)
+            .forEach(productRepository::createProduct);
         return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), productRepository);
+            new HashSet<>(Arrays.asList(productIdLists)), productRepository, "sampleTask");
     }
 
     private static class ProductRepositoryDummy implements ProductRepository {

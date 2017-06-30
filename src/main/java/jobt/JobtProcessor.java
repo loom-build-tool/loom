@@ -20,13 +20,12 @@ import jobt.config.BuildConfigWithSettings;
 import jobt.plugin.PluginRegistry;
 import jobt.plugin.ProductRepositoryImpl;
 import jobt.plugin.TaskRegistryImpl;
-import jobt.plugin.TaskRegistryLookup;
 import jobt.plugin.TaskUtil;
 import jobt.util.Stopwatch;
 
 public class JobtProcessor {
 
-    private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
+    private TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
     private final ProductRepository productRepository = new ProductRepositoryImpl();
 
     static {

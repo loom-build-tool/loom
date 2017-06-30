@@ -48,6 +48,8 @@ public class JobPool {
         CompletableFuture.runAsync(() -> {
             Thread.currentThread().setName("job-" + jobName);
 
+            final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+
             LOG.info("Start job {}", jobName);
             try {
                 currentJobs.put(jobName, job);
@@ -61,6 +63,7 @@ public class JobPool {
                 executor.shutdownNow();
             } finally {
                 currentJobs.remove(jobName);
+                Thread.currentThread().setContextClassLoader(contextClassLoader);
             }
         }, executor);
     }

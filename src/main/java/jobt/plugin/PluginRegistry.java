@@ -53,6 +53,7 @@ public class PluginRegistry {
         internalPlugins.put("mavenresolver", "jobt.plugin.mavenresolver.MavenResolverPlugin");
         internalPlugins.put("checkstyle", "jobt.plugin.checkstyle.CheckstylePlugin");
         internalPlugins.put("findbugs", "jobt.plugin.findbugs.FindbugsPlugin");
+        internalPlugins.put("pmd", "jobt.plugin.pmd.PmdPlugin");
         internalPlugins.put("idea", "jobt.plugin.idea.IdeaPlugin");
         INTERNAL_PLUGINS = Collections.unmodifiableMap(internalPlugins);
 

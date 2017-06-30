@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -54,7 +55,9 @@ public class Job implements Callable<TaskStatus> {
         LOG.info("Start task {}", name);
 
         Stopwatch.startProcess("Task " + name);
-        final Task task = configuredTask.getTaskSupplier().get();
+        final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
+        Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
+        final Task task = taskSupplier.get();
         injectTaskProperties(task);
         final TaskStatus taskStatus = task.run();
         Stopwatch.stopProcess();

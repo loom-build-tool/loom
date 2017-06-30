@@ -19,6 +19,7 @@
     <allow pkg="ch.qos.logback"/>
 
     <allow pkg="edu.umd.cs.findbugs"/>
+    <allow pkg="net.sourceforge.pmd"/>
 
     <allow pkg="nu.xom"/>
 

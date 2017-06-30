@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import jobt.api.BuildConfig;
@@ -43,6 +44,11 @@ public class BuildConfigImpl implements BuildConfig, Serializable {
     @Override
     public Map<String, String> getConfiguration() {
         return configuration;
+    }
+
+    @Override
+    public Optional<String> lookupConfiguration(final String key) {
+        return Optional.ofNullable(configuration.get(key));
     }
 
     @Override

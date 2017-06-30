@@ -77,7 +77,7 @@ public class IdeaTask extends AbstractTask {
             final String languageLevel;
             final String projectJdkName;
             final int javaPlatformVersion = JavaVersion.ofVersion(
-                buildConfig.getConfiguration().getOrDefault("javaPlatformVersion", "8"))
+                buildConfig.lookupConfiguration("javaPlatformVersion").orElse("8"))
                 .getNumericVersion();
 
             languageLevel = "JDK_1_" + javaPlatformVersion;

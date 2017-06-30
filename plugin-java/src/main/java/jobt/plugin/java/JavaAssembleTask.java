@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -71,9 +72,9 @@ public class JavaAssembleTask extends AbstractTask {
             String.format("%s (%s)", System.getProperty("java.version"),
                 System.getProperty("java.vendor")));
 
-        final String mainClassName = buildConfig.getConfiguration().get("mainClassName");
-        if (mainClassName != null) {
-            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName);
+        final Optional<String> mainClassName = buildConfig.lookupConfiguration("mainClassName");
+        if (mainClassName.isPresent()) {
+            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName.get());
         }
         return newManifest;
     }

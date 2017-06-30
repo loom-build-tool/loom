@@ -89,7 +89,6 @@ public class JobtProcessor {
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 
-
     public void generateDotProductOverview() {
         GraphvizOutput.generateDot(taskRegistry);
     }

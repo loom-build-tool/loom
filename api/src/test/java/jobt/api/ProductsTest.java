@@ -42,7 +42,8 @@ public class ProductsTest {
             providedProducts.complete("a", new StringProduct("result-double"));
             fail();
         } catch (final IllegalStateException e) {
-            assertEquals("Product promise <a> already completed", e.getMessage());
+            assertEquals("Task <sampleTask> has tried to complete"
+                + " the already completed product <a>", e.getMessage());
         }
 
     }
@@ -55,7 +56,8 @@ public class ProductsTest {
         try {
             providedProducts.complete("a", null);
         } catch (final NullPointerException e) {
-            assertEquals("Must not complete product <a> with null value", e.getMessage());
+            assertEquals("Must not complete product <a> in task <sampleTask> with null value",
+                e.getMessage());
         }
     }
 

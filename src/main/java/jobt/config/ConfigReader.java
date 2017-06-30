@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import jobt.RuntimeConfigurationImpl;
+import jobt.api.BuildConfig;
 import jobt.util.Hasher;
 
 public final class ConfigReader {
@@ -26,7 +27,7 @@ public final class ConfigReader {
     private ConfigReader() {
     }
 
-    public static BuildConfigImpl readConfig(final RuntimeConfigurationImpl runtimeConfiguration)
+    public static BuildConfig readConfig(final RuntimeConfigurationImpl runtimeConfiguration)
         throws IOException {
         final Path buildFile = Paths.get("build.yml");
 
@@ -36,11 +37,16 @@ public final class ConfigReader {
 
         final byte[] configData = Files.readAllBytes(buildFile);
 
+        final BuildConfigImpl buildConfig;
         if (!runtimeConfiguration.isCacheEnabled()) {
-            return parseConfig(configData);
+            buildConfig = parseConfig(configData);
+            LOG.debug("Working with parsed config: {}", buildConfig);
+        } else {
+            buildConfig = parseAndCacheConfig(configData);
+            LOG.debug("Working with cached config: {}", buildConfig);
         }
 
-        return parseAndCacheConfig(configData);
+        return buildConfig;
     }
 
     private static BuildConfigImpl parseAndCacheConfig(final byte[] configData) throws IOException {
@@ -90,7 +96,7 @@ public final class ConfigReader {
         final Yaml yaml = new Yaml();
         try (InputStreamReader in = new InputStreamReader(new ByteArrayInputStream(data),
             StandardCharsets.UTF_8)) {
-            return yaml.loadAs(in, BuildConfigImpl.class);
+            return yaml.loadAs(in, BuildConfigDTO.class).build();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

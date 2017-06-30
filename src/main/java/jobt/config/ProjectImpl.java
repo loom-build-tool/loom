@@ -8,17 +8,19 @@ public class ProjectImpl implements Project, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String groupId;
-    private String artifactId;
-    private String version;
+    private final String groupId;
+    private final String artifactId;
+    private final String version;
+
+    public ProjectImpl(final String groupId, final String artifactId, final String version) {
+        this.groupId = groupId;
+        this.artifactId = artifactId;
+        this.version = version;
+    }
 
     @Override
     public String getGroupId() {
         return groupId;
-    }
-
-    public void setGroupId(final String groupId) {
-        this.groupId = groupId;
     }
 
     @Override
@@ -26,17 +28,18 @@ public class ProjectImpl implements Project, Serializable {
         return artifactId;
     }
 
-    public void setArtifactId(final String artifactId) {
-        this.artifactId = artifactId;
-    }
-
     @Override
     public String getVersion() {
         return version;
     }
 
-    public void setVersion(final String version) {
-        this.version = version;
+    @Override
+    public String toString() {
+        return "ProjectImpl{"
+            + "groupId='" + groupId + '\''
+            + ", artifactId='" + artifactId + '\''
+            + ", version='" + version + '\''
+            + '}';
     }
 
 }

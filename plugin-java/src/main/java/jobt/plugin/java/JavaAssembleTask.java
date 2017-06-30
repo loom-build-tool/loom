@@ -80,9 +80,7 @@ public class JavaAssembleTask extends AbstractTask {
                 System.getProperty("java.vendor")));
 
         final Optional<String> mainClassName = pluginSettings.getMainClassName();
-        if (mainClassName.isPresent()) {
-            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName.get());
-        }
+        mainClassName.ifPresent(s -> mainAttributes.put(Attributes.Name.MAIN_CLASS, s));
         return newManifest;
     }
 

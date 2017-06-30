@@ -35,8 +35,6 @@ import jobt.api.product.SourceTreeProduct;
 
 public class JavaCompileTask extends AbstractTask {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
-    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 

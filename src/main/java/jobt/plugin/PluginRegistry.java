@@ -45,7 +45,7 @@ public class PluginRegistry {
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistry taskRegistry;
-    private Set<String> configuredPluginProperties = new CopyOnWriteArraySet<>();
+    private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
         final Map<String, String> internalPlugins = new HashMap<>();
@@ -188,7 +188,7 @@ public class PluginRegistry {
                     plugin, propertyName));
             }
 
-            configuredPluginProperties.add(property);
+            configuredPluginSettings.add(property);
         }
     }
 
@@ -198,7 +198,7 @@ public class PluginRegistry {
 
     private void validateSettings() {
         final Set<String> unknownSettings = new HashSet<>(buildConfig.getSettings().keySet());
-        unknownSettings.removeAll(configuredPluginProperties);
+        unknownSettings.removeAll(configuredPluginSettings);
 
         if (!unknownSettings.isEmpty()) {
             throw new IllegalStateException("Unknown settings: " + unknownSettings);

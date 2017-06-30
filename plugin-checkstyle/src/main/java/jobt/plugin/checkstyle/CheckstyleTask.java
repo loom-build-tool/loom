@@ -2,7 +2,6 @@ package jobt.plugin.checkstyle;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -103,8 +101,7 @@ public class CheckstyleTask extends AbstractTask {
         }
     }
 
-    private RootModule createRootModule()
-        throws MalformedURLException, ExecutionException, InterruptedException {
+    private RootModule createRootModule() {
         final RootModule rootModule;
         final String classpath = "";
 

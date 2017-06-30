@@ -29,10 +29,7 @@ import jobt.api.product.SourceTreeProduct;
 
 public class FindbugsTask extends AbstractTask {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
-    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
-    public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
     public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
@@ -83,7 +80,7 @@ public class FindbugsTask extends AbstractTask {
         }
 
         return
-            Arrays.asList(input.split(",")).stream()
+            Arrays.stream(input.split(","))
             .map(String::trim)
             .filter(str -> !str.isEmpty())
             .collect(Collectors.toList());

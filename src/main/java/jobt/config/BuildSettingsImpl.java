@@ -5,7 +5,7 @@ import jobt.api.JavaVersion;
 
 class BuildSettingsImpl implements BuildSettings {
 
-    private JavaVersion javaPlatformVersion;
+    private final JavaVersion javaPlatformVersion;
 
     BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
         this.javaPlatformVersion = javaPlatformVersion;

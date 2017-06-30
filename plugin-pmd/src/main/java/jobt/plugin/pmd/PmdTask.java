@@ -61,7 +61,7 @@ public class PmdTask extends AbstractTask {
         this.compileTarget = compileTarget;
 
         configuration.setReportShortNames(true);
-        configuration.setRuleSets("rulesets/java/basic.xml");
+        configuration.setRuleSets(pluginSettings.getRuleSets());
         configuration.setRuleSetFactoryCompatibilityEnabled(false);
         configuration.setSourceEncoding("UTF-8");
         configuration.setThreads(0);

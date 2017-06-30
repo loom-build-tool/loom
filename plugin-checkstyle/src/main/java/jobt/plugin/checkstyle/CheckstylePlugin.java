@@ -2,8 +2,9 @@ package jobt.plugin.checkstyle;
 
 import jobt.api.AbstractPlugin;
 import jobt.api.CompileTarget;
+import jobt.api.PluginSettings;
 
-public class CheckstylePlugin extends AbstractPlugin {
+public class CheckstylePlugin extends AbstractPlugin<PluginSettings> {
 
     @Override
     public void configure() {

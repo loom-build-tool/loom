@@ -8,15 +8,24 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
-public abstract class AbstractPlugin implements Plugin {
+public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
+    private final S pluginSettings;
     private TaskRegistry taskRegistry;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
 
+    public AbstractPlugin() {
+        this.pluginSettings = null;
+    }
+
+    public AbstractPlugin(final S pluginSettings) {
+        this.pluginSettings = pluginSettings;
+    }
+
     @Override
-    public PluginSettings getPluginSettings() {
-        return null;
+    public S getPluginSettings() {
+        return pluginSettings;
     }
 
     @Override

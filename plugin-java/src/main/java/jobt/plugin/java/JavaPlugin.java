@@ -5,11 +5,10 @@ import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
 
-public class JavaPlugin extends AbstractPlugin {
+public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
-    @Override
-    public JavaPluginSettings getPluginSettings() {
-        return new JavaPluginSettings();
+    public JavaPlugin() {
+        super(new JavaPluginSettings());
     }
 
     @Override

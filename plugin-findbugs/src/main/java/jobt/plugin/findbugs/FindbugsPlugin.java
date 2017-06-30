@@ -3,11 +3,10 @@ package jobt.plugin.findbugs;
 import jobt.api.AbstractPlugin;
 import jobt.api.CompileTarget;
 
-public class FindbugsPlugin extends AbstractPlugin {
+public class FindbugsPlugin extends AbstractPlugin<FindbugsPluginSettings> {
 
-    @Override
-    public FindbugsPluginSettings getPluginSettings() {
-        return new FindbugsPluginSettings();
+    public FindbugsPlugin() {
+        super(new FindbugsPluginSettings());
     }
 
     @Override

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -42,7 +41,7 @@ public class JavaCompileTask extends AbstractTask {
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
-    private static final int DEFAULT_JAVA_PLATFORM = 8;
+    private static final String DEFAULT_JAVA_PLATFORM = "8";
 
     // The first Java version which supports the --release flag
     private static final int JAVA_VERSION_WITH_RELEASE_FLAG = 9;
@@ -76,11 +75,10 @@ public class JavaCompileTask extends AbstractTask {
     }
 
     private static List<String> configuredPlatformVersion(final String versionString) {
-        final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
+        Objects.requireNonNull(versionString, "versionString required");
 
-        final int platformVersion = versionString == null
-            ? DEFAULT_JAVA_PLATFORM
-            : JavaVersion.ofVersion(versionString).getNumericVersion();
+        final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
+        final int platformVersion = JavaVersion.ofVersion(versionString).getNumericVersion();
 
         if (platformVersion == parsedJavaSpecVersion) {
             return Collections.emptyList();
@@ -252,9 +250,9 @@ public class JavaCompileTask extends AbstractTask {
 
         options.add("-Xpkginfo:always");
 
-        final Map<String, String> config = buildConfig.getConfiguration();
-
-        options.addAll(configuredPlatformVersion(config.get("javaPlatformVersion")));
+        final String javaPlatformVersion = buildConfig.lookupConfiguration("javaPlatformVersion")
+            .orElse(DEFAULT_JAVA_PLATFORM);
+        options.addAll(configuredPlatformVersion(javaPlatformVersion));
 
         return options;
     }

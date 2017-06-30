@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import jobt.RuntimeConfigurationImpl;
 import jobt.Version;
+import jobt.api.BuildConfig;
 import jobt.api.Plugin;
 import jobt.api.TaskRegistry;
-import jobt.config.BuildConfigImpl;
 import jobt.util.ThreadUtil;
 
 @SuppressWarnings({
@@ -38,7 +38,7 @@ public class PluginRegistry {
     private static final Map<String, String> INTERNAL_PLUGINS;
     private static final Set<String> DEFAULT_PLUGINS;
 
-    private final BuildConfigImpl buildConfig;
+    private final BuildConfig buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistry taskRegistry;
 
@@ -57,7 +57,7 @@ public class PluginRegistry {
         DEFAULT_PLUGINS = Collections.unmodifiableSet(defaultPlugins);
     }
 
-    public PluginRegistry(final BuildConfigImpl buildConfig,
+    public PluginRegistry(final BuildConfig buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
                           final TaskRegistry taskRegistry) {
 

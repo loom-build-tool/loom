@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
-import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
 import jobt.api.product.ClasspathProduct;
@@ -47,26 +46,23 @@ public class FindbugsTask extends AbstractTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public FindbugsTask(final BuildConfig buildConfig,
-                        final FindbugsPluginSettings pluginConfiguration,
+    public FindbugsTask(final FindbugsPluginSettings pluginSettings,
                         final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
-        readBuildConfig(Objects.requireNonNull(buildConfig),
-            Objects.requireNonNull(pluginConfiguration));
+        readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
 
-    private void readBuildConfig(final BuildConfig buildConfig,
-                                 final FindbugsPluginSettings pluginConfiguration) {
+    private void readBuildConfig(final FindbugsPluginSettings pluginSettings) {
 
         priorityThreshold =
-            pluginConfiguration.getPriorityThreshold()
+            pluginSettings.getPriorityThreshold()
             .map(PRIORITIES_MAP::get)
             .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
 
         final List<String> customPlugins =
-            parsePropValue(pluginConfiguration.getCustomPlugins());
+            parsePropValue(pluginSettings.getCustomPlugins());
 
         if (customPlugins.remove("FbContrib")) {
             loadFbContrib = true;

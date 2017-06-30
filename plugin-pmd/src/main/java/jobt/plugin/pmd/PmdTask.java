@@ -127,7 +127,7 @@ public class PmdTask extends AbstractTask {
 
         final int ruleViolationCnt = ruleViolations.get();
 
-        LOG.debug("{} problems found", ruleViolationCnt);
+        LOG.warn("{} problems found", ruleViolationCnt);
 
         if (ruleViolationCnt > 0) {
             throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
@@ -244,7 +244,7 @@ public class PmdTask extends AbstractTask {
 
         @Override
         public void ruleViolationAdded(final RuleViolation ruleViolation) {
-            LOG.error("{}:{} violates rule {} - {}", ruleViolation.getFilename(),
+            LOG.warn("{}:{} violates rule {} - {}", ruleViolation.getFilename(),
                 ruleViolation.getBeginLine(), ruleViolation.getRule().getName(),
                 ruleViolation.getDescription());
 

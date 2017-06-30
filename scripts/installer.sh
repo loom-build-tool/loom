@@ -25,4 +25,4 @@ if [ ! -e build.yml ]; then
     cp "$jobt_base/scripts/build.yml" .
 fi
 
-echo "Done. Run ``./jobt`` to start your build."
+echo "Done. Run ``./jobt build`` to start your build."

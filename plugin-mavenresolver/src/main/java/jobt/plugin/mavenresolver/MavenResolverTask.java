@@ -5,26 +5,26 @@ import java.util.List;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.product.ClasspathProduct;
 import jobt.api.DependencyScope;
 import jobt.api.TaskStatus;
+import jobt.api.product.ClasspathProduct;
 
 public class MavenResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
-    private final MavenResolver mavenResolver;
+    private MavenResolver mavenResolver;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
                              final BuildConfig buildConfig) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
-        this.mavenResolver = MavenResolverSingleton.getInstance();
     }
 
     @Override
     public TaskStatus run() throws Exception {
+        this.mavenResolver = MavenResolverSingleton.getInstance();
         switch (dependencyScope) {
             case COMPILE:
                 compileScope();

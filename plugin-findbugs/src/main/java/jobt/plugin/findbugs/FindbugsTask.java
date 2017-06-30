@@ -19,12 +19,12 @@ import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
+import jobt.api.CompileTarget;
+import jobt.api.TaskStatus;
 import jobt.api.product.ClasspathProduct;
 import jobt.api.product.CompilationProduct;
-import jobt.api.CompileTarget;
 import jobt.api.product.ReportProduct;
 import jobt.api.product.SourceTreeProduct;
-import jobt.api.TaskStatus;
 
 public class FindbugsTask extends AbstractTask {
 
@@ -64,7 +64,7 @@ public class FindbugsTask extends AbstractTask {
 
         if (Files.notExists(getSourceTree().getSrcDir())
             || Files.notExists(getClasses().getClassesDir())) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         FindbugsSingleton.initFindbugs();

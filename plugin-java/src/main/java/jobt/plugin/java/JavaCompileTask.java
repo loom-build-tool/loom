@@ -26,12 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
-import jobt.api.product.ClasspathProduct;
-import jobt.api.product.CompilationProduct;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
-import jobt.api.product.SourceTreeProduct;
 import jobt.api.TaskStatus;
+import jobt.api.product.ClasspathProduct;
+import jobt.api.product.CompilationProduct;
+import jobt.api.product.SourceTreeProduct;
 import jobt.util.JavaVersion;
 
 public class JavaCompileTask extends AbstractTask {
@@ -160,7 +160,7 @@ public class JavaCompileTask extends AbstractTask {
             ? new FileCacherImpl(subdirName) : new NullCacher();
 
         if (fileCacher.filesCached(srcPaths)) {
-            return  complete(TaskStatus.UP_TO_DATE);
+            return complete(TaskStatus.UP_TO_DATE);
         }
 
         if (Files.notExists(buildDir)) {

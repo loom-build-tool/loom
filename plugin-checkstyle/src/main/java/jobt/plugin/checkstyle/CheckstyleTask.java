@@ -24,11 +24,11 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import jobt.api.AbstractTask;
-import jobt.api.product.ClasspathProduct;
 import jobt.api.CompileTarget;
+import jobt.api.TaskStatus;
+import jobt.api.product.ClasspathProduct;
 import jobt.api.product.ReportProduct;
 import jobt.api.product.SourceTreeProduct;
-import jobt.api.TaskStatus;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
@@ -49,7 +49,7 @@ public class CheckstyleTask extends AbstractTask {
         final SourceTreeProduct sourceTree = getSourceTree();
 
         if (Files.notExists(sourceTree.getSrcDir())) {
-            return TaskStatus.SKIP;
+            return complete(TaskStatus.SKIP);
         }
 
         final List<File> collect = Files.walk(sourceTree.getSrcDir())

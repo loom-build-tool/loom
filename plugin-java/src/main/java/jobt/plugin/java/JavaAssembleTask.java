@@ -13,11 +13,11 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import jobt.api.AbstractTask;
-import jobt.api.product.AssemblyProduct;
 import jobt.api.BuildConfig;
+import jobt.api.TaskStatus;
+import jobt.api.product.AssemblyProduct;
 import jobt.api.product.CompilationProduct;
 import jobt.api.product.SourceTreeProduct;
-import jobt.api.TaskStatus;
 
 public class JavaAssembleTask extends AbstractTask {
 
@@ -34,19 +34,23 @@ public class JavaAssembleTask extends AbstractTask {
         final Path buildDir = Paths.get("jobtbuild", "libs");
         Files.createDirectories(buildDir);
 
+        final CompilationProduct compilation = getUsedProducts().readProduct(
+            "compilation", CompilationProduct.class);
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final CompilationProduct compilation = getUsedProducts().readProduct(
-            "compilation", CompilationProduct.class);
-        createJar(compilation.getClassesDir(), jarFile, preparedManifest);
+        if (Files.isDirectory(compilation.getClassesDir())) {
+            createJar(compilation.getClassesDir(), jarFile, preparedManifest);
+        }
 
+        final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
+            "source", SourceTreeProduct.class);
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
-            "source", SourceTreeProduct.class);
-        createJar(sourceTree.getSrcDir(), sourceJarFile, null);
+        if (Files.isDirectory(sourceTree.getSrcDir())) {
+            createJar(sourceTree.getSrcDir(), sourceJarFile, null);
+        }
 
         getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));
         getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile));

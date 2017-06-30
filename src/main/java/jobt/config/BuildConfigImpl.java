@@ -4,28 +4,30 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
-import jobt.api.BuildConfig;
+import jobt.api.BuildSettings;
 import jobt.api.Project;
 
-public class BuildConfigImpl implements BuildConfig, Serializable {
+class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Project project;
-    private Set<String> plugins;
-    private Map<String, String> configuration;
-    private Set<String> dependencies;
-    private Set<String> testDependencies;
+    private final Project project;
+    private final Set<String> plugins;
+    private final BuildSettings buildSettings;
+    private final Map<String, String> settings;
+    private final Set<String> dependencies;
+    private final Set<String> testDependencies;
 
-    public BuildConfigImpl(final ProjectImpl project, final Set<String> plugins,
-                           final Map<String, String> configuration,
-                           final Set<String> dependencies, final Set<String> testDependencies) {
+    BuildConfigImpl(final ProjectImpl project, final Set<String> plugins,
+                    final BuildSettings buildSettings,
+                    final Map<String, String> settings,
+                    final Set<String> dependencies, final Set<String> testDependencies) {
         this.project = Objects.requireNonNull(project);
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
-        this.configuration = Collections.unmodifiableMap(Objects.requireNonNull(configuration));
+        this.buildSettings = Objects.requireNonNull(buildSettings);
+        this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
         this.dependencies = Collections.unmodifiableSet(Objects.requireNonNull(dependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));
@@ -42,13 +44,13 @@ public class BuildConfigImpl implements BuildConfig, Serializable {
     }
 
     @Override
-    public Map<String, String> getConfiguration() {
-        return configuration;
+    public BuildSettings getBuildSettings() {
+        return buildSettings;
     }
 
     @Override
-    public Optional<String> lookupConfiguration(final String key) {
-        return Optional.ofNullable(configuration.get(key));
+    public Map<String, String> getSettings() {
+        return settings;
     }
 
     @Override
@@ -66,7 +68,7 @@ public class BuildConfigImpl implements BuildConfig, Serializable {
         return "BuildConfigImpl{"
             + "project=" + project
             + ", plugins=" + plugins
-            + ", configuration=" + configuration
+            + ", buildSettings=" + buildSettings
             + ", dependencies=" + dependencies
             + ", testDependencies=" + testDependencies
             + '}';

@@ -38,7 +38,7 @@ project:
   version: 1.0.0-SNAPSHOT
 plugins:
   - checkstyle
-configuration:
+settings:
   javaPlatformVersion: 6
 dependencies:
   - com.google.guava:guava:21.0

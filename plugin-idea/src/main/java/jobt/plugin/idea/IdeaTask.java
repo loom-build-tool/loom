@@ -14,7 +14,6 @@ import jobt.api.BuildConfig;
 import jobt.api.TaskStatus;
 import jobt.api.product.ClasspathProduct;
 import jobt.api.product.DummyProduct;
-import jobt.util.JavaVersion;
 import nu.xom.Attribute;
 import nu.xom.Builder;
 import nu.xom.Document;
@@ -76,8 +75,7 @@ public class IdeaTask extends AbstractTask {
 
             final String languageLevel;
             final String projectJdkName;
-            final int javaPlatformVersion = JavaVersion.ofVersion(
-                buildConfig.lookupConfiguration("javaPlatformVersion").orElse("8"))
+            final int javaPlatformVersion = buildConfig.getBuildSettings().getJavaPlatformVersion()
                 .getNumericVersion();
 
             languageLevel = "JDK_1_" + javaPlatformVersion;

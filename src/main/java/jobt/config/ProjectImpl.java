@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import jobt.api.Project;
 
-public class ProjectImpl implements Project, Serializable {
+class ProjectImpl implements Project, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -12,7 +12,7 @@ public class ProjectImpl implements Project, Serializable {
     private final String artifactId;
     private final String version;
 
-    public ProjectImpl(final String groupId, final String artifactId, final String version) {
+    ProjectImpl(final String groupId, final String artifactId, final String version) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;

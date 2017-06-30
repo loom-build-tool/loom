@@ -15,6 +15,11 @@ public abstract class AbstractPlugin implements Plugin {
     private RuntimeConfiguration runtimeConfiguration;
 
     @Override
+    public PluginSettings getPluginSettings() {
+        return null;
+    }
+
+    @Override
     public void setTaskRegistry(final TaskRegistry taskRegistry) {
         this.taskRegistry = taskRegistry;
     }

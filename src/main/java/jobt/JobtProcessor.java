@@ -15,8 +15,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jobt.api.BuildConfig;
 import jobt.api.ProductRepository;
+import jobt.config.BuildConfigWithSettings;
 import jobt.plugin.PluginRegistry;
 import jobt.plugin.ProductRepositoryImpl;
 import jobt.plugin.TaskRegistryImpl;
@@ -33,7 +33,7 @@ public class JobtProcessor {
         System.setProperty("jobt.version", Version.getVersion());
     }
 
-    public void init(final BuildConfig buildConfig,
+    public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
         Stopwatch.startProcess("Initialize plugins");
         new PluginRegistry(buildConfig, runtimeConfiguration, taskRegistry).initPlugins();

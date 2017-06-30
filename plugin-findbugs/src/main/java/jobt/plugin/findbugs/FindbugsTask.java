@@ -47,25 +47,26 @@ public class FindbugsTask extends AbstractTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public FindbugsTask(
-        final BuildConfig buildConfig, final CompileTarget compileTarget) {
+    public FindbugsTask(final BuildConfig buildConfig,
+                        final FindbugsPluginSettings pluginConfiguration,
+                        final CompileTarget compileTarget) {
 
-        readBuildConfig(Objects.requireNonNull(buildConfig));
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
+        readBuildConfig(Objects.requireNonNull(buildConfig),
+            Objects.requireNonNull(pluginConfiguration));
     }
 
-    private void readBuildConfig(final BuildConfig buildConfig) {
+    private void readBuildConfig(final BuildConfig buildConfig,
+                                 final FindbugsPluginSettings pluginConfiguration) {
 
         priorityThreshold =
-            buildConfig.lookupConfiguration("findbugsPriorityThreshold")
+            pluginConfiguration.getPriorityThreshold()
             .map(PRIORITIES_MAP::get)
             .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
 
         final List<String> customPlugins =
-            parsePropValue(
-                buildConfig.getConfiguration()
-                .get("findbugsEnableCustomPlugins"));
+            parsePropValue(pluginConfiguration.getCustomPlugins());
 
         if (customPlugins.remove("FbContrib")) {
             loadFbContrib = true;

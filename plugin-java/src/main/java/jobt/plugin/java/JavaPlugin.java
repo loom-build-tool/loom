@@ -8,6 +8,11 @@ import jobt.api.RuntimeConfiguration;
 public class JavaPlugin extends AbstractPlugin {
 
     @Override
+    public JavaPluginSettings getPluginSettings() {
+        return new JavaPluginSettings();
+    }
+
+    @Override
     public void configure() {
         final BuildConfig buildConfig = getBuildConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
@@ -35,7 +40,7 @@ public class JavaPlugin extends AbstractPlugin {
             .register();
 
         task("assemble")
-            .impl(() -> new JavaAssembleTask(buildConfig))
+            .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
             .provides("jar", "sourcesJar")
             .uses("source", "compilation")
             .register();

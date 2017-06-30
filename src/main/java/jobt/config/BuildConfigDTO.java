@@ -1,14 +1,19 @@
 package jobt.config;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import jobt.api.JavaVersion;
+
 public class BuildConfigDTO {
+
+    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_1_8;
 
     private ProjectDTO project;
     private Set<String> plugins;
-    private Map<String, String> configuration;
+    private Map<String, String> settings;
     private Set<String> dependencies;
     private Set<String> testDependencies;
 
@@ -28,12 +33,12 @@ public class BuildConfigDTO {
         this.plugins = plugins;
     }
 
-    public Map<String, String> getConfiguration() {
-        return configuration;
+    public Map<String, String> getSettings() {
+        return settings;
     }
 
-    public void setConfiguration(final Map<String, String> configuration) {
-        this.configuration = configuration;
+    public void setSettings(final Map<String, String> settings) {
+        this.settings = settings;
     }
 
     public Set<String> getDependencies() {
@@ -53,10 +58,20 @@ public class BuildConfigDTO {
     }
 
     public BuildConfigImpl build() {
+        final Map<String, String> cfg = settings != null ? settings : new HashMap<>();
+
+        final String javaPlatformVersionStr = cfg.remove("javaPlatformVersion");
+        final JavaVersion javaPlatformVersion = javaPlatformVersionStr != null
+            ? JavaVersion.ofVersion(javaPlatformVersionStr)
+            : DEFAULT_JAVA_PLATFORM_VERSION;
+
+        final BuildSettingsImpl buildSettings = new BuildSettingsImpl(javaPlatformVersion);
+
         return new BuildConfigImpl(
             project.build(),
             plugins != null ? plugins : Collections.emptySet(),
-            configuration != null ? configuration : Collections.emptyMap(),
+            buildSettings,
+            cfg,
             dependencies != null ? dependencies : Collections.emptySet(),
             testDependencies != null ? testDependencies : Collections.emptySet());
     }

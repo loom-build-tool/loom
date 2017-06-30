@@ -9,6 +9,8 @@ package jobt.api;
  */
 public interface Plugin {
 
+    PluginSettings getPluginSettings();
+
     void setTaskRegistry(TaskRegistry taskRegistry);
 
     void setBuildConfig(BuildConfig buildConfig);

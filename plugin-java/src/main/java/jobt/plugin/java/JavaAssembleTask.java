@@ -23,9 +23,12 @@ import jobt.api.product.SourceTreeProduct;
 public class JavaAssembleTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
+    private final JavaPluginSettings pluginSettings;
 
-    public JavaAssembleTask(final BuildConfig buildConfig) {
+    public JavaAssembleTask(final BuildConfig buildConfig,
+                            final JavaPluginSettings pluginSettings) {
         this.buildConfig = buildConfig;
+        this.pluginSettings = pluginSettings;
     }
 
     @Override
@@ -76,10 +79,8 @@ public class JavaAssembleTask extends AbstractTask {
             String.format("%s (%s)", System.getProperty("java.version"),
                 System.getProperty("java.vendor")));
 
-        final Optional<String> mainClassName = buildConfig.lookupConfiguration("mainClassName");
-        if (mainClassName.isPresent()) {
-            mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClassName.get());
-        }
+        final Optional<String> mainClassName = pluginSettings.getMainClassName();
+        mainClassName.ifPresent(s -> mainAttributes.put(Attributes.Name.MAIN_CLASS, s));
         return newManifest;
     }
 

@@ -20,7 +20,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import jobt.api.BuildConfig;
+import jobt.config.BuildConfigWithSettings;
 import jobt.config.ConfigReader;
 import jobt.util.Stopwatch;
 import jobt.util.Watch;
@@ -137,7 +137,7 @@ public class Jobt {
         jobtProcessor.logMemoryUsage();
 
         Stopwatch.startProcess("Read configuration");
-        final BuildConfig buildConfig = ConfigReader.readConfig(runtimeConfiguration);
+        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
         Stopwatch.stopProcess();
 
         System.out.printf("Initialized configuration for %s version %s%n",

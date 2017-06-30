@@ -26,22 +26,19 @@ import org.slf4j.LoggerFactory;
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
+import jobt.api.JavaVersion;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
 import jobt.api.product.ClasspathProduct;
 import jobt.api.product.CompilationProduct;
 import jobt.api.product.SourceTreeProduct;
-import jobt.util.JavaVersion;
 
 public class JavaCompileTask extends AbstractTask {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
-    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
     public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
-    private static final String DEFAULT_JAVA_PLATFORM = "8";
 
     // The first Java version which supports the --release flag
     private static final int JAVA_VERSION_WITH_RELEASE_FLAG = 9;
@@ -74,11 +71,11 @@ public class JavaCompileTask extends AbstractTask {
         }
     }
 
-    private static List<String> configuredPlatformVersion(final String versionString) {
-        Objects.requireNonNull(versionString, "versionString required");
+    private static List<String> configuredPlatformVersion(final JavaVersion version) {
+        Objects.requireNonNull(version, "versionString required");
 
         final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
-        final int platformVersion = JavaVersion.ofVersion(versionString).getNumericVersion();
+        final int platformVersion = version.getNumericVersion();
 
         if (platformVersion == parsedJavaSpecVersion) {
             return Collections.emptyList();
@@ -250,9 +247,8 @@ public class JavaCompileTask extends AbstractTask {
 
         options.add("-Xpkginfo:always");
 
-        final String javaPlatformVersion = buildConfig.lookupConfiguration("javaPlatformVersion")
-            .orElse(DEFAULT_JAVA_PLATFORM);
-        options.addAll(configuredPlatformVersion(javaPlatformVersion));
+        options.addAll(
+            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion()));
 
         return options;
     }

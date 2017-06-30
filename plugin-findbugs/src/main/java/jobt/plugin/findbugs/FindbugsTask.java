@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
-import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.TaskStatus;
 import jobt.api.product.ClasspathProduct;
@@ -30,10 +29,7 @@ import jobt.api.product.SourceTreeProduct;
 
 public class FindbugsTask extends AbstractTask {
 
-    public static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
-    public static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
     public static final Path BUILD_MAIN_PATH = Paths.get("jobtbuild", "classes", "main");
-    public static final Path BUILD_TEST_PATH = Paths.get("jobtbuild", "classes", "test");
     public static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "findbugs");
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
@@ -47,25 +43,23 @@ public class FindbugsTask extends AbstractTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public FindbugsTask(
-        final BuildConfig buildConfig, final CompileTarget compileTarget) {
+    public FindbugsTask(final FindbugsPluginSettings pluginSettings,
+                        final CompileTarget compileTarget) {
 
-        readBuildConfig(Objects.requireNonNull(buildConfig));
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
+        readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
 
-    private void readBuildConfig(final BuildConfig buildConfig) {
+    private void readBuildConfig(final FindbugsPluginSettings pluginSettings) {
 
         priorityThreshold =
-            buildConfig.lookupConfiguration("findbugsPriorityThreshold")
+            pluginSettings.getPriorityThreshold()
             .map(PRIORITIES_MAP::get)
             .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
 
         final List<String> customPlugins =
-            parsePropValue(
-                buildConfig.getConfiguration()
-                .get("findbugsEnableCustomPlugins"));
+            parsePropValue(pluginSettings.getCustomPlugins());
 
         if (customPlugins.remove("FbContrib")) {
             loadFbContrib = true;
@@ -86,7 +80,7 @@ public class FindbugsTask extends AbstractTask {
         }
 
         return
-            Arrays.asList(input.split(",")).stream()
+            Arrays.stream(input.split(","))
             .map(String::trim)
             .filter(str -> !str.isEmpty())
             .collect(Collectors.toList());

@@ -1,4 +1,4 @@
-package jobt.util;
+package jobt.api;
 
 public enum JavaVersion {
 

@@ -1,6 +1,6 @@
 package jobt.plugin;
 
-import java.io.IOException;
+import java.beans.Statement;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -9,22 +9,26 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.RuntimeConfigurationImpl;
 import jobt.Version;
-import jobt.api.BuildConfig;
 import jobt.api.Plugin;
+import jobt.api.PluginSettings;
 import jobt.api.TaskRegistry;
+import jobt.config.BuildConfigWithSettings;
 import jobt.util.ThreadUtil;
 
 @SuppressWarnings({
@@ -38,9 +42,10 @@ public class PluginRegistry {
     private static final Map<String, String> INTERNAL_PLUGINS;
     private static final Set<String> DEFAULT_PLUGINS;
 
-    private final BuildConfig buildConfig;
+    private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistry taskRegistry;
+    private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
         final Map<String, String> internalPlugins = new HashMap<>();
@@ -57,7 +62,7 @@ public class PluginRegistry {
         DEFAULT_PLUGINS = Collections.unmodifiableSet(defaultPlugins);
     }
 
-    public PluginRegistry(final BuildConfig buildConfig,
+    public PluginRegistry(final BuildConfigWithSettings buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
                           final TaskRegistry taskRegistry) {
 
@@ -100,10 +105,12 @@ public class PluginRegistry {
         if (firstException.get() != null) {
             throw new IllegalStateException(firstException.get());
         }
+
+        validateSettings();
     }
 
     private void initPlugin(final String plugin)
-        throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+        throws Exception {
 
         LOG.info("Initialize plugin {}", plugin);
         final String pluginClassname = INTERNAL_PLUGINS.get(plugin);
@@ -130,13 +137,10 @@ public class PluginRegistry {
         regPlugin.setTaskRegistry(taskRegistry);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
+        injectPluginSettings(plugin, regPlugin);
         regPlugin.configure();
 
         LOG.info("Plugin {} initialized", plugin);
-    }
-
-    public static ClassLoader getPlatformClassLoader() {
-        return ClassLoader.getSystemClassLoader().getParent();
     }
 
     private URL findPluginUrl(final String name) {
@@ -151,6 +155,53 @@ public class PluginRegistry {
             return f.toUri().toURL();
         } catch (final MalformedURLException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    public static ClassLoader getPlatformClassLoader() {
+        return ClassLoader.getSystemClassLoader().getParent();
+    }
+
+    private void injectPluginSettings(final String plugin, final Plugin regPlugin)
+        throws Exception {
+
+        final PluginSettings pluginSettings = regPlugin.getPluginSettings();
+
+        if (pluginSettings == null) {
+            return;
+        }
+
+        final Map<String, String> settings = buildConfig.getSettings();
+        final List<String> properties = settings.keySet().stream()
+            .filter(k -> k.startsWith(plugin + "."))
+            .collect(Collectors.toList());
+
+        for (final String property : properties) {
+            final String propertyName = property.substring(plugin.length() + 1);
+            final String setter = constructSetter(propertyName);
+            final String[] setterArgs = {settings.get(property)};
+
+            try {
+                new Statement(pluginSettings, setter, setterArgs).execute();
+            } catch (final NoSuchMethodException e) {
+                throw new IllegalStateException(String.format("Plugin %s has no setting '%s'",
+                    plugin, propertyName));
+            }
+
+            configuredPluginSettings.add(property);
+        }
+    }
+
+    private static String constructSetter(final String propertyName) {
+        return "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+    }
+
+    private void validateSettings() {
+        final Set<String> unknownSettings = new HashSet<>(buildConfig.getSettings().keySet());
+        unknownSettings.removeAll(configuredPluginSettings);
+
+        if (!unknownSettings.isEmpty()) {
+            throw new IllegalStateException("Unknown settings: " + unknownSettings);
         }
     }
 

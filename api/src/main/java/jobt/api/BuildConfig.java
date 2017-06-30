@@ -1,7 +1,5 @@
 package jobt.api;
 
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public interface BuildConfig {
@@ -10,9 +8,7 @@ public interface BuildConfig {
 
     Set<String> getPlugins();
 
-    Map<String, String> getConfiguration();
-
-    Optional<String> lookupConfiguration(String key);
+    BuildSettings getBuildSettings();
 
     Set<String> getDependencies();
 

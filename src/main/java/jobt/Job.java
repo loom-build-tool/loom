@@ -41,10 +41,6 @@ public class Job implements Callable<TaskStatus> {
         return name;
     }
 
-    public JobStatus getStatus() {
-        return status.get();
-    }
-
     @Override
     public TaskStatus call() throws Exception {
         status.set(JobStatus.RUNNING);

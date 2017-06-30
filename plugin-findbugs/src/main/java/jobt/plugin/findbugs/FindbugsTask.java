@@ -55,7 +55,7 @@ public class FindbugsTask extends AbstractTask {
         priorityThreshold = Optional.ofNullable(
             buildConfig.getConfiguration().get("findbugsPriorityThreshold"))
             .map(PRIORITIES_MAP::get)
-            .map(prio -> Objects.requireNonNull(prio, "Invalid priority thresold " + prio));
+            .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
 
     }
 

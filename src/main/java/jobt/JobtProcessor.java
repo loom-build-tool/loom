@@ -8,9 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,7 @@ import jobt.plugin.PluginRegistry;
 import jobt.plugin.ProductRepositoryImpl;
 import jobt.plugin.TaskRegistryImpl;
 import jobt.plugin.TaskRegistryLookup;
+import jobt.plugin.TaskUtil;
 import jobt.util.Stopwatch;
 
 public class JobtProcessor {
@@ -93,8 +94,9 @@ public class JobtProcessor {
         GraphvizOutput.generateDot(taskRegistry);
     }
 
-    public Set<String> getAvailableProducts() {
-        return productRepository.getProductNames();
+    public Collection<String> getAvailableProducts() {
+        return
+            TaskUtil.buildInvertedProducersMap(taskRegistry).keySet();
     }
 
 }

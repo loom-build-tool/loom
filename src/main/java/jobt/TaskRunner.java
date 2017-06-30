@@ -1,7 +1,6 @@
 package jobt;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import jobt.api.ProductRepository;
 import jobt.plugin.ConfiguredTask;
 import jobt.plugin.TaskRegistryLookup;
+import jobt.plugin.TaskUtil;
 
 public class TaskRunner {
 
@@ -48,7 +48,8 @@ public class TaskRunner {
 
     private List<String> resolveTasks(final Set<String> productIds) {
         // Map productId -> taskName
-        final Map<String, String> producersMap = buildInvertedProducersMap();
+        final Map<String, String> producersMap =
+            TaskUtil.buildInvertedProducersMap(taskRegistry);
 
         producersMap.keySet().forEach(productRepository::createProduct);
 
@@ -73,23 +74,6 @@ public class TaskRunner {
         }
 
         return resolvedTasks;
-    }
-
-    private Map<String, String> buildInvertedProducersMap() {
-        final Map<String, String> producersMap = new HashMap<>();
-
-        for (final String taskName : taskRegistry.getTaskNames()) {
-            final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
-            for (final String providedProduct : configuredTask.getProvidedProducts()) {
-                final String oldTaskName = producersMap.putIfAbsent(providedProduct, taskName);
-                if (oldTaskName != null) {
-                    throw new IllegalStateException("Product " + providedProduct + " provided by "
-                        + taskName + " but was already provided by " + oldTaskName);
-                }
-            }
-        }
-
-        return producersMap;
     }
 
     private Collection<Job> buildJobs(final Collection<String> resolvedTasks) {

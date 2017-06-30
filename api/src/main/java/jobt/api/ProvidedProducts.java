@@ -42,7 +42,7 @@ public class ProvidedProducts {
         Objects.requireNonNull(productId);
         Objects.requireNonNull(value,
             "Must not complete product <" + productId + ">"
-                + "in task <" + taskName + "> with null value");
+                + " in task <" + taskName + "> with null value");
 
         if (!producedProductIds.contains(productId)) {
             throw new IllegalStateException(

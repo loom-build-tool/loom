@@ -5,8 +5,8 @@ import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
-import jobt.api.product.ResourcesTreeProduct;
 import jobt.api.TaskStatus;
+import jobt.api.product.ResourcesTreeProduct;
 
 public class JavaProvideResourcesDirTask extends AbstractTask {
     private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");

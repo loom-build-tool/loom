@@ -6,10 +6,10 @@ import java.nio.file.Paths;
 
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
-import jobt.api.product.ProcessedResourceProduct;
-import jobt.api.product.ResourcesTreeProduct;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
+import jobt.api.product.ProcessedResourceProduct;
+import jobt.api.product.ResourcesTreeProduct;
 
 public class ResourcesTask extends AbstractTask {
 

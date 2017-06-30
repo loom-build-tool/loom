@@ -68,6 +68,10 @@ public class PmdTask extends AbstractTask {
         configuration.setMinimumPriority(RulePriority.valueOf(pluginSettings.getMinimumPriority()));
         configuration.setAnalysisCacheLocation(resolveCacheFile().toString());
         configuration.setDefaultLanguageVersion(getLanguageVersion(buildConfig));
+
+        if (configuration.getSuppressMarker() != null) {
+            LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
+        }
     }
 
     private LanguageVersion getLanguageVersion(final BuildConfig buildConfig) {
@@ -92,10 +96,6 @@ public class PmdTask extends AbstractTask {
     @Override
     public TaskStatus run() throws Exception {
         final RuleSetFactory ruleSetFactory = buildRuleSetFactory();
-
-        if (configuration.getSuppressMarker() != null) {
-            LOG.debug("Setting suppress marker to be {}", configuration.getSuppressMarker());
-        }
 
         final RuleContext ctx = new RuleContext();
         final AtomicInteger ruleViolations = new AtomicInteger(0);

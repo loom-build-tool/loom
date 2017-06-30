@@ -26,13 +26,13 @@ public final class FindbugsSingleton {
     private FindbugsSingleton() {
     }
 
-    public static void initFindbugs() {
+    public static void initFindbugs(final boolean loadFbContrib, final boolean loadFindBugsSec) {
 
         if (!initialized) {
             synchronized (FindbugsSingleton.class) {
                 if (!initialized) {
 
-                    loadFindbugsPlugin();
+                    loadFindbugsPlugin(loadFbContrib, loadFindBugsSec);
                     disableUpdateChecksOnEveryPlugin();
 
                     LOG.info("Using findbugs plugins: {}", Plugin.getAllPluginIds());
@@ -48,7 +48,8 @@ public final class FindbugsSingleton {
     /**
      * Note: findbugs plugins are registered in a static map and thus has many concurrency issues.
      */
-    private static void loadFindbugsPlugin() {
+    private static void loadFindbugsPlugin(
+        final boolean loadFbContrib, final boolean loadFindBugsSec) {
 
         final ClassLoader contextClassLoader = FindbugsSingleton.class.getClassLoader();
 
@@ -58,6 +59,10 @@ public final class FindbugsSingleton {
                 .map(FindbugsSingleton::normalizeUrl)
                 .map(Paths::get)
                 .filter(Files::exists)
+                .filter(file ->
+                    loadFbContrib && file.getFileName().toString().startsWith("fb-contrib")
+                    || loadFindBugsSec && file.getFileName().toString().startsWith("findsecbugs")
+                )
                 .map(Path::toUri)
                 .forEach(pluginUri -> {
                     try {

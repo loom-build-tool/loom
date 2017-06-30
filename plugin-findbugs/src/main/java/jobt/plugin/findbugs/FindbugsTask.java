@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +44,9 @@ public class FindbugsTask extends AbstractTask {
 
     private Optional<Integer> priorityThreshold;
 
+    private boolean loadFbContrib;
+    private boolean loadFindBugsSec;
+
     public FindbugsTask(
         final BuildConfig buildConfig, final CompileTarget compileTarget) {
 
@@ -57,6 +62,34 @@ public class FindbugsTask extends AbstractTask {
             .map(PRIORITIES_MAP::get)
             .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
 
+        final List<String> customPlugins =
+            parsePropValue(
+                buildConfig.getConfiguration()
+                .get("findbugsEnableCustomPlugins"));
+
+        if (customPlugins.remove("FbContrib")) {
+            loadFbContrib = true;
+        }
+        if (customPlugins.remove("FindSecBugs")) {
+            loadFindBugsSec = true;
+        }
+
+        Preconditions.checkState(
+            customPlugins.isEmpty(),
+            "Unknown findbugs custom plugin(s): " + customPlugins);
+
+    }
+
+    private List<String> parsePropValue(final String input) {
+        if (input == null) {
+            return Collections.emptyList();
+        }
+
+        return
+            Arrays.asList(input.split(",")).stream()
+            .map(String::trim)
+            .filter(str -> !str.isEmpty())
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -67,7 +100,7 @@ public class FindbugsTask extends AbstractTask {
             return complete(TaskStatus.SKIP);
         }
 
-        FindbugsSingleton.initFindbugs();
+        FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
         final List<BugInstance> bugs = new FindbugsRunner(
             getSourceTree().getSrcDir(),

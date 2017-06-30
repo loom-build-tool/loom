@@ -25,7 +25,7 @@ import jobt.util.Stopwatch;
 
 public class JobtProcessor {
 
-    private TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+    private final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
     private final ProductRepository productRepository = new ProductRepositoryImpl();
 
     static {

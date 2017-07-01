@@ -19,7 +19,8 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
         task("springBootApplication")
             .impl(() -> new SpringBootTask(getBuildConfig(), pluginSettings))
             .provides("springBootApplication")
-            .uses("compilation", "compileDependencies", "pluginDependencies.springBootApplication")
+            .uses("processedResources", "compilation", "compileDependencies",
+                "pluginDependencies.springBootApplication")
             .deps("org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion())
             .register();
 

@@ -41,7 +41,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
         task("assemble")
             .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
             .provides("jar", "sourcesJar")
-            .uses("source", "compilation")
+            .uses("source", "resources", "processedResources", "compilation")
             .register();
 
         task("provideResources")
@@ -56,8 +56,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
         task("processResources")
             .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN))
-            .uses("resources")
             .provides("processedResources")
+            .uses("resources")
             .register();
 
         task("processTestResources")

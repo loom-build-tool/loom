@@ -18,6 +18,7 @@ import jobt.api.TaskStatus;
 import jobt.api.product.AssemblyProduct;
 import jobt.api.product.ClasspathProduct;
 import jobt.api.product.CompilationProduct;
+import jobt.api.product.ProcessedResourceProduct;
 
 public class SpringBootTask extends AbstractTask {
 
@@ -49,7 +50,12 @@ public class SpringBootTask extends AbstractTask {
             .readProduct("compilation", CompilationProduct.class);
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
-        copyClasses(classesDir, compilationProduct);
+        copyFiles(compilationProduct.getClassesDir(), classesDir);
+
+        // copy resources
+        final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts()
+            .readProduct("processedResources", ProcessedResourceProduct.class);
+        copyFiles(resourcesTreeProduct.getSrcDir(), classesDir);
 
         // scan for @SpringBootApplication
         final String applicationClassname = scanForApplicationStarter(compilationProduct);
@@ -72,25 +78,23 @@ public class SpringBootTask extends AbstractTask {
         return complete(TaskStatus.OK, assemblyFile);
     }
 
-    private void copyClasses(final Path classesDir, final CompilationProduct compilation)
+    private void copyFiles(final Path srcDir, final Path targetDir)
         throws IOException {
 
-        final Path classesSrcDir = compilation.getClassesDir();
-
-        Files.walkFileTree(classesSrcDir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(srcDir, new SimpleFileVisitor<Path>() {
 
             @Override
             public FileVisitResult preVisitDirectory(final Path dir,
                                                      final BasicFileAttributes attrs)
                 throws IOException {
-                Files.createDirectories(classesDir.resolve(classesSrcDir.relativize(dir)));
+                Files.createDirectories(targetDir.resolve(srcDir.relativize(dir)));
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
                 throws IOException {
-                Files.copy(file, classesDir.resolve(classesSrcDir.relativize(file)));
+                Files.copy(file, targetDir.resolve(srcDir.relativize(file)));
                 return FileVisitResult.CONTINUE;
             }
 

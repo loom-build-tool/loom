@@ -28,7 +28,7 @@ public final class LogConfiguration {
 
         final PatternLayoutEncoder consoleEncoder = new PatternLayoutEncoder();
         consoleEncoder.setContext(lc);
-        consoleEncoder.setPattern("%level %logger - %msg%n");
+        consoleEncoder.setPattern("%highlight(%level) %cyan(%logger) - %msg%n");
         consoleEncoder.start();
 
         final ThresholdFilter filter = new ThresholdFilter();
@@ -39,6 +39,7 @@ public final class LogConfiguration {
 
         final ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
         consoleAppender.setContext(lc);
+        consoleAppender.setWithJansi(true);
         consoleAppender.setName("Jobt Console Appender");
         consoleAppender.setTarget("System.err");
         consoleAppender.setEncoder(consoleEncoder);

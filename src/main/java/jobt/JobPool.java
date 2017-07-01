@@ -53,6 +53,8 @@ public class JobPool {
                 currentJobs.put(jobName, job);
                 final TaskStatus status = job.call();
                 LOG.info("Job {} resulted with {}", jobName, status);
+
+                ProgressMonitor.progress();
             } catch (final Throwable e) {
                 firstException.compareAndSet(null, e);
                 if (!(e instanceof InterruptedException)) {

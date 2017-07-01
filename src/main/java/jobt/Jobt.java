@@ -19,6 +19,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 
 import jobt.config.BuildConfigWithSettings;
 import jobt.config.ConfigReader;
@@ -31,25 +33,57 @@ public class Jobt {
 
     private static final Path BUILD_FILE = Paths.get("build.yml");
 
-    @SuppressWarnings("checkstyle:avoidescapedunicodecharacters")
-    private static final String PASTA = "\uD83C\uDF5D";
-
     public static void main(final String[] args) {
-        final String javaVersion = System.getProperty("java.version");
-        System.out.printf("Java Optimized Build Tool v%s (on Java %s)%n",
-            Version.getVersion(), javaVersion);
+        AnsiConsole.systemInstall();
+
+        final Thread ctrlCHook = new Thread(() ->
+            AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
+                .a("Interrupt received - cooking stopped").reset()));
+
+        try {
+            init();
+
+            final Options options = buildOptions();
+            final CommandLine cmd = parseCommandLine(options, args);
+
+            if (validate(cmd, options)) {
+                Runtime.getRuntime().addShutdownHook(ctrlCHook);
+
+                try (FileLock ignored = lock()) {
+                    run(cmd, options);
+                }
+
+                Runtime.getRuntime().removeShutdownHook(ctrlCHook);
+            }
+        } catch (final Throwable e) {
+            Runtime.getRuntime().removeShutdownHook(ctrlCHook);
+            AnsiConsole.err().println(Ansi.ansi().reset().fgBrightRed().a(e.getMessage()).reset()
+                .newline());
+            System.exit(1);
+        }
+
+        AnsiConsole.out().println(Ansi.ansi().reset());
+        AnsiConsole.systemUninstall();
+        System.exit(0);
+    }
+
+    private static void init() {
+        AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
+            .format("Java Optimized Build Tool v%s (on Java %s)",
+                Version.getVersion(), System.getProperty("java.version"))
+            .reset());
 
         if (ToolProvider.getSystemJavaCompiler() == null) {
-            System.err.println("JDK required (running inside of JRE)");
-            System.exit(1);
+            throw new IllegalStateException("JDK required (running inside of JRE)");
         }
 
         if (Files.notExists(BUILD_FILE)) {
-            System.err.println("No build.yml found");
-            System.exit(1);
+            throw new IllegalStateException("No build.yml found");
         }
+    }
 
-        final Options options = new Options()
+    private static Options buildOptions() {
+        return new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
@@ -61,43 +95,30 @@ public class Jobt {
                     .argName("format")
                     .desc("Show available products (formats: text [default], dot)")
                     .build());
-
-        if (args.length == 0) {
-            System.err.println("Nothing to do!");
-            printHelp(options);
-            System.exit(1);
-        }
-
-        final CommandLine cmd = parseCommandLine(args, options);
-
-        if (cmd.hasOption("help")) {
-            printHelp(options);
-            System.exit(0);
-        }
-
-        final long startTime = System.nanoTime();
-
-        try (FileLock ignored = lock()) {
-            run(cmd);
-        } catch (final Throwable e) {
-            e.printStackTrace(System.err);
-            System.err.println();
-            System.err.println("Build failed");
-            System.exit(1);
-        }
-
-        final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-        System.out.printf(PASTA + "  Cooked your pasta in %.2fs%n", duration);
     }
 
-    private static CommandLine parseCommandLine(final String[] args, final Options options) {
+    private static CommandLine parseCommandLine(final Options options, final String[] args) {
         try {
             return new DefaultParser().parse(options, args);
         } catch (final ParseException e) {
-            System.err.println("Error parsing command line: " + e.getMessage());
-            System.exit(1);
-            throw new IllegalStateException("Unreachable code");
+            throw new IllegalStateException("Error parsing command line: " + e.getMessage());
         }
+    }
+
+    private static boolean validate(final CommandLine cmd, final Options options) {
+        if (cmd.hasOption("help")) {
+            printHelp(options);
+            return false;
+        }
+
+        if (!cmd.hasOption("clean") && !cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
+            AnsiConsole.out().println(Ansi.ansi().fgBrightYellow()
+                .a("No product requested!").reset().newline());
+            printHelp(options);
+            return false;
+        }
+
+        return true;
     }
 
     private static void printHelp(final Options options) {
@@ -111,23 +132,36 @@ public class Jobt {
         final FileLock fileLock = fileChannel.tryLock();
 
         if (fileLock == null) {
-            System.err.println("Jobt already running");
-            System.exit(1);
+            throw new IllegalStateException("Jobt already running");
         }
 
         return fileLock;
     }
 
-    public static void run(final CommandLine cmd) throws Exception {
+    public static void run(final CommandLine cmd, final Options options) throws Exception {
+        final long startTime = System.nanoTime();
+
         final JobtProcessor jobtProcessor = new JobtProcessor();
 
         if (cmd.hasOption("clean")) {
-            System.out.println("Cleaning...");
+            AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
             jobtProcessor.clean();
+            AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
+
+            if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
+                return;
+            }
         }
 
+        final boolean noCacheMode = cmd.hasOption("no-cache");
+
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(!cmd.hasOption("no-cache"));
+            new RuntimeConfigurationImpl(!noCacheMode);
+
+        if (noCacheMode) {
+            AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
+                .reset());
+        }
 
         Stopwatch.startProcess("Configure logging");
         LogConfiguration.configureLogger();
@@ -140,39 +174,52 @@ public class Jobt {
         final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
         Stopwatch.stopProcess();
 
-        System.out.printf("Initialized configuration for %s version %s%n",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion());
+        AnsiConsole.out.println(Ansi.ansi()
+            .render("Initialized configuration for @|bold %s|@ version @|bold %s|@",
+                buildConfig.getProject().getArtifactId(),
+                buildConfig.getProject().getVersion())
+            .reset());
 
         jobtProcessor.init(buildConfig, runtimeConfiguration);
 
         if (cmd.hasOption("products")) {
             final String format = cmd.getOptionValue("products");
-
-            if (format == null || "text".equals(format)) {
-                System.out.println();
-                System.out.println("Available products:");
-                System.out.println();
-                jobtProcessor.getAvailableProducts().stream().sorted()
-                    .forEach(System.out::println);
-                System.out.println();
-            } else if ("dot".equals(format)) {
-                jobtProcessor.generateDotProductOverview();
-            } else {
-                System.err.println("Unknown format: " + format);
-                System.exit(1);
-            }
-
-            System.exit(0);
+            printProducts(jobtProcessor, format);
         }
 
         if (!cmd.getArgList().isEmpty()) {
-            jobtProcessor.execute(cmd.getArgList());
+            ProgressMonitor.start();
+
+            try {
+                jobtProcessor.execute(cmd.getArgList());
+            } finally {
+                ProgressMonitor.stop();
+            }
+
+            printExecutionStatistics();
+
+            final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
+
+            AnsiConsole.out().print(Ansi.ansi().reset().fgBrightGreen()
+                .format("Cooked your pasta in %.2fs%n", duration)
+                .reset());
         }
 
-        printExecutionStatistics();
-
         jobtProcessor.logMemoryUsage();
+    }
+
+    private static void printProducts(final JobtProcessor jobtProcessor, final String format) {
+        if (format == null || "text".equals(format)) {
+            System.out.println();
+            System.out.println("Available products:");
+            System.out.println();
+            jobtProcessor.getAvailableProducts().stream().sorted()
+                .forEach(System.out::println);
+        } else if ("dot".equals(format)) {
+            jobtProcessor.generateDotProductOverview();
+        } else {
+            throw new IllegalStateException("Unknown format: " + format);
+        }
     }
 
     private static void printExecutionStatistics() {
@@ -196,9 +243,6 @@ public class Jobt {
             final long watchDuration = stringWatchEntry.getValue().getDuration();
             printDuration(longestKey, name, totalDuration, watchDuration);
         });
-
-        final double totalDurationSecs = totalDuration / 1_000_000_000D;
-        System.out.printf("Total: %.2fs (executed in parallel)%n%n", totalDurationSecs);
     }
 
     private static void printDuration(final int longestKey, final String name,
@@ -212,7 +256,7 @@ public class Jobt {
             Collections.nCopies((int) Math.ceil(pct / 2), "#"));
 
         final double durationSecs = watchDuration / 1_000_000_000D;
-        System.out.printf("%s %s: %.2fs (%4.1f%%) %s%n",
+        System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
             name, space, durationSecs, pct, durationBar);
     }
 

@@ -19,48 +19,43 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
         this.resourceFilterVariables = resourceFilterVariables;
     }
 
-    @SuppressWarnings({"checkstyle:returncount", "checkstyle:nestedifdepth"})
+    @SuppressWarnings("checkstyle:returncount")
     @Override
     public void write(final int b) throws IOException {
         if (filtering == 0) {
             if (b == '$') {
                 filtering = 1;
                 buf.write(b);
-                return;
+            } else {
+                out.write(b);
             }
         } else if (filtering == 1) {
             if (b == '{') {
                 filtering = 2;
                 buf.write(b);
-                return;
             } else {
                 filtering = 0;
                 buf.writeTo(out);
                 buf.reset();
+                out.write(b);
             }
-        } else if (filtering == 2) {
-            if (b == '}') {
-                buf.write(b);
-                filtering = 0;
+        } else if (b == '}') {
+            buf.write(b);
+            filtering = 0;
 
-                final String placeholder = buf.toString("UTF-8")
-                    .substring(2, buf.size() - 1);
-                final String resource = resourceFilterVariables.get(placeholder);
-                if (resource != null) {
-                    out.write(resource.getBytes(StandardCharsets.UTF_8));
-                } else {
-                    buf.writeTo(out);
-                }
-
-                buf.reset();
+            final String placeholder = buf.toString("UTF-8")
+                .substring(2, buf.size() - 1);
+            final String resource = resourceFilterVariables.get(placeholder);
+            if (resource != null) {
+                out.write(resource.getBytes(StandardCharsets.UTF_8));
             } else {
-                buf.write(b);
+                buf.writeTo(out);
             }
 
-            return;
+            buf.reset();
+        } else {
+            buf.write(b);
         }
-
-        out.write(b);
     }
 
     @Override

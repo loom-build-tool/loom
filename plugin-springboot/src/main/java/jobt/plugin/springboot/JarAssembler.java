@@ -43,22 +43,20 @@ public class JarAssembler {
     }
 
     private Manifest prepareManifest(final String applicationClassname) {
-        final Manifest newManifest = new Manifest();
-        final Attributes mainAttributes = newManifest.getMainAttributes();
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        mainAttributes.put(new Attributes.Name("Created-By"),
-            "Jobt " + System.getProperty("jobt.version"));
-        mainAttributes.put(new Attributes.Name("Build-Jdk"),
-            String.format("%s (%s)", System.getProperty("java.version"),
-                System.getProperty("java.vendor")));
+        final Manifest manifest = new Manifest();
 
-        mainAttributes.put(new Attributes.Name("Start-Class"), applicationClassname);
-        mainAttributes.put(new Attributes.Name("Spring-Boot-Classes"), "BOOT-INF/classes/");
-        mainAttributes.put(new Attributes.Name("Spring-Boot-Lib"), "BOOT-INF/lib/");
-        mainAttributes.put(new Attributes.Name("Spring-Boot-Version"), pluginSettings.getVersion());
+        new ManifestBuilder(manifest)
+            .put(Attributes.Name.MANIFEST_VERSION, "1.0")
+            .put("Created-By", "Jobt " + System.getProperty("jobt.version"))
+            .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
+                System.getProperty("java.vendor")))
+            .put("Start-Class", applicationClassname)
+            .put("Spring-Boot-Classes", "BOOT-INF/classes/")
+            .put("Spring-Boot-Lib", "BOOT-INF/lib/")
+            .put("Spring-Boot-Version", pluginSettings.getVersion())
+            .put(Attributes.Name.MAIN_CLASS, SPRING_BOOT_LAUNCHER);
 
-        mainAttributes.put(Attributes.Name.MAIN_CLASS, SPRING_BOOT_LAUNCHER);
-        return newManifest;
+        return manifest;
     }
 
     private void writeManifest(final Path buildDir, final Manifest manifest) throws IOException {

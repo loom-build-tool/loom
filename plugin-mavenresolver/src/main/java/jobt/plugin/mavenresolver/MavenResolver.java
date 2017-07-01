@@ -95,14 +95,15 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> resolve(final List<String> deps, final DependencyScope scope) {
+    public List<Path> resolve(final List<String> deps, final DependencyScope scope,
+                              final String cacheName) {
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
         try {
 
             // note: caches do not need extra locking, because they get isolated by the scope used
-            final List<Path> files = readCache(deps, scope);
+            final List<Path> files = readCache(deps, cacheName);
 
             if (!files.isEmpty()) {
                 LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
@@ -116,7 +117,7 @@ public class MavenResolver implements DependencyResolver {
                 LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
             }
 
-            writeCache(deps, scope, paths);
+            writeCache(deps, cacheName, paths);
 
             return paths;
 
@@ -124,12 +125,11 @@ public class MavenResolver implements DependencyResolver {
             throw new UncheckedIOException(
                 String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
         }
-
     }
 
-    private List<Path> readCache(final List<String> deps, final DependencyScope scope)
+    private List<Path> readCache(final List<String> deps, final String cacheName)
         throws IOException {
-        final Path cacheFile = resolveCacheFile(scope);
+        final Path cacheFile = resolveCacheFile(cacheName);
         if (Files.exists(cacheFile)) {
             final List<String> strings = Files.readAllLines(cacheFile);
             final String[] split = strings.get(0).split("\t");
@@ -144,10 +144,10 @@ public class MavenResolver implements DependencyResolver {
         return Collections.emptyList();
     }
 
-    private Path resolveCacheFile(final DependencyScope scope) throws IOException {
+    private Path resolveCacheFile(final String cacheName) throws IOException {
         final Path cacheDir = Files.createDirectories(
             Paths.get(".jobt", "cache", "mavenresolver"));
-        return cacheDir.resolve(mavenScope(scope) + "-dependencies.cache");
+        return cacheDir.resolve(cacheName + "-dependencies.cache");
     }
 
     private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope) {
@@ -202,13 +202,13 @@ public class MavenResolver implements DependencyResolver {
         }
     }
 
-    private void writeCache(final List<String> deps, final DependencyScope scope,
+    private void writeCache(final List<String> deps, final String cacheName,
                             final List<Path> files) throws IOException {
         final String sb = Hasher.hash(deps) + '\t' + files.stream()
             .map(f -> f.toAbsolutePath().toString())
             .collect(Collectors.joining(","));
 
-        Files.write(resolveCacheFile(scope), Collections.singletonList(sb),
+        Files.write(resolveCacheFile(cacheName), Collections.singletonList(sb),
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 

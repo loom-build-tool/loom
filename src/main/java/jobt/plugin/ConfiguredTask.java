@@ -12,12 +12,15 @@ public class ConfiguredTask {
     private final Supplier<Task> taskSupplier;
     private final Set<String> providedProducts;
     private final Set<String> usedProducts;
+    private final Set<String> dependencies;
 
-    ConfiguredTask(final Supplier<Task> taskSupplier,
-                   final Set<String> providedProducts, final Set<String> usedProducts) {
+    ConfiguredTask(final Supplier<Task> taskSupplier, final Set<String> providedProducts,
+                   final Set<String> usedProducts, final Set<String> dependencies) {
         this.taskSupplier = taskSupplier;
         this.providedProducts = new HashSet<>(providedProducts);
         this.usedProducts = new HashSet<>(usedProducts);
+        this.dependencies = dependencies != null
+            ? new HashSet<>(dependencies) : Collections.emptySet();
     }
 
     public Supplier<Task> getTaskSupplier() {
@@ -35,6 +38,10 @@ public class ConfiguredTask {
     ConfiguredTask addUsedProducts(final Set<String> additionalProducts) {
         this.usedProducts.addAll(additionalProducts);
         return this;
+    }
+
+    public Set<String> getDependencies() {
+        return Collections.unmodifiableSet(dependencies);
     }
 
 }

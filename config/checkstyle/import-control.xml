@@ -15,21 +15,33 @@
 
     <allow pkg="javax.tools"/>
 
-    <allow pkg="com.puppycrawl.tools"/>
     <allow pkg="ch.qos.logback"/>
 
-    <allow pkg="edu.umd.cs.findbugs"/>
-    <allow pkg="net.sourceforge.pmd"/>
-
-    <allow pkg="nu.xom"/>
-
-    <allow pkg="org.fusesource.jansi"/>
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>
-    <allow pkg="org.apache.maven"/>
     <allow pkg="org.slf4j"/>
-    <allow pkg="org.sonatype.aether"/>
     <allow pkg="org.junit"/>
     <allow pkg="jobt"/>
+
+    <subpackage name="plugin.mavenresolver">
+        <allow pkg="org.apache.maven"/>
+        <allow pkg="org.sonatype.aether"/>
+    </subpackage>
+
+    <subpackage name="plugin.checkstyle">
+        <allow pkg="com.puppycrawl.tools"/>
+    </subpackage>
+
+    <subpackage name="plugin.findbugs">
+        <allow pkg="edu.umd.cs.findbugs"/>
+    </subpackage>
+
+    <subpackage name="plugin.idea">
+        <allow pkg="nu.xom"/>
+    </subpackage>
+
+    <subpackage name="plugin.springboot">
+        <allow pkg="javassist.bytecode"/>
+    </subpackage>
 
 </import-control>

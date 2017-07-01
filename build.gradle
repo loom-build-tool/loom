@@ -84,5 +84,6 @@ task zip(type: Zip) {
     into("scripts") {
         from 'scripts/build.yml'
         from 'scripts/jobt'
+        from 'scripts/jobt.bat'
     }
 }

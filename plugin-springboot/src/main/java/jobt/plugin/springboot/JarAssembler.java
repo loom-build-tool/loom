@@ -1,8 +1,9 @@
 package jobt.plugin.springboot;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +32,9 @@ public class JarAssembler {
                          final String applicationClassname) throws IOException {
 
         final Manifest manifest = prepareManifest(applicationClassname);
-        try (final JarOutputStream os = newJarOutputStream(assemblyFile, manifest)) {
+        writeManifest(buildDir, manifest);
+
+        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(assemblyFile))) {
             os.setMethod(ZipEntry.STORED);
             os.setLevel(Deflater.NO_COMPRESSION);
 
@@ -58,15 +61,16 @@ public class JarAssembler {
         return newManifest;
     }
 
-    private JarOutputStream newJarOutputStream(final Path targetFile, final Manifest manifest)
-        throws IOException {
-        return manifest == null
-            ? new JarOutputStream(Files.newOutputStream(targetFile))
-            : new JarOutputStream(Files.newOutputStream(targetFile), manifest);
+    private void writeManifest(final Path buildDir, final Manifest manifest) throws IOException {
+        final Path manifestDir = Files.createDirectories(buildDir.resolve("META-INF"));
+        final Path file = manifestDir.resolve("MANIFEST.MF");
+        try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
+            manifest.write(os);
+        }
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private static long crc32(final Path file) {
+    private static long crc32(final Path file) throws IOException {
         final byte[] buffer = new byte[8192];
         int bytesRead;
 
@@ -76,8 +80,6 @@ public class JarAssembler {
             while ((bytesRead = in.read(buffer)) != -1) {
                 crc.update(buffer, 0, bytesRead);
             }
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
         }
 
         return crc.getValue();

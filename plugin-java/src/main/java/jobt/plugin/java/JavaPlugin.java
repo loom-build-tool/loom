@@ -55,13 +55,15 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processResources")
-            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.MAIN))
+            .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
+                CompileTarget.MAIN))
             .provides("processedResources")
             .uses("resources")
             .register();
 
         task("processTestResources")
-            .impl(() -> new ResourcesTask(runtimeConfiguration, CompileTarget.TEST))
+            .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
+                CompileTarget.TEST))
             .provides("processedTestResources")
             .uses("testResources")
             .register();

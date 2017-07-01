@@ -3,8 +3,11 @@ package jobt.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import jobt.api.AbstractTask;
+import jobt.api.BuildConfig;
 import jobt.api.CompileTarget;
 import jobt.api.RuntimeConfiguration;
 import jobt.api.TaskStatus;
@@ -14,13 +17,19 @@ import jobt.api.product.ResourcesTreeProduct;
 public class ResourcesTask extends AbstractTask {
 
     private final RuntimeConfiguration runtimeConfiguration;
+    private final BuildConfig buildConfig;
+    private final JavaPluginSettings pluginSettings;
     private final Path destPath;
     private final CompileTarget compileTarget;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
+                  final BuildConfig buildConfig,
+                  final JavaPluginSettings pluginSettings,
                   final CompileTarget compileTarget) {
 
         this.runtimeConfiguration = runtimeConfiguration;
+        this.buildConfig = buildConfig;
+        this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
 
         destPath = Paths.get("jobtbuild", "resources", compileTarget.name().toLowerCase());
@@ -64,7 +73,14 @@ public class ResourcesTask extends AbstractTask {
             ? new DiskKeyValueCache(cacheFile)
             : new NullKeyValueCache();
 
-        Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache));
+        final Map<String, String> variables = new HashMap<>();
+        variables.put("project.groupId", buildConfig.getProject().getGroupId());
+        variables.put("project.artifactId", buildConfig.getProject().getArtifactId());
+        variables.put("project.version", buildConfig.getProject().getVersion());
+
+        Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache,
+            pluginSettings.getResourceFilterGlob(), variables));
+
         Files.walkFileTree(destPath, new DeleteObsoleteFileVisitor(srcPath, cache));
 
         cache.saveCache();

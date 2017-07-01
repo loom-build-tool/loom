@@ -18,6 +18,8 @@ import jobt.api.BuildConfig;
 import jobt.api.TaskStatus;
 import jobt.api.product.AssemblyProduct;
 import jobt.api.product.CompilationProduct;
+import jobt.api.product.ProcessedResourceProduct;
+import jobt.api.product.ResourcesTreeProduct;
 import jobt.api.product.SourceTreeProduct;
 
 public class JavaAssembleTask extends AbstractTask {
@@ -35,25 +37,36 @@ public class JavaAssembleTask extends AbstractTask {
     public TaskStatus run() throws Exception {
         final Manifest preparedManifest = prepareManifest();
 
-        final Path buildDir = Paths.get("jobtbuild", "libs");
-        Files.createDirectories(buildDir);
+        final Path buildDir = Files.createDirectories(Paths.get("jobtbuild", "libs"));
 
-        final CompilationProduct compilation = getUsedProducts().readProduct(
-            "compilation", CompilationProduct.class);
+        // main jar
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        if (Files.isDirectory(compilation.getClassesDir())) {
-            createJar(compilation.getClassesDir(), jarFile, preparedManifest);
+
+        try (final JarOutputStream os = newJarOutputStream(jarFile, preparedManifest)) {
+            final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts().readProduct(
+                "processedResources", ProcessedResourceProduct.class);
+            copy(resourcesTreeProduct.getSrcDir(), os);
+
+            final CompilationProduct compilation = getUsedProducts().readProduct(
+                "compilation", CompilationProduct.class);
+            copy(compilation.getClassesDir(), os);
         }
 
-        final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
-            "source", SourceTreeProduct.class);
+        // sources jar
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
-        if (Files.isDirectory(sourceTree.getSrcDir())) {
-            createJar(sourceTree.getSrcDir(), sourceJarFile, null);
+
+        try (final JarOutputStream os = newJarOutputStream(sourceJarFile, null)) {
+            final ResourcesTreeProduct resourcesTreeProduct = getUsedProducts().readProduct(
+                "resources", ResourcesTreeProduct.class);
+            copy(resourcesTreeProduct.getSrcDir(), os);
+
+            final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
+                "source", SourceTreeProduct.class);
+            copy(sourceTree.getSrcDir(), os);
         }
 
         getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));
@@ -62,10 +75,9 @@ public class JavaAssembleTask extends AbstractTask {
         return TaskStatus.OK;
     }
 
-    private void createJar(final Path sourceDir, final Path targetFile, final Manifest manifest)
-        throws IOException {
-        try (final JarOutputStream os = newJarOutputStream(targetFile, manifest)) {
-            Files.walkFileTree(sourceDir, new CreateJarFileVisitor(sourceDir, os));
+    private void copy(final Path srcDir, final JarOutputStream os) throws IOException {
+        if (Files.isDirectory(srcDir)) {
+            Files.walkFileTree(srcDir, new CreateJarFileVisitor(srcDir, os));
         }
     }
 

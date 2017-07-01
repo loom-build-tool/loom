@@ -32,6 +32,7 @@ import jobt.util.Watch;
 public class Jobt {
 
     private static final Path BUILD_FILE = Paths.get("build.yml");
+    private static final Path LOCK_FILE = Paths.get(".jobt.lock");
 
     public static void main(final String[] args) {
         AnsiConsole.systemInstall();
@@ -127,13 +128,24 @@ public class Jobt {
     }
 
     private static FileLock lock() throws IOException {
-        final FileChannel fileChannel = FileChannel.open(BUILD_FILE,
+        if (Files.notExists(LOCK_FILE)) {
+            Files.createFile(LOCK_FILE);
+        }
+
+        final FileChannel fileChannel = FileChannel.open(LOCK_FILE,
             StandardOpenOption.READ, StandardOpenOption.WRITE);
         final FileLock fileLock = fileChannel.tryLock();
 
         if (fileLock == null) {
-            throw new IllegalStateException("Jobt already running");
+            throw new IllegalStateException("Jobt already running - locked by " + LOCK_FILE);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.deleteIfExists(LOCK_FILE);
+            } catch (final IOException ignored) {
+            }
+        }));
 
         return fileLock;
     }

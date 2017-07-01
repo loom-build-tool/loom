@@ -30,6 +30,7 @@ import jobt.util.Watch;
 public class Jobt {
 
     private static final Path BUILD_FILE = Paths.get("build.yml");
+    private static final Path LOCK_FILE = Paths.get(".jobt.lock");
 
     @SuppressWarnings("checkstyle:avoidescapedunicodecharacters")
     private static final String PASTA = "\uD83C\uDF5D";
@@ -106,14 +107,25 @@ public class Jobt {
     }
 
     private static FileLock lock() throws IOException {
-        final FileChannel fileChannel = FileChannel.open(BUILD_FILE,
+        if (Files.notExists(LOCK_FILE)) {
+            Files.createFile(LOCK_FILE);
+        }
+
+        final FileChannel fileChannel = FileChannel.open(LOCK_FILE,
             StandardOpenOption.READ, StandardOpenOption.WRITE);
         final FileLock fileLock = fileChannel.tryLock();
 
         if (fileLock == null) {
-            System.err.println("Jobt already running");
+            System.err.println("Jobt already running - locked by " + LOCK_FILE);
             System.exit(1);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.deleteIfExists(LOCK_FILE);
+            } catch (final IOException ignored) {
+            }
+        }));
 
         return fileLock;
     }

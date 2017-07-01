@@ -1,5 +1,7 @@
 package jobt.api;
 
+import java.util.Set;
+
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
  * configuration &ndash; even if it isn't used in the build process. Ensure quick initialization and
@@ -18,5 +20,7 @@ public interface Plugin {
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 
     void configure();
+
+    void requestDependency(String taskName, Set<String> taskDependencies);
 
 }

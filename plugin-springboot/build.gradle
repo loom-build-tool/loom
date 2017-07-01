@@ -1,0 +1,14 @@
+apply plugin: 'java'
+
+dependencies {
+    compileOnly project(':api')
+    compile('org.javassist:javassist:3.21.0-GA')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

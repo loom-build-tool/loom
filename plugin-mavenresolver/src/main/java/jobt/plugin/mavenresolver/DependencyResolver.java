@@ -7,6 +7,6 @@ import jobt.api.DependencyScope;
 
 public interface DependencyResolver {
 
-    List<Path> resolve(List<String> deps, DependencyScope scope);
+    List<Path> resolve(List<String> deps, DependencyScope scope, String cacheName);
 
 }

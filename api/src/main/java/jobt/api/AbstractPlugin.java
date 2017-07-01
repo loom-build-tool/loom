@@ -47,6 +47,10 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         this.runtimeConfiguration = runtimeConfiguration;
     }
 
+    @Override
+    public void requestDependency(final String taskName, final Set<String> taskDependencies) {
+    }
+
     public RuntimeConfiguration getRuntimeConfiguration() {
         return runtimeConfiguration;
     }
@@ -65,6 +69,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private Supplier<Task> taskSupplier;
         private Set<String> providedProducts;
         private Set<String> usedProducts = Collections.emptySet();
+        private Set<String> dependencies = Collections.emptySet();
 
         public TaskBuilder(final String taskName) {
             this.taskName = taskName;
@@ -85,10 +90,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public void register() {
-            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
+        public TaskBuilder deps(final String... deps) {
+            this.dependencies = new HashSet<>(Arrays.asList(Objects.requireNonNull(deps)));
+            return this;
         }
 
+        public void register() {
+            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts,
+                dependencies);
+        }
     }
 
     protected class GoalBuilder {

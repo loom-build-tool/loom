@@ -124,6 +124,7 @@ public class Jobt {
             try {
                 Files.deleteIfExists(LOCK_FILE);
             } catch (final IOException ignored) {
+                // ignored
             }
         }));
 

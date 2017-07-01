@@ -51,7 +51,7 @@ public class Jobt {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
                 try (FileLock ignored = lock()) {
-                    run(cmd, options);
+                    run(cmd);
                 }
 
                 Runtime.getRuntime().removeShutdownHook(ctrlCHook);
@@ -144,13 +144,14 @@ public class Jobt {
             try {
                 Files.deleteIfExists(LOCK_FILE);
             } catch (final IOException ignored) {
+                // ignored
             }
         }));
 
         return fileLock;
     }
 
-    public static void run(final CommandLine cmd, final Options options) throws Exception {
+    public static void run(final CommandLine cmd) throws Exception {
         final long startTime = System.nanoTime();
 
         final JobtProcessor jobtProcessor = new JobtProcessor();
@@ -175,16 +176,11 @@ public class Jobt {
                 .reset());
         }
 
-        Stopwatch.startProcess("Configure logging");
-        LogConfiguration.configureLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
-        Stopwatch.stopProcess();
+        configureLogging();
 
         jobtProcessor.logMemoryUsage();
 
-        Stopwatch.startProcess("Read configuration");
-        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
-        Stopwatch.stopProcess();
+        final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);
 
         AnsiConsole.out.println(Ansi.ansi()
             .render("Initialized configuration for @|bold %s|@ version @|bold %s|@",
@@ -218,6 +214,21 @@ public class Jobt {
         }
 
         jobtProcessor.logMemoryUsage();
+    }
+
+    private static void configureLogging() {
+        Stopwatch.startProcess("Configure logging");
+        LogConfiguration.configureLogger();
+        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
+        Stopwatch.stopProcess();
+    }
+
+    private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl
+                                                          runtimeConfiguration) throws IOException {
+        Stopwatch.startProcess("Read configuration");
+        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
+        Stopwatch.stopProcess();
+        return buildConfig;
     }
 
     private static void printProducts(final JobtProcessor jobtProcessor, final String format) {

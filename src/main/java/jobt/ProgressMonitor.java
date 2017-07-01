@@ -8,12 +8,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-public class ProgressMonitor {
+public final class ProgressMonitor {
+
+    private static final int DELAY = 100;
+    private static final int JANSI_BUF = 80;
 
     private static AtomicInteger tasks = new AtomicInteger();
     private static AtomicInteger completedTasks = new AtomicInteger();
     private static AtomicInteger lastProgress = new AtomicInteger();
     private static Timer timer = new Timer("ProgressMonitor", true);
+
+    private ProgressMonitor() {
+    }
 
     public static void start() {
         timer.schedule(new TimerTask() {
@@ -23,7 +29,7 @@ public class ProgressMonitor {
                     update();
                 }
             }
-        }, 100, 100);
+        }, DELAY, DELAY);
     }
 
     public static void setTasks(final int tasks) {
@@ -41,17 +47,17 @@ public class ProgressMonitor {
         AnsiConsole.out().print(Ansi.ansi().reset().restoreCursorPosition().eraseLine());
     }
 
-    private static synchronized void update() {
+    private static void update() {
         final int cpl = completedTasks.get();
 
         final int taskCnt = tasks.get();
         final double pct = 100.0 / taskCnt * cpl;
 
-        int progressBarLength = 25;
-        int progress = (int) Math.floor(((double) progressBarLength) / taskCnt * cpl);
-        int nullProgress = progressBarLength - progress;
+        final int progressBarLength = 25;
+        final int progress = (int) Math.floor(((double) progressBarLength) / taskCnt * cpl);
+        final int nullProgress = progressBarLength - progress;
 
-        final Ansi a = Ansi.ansi(100).restoreCursorPosition().fg(Ansi.Color.WHITE)
+        final Ansi a = Ansi.ansi(JANSI_BUF).restoreCursorPosition().fg(Ansi.Color.WHITE)
             .a('[')
             .a(String.join("", Collections.nCopies(progress, "=")))
             .a('>')

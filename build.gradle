@@ -41,6 +41,7 @@ dependencies {
     runtimeOnly project(':plugin-findbugs')
     runtimeOnly project(':plugin-mavenresolver')
     runtimeOnly project(':plugin-idea')
+    runtimeOnly project(':plugin-eclipse')
     compile('ch.qos.logback:logback-classic:1.1.7')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
@@ -80,6 +81,10 @@ task zip(type: Zip) {
     into("plugin-idea") {
         from project(':plugin-idea').configurations.runtime.allArtifacts.files
         from project(':plugin-idea').configurations.runtime
+    }
+    into("plugin-eclipse") {
+        from project(':plugin-eclipse').configurations.runtime.allArtifacts.files
+        from project(':plugin-eclipse').configurations.runtime
     }
     into("scripts") {
         from 'scripts/build.yml'

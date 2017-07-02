@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+dependencies {
+    compileOnly project(':api')
+    compileOnly project(':util')
+    compile('com.io7m.xom:xom:1.2.10')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

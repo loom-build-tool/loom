@@ -54,6 +54,7 @@ public class PluginRegistry {
         internalPlugins.put("checkstyle", "jobt.plugin.checkstyle.CheckstylePlugin");
         internalPlugins.put("findbugs", "jobt.plugin.findbugs.FindbugsPlugin");
         internalPlugins.put("idea", "jobt.plugin.idea.IdeaPlugin");
+        internalPlugins.put("eclipse", "jobt.plugin.eclipse.EclipsePlugin");
         INTERNAL_PLUGINS = Collections.unmodifiableMap(internalPlugins);
 
         final Set<String> defaultPlugins = new HashSet<>();

@@ -73,7 +73,7 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
             FileUtil.deleteDirectoryRecursively(destPath, true);
         }
 
-        if (matcher.matches(relativizedFile)) {
+        if (matcher != null && matcher.matches(relativizedFile)) {
             try (final ResourceFilteringOutputStream out = newOut(destPath)) {
                 Files.copy(file, out);
             }

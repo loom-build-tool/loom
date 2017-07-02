@@ -61,6 +61,7 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
     @Override
     public void flush() throws IOException {
         buf.writeTo(out);
+        buf.reset();
         super.flush();
     }
 

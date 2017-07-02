@@ -62,7 +62,7 @@ public final class ProgressMonitor {
             .a(String.join("", Collections.nCopies(progress, "=")))
             .a('>')
             .a(String.join("", Collections.nCopies(nullProgress, " ")))
-            .format("] (%d) [%d/%d tasks completed]", (int) pct, cpl, taskCnt);
+            .format("] (%d%%) [%d/%d tasks completed]", (int) pct, cpl, taskCnt);
 
         AnsiConsole.out().print(a);
         AnsiConsole.out().flush();

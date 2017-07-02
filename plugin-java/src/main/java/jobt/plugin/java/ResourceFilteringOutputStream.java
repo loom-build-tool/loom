@@ -19,7 +19,7 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
         this.resourceFilterVariables = resourceFilterVariables;
     }
 
-    @SuppressWarnings("checkstyle:returncount")
+    @SuppressWarnings("checkstyle:nestedifdepth")
     @Override
     public void write(final int b) throws IOException {
         if (filtering == 0) {

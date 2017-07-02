@@ -32,7 +32,7 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
         matcher = filterGlob != null
             ? FileSystems.getDefault().getPathMatcher("glob:" + filterGlob)
-            : null;
+            : path -> false;
     }
 
     @Override
@@ -73,7 +73,7 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
             FileUtil.deleteDirectoryRecursively(destPath, true);
         }
 
-        if (matcher != null && matcher.matches(relativizedFile)) {
+        if (matcher.matches(relativizedFile)) {
             try (final ResourceFilteringOutputStream out = newOut(destPath)) {
                 Files.copy(file, out);
             }

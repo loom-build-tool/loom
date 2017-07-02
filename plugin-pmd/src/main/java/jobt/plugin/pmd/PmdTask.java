@@ -102,6 +102,11 @@ public class PmdTask extends AbstractTask {
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
         final Path srcDir = getSource();
+
+        if (Files.notExists(srcDir)) {
+            return complete(TaskStatus.SKIP);
+        }
+
         final List<DataSource> files = Files.walk(srcDir)
             .filter(Files::isRegularFile)
             .filter(f -> f.toString().endsWith(".java"))

@@ -10,8 +10,8 @@ import java.util.Map;
 public class ResourceFilteringOutputStream extends FilterOutputStream {
 
     private final Map<String, String> resourceFilterVariables;
+    private final ByteArrayOutputStream buf = new ByteArrayOutputStream();
     private int filtering;
-    private ByteArrayOutputStream buf = new ByteArrayOutputStream();
 
     public ResourceFilteringOutputStream(final OutputStream out,
                                          final Map<String, String> resourceFilterVariables) {

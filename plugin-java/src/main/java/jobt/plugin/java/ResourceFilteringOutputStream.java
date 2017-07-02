@@ -34,34 +34,38 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
                 filtering = 2;
                 buf.write(b);
             } else {
-                filtering = 0;
-                buf.writeTo(out);
-                buf.reset();
+                flushBuffer();
                 out.write(b);
             }
-        } else if (b == '}') {
-            buf.write(b);
-            filtering = 0;
-
-            final String placeholder = buf.toString("UTF-8")
-                .substring(2, buf.size() - 1);
-            final String resource = resourceFilterVariables.get(placeholder);
-            if (resource != null) {
-                out.write(resource.getBytes(StandardCharsets.UTF_8));
-            } else {
-                buf.writeTo(out);
-            }
-
-            buf.reset();
         } else {
             buf.write(b);
+
+            if (b == '}') {
+                filtering = 0;
+
+                final String placeholder = buf.toString("UTF-8")
+                    .substring(2, buf.size() - 1);
+                final String resource = resourceFilterVariables.get(placeholder);
+                if (resource != null) {
+                    out.write(resource.getBytes(StandardCharsets.UTF_8));
+                } else {
+                    buf.writeTo(out);
+                }
+
+                buf.reset();
+            }
         }
+    }
+
+    private void flushBuffer() throws IOException {
+        filtering = 0;
+        buf.writeTo(out);
+        buf.reset();
     }
 
     @Override
     public void flush() throws IOException {
-        buf.writeTo(out);
-        buf.reset();
+        flushBuffer();
         super.flush();
     }
 

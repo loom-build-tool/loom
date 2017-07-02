@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductRepository;
 import jobt.plugin.ConfiguredTask;
@@ -15,6 +17,8 @@ import jobt.plugin.TaskRegistryLookup;
 import jobt.plugin.TaskUtil;
 
 public class TaskRunner {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
     private final TaskRegistryLookup taskRegistry;
     private final ProductRepository productRepository;
@@ -33,8 +37,9 @@ public class TaskRunner {
             return;
         }
 
-        System.out.println("Execute "
-            + resolvedTasks.stream().collect(Collectors.joining(" > ")));
+        LOG.info("Execute {}", resolvedTasks);
+
+        ProgressMonitor.setTasks(resolvedTasks.size());
 
         final JobPool jobPool = new JobPool();
         jobPool.submitAll(buildJobs(resolvedTasks));

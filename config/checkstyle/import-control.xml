@@ -23,6 +23,7 @@
 
     <allow pkg="nu.xom"/>
 
+    <allow pkg="org.fusesource.jansi"/>
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>
     <allow pkg="org.apache.maven"/>

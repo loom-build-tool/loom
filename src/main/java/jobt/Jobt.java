@@ -266,6 +266,8 @@ public class Jobt {
             final long watchDuration = stringWatchEntry.getValue().getDuration();
             printDuration(longestKey, name, totalDuration, watchDuration);
         });
+
+        System.out.println();
     }
 
     private static void printDuration(final int longestKey, final String name,

@@ -98,6 +98,12 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
+            Objects.requireNonNull(taskSupplier,
+                "taskSupplier missing on task <" + taskName + ">");
+            Objects.requireNonNull(providedProducts,
+                "providedProducts missing on task <" + taskName + ">");
+            Objects.requireNonNull(usedProducts,
+                "usedProducts missing on task <" + taskName + ">");
             taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
         }
     }
@@ -117,6 +123,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
+            Objects.requireNonNull(usedProducts,
+                "usedProducts missing on goal <" + goalName + ">");
             taskRegistry.registerGoal(goalName, usedProducts);
         }
 
@@ -138,6 +146,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
+            Objects.requireNonNull(serviceSupplier,
+                "serviceSupplier missing on service <" + serviceName + ">");
             serviceLocator.registerService(serviceName, serviceSupplier);
         }
 

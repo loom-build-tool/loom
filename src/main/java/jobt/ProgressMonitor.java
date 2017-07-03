@@ -1,5 +1,6 @@
 package jobt;
 
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,6 +13,7 @@ public final class ProgressMonitor {
 
     private static final int DELAY = 100;
     private static final int JANSI_BUF = 80;
+    private static final PrintStream OUT = AnsiConsole.out();
 
     private static AtomicInteger tasks = new AtomicInteger();
     private static AtomicInteger completedTasks = new AtomicInteger();
@@ -33,8 +35,7 @@ public final class ProgressMonitor {
     }
 
     public static void setTasks(final int tasks) {
-        AnsiConsole.out().print(Ansi.ansi().reset().saveCursorPosition());
-
+        OUT.println();
         ProgressMonitor.tasks.set(tasks);
     }
 
@@ -44,7 +45,7 @@ public final class ProgressMonitor {
 
     public static void stop() {
         timer.cancel();
-        AnsiConsole.out().print(Ansi.ansi().reset().restoreCursorPosition().eraseLine());
+        OUT.print(Ansi.ansi().reset().cursorUpLine().eraseLine());
     }
 
     private static void update() {
@@ -57,15 +58,15 @@ public final class ProgressMonitor {
         final int progress = (int) Math.floor(((double) progressBarLength) / taskCnt * cpl);
         final int nullProgress = progressBarLength - progress;
 
-        final Ansi a = Ansi.ansi(JANSI_BUF).restoreCursorPosition().fg(Ansi.Color.WHITE)
+        final Ansi a = Ansi.ansi(JANSI_BUF).cursorUpLine().cursorToColumn(0)
+            .fg(Ansi.Color.WHITE)
             .a('[')
             .a(String.join("", Collections.nCopies(progress, "=")))
             .a('>')
             .a(String.join("", Collections.nCopies(nullProgress, " ")))
             .format("] (%d%%) [%d/%d tasks completed]", (int) pct, cpl, taskCnt);
 
-        AnsiConsole.out().print(a);
-        AnsiConsole.out().flush();
+        OUT.println(a);
 
         lastProgress.set(cpl);
     }

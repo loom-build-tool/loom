@@ -14,9 +14,11 @@ import jobt.api.ProductDependenciesAware;
 import jobt.api.ProductPromise;
 import jobt.api.ProductRepository;
 import jobt.api.ProvidedProducts;
+import jobt.api.ServiceLocatorAware;
 import jobt.api.Task;
 import jobt.api.TaskStatus;
 import jobt.api.UsedProducts;
+import jobt.api.service.ServiceLocator;
 import jobt.plugin.ConfiguredTask;
 import jobt.util.Preconditions;
 import jobt.util.Stopwatch;
@@ -29,13 +31,16 @@ public class Job implements Callable<TaskStatus> {
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
+    private final ServiceLocator serviceLocator;
 
     Job(final String name, final ConfiguredTask configuredTask,
-        final ProductRepository productRepository) {
+        final ProductRepository productRepository,
+        final ServiceLocator serviceLocator) {
         this.name = Objects.requireNonNull(name, "name required");
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
+        this.serviceLocator = serviceLocator;
     }
 
     public String getName() {
@@ -93,6 +98,10 @@ public class Job implements Callable<TaskStatus> {
                     configuredTask.getProvidedProducts(), productRepository, name));
             pdaTask.setUsedProducts(
                 new UsedProducts(configuredTask.getUsedProducts(), productRepository));
+        }
+        if (task instanceof ServiceLocatorAware) {
+            final ServiceLocatorAware slaTask = (ServiceLocatorAware) task;
+            slaTask.setServiceLocator(serviceLocator);
         }
     }
 

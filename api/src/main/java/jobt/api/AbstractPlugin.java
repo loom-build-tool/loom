@@ -7,11 +7,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import jobt.api.service.ServiceLocator;
+
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
     private final S pluginSettings;
     private TaskRegistry taskRegistry;
+    private ServiceLocator serviceLocator;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
 
@@ -34,6 +37,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     }
 
     @Override
+    public void setServiceLocator(final ServiceLocator serviceLocator) {
+        this.serviceLocator = serviceLocator;
+    }
+
+    @Override
     public void setBuildConfig(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
@@ -45,10 +53,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     @Override
     public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
         this.runtimeConfiguration = runtimeConfiguration;
-    }
-
-    @Override
-    public void requestDependency(final String taskName, final Set<String> taskDependencies) {
     }
 
     public RuntimeConfiguration getRuntimeConfiguration() {
@@ -63,13 +67,16 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         return new GoalBuilder(goalName);
     }
 
+    protected ServiceBuilder service(final String serviceName) {
+        return new ServiceBuilder(serviceName);
+    }
+
     protected class TaskBuilder {
 
         private final String taskName;
         private Supplier<Task> taskSupplier;
         private Set<String> providedProducts;
         private Set<String> usedProducts = Collections.emptySet();
-        private Set<String> dependencies = Collections.emptySet();
 
         public TaskBuilder(final String taskName) {
             this.taskName = taskName;
@@ -90,14 +97,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public TaskBuilder deps(final String... deps) {
-            this.dependencies = new HashSet<>(Arrays.asList(Objects.requireNonNull(deps)));
-            return this;
-        }
-
         public void register() {
-            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts,
-                dependencies);
+            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
         }
     }
 
@@ -117,6 +118,27 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerGoal(goalName, usedProducts);
+        }
+
+    }
+
+    protected class ServiceBuilder {
+
+        private final String serviceName;
+        private Supplier<Service> serviceSupplier;
+
+        public ServiceBuilder(
+            final String serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        public ServiceBuilder impl(final Supplier<Service> supplier) {
+            this.serviceSupplier = supplier;
+            return this;
+        }
+
+        public void register() {
+            serviceLocator.registerService(serviceName, serviceSupplier);
         }
 
     }

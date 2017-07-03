@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductRepository;
+import jobt.api.service.ServiceLocator;
 import jobt.plugin.ConfiguredTask;
 import jobt.plugin.TaskRegistryLookup;
 import jobt.plugin.TaskUtil;
@@ -22,11 +23,14 @@ public class TaskRunner {
 
     private final TaskRegistryLookup taskRegistry;
     private final ProductRepository productRepository;
+    private final ServiceLocator serviceLocator;
 
     public TaskRunner(final TaskRegistryLookup taskRegistry,
-        final ProductRepository productRepository) {
+        final ProductRepository productRepository,
+        final ServiceLocator serviceLocator) {
         this.taskRegistry = taskRegistry;
         this.productRepository = productRepository;
+        this.serviceLocator = serviceLocator;
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")
@@ -73,6 +77,9 @@ public class TaskRunner {
             workingProductIds.addAll(configuredTask.getUsedProducts());
         }
 
+        LOG.info("Registered products: {}", producersMap.keySet());
+        LOG.info("Registered services: {}", serviceLocator.getServiceNames());
+
         return resolvedTasks;
     }
 
@@ -81,7 +88,7 @@ public class TaskRunner {
         final Map<String, Job> jobs = new LinkedHashMap<>();
         for (final String resolvedTask : resolvedTasks) {
             final ConfiguredTask task = taskRegistry.lookupTask(resolvedTask);
-            jobs.put(resolvedTask, new Job(resolvedTask, task, productRepository));
+            jobs.put(resolvedTask, new Job(resolvedTask, task, productRepository, serviceLocator));
         }
 
         return jobs.values();

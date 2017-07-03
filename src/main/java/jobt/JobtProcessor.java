@@ -16,9 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductRepository;
+import jobt.api.service.ServiceLocator;
 import jobt.config.BuildConfigWithSettings;
 import jobt.plugin.PluginRegistry;
 import jobt.plugin.ProductRepositoryImpl;
+import jobt.plugin.ServiceLocatorImpl;
 import jobt.plugin.TaskRegistryImpl;
 import jobt.plugin.TaskRegistryLookup;
 import jobt.plugin.TaskUtil;
@@ -27,6 +29,7 @@ import jobt.util.Stopwatch;
 public class JobtProcessor {
 
     private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
+    private final ServiceLocator serviceLocator = new ServiceLocatorImpl();
     private final ProductRepository productRepository = new ProductRepositoryImpl();
 
     static {
@@ -36,12 +39,14 @@ public class JobtProcessor {
     public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
         Stopwatch.startProcess("Initialize plugins");
-        new PluginRegistry(buildConfig, runtimeConfiguration, taskRegistry).initPlugins();
+        new PluginRegistry(buildConfig, runtimeConfiguration,
+            taskRegistry, serviceLocator).initPlugins();
         Stopwatch.stopProcess();
     }
 
     public void execute(final List<String> productIds) throws Exception {
-        final TaskRunner taskRunner = new TaskRunner(taskRegistry, productRepository);
+        final TaskRunner taskRunner = new TaskRunner(
+            taskRegistry, productRepository, serviceLocator);
         taskRunner.execute(new HashSet<>(productIds));
     }
 

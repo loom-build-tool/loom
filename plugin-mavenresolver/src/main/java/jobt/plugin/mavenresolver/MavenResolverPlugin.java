@@ -1,8 +1,10 @@
 package jobt.plugin.mavenresolver;
 
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.List;
 
 import jobt.api.AbstractPlugin;
+import jobt.api.DependencyResolverService;
 import jobt.api.DependencyScope;
 import jobt.api.PluginSettings;
 
@@ -20,14 +22,17 @@ public class MavenResolverPlugin extends AbstractPlugin<PluginSettings> {
             .impl(() -> new MavenResolverTask(DependencyScope.TEST, getBuildConfig()))
             .provides("testDependencies")
             .register();
-    }
 
-    @Override
-    public void requestDependency(final String taskName, final Set<String> taskDependencies) {
-        task("resolvePluginDependencies." + taskName)
-            .impl(() -> new MavenPluginResolverTask("pluginDependencies."
-                + taskName, taskDependencies))
-            .provides("pluginDependencies." + taskName)
+
+        service("mavenDependencyResolver")
+            .impl(() -> new DependencyResolverService() {
+                @Override
+                public List<Path> resolve(final List<String> deps,
+                    final DependencyScope scope, final String cacheName) {
+                    final MavenResolver mavenResolver = MavenResolverSingleton.getInstance();
+                    return mavenResolver.resolve(deps, scope, cacheName);
+                }
+            })
             .register();
     }
 

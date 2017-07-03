@@ -28,6 +28,7 @@ import jobt.RuntimeConfigurationImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.PluginSettings;
+import jobt.api.service.ServiceLocator;
 import jobt.config.BuildConfigWithSettings;
 import jobt.util.ThreadUtil;
 
@@ -45,6 +46,7 @@ public class PluginRegistry {
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistryLookup taskRegistry;
+    private final ServiceLocator serviceLocator;
     private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
@@ -67,11 +69,13 @@ public class PluginRegistry {
 
     public PluginRegistry(final BuildConfigWithSettings buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
-                          final TaskRegistryLookup taskRegistry) {
+                          final TaskRegistryLookup taskRegistry,
+                          final ServiceLocator serviceLocator) {
 
         this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
         this.taskRegistry = taskRegistry;
+        this.serviceLocator = serviceLocator;
     }
 
     public void initPlugins() {
@@ -113,15 +117,6 @@ public class PluginRegistry {
 
         validateSettings();
 
-        final Plugin mavenresolverPlugin = registeredPlugins.get("mavenresolver");
-
-        for (final String taskName : taskRegistry.getTaskNames()) {
-            final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
-            final Set<String> taskDependencies = configuredTask.getDependencies();
-
-            mavenresolverPlugin.requestDependency(taskName, taskDependencies);
-        }
-
     }
 
     private Plugin initPlugin(final String plugin)
@@ -150,6 +145,7 @@ public class PluginRegistry {
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
         regPlugin.setTaskRegistry(taskRegistry);
+        regPlugin.setServiceLocator(serviceLocator);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         injectPluginSettings(plugin, regPlugin);

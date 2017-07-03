@@ -8,17 +8,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
+import jobt.api.DependencyResolverService;
+import jobt.api.DependencyScope;
 import jobt.api.TaskStatus;
 import jobt.api.product.AssemblyProduct;
 import jobt.api.product.ClasspathProduct;
 import jobt.api.product.CompilationProduct;
 import jobt.api.product.ProcessedResourceProduct;
+import jobt.util.Iterables;
+import jobt.util.Preconditions;
 
 public class SpringBootTask extends AbstractTask {
 
@@ -68,9 +73,16 @@ public class SpringBootTask extends AbstractTask {
         copyLibs(libDir, compileDependenciesProduct);
 
         // copy spring boot loader
-        final ClasspathProduct pluginDependenciesProduct = getUsedProducts()
-            .readProduct("pluginDependencies.springBootApplication", ClasspathProduct.class);
-        copySpringBootLoader(buildDir, pluginDependenciesProduct);
+
+        final Path springBootLoaderJar = Iterables.getOnlyElement(
+            getServiceLocator()
+            .getService("mavenDependencyResolver", DependencyResolverService.class)
+            .resolve(Collections.singletonList(
+                "org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion()),
+                DependencyScope.COMPILE, "springBootApplication")
+            );
+
+        copySpringBootLoader(buildDir, springBootLoaderJar);
 
         // assemble jar
         new JarAssembler(pluginSettings).assemble(buildDir, assemblyFile, applicationClassname);
@@ -124,10 +136,10 @@ public class SpringBootTask extends AbstractTask {
     }
 
     private void copySpringBootLoader(final Path baseDir,
-                                      final ClasspathProduct pluginDependenciesProduct)
+                                      final Path springBootLoaderJar)
         throws IOException {
 
-        final Path springBootLoaderJar = pluginDependenciesProduct.getSingleEntry();
+        Preconditions.checkState(Files.isRegularFile(springBootLoaderJar));
 
         try (final JarFile jarFile = new JarFile(springBootLoaderJar.toFile())) {
             final Enumeration<JarEntry> entries = jarFile.entries();

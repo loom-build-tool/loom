@@ -1,6 +1,6 @@
 package jobt.api;
 
-import java.util.Set;
+import jobt.api.service.ServiceLocator;
 
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
@@ -15,12 +15,12 @@ public interface Plugin {
 
     void setTaskRegistry(TaskRegistry taskRegistry);
 
+    void setServiceLocator(ServiceLocator serviceLocator);
+
     void setBuildConfig(BuildConfig buildConfig);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 
     void configure();
-
-    void requestDependency(String taskName, Set<String> taskDependencies);
 
 }

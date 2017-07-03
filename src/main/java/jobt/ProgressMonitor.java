@@ -49,13 +49,13 @@ public final class ProgressMonitor {
     }
 
     private static void update() {
-        final int cpl = completedTasks.get();
-
-        final int taskCnt = tasks.get();
-        final double pct = 100.0 / taskCnt * cpl;
-
         final int progressBarLength = 25;
-        final int progress = (int) Math.floor(((double) progressBarLength) / taskCnt * cpl);
+
+        final int cpl = completedTasks.get();
+        final int taskCnt = tasks.get();
+
+        final int pct = 100 * cpl / taskCnt;
+        final int progress = progressBarLength * cpl / taskCnt;
         final int nullProgress = progressBarLength - progress;
 
         final Ansi a = Ansi.ansi(JANSI_BUF).cursorUpLine().cursorToColumn(0)
@@ -64,7 +64,7 @@ public final class ProgressMonitor {
             .a(String.join("", Collections.nCopies(progress, "=")))
             .a('>')
             .a(String.join("", Collections.nCopies(nullProgress, " ")))
-            .format("] (%d%%) [%d/%d tasks completed]", (int) pct, cpl, taskCnt);
+            .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
 
         OUT.println(a);
 

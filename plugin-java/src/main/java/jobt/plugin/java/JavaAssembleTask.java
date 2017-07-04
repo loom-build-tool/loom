@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -83,16 +82,18 @@ public class JavaAssembleTask extends AbstractTask {
 
     private Manifest prepareManifest() {
         final Manifest newManifest = new Manifest();
-        final Attributes mainAttributes = newManifest.getMainAttributes();
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        mainAttributes.put(new Attributes.Name("Created-By"),
-            "Jobt " + System.getProperty("jobt.version"));
-        mainAttributes.put(new Attributes.Name("Build-Jdk"),
-            String.format("%s (%s)", System.getProperty("java.version"),
+
+        final ManifestBuilder manifestBuilder = new ManifestBuilder(newManifest);
+
+        manifestBuilder
+            .put(Attributes.Name.MANIFEST_VERSION, "1.0")
+            .put("Created-By", "Jobt " + System.getProperty("jobt.version"))
+            .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
                 System.getProperty("java.vendor")));
 
-        final Optional<String> mainClassName = pluginSettings.getMainClassName();
-        mainClassName.ifPresent(s -> mainAttributes.put(Attributes.Name.MAIN_CLASS, s));
+        pluginSettings.getMainClassName()
+            .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
+
         return newManifest;
     }
 

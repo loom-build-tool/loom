@@ -6,6 +6,6 @@ import java.util.List;
 public interface DependencyResolverService extends Service {
 
     List<Path> resolve(final List<String> deps, final DependencyScope scope,
-                              final String cacheName);
+                       final String cacheName);
 
 }

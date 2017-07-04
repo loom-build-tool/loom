@@ -7,14 +7,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import jobt.api.service.ServiceLocator;
+import jobt.api.service.ServiceLocatorRegistration;
 
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
     private final S pluginSettings;
     private TaskRegistry taskRegistry;
-    private ServiceLocator serviceLocator;
+    private ServiceLocatorRegistration serviceLocator;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
 
@@ -37,7 +37,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     }
 
     @Override
-    public void setServiceLocator(final ServiceLocator serviceLocator) {
+    public void setServiceLocator(final ServiceLocatorRegistration serviceLocator) {
         this.serviceLocator = serviceLocator;
     }
 
@@ -98,14 +98,9 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            Objects.requireNonNull(taskSupplier,
-                "taskSupplier missing on task <" + taskName + ">");
-            Objects.requireNonNull(providedProducts,
-                "providedProducts missing on task <" + taskName + ">");
-            Objects.requireNonNull(usedProducts,
-                "usedProducts missing on task <" + taskName + ">");
             taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
         }
+
     }
 
     protected class GoalBuilder {
@@ -123,8 +118,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            Objects.requireNonNull(usedProducts,
-                "usedProducts missing on goal <" + goalName + ">");
             taskRegistry.registerGoal(goalName, usedProducts);
         }
 
@@ -135,8 +128,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private final String serviceName;
         private Supplier<Service> serviceSupplier;
 
-        public ServiceBuilder(
-            final String serviceName) {
+        public ServiceBuilder(final String serviceName) {
             this.serviceName = serviceName;
         }
 
@@ -146,8 +138,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            Objects.requireNonNull(serviceSupplier,
-                "serviceSupplier missing on service <" + serviceName + ">");
             serviceLocator.registerService(serviceName, serviceSupplier);
         }
 

@@ -1,7 +1,7 @@
 package jobt.api;
 
 /**
- * Marker interface for services managed by @link jobt.api.service.ServiceLocator.
+ * Marker interface for services managed by {@link jobt.api.service.ServiceLocator}.
  */
 public interface Service {
 

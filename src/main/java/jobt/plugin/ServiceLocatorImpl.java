@@ -9,29 +9,26 @@ import java.util.function.Supplier;
 
 import jobt.api.Service;
 import jobt.api.service.ServiceLocator;
+import jobt.api.service.ServiceLocatorRegistration;
 
-public class ServiceLocatorImpl implements ServiceLocator {
+public class ServiceLocatorImpl implements ServiceLocator, ServiceLocatorRegistration {
 
     private final Map<String, Supplier<Service>> registry = new ConcurrentHashMap<>();
 
     @Override
-    public void registerService(
-        final String serviceName, final Supplier<Service> serviceSupplier) {
-
+    public void registerService(final String serviceName, final Supplier<Service> serviceSupplier) {
         Objects.requireNonNull(serviceName, "serviceName must be specified");
-        Objects.requireNonNull(serviceSupplier, "serviceSupplier must be specified");
+        Objects.requireNonNull(serviceSupplier,
+            "serviceSupplier missing on service <" + serviceName + ">");
 
         if (registry.putIfAbsent(serviceName, serviceSupplier) != null) {
             throw new IllegalStateException("Service with name " + serviceName
                 + " already registered.");
         }
-
     }
 
     @Override
-    public <T extends Service> T getService(
-        final String serviceName, final Class<T> serviceClazz) {
-
+    public <T extends Service> T getService(final String serviceName, final Class<T> serviceClazz) {
         Objects.requireNonNull(serviceName, "serviceName must be specified");
         Objects.requireNonNull(serviceClazz, "serviceClazz must be specified");
 

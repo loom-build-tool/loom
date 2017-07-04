@@ -1,6 +1,6 @@
 package jobt.api;
 
-import jobt.api.service.ServiceLocator;
+import jobt.api.service.ServiceLocatorRegistration;
 
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
@@ -15,7 +15,7 @@ public interface Plugin {
 
     void setTaskRegistry(TaskRegistry taskRegistry);
 
-    void setServiceLocator(ServiceLocator serviceLocator);
+    void setServiceLocator(ServiceLocatorRegistration serviceLocator);
 
     void setBuildConfig(BuildConfig buildConfig);
 

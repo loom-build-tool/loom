@@ -19,9 +19,10 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
                              final Set<String> providedProducts, final Set<String> usedProducts) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");
-        Objects.requireNonNull(taskSupplier, "taskSupplier must be specified");
-        Objects.requireNonNull(providedProducts, "providedProducts must be specified");
-        Objects.requireNonNull(usedProducts, "usedProducts must be specified");
+        Objects.requireNonNull(taskSupplier, "taskSupplier missing on task <" + taskName + ">");
+        Objects.requireNonNull(providedProducts,
+            "providedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
 
         if (taskMap.putIfAbsent(taskName, new ConfiguredTask(taskSupplier, providedProducts,
             usedProducts)) != null) {
@@ -33,7 +34,8 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
     @Override
     public void registerGoal(final String goalName, final Set<String> usedProducts) {
         Objects.requireNonNull(goalName, "goalName must be specified");
-        Objects.requireNonNull(usedProducts, "usedProducts must be specified");
+        Objects.requireNonNull(usedProducts,
+            "usedProducts missing on goal <" + goalName + ">");
 
         taskMap.compute(goalName, (name, configuredTask) -> configuredTask != null
             ? configuredTask.addUsedProducts(usedProducts)

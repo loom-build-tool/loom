@@ -10,6 +10,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -73,21 +74,26 @@ public class SpringBootTask extends AbstractTask {
         copyLibs(libDir, compileDependenciesProduct);
 
         // copy spring boot loader
-
-        final Path springBootLoaderJar = Iterables.getOnlyElement(
-            getServiceLocator()
-            .getService("mavenDependencyResolver", DependencyResolverService.class)
-            .resolve(Collections.singletonList(
-                "org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion()),
-                DependencyScope.COMPILE, "springBootApplication")
-            );
-
-        copySpringBootLoader(buildDir, springBootLoaderJar);
+        copySpringBootLoader(buildDir, resolveSpringBootLoaderJar());
 
         // assemble jar
         new JarAssembler(pluginSettings).assemble(buildDir, assemblyFile, applicationClassname);
 
         return complete(TaskStatus.OK, assemblyFile);
+    }
+
+    private Path resolveSpringBootLoaderJar() {
+        final DependencyResolverService mavenDependencyResolver = getServiceLocator()
+            .getService("mavenDependencyResolver", DependencyResolverService.class);
+
+        final String springBootLoaderArtifact =
+            "org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion();
+
+        final List<Path> resolvedArtifacts = mavenDependencyResolver.resolve(
+            Collections.singletonList(springBootLoaderArtifact),
+            DependencyScope.COMPILE, "springBootApplication");
+
+        return Iterables.getOnlyElement(resolvedArtifacts);
     }
 
     private void copyFiles(final Path srcDir, final Path targetDir)

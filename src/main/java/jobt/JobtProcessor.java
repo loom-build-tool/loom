@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jobt.api.ProductRepository;
-import jobt.api.service.ServiceLocator;
 import jobt.config.BuildConfigWithSettings;
 import jobt.plugin.PluginRegistry;
 import jobt.plugin.ProductRepositoryImpl;
@@ -29,7 +28,7 @@ import jobt.util.Stopwatch;
 public class JobtProcessor {
 
     private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
-    private final ServiceLocator serviceLocator = new ServiceLocatorImpl();
+    private final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
     private final ProductRepository productRepository = new ProductRepositoryImpl();
 
     static {

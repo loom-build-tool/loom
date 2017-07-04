@@ -68,6 +68,9 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("testResources")
             .register();
 
+        goal("check")
+            .register();
+
         goal("build")
             .requires("jar", "sourcesJar", "check")
             .register();

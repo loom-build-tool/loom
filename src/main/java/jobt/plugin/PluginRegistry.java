@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,7 +27,6 @@ import jobt.RuntimeConfigurationImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.PluginSettings;
-import jobt.api.service.ServiceLocator;
 import jobt.config.BuildConfigWithSettings;
 import jobt.util.ThreadUtil;
 
@@ -46,7 +44,7 @@ public class PluginRegistry {
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistryLookup taskRegistry;
-    private final ServiceLocator serviceLocator;
+    private final ServiceLocatorImpl serviceLocator;
     private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
@@ -71,7 +69,7 @@ public class PluginRegistry {
     public PluginRegistry(final BuildConfigWithSettings buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
                           final TaskRegistryLookup taskRegistry,
-                          final ServiceLocator serviceLocator) {
+                          final ServiceLocatorImpl serviceLocator) {
 
         this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
@@ -88,15 +86,13 @@ public class PluginRegistry {
         final ExecutorService executorService = Executors.newCachedThreadPool(
             ThreadUtil.newThreadFactory("plugin-init"));
 
-        final Map<String, Plugin> registeredPlugins = new ConcurrentHashMap<>();
-
         for (final String plugin : plugins) {
             if (firstException.get() != null) {
                 break;
             }
             CompletableFuture.runAsync(() -> {
                     try {
-                        registeredPlugins.put(plugin, initPlugin(plugin));
+                        initPlugin(plugin);
                     } catch (final Throwable e) {
                         executorService.shutdownNow();
                         firstException.compareAndSet(null, e);
@@ -120,7 +116,7 @@ public class PluginRegistry {
 
     }
 
-    private Plugin initPlugin(final String plugin)
+    private void initPlugin(final String plugin)
         throws Exception {
 
         LOG.info("Initialize plugin {}", plugin);
@@ -153,8 +149,6 @@ public class PluginRegistry {
         regPlugin.configure();
 
         LOG.info("Plugin {} initialized", plugin);
-
-        return regPlugin;
     }
 
     private URL findPluginUrl(final String name) {

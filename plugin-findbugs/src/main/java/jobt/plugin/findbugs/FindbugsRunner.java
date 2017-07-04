@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.HTMLBugReporter;
-import edu.umd.cs.findbugs.NoOpFindBugsProgress;
 import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
@@ -72,6 +71,9 @@ public class FindbugsRunner {
 
         final Integer threshold = priorityThreshold.orElse(DEFAULT_PRIORITY_THRESHOLD);
 
+        final LoggingBugReporter loggingBugReporter = new LoggingBugReporter();
+        loggingBugReporter.setPriorityThreshold(threshold);
+
         final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
         xmlBugReporter.setPriorityThreshold(threshold);
         xmlBugReporter.setAddMessages(true);
@@ -81,31 +83,17 @@ public class FindbugsRunner {
         htmlBugReporter.setPriorityThreshold(threshold);
         htmlBugReporter.setOutputStream(new PrintStream(getTargetHTMLReport().toFile(), "UTF-8"));
 
-        final LoggingBugReporter loggingBugReporter = new LoggingBugReporter();
-        loggingBugReporter.setPriorityThreshold(threshold);
-
         final MultiplexingBugReporter multiplexingBugReporter =
             new MultiplexingBugReporter(loggingBugReporter, xmlBugReporter, htmlBugReporter);
 
         try {
             final FindBugs2 engine = new FindBugs2();
-
             engine.setProject(project);
-
-
             engine.setBugReporter(multiplexingBugReporter);
-
             engine.setNoClassOk(true);
-
-            final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
-            userPreferences.setEffort(EFFORT_DEFAULT);
-            engine.setUserPreferences(userPreferences);
-
+            engine.setUserPreferences(buildUserPreferences());
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
             engine.setAnalysisFeatureSettings(FindBugs.DEFAULT_EFFORT);
-
-            engine.setProgressCallback(new NoOpFindBugsProgress());
-
             engine.finishSettings();
 
             engine.execute();
@@ -162,6 +150,12 @@ public class FindbugsRunner {
         }
 
         return findbugsProject;
+    }
+
+    private UserPreferences buildUserPreferences() {
+        final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
+        userPreferences.setEffort(EFFORT_DEFAULT);
+        return userPreferences;
     }
 
     private static List<String> getClassesToScan(final Path classesDir) throws IOException {

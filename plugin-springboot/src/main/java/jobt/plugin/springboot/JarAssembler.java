@@ -34,7 +34,8 @@ public class JarAssembler {
         final Manifest manifest = prepareManifest(applicationClassname);
         writeManifest(buildDir, manifest);
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(assemblyFile))) {
+        try (final JarOutputStream os =
+                 new JarOutputStream(Files.newOutputStream(assemblyFile), manifest)) {
             os.setMethod(ZipEntry.STORED);
             os.setLevel(Deflater.NO_COMPRESSION);
 
@@ -100,6 +101,10 @@ public class JarAssembler {
 
             if (dir.equals(sourceDir)) {
                 return FileVisitResult.CONTINUE;
+            }
+
+            if ("META-INF".equals(dir.getFileName().toString())) {
+                return FileVisitResult.SKIP_SUBTREE;
             }
 
             final JarEntry entry = new JarEntry(sourceDir.relativize(dir).toString() + "/");

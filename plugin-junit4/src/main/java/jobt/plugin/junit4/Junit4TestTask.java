@@ -2,6 +2,8 @@ package jobt.plugin.junit4;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -15,12 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.Computer;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,21 +43,18 @@ public class Junit4TestTask extends AbstractTask {
         }
 
         final URLClassLoader urlClassLoader = buildClassLoader();
+        Thread.currentThread().setContextClassLoader(urlClassLoader);
 
-        final Class<?>[] testClasses = collectClasses(urlClassLoader)
-            .toArray(new Class<?>[] {});
+        final Class[] testClasses = collectClasses(urlClassLoader)
+            .toArray(new Class[] {});
 
-        final Computer computer = new Computer();
-        final JUnitCore jUnitCore = new JUnitCore();
-        jUnitCore.addListener(new RunListener() {
-            @Override
-            public void testFailure(final Failure failure) throws Exception {
-                LOG.error("Test failure: {}", failure);
-            }
-        });
-        final Result run = jUnitCore.run(computer, testClasses);
+        final Class<?> wrapperClass = urlClassLoader.loadClass("jobt.plugin.junit4.Junit4Wrapper");
+        final Object wrapper = wrapperClass.newInstance();
+        final Method wrapperRun = wrapperClass.getMethod("run", Class[].class);
 
-        if (run.wasSuccessful()) {
+        boolean successful = (boolean) wrapperRun.invoke(wrapper, (Object) testClasses);
+
+        if (successful) {
             return complete(TaskStatus.OK);
         }
 
@@ -90,6 +83,8 @@ public class Junit4TestTask extends AbstractTask {
         final List<URL> testDependencies = getUsedProducts().readProduct("testDependencies",
             ClasspathProduct.class).getEntriesAsUrls();
         urls.addAll(testDependencies);
+
+        System.out.println("Classloader URLs:" + urls);
 
         return new URLClassLoader(urls.toArray(new URL[] {}),
             Junit4TestTask.class.getClassLoader());
@@ -124,11 +119,19 @@ public class Junit4TestTask extends AbstractTask {
             .substring(0, filename.indexOf(".class"))
             .replace(File.separatorChar, '.');
 
+        final Class<? extends Annotation> testAnnotation;
         try {
-            final Class<?> clazz = Class.forName(classname, true, urlClassLoader);
+            testAnnotation = (Class<? extends Annotation>)
+                urlClassLoader.loadClass("org.junit.Test");
+        } catch (final ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+
+        try {
+            final Class<?> clazz = urlClassLoader.loadClass(classname);
 
             final boolean classHasTestMethod = Arrays.stream(clazz.getDeclaredMethods())
-                .anyMatch(m -> m.isAnnotationPresent(Test.class));
+                .anyMatch(m -> m.isAnnotationPresent(testAnnotation));
 
             if (classHasTestMethod) {
                 classes.add(clazz);

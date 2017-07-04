@@ -1,9 +1,13 @@
 package jobt.api;
 
-public abstract class AbstractTask implements Task, ProductDependenciesAware {
+import jobt.api.service.ServiceLocator;
+
+public abstract class AbstractTask implements Task,
+    ProductDependenciesAware, ServiceLocatorAware {
 
     private ProvidedProducts providedProducts;
     private UsedProducts usedProducts;
+    private ServiceLocator serviceLocator;
 
     @Override
     public void setProvidedProducts(final ProvidedProducts providedProducts) {
@@ -21,6 +25,15 @@ public abstract class AbstractTask implements Task, ProductDependenciesAware {
 
     public UsedProducts getUsedProducts() {
         return usedProducts;
+    }
+
+    @Override
+    public void setServiceLocator(final ServiceLocator serviceLocator) {
+        this.serviceLocator = serviceLocator;
+    }
+
+    public ServiceLocator getServiceLocator() {
+        return serviceLocator;
     }
 
 }

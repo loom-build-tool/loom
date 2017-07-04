@@ -41,7 +41,7 @@ public class MavenResolverTask extends AbstractTask {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         getProvidedProducts().complete("compileDependencies",
             new ClasspathProduct(mavenResolver.resolve(dependencies,
-            DependencyScope.COMPILE)));
+            DependencyScope.COMPILE, "main")));
     }
 
     private void testScope() {
@@ -50,7 +50,7 @@ public class MavenResolverTask extends AbstractTask {
 
         getProvidedProducts().complete("testDependencies",
             new ClasspathProduct(mavenResolver.resolve(dependencies,
-            DependencyScope.TEST)));
+            DependencyScope.TEST, "test")));
     }
 
 }

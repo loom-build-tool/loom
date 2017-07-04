@@ -13,8 +13,8 @@ public class ConfiguredTask {
     private final Set<String> providedProducts;
     private final Set<String> usedProducts;
 
-    ConfiguredTask(final Supplier<Task> taskSupplier,
-                   final Set<String> providedProducts, final Set<String> usedProducts) {
+    ConfiguredTask(final Supplier<Task> taskSupplier, final Set<String> providedProducts,
+                   final Set<String> usedProducts) {
         this.taskSupplier = taskSupplier;
         this.providedProducts = new HashSet<>(providedProducts);
         this.usedProducts = new HashSet<>(usedProducts);

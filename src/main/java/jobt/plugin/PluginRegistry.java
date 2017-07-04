@@ -27,7 +27,6 @@ import jobt.RuntimeConfigurationImpl;
 import jobt.Version;
 import jobt.api.Plugin;
 import jobt.api.PluginSettings;
-import jobt.api.TaskRegistry;
 import jobt.config.BuildConfigWithSettings;
 import jobt.util.ThreadUtil;
 
@@ -44,7 +43,8 @@ public class PluginRegistry {
 
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
-    private final TaskRegistry taskRegistry;
+    private final TaskRegistryLookup taskRegistry;
+    private final ServiceLocatorImpl serviceLocator;
     private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
@@ -55,6 +55,7 @@ public class PluginRegistry {
         internalPlugins.put("checkstyle", "jobt.plugin.checkstyle.CheckstylePlugin");
         internalPlugins.put("findbugs", "jobt.plugin.findbugs.FindbugsPlugin");
         internalPlugins.put("pmd", "jobt.plugin.pmd.PmdPlugin");
+        internalPlugins.put("springboot", "jobt.plugin.springboot.SpringBootPlugin");
         internalPlugins.put("idea", "jobt.plugin.idea.IdeaPlugin");
         internalPlugins.put("eclipse", "jobt.plugin.eclipse.EclipsePlugin");
         INTERNAL_PLUGINS = Collections.unmodifiableMap(internalPlugins);
@@ -67,11 +68,13 @@ public class PluginRegistry {
 
     public PluginRegistry(final BuildConfigWithSettings buildConfig,
                           final RuntimeConfigurationImpl runtimeConfiguration,
-                          final TaskRegistry taskRegistry) {
+                          final TaskRegistryLookup taskRegistry,
+                          final ServiceLocatorImpl serviceLocator) {
 
         this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
         this.taskRegistry = taskRegistry;
+        this.serviceLocator = serviceLocator;
     }
 
     public void initPlugins() {
@@ -110,6 +113,7 @@ public class PluginRegistry {
         }
 
         validateSettings();
+
     }
 
     private void initPlugin(final String plugin)
@@ -138,6 +142,7 @@ public class PluginRegistry {
         final Class<?> aClass = classLoader.loadClass(pluginClassname);
         final Plugin regPlugin = (Plugin) aClass.newInstance();
         regPlugin.setTaskRegistry(taskRegistry);
+        regPlugin.setServiceLocator(serviceLocator);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
         injectPluginSettings(plugin, regPlugin);

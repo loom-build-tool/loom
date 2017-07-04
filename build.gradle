@@ -42,6 +42,7 @@ dependencies {
     runtimeOnly project(':plugin-findbugs')
     runtimeOnly project(':plugin-pmd')
     runtimeOnly project(':plugin-mavenresolver')
+    runtimeOnly project(':plugin-springboot')
     runtimeOnly project(':plugin-idea')
     runtimeOnly project(':plugin-eclipse')
     compile('ch.qos.logback:logback-classic:1.1.7')
@@ -88,6 +89,10 @@ task zip(type: Zip) {
     into("plugin-pmd") {
         from project(':plugin-pmd').configurations.runtime.allArtifacts.files
         from project(':plugin-pmd').configurations.runtime
+    }
+    into("plugin-springboot") {
+        from project(':plugin-springboot').configurations.runtime.allArtifacts.files
+        from project(':plugin-springboot').configurations.runtime
     }
     into("plugin-idea") {
         from project(':plugin-idea').configurations.runtime.allArtifacts.files

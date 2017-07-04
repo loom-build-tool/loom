@@ -41,6 +41,10 @@
         <allow pkg="net.sourceforge.pmd"/>
     </subpackage>
 
+    <subpackage name="plugin.springboot">
+        <allow pkg="javassist.bytecode"/>
+    </subpackage>
+
     <subpackage name="plugin.idea">
         <allow pkg="nu.xom"/>
     </subpackage>

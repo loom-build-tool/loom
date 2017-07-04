@@ -9,7 +9,6 @@ public class MavenResolverPlugin extends AbstractPlugin<PluginSettings> {
 
     @Override
     public void configure() {
-
         task("resolveCompileDependencies")
             .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, getBuildConfig()))
             .provides("compileDependencies")

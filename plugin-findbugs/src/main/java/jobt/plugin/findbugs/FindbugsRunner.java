@@ -53,35 +53,6 @@ public class FindbugsRunner {
         this.priorityThreshold = priorityThreshold;
     }
 
-    private static List<String> getClassesToScan(final Path classesDir) throws IOException {
-        return
-            Files.walk(classesDir)
-                .filter(filterByExtension("class"))
-                .map(FindbugsRunner::pathToString)
-                .collect(Collectors.toList());
-    }
-
-    private static Predicate<Path> filterByExtension(final String extension) {
-        Objects.requireNonNull(extension);
-        return p -> extension.equals(Util.getFileExtension(p.getFileName().toString()));
-    }
-
-    private static String pathToString(final Path file) {
-        return file.toAbsolutePath().normalize().toString();
-    }
-
-    private static List<String> getSourceFiles(final Path sourcesDir) {
-        try {
-            return Files.walk(sourcesDir)
-                .filter(Files::isRegularFile)
-                .filter(filterByExtension("java"))
-                .map(FindbugsRunner::pathToString)
-                .collect(Collectors.toList());
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     @SuppressWarnings("checkstyle:executablestatementcount")
     public void executeFindbugs()
         throws InterruptedException, IOException, NoSuchFieldException, IllegalAccessException {
@@ -191,6 +162,35 @@ public class FindbugsRunner {
         }
 
         return findbugsProject;
+    }
+
+    private static List<String> getClassesToScan(final Path classesDir) throws IOException {
+        return
+            Files.walk(classesDir)
+                .filter(filterByExtension("class"))
+                .map(FindbugsRunner::pathToString)
+                .collect(Collectors.toList());
+    }
+
+    private static Predicate<Path> filterByExtension(final String extension) {
+        Objects.requireNonNull(extension);
+        return p -> extension.equals(Util.getFileExtension(p.getFileName().toString()));
+    }
+
+    private static String pathToString(final Path file) {
+        return file.toAbsolutePath().normalize().toString();
+    }
+
+    private static List<String> getSourceFiles(final Path sourcesDir) {
+        try {
+            return Files.walk(sourcesDir)
+                .filter(Files::isRegularFile)
+                .filter(filterByExtension("java"))
+                .map(FindbugsRunner::pathToString)
+                .collect(Collectors.toList());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

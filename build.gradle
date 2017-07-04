@@ -37,6 +37,7 @@ dependencies {
     compile project(':api')
     compile project(':util')
     runtimeOnly project(':plugin-java')
+    runtimeOnly project(':plugin-junit4')
     runtimeOnly project(':plugin-checkstyle')
     runtimeOnly project(':plugin-findbugs')
     runtimeOnly project(':plugin-pmd')
@@ -67,6 +68,10 @@ task zip(type: Zip) {
     into("plugin-java") {
         from project(':plugin-java').configurations.runtime.allArtifacts.files
         from project(':plugin-java').configurations.runtime
+    }
+    into("plugin-junit4") {
+        from project(':plugin-junit4').configurations.runtime.allArtifacts.files
+        from project(':plugin-junit4').configurations.runtime
     }
     into("plugin-mavenresolver") {
         from project(':plugin-mavenresolver').configurations.runtime.allArtifacts.files

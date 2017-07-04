@@ -1,4 +1,4 @@
-package jobt.plugin.java;
+package jobt.plugin.junit4;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,9 +30,9 @@ import jobt.api.product.CompilationProduct;
 import jobt.api.product.ProcessedResourceProduct;
 import jobt.api.product.ReportProduct;
 
-public class JavaTestTask extends AbstractTask {
+public class Junit4TestTask extends AbstractTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Junit4TestTask.class);
 
     private static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "tests");
 

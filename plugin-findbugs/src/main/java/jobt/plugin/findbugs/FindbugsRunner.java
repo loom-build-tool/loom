@@ -165,11 +165,10 @@ public class FindbugsRunner {
     }
 
     private static List<String> getClassesToScan(final Path classesDir) throws IOException {
-        return
-            Files.walk(classesDir)
-                .filter(filterByExtension("class"))
-                .map(FindbugsRunner::pathToString)
-                .collect(Collectors.toList());
+        return Files.walk(classesDir)
+            .filter(filterByExtension("class"))
+            .map(FindbugsRunner::pathToString)
+            .collect(Collectors.toList());
     }
 
     private static Predicate<Path> filterByExtension(final String extension) {
@@ -181,16 +180,12 @@ public class FindbugsRunner {
         return file.toAbsolutePath().normalize().toString();
     }
 
-    private static List<String> getSourceFiles(final Path sourcesDir) {
-        try {
-            return Files.walk(sourcesDir)
-                .filter(Files::isRegularFile)
-                .filter(filterByExtension("java"))
-                .map(FindbugsRunner::pathToString)
-                .collect(Collectors.toList());
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    private static List<String> getSourceFiles(final Path sourcesDir) throws IOException {
+        return Files.walk(sourcesDir)
+            .filter(Files::isRegularFile)
+            .filter(filterByExtension("java"))
+            .map(FindbugsRunner::pathToString)
+            .collect(Collectors.toList());
     }
 
 }

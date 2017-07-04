@@ -1,8 +1,7 @@
-package jobt.plugin.java;
+package jobt.plugin.junit4;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -13,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -20,6 +20,7 @@ import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +31,9 @@ import jobt.api.product.CompilationProduct;
 import jobt.api.product.ProcessedResourceProduct;
 import jobt.api.product.ReportProduct;
 
-public class JavaTestTask extends AbstractTask {
+public class Junit4TestTask extends AbstractTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaTestTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Junit4TestTask.class);
 
     private static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "tests");
 
@@ -45,48 +46,53 @@ public class JavaTestTask extends AbstractTask {
             return complete(TaskStatus.SKIP);
         }
 
-        final Computer computer = new Computer();
-        final JUnitCore jUnitCore = new JUnitCore();
-
         final URLClassLoader urlClassLoader = buildClassLoader();
 
-        final List<Class<?>> fooTest = collectClasses(urlClassLoader);
+        final Class<?>[] testClasses = collectClasses(urlClassLoader)
+            .toArray(new Class<?>[] {});
 
-        final Result run = jUnitCore.run(computer, fooTest.toArray(new Class<?>[] {}));
+        final Computer computer = new Computer();
+        final JUnitCore jUnitCore = new JUnitCore();
+        jUnitCore.addListener(new RunListener() {
+            @Override
+            public void testFailure(final Failure failure) throws Exception {
+                LOG.error("Test failure: {}", failure);
+            }
+        });
+        final Result run = jUnitCore.run(computer, testClasses);
 
         if (run.wasSuccessful()) {
             return complete(TaskStatus.OK);
-        }
-
-        for (final Failure failure : run.getFailures()) {
-            LOG.error(failure.toString());
         }
 
         throw new IllegalStateException("Failed");
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException {
-        final CompilationProduct compilation = getUsedProducts().readProduct(
-            "compilation", CompilationProduct.class);
+        final List<URL> urls = new ArrayList<>();
 
         final CompilationProduct testCompilation = getUsedProducts().readProduct(
             "testCompilation", CompilationProduct.class);
-
-        final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
-            "processedResources", ProcessedResourceProduct.class);
+        urls.add(testCompilation.getClassesDir().toUri().toURL());
 
         final ProcessedResourceProduct processedTestResources = getUsedProducts().readProduct(
             "processedTestResources", ProcessedResourceProduct.class);
-
-        final List<URL> urls = new ArrayList<>(
-            getUsedProducts().readProduct("testDependencies",
-                ClasspathProduct.class).getEntriesAsUrls());
-
-        urls.add(testCompilation.getClassesDir().toUri().toURL());
-        urls.add(compilation.getClassesDir().toUri().toURL());
         urls.add(processedTestResources.getSrcDir().toUri().toURL());
+
+        final CompilationProduct compilation = getUsedProducts().readProduct(
+            "compilation", CompilationProduct.class);
+        urls.add(compilation.getClassesDir().toUri().toURL());
+
+        final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
+            "processedResources", ProcessedResourceProduct.class);
         urls.add(processedResources.getSrcDir().toUri().toURL());
-        return new URLClassLoader(urls.toArray(new URL[] {}));
+
+        final List<URL> testDependencies = getUsedProducts().readProduct("testDependencies",
+            ClasspathProduct.class).getEntriesAsUrls();
+        urls.addAll(testDependencies);
+
+        return new URLClassLoader(urls.toArray(new URL[] {}),
+            Junit4TestTask.class.getClassLoader());
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
@@ -121,15 +127,10 @@ public class JavaTestTask extends AbstractTask {
         try {
             final Class<?> clazz = Class.forName(classname, true, urlClassLoader);
 
-            boolean testClass = false;
-            for (final Method method : clazz.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(Test.class)) {
-                    testClass = true;
-                    break;
-                }
-            }
+            final boolean classHasTestMethod = Arrays.stream(clazz.getDeclaredMethods())
+                .anyMatch(m -> m.isAnnotationPresent(Test.class));
 
-            if (testClass) {
+            if (classHasTestMethod) {
                 classes.add(clazz);
             }
         } catch (final ClassNotFoundException e) {

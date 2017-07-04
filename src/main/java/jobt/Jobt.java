@@ -35,8 +35,6 @@ public class Jobt {
     private static final Path LOCK_FILE = Paths.get(".jobt.lock");
 
     public static void main(final String[] args) {
-        AnsiConsole.systemInstall();
-
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
                 .a("Interrupt received - cooking stopped").reset()));
@@ -64,7 +62,6 @@ public class Jobt {
         }
 
         AnsiConsole.out().println(Ansi.ansi().reset());
-        AnsiConsole.systemUninstall();
         System.exit(0);
     }
 

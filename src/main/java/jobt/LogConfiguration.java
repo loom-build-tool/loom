@@ -28,7 +28,7 @@ public final class LogConfiguration {
 
         final PatternLayoutEncoder consoleEncoder = new PatternLayoutEncoder();
         consoleEncoder.setContext(lc);
-        consoleEncoder.setPattern("%highlight(%level) %cyan(%logger) - %msg%n");
+        consoleEncoder.setPattern("%highlight(%level) %cyan(%logger) - %msg%n%n");
         consoleEncoder.start();
 
         final ThresholdFilter filter = new ThresholdFilter();

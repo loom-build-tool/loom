@@ -1,12 +1,19 @@
 package jobt.util;
 
-public class Watch {
+public final class Watch {
 
-    private final long startTime = System.nanoTime();
-    private long duration;
+    private final long startTime;
+    private long duration = -1;
 
-    public void stop() {
-        duration = System.nanoTime() - startTime;
+    public Watch(final long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void stop(final long stopTime) {
+        if (duration != -1) {
+            throw new IllegalStateException("Watch already stopped");
+        }
+        duration = stopTime - startTime;
     }
 
     public long getDuration() {

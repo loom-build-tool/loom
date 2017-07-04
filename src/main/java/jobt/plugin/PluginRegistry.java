@@ -52,6 +52,7 @@ public class PluginRegistry {
     static {
         final Map<String, String> internalPlugins = new HashMap<>();
         internalPlugins.put("java", "jobt.plugin.java.JavaPlugin");
+        internalPlugins.put("junit4", "jobt.plugin.junit4.Junit4Plugin");
         internalPlugins.put("mavenresolver", "jobt.plugin.mavenresolver.MavenResolverPlugin");
         internalPlugins.put("checkstyle", "jobt.plugin.checkstyle.CheckstylePlugin");
         internalPlugins.put("findbugs", "jobt.plugin.findbugs.FindbugsPlugin");

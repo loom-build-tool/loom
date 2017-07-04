@@ -68,19 +68,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("testResources")
             .register();
 
-        task("runTest")
-            .impl(JavaTestTask::new)
-            .provides("test")
-            .uses("testDependencies", "processedResources", "compilation",
-                "processedTestResources", "testCompilation")
-            .register();
-
-        goal("check")
-            .requires("test")
-            .register();
-
         goal("build")
-            .requires("jar", "sourcesJar", "test", "check")
+            .requires("jar", "sourcesJar", "check")
             .register();
     }
 

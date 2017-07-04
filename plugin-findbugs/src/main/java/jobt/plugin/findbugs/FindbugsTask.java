@@ -135,7 +135,7 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
-    private SourceTreeProduct getSourceTree() {
+    private SourceTreeProduct getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
                 return getUsedProducts().readProduct("source", SourceTreeProduct.class);
@@ -146,7 +146,7 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
-    private CompilationProduct getClasses() {
+    private CompilationProduct getClasses() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
                 return getUsedProducts().readProduct("compilation", CompilationProduct.class);
@@ -157,7 +157,7 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
-    private ClasspathProduct calcClasspath() {
+    private ClasspathProduct calcClasspath() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
                 return getUsedProducts().readProduct("compileDependencies",

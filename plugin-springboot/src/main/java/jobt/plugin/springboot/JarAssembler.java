@@ -103,7 +103,8 @@ public class JarAssembler {
                 return FileVisitResult.CONTINUE;
             }
 
-            if ("META-INF".equals(dir.getFileName().toString())) {
+            final Path dirName = dir.getFileName();
+            if (dirName != null && "META-INF".equals(dirName.toString())) {
                 return FileVisitResult.SKIP_SUBTREE;
             }
 

@@ -36,7 +36,7 @@ public final class ProductPromise {
         return productId;
     }
 
-    public Object getAndWaitForProduct() {
+    public Object getAndWaitForProduct() throws InterruptedException {
         return waitAndGet(promise);
     }
 
@@ -44,7 +44,7 @@ public final class ProductPromise {
         return promise.isDone();
     }
 
-    private Object waitAndGet(final Future<Object> future) {
+    private Object waitAndGet(final Future<Object> future) throws InterruptedException {
 
         LOG.debug("Requesting product <{}> ...", productId);
 
@@ -56,9 +56,6 @@ public final class ProductPromise {
             return product;
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
         } catch (final TimeoutException e) {
 
             LOG.warn("Blocked for {} seconds waiting for product <{}> - continue",
@@ -67,9 +64,6 @@ public final class ProductPromise {
             try {
                 return future.get();
             } catch (final ExecutionException e1) {
-                throw new IllegalStateException(e1);
-            } catch (final InterruptedException e1) {
-                Thread.currentThread().interrupt();
                 throw new IllegalStateException(e1);
             }
         }

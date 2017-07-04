@@ -177,7 +177,7 @@ public class PmdTask extends AbstractTask {
         return ruleSetFactory;
     }
 
-    private Path getSource() {
+    private Path getSource() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
                 return getUsedProducts().readProduct("source", SourceTreeProduct.class)

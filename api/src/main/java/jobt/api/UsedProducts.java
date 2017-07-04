@@ -31,7 +31,9 @@ public class UsedProducts {
         this.productRepository = productRepository;
     }
 
-    public <T extends Product> T readProduct(final String productId, final Class<T> clazz) {
+    public <T extends Product> T readProduct(final String productId, final Class<T> clazz)
+        throws InterruptedException {
+
         Objects.requireNonNull(productId);
         Objects.requireNonNull(clazz);
 
@@ -52,7 +54,7 @@ public class UsedProducts {
         return clazz.cast(value);
     }
 
-    public void waitForProduct(final String productId) {
+    public void waitForProduct(final String productId) throws InterruptedException {
 
         final ProductPromise productPromise = productRepository.lookup(productId);
 

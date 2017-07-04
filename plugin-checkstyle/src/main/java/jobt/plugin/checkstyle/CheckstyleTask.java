@@ -90,7 +90,7 @@ public class CheckstyleTask extends AbstractTask {
         }
     }
 
-    private SourceTreeProduct getSourceTree() {
+    private SourceTreeProduct getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
                 return getUsedProducts().readProduct("source", SourceTreeProduct.class);
@@ -101,7 +101,7 @@ public class CheckstyleTask extends AbstractTask {
         }
     }
 
-    private RootModule createRootModule() {
+    private RootModule createRootModule() throws InterruptedException {
         final RootModule rootModule;
         final String classpath = "";
 
@@ -156,7 +156,7 @@ public class CheckstyleTask extends AbstractTask {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader() {
+    private URLClassLoader buildClassLoader() throws InterruptedException {
         final ClasspathProduct classpath;
         switch (compileTarget) {
             case MAIN:

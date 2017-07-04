@@ -118,7 +118,7 @@ public class IdeaTask extends AbstractTask {
         }
     }
 
-    private Document createImlFile() throws IOException, ParsingException {
+    private Document createImlFile() throws IOException, ParsingException, InterruptedException {
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");

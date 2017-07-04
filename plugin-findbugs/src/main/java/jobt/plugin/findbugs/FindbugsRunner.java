@@ -59,7 +59,7 @@ public class FindbugsRunner {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public List<BugInstance> executeFindbugs() {
+    public List<BugInstance> executeFindbugs() throws InterruptedException {
 
         prepareEnvironment();
 
@@ -107,8 +107,7 @@ public class FindbugsRunner {
             xmlBugReporter.getBugCollection().forEach(bugs::add);
             return bugs;
 
-        } catch (final InterruptedException | IOException e) {
-            Thread.currentThread().interrupt();
+        } catch (final IOException e) {
             throw new IllegalStateException("Error execution Findbugs", e);
         } finally {
             System.setSecurityManager(currentSecurityManager);

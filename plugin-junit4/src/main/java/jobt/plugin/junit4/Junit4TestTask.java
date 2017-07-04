@@ -68,7 +68,7 @@ public class Junit4TestTask extends AbstractTask {
         throw new IllegalStateException("Failed");
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException {
+    private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
         final List<URL> urls = new ArrayList<>();
 
         final CompilationProduct testCompilation = getUsedProducts().readProduct(
@@ -96,7 +96,7 @@ public class Junit4TestTask extends AbstractTask {
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
-        throws IOException {
+        throws IOException, InterruptedException {
 
         final List<Class<?>> classes = new ArrayList<>();
 

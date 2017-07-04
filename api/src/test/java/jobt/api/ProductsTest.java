@@ -19,7 +19,7 @@ public class ProductsTest {
     private final ProductRepository productRepository = new ProductRepositoryDummy();
 
     @Test
-    public void successProvideAndUse() {
+    public void successProvideAndUse() throws InterruptedException {
 
         final ProvidedProducts providedProducts = provides("a", "b");
 
@@ -77,7 +77,7 @@ public class ProductsTest {
     }
 
     @Test
-    public void failOnUnknownProduct() {
+    public void failOnUnknownProduct() throws InterruptedException {
 
         try {
             final UsedProducts uses = uses("x");

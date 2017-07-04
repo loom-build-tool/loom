@@ -79,7 +79,9 @@ public class EclipseTask extends AbstractTask {
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createClasspathFile() throws IOException, ParsingException {
+    private Document createClasspathFile()
+        throws IOException, ParsingException, InterruptedException {
+
         try (final InputStream resourceAsStream = readResource("/classpath-template.xml")) {
             final Document doc = parser.build(resourceAsStream);
             final Element root = doc.getRootElement();

@@ -15,7 +15,6 @@ import jobt.api.ProductRepository;
 import jobt.plugin.ConfiguredTask;
 import jobt.plugin.TaskRegistryLookup;
 import jobt.plugin.TaskUtil;
-import jobt.util.Watch;
 
 public class TaskRunner {
 
@@ -42,7 +41,6 @@ public class TaskRunner {
 
         ProgressMonitor.setTasks(resolvedTasks.size());
 
-        LOG.debug("Task tracing with cpu time support {}", Watch.CPU_TIME_SUPPORTED ? "ON" : "OFF");
         final JobPool jobPool = new JobPool();
         jobPool.submitAll(buildJobs(resolvedTasks));
         jobPool.shutdown();

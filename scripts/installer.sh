@@ -2,16 +2,18 @@
 set -e
 
 loom_version=1.0.0
-loom_base=~/.loom/binary/$loom_version
-download_url="https://loom.builders/loom-downloader-$loom_version.jar"
+loom_base=~/.loom/binary/loom-$loom_version
+downloader_url="https://loom.builders/loom-downloader-$loom_version.jar"
+lib_url="https://loom.builders/loom-$loom_version.zip"
 
 if [ ! -d loom-downloader ]; then
     mkdir loom-downloader
-    curl -s "$download_url" > loom-downloader/loom-downloader.jar
+    echo "distributionUrl=$lib_url" > loom-downloader/loom-downloader.properties
+    curl -s "$downloader_url" > loom-downloader/loom-downloader.jar
 fi
 
 if [ ! -d $loom_base ]; then
-    java -cp loom-downloader/loom-downloader.jar builders.loom.LoomDownloader $loom_version
+    java -cp loom-downloader/loom-downloader.jar builders.loom.downloader.LoomDownloader
 fi
 
 if [ ! -e loom ]; then

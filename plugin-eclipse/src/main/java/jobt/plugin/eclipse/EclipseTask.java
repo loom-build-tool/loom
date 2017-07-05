@@ -7,11 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.TaskStatus;
-import jobt.api.product.ClasspathProduct;
+import jobt.api.product.ArtifactListProduct;
+import jobt.api.product.ArtifactProduct;
 import jobt.api.product.DummyProduct;
 import nu.xom.Attribute;
 import nu.xom.Builder;
@@ -104,18 +106,27 @@ public class EclipseTask extends AbstractTask {
                     projectJdkName)));
             root.appendChild(jdkEntry);
 
-            for (final Path path : getUsedProducts().readProduct("testDependencies",
-                ClasspathProduct.class).getEntries()) {
-                root.appendChild(buildClasspathElement(path.toAbsolutePath().toString()));
+            final List<ArtifactProduct> artifacts = getUsedProducts().readProduct("testArtifacts",
+                ArtifactListProduct.class).getArtifacts();
+
+            for (final ArtifactProduct path : artifacts) {
+                final String jar = path.getMainArtifact().toAbsolutePath().toString();
+                final Path sourceArtifact = path.getSourceArtifact();
+                final String sourceJar = sourceArtifact != null
+                    ? sourceArtifact.toAbsolutePath().toString() : null;
+
+                root.appendChild(buildClasspathElement(jar, sourceJar));
             }
 
             return doc;
         }
     }
 
-    private Element buildClasspathElement(final String jar) {
+    private Element buildClasspathElement(final String jar, final String sourceJar) {
         final Element classpathentry = new Element("classpathentry");
-//        classpathentry2.addAttribute(new Attribute("sourcepath", "lib"));
+        if (sourceJar != null) {
+            classpathentry.addAttribute(new Attribute("sourcepath", sourceJar));
+        }
         classpathentry.addAttribute(new Attribute("kind", "lib"));
         classpathentry.addAttribute(new Attribute("path", jar));
 

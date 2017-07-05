@@ -10,7 +10,7 @@ public class IdeaPlugin extends AbstractPlugin<PluginSettings> {
         task("configureIdea")
             .impl(() -> new IdeaTask(getBuildConfig()))
             .provides("idea")
-            .uses("compileDependencies", "testDependencies")
+            .uses("compileArtifacts", "testArtifacts")
             .register();
     }
 

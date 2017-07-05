@@ -1,25 +1,22 @@
 package jobt.plugin.mavenresolver;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.DependencyScope;
 import jobt.api.TaskStatus;
-import jobt.api.product.ArtifactProduct;
-import jobt.api.product.ClasspathProduct;
+import jobt.api.product.ArtifactListProduct;
 
-public class MavenResolverTask extends AbstractTask {
+public class MavenArtifactResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
     private MavenResolver mavenResolver;
 
-    public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig) {
+    public MavenArtifactResolverTask(final DependencyScope dependencyScope,
+                                     final BuildConfig buildConfig) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
@@ -42,28 +39,17 @@ public class MavenResolverTask extends AbstractTask {
 
     private void compileScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
-            DependencyScope.COMPILE, null, "main");
-
-        final List<Path> collect = artifactProducts.stream()
-            .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
-
-        getProvidedProducts().complete("compileDependencies",
-            new ClasspathProduct(collect));
+        getProvidedProducts().complete("compileArtifacts",
+            new ArtifactListProduct(mavenResolver.resolve(dependencies,
+                DependencyScope.COMPILE, "sources", "main")));
     }
 
     private void testScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
-            DependencyScope.TEST, null, "test");
-
-        final List<Path> collect = artifactProducts.stream()
-            .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
-
-        getProvidedProducts().complete("testDependencies",
-            new ClasspathProduct(collect));
+        getProvidedProducts().complete("testArtifacts",
+            new ArtifactListProduct(mavenResolver.resolve(dependencies,
+                DependencyScope.TEST, "sources", "test")));
     }
-
 }

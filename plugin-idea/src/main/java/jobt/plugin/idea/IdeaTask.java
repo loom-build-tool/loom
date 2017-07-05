@@ -8,11 +8,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 import jobt.api.AbstractTask;
 import jobt.api.BuildConfig;
 import jobt.api.TaskStatus;
-import jobt.api.product.ClasspathProduct;
+import jobt.api.product.ArtifactListProduct;
+import jobt.api.product.ArtifactProduct;
 import jobt.api.product.DummyProduct;
 import nu.xom.Attribute;
 import nu.xom.Builder;
@@ -123,21 +125,37 @@ public class IdeaTask extends AbstractTask {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
-            for (final Path path : getUsedProducts().readProduct("compileDependencies",
-                ClasspathProduct.class).getEntries()) {
-                component.appendChild(buildOrderEntry("COMPILE", path.toAbsolutePath().toString()));
+            final List<ArtifactProduct> mainArtifacts =
+                getUsedProducts().readProduct("compileArtifacts",
+                ArtifactListProduct.class).getArtifacts();
+
+            for (final ArtifactProduct artifact : mainArtifacts) {
+                final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
+                final Path sourceArtifact = artifact.getSourceArtifact();
+                final String sourceJar = sourceArtifact != null
+                    ? sourceArtifact.toAbsolutePath().toString() : null;
+
+                component.appendChild(buildOrderEntry("COMPILE", mainJar, sourceJar));
             }
 
-            for (final Path path : getUsedProducts().readProduct("testDependencies",
-                ClasspathProduct.class).getEntries()) {
-                component.appendChild(buildOrderEntry("TEST", path.toAbsolutePath().toString()));
+            final List<ArtifactProduct> testArtifacts = getUsedProducts()
+                .readProduct("testArtifacts",
+                ArtifactListProduct.class).getArtifacts();
+
+            for (final ArtifactProduct artifact : testArtifacts) {
+                final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
+                final Path sourceArtifact = artifact.getSourceArtifact();
+                final String sourceJar = sourceArtifact != null
+                    ? sourceArtifact.toAbsolutePath().toString() : null;
+
+                component.appendChild(buildOrderEntry("TEST", mainJar, sourceJar));
             }
 
             return doc;
         }
     }
 
-    private Element buildOrderEntry(final String scope, final String jar) {
+    private Element buildOrderEntry(final String scope, final String jar, final String sourceJar) {
         final Element orderEntry = new Element("orderEntry");
         orderEntry.addAttribute(new Attribute("type", "module-library"));
         if (scope != null) {
@@ -146,7 +164,7 @@ public class IdeaTask extends AbstractTask {
 
         final Element library = new Element("library");
         library.appendChild(buildJarElement("CLASSES", jar));
-        library.appendChild(buildJarElement("SOURCES", null));
+        library.appendChild(buildJarElement("SOURCES", sourceJar));
         library.appendChild(buildJarElement("JAVADOC", null));
         orderEntry.appendChild(library);
 

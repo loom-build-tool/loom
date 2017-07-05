@@ -1,12 +1,11 @@
 package jobt.plugin.mavenresolver;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
@@ -37,13 +37,19 @@ import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.repository.RemoteRepository;
+import org.sonatype.aether.resolution.ArtifactRequest;
+import org.sonatype.aether.resolution.ArtifactResolutionException;
+import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
+import org.sonatype.aether.resolution.DependencyResult;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+import org.sonatype.aether.util.artifact.SubArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import jobt.api.DependencyScope;
+import jobt.api.product.ArtifactProduct;
 import jobt.util.Hasher;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -95,36 +101,36 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> resolve(final List<String> deps, final DependencyScope scope,
-                              final String cacheName) {
+    public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
+                                         final String classifier, final String cacheName) {
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
-        try {
+//        try {
+//
+//             note: caches do not need extra locking, because they get isolated by the scope used
+//            final List<Path> files = readCache(deps, cacheName);
+//
+//            if (!files.isEmpty()) {
+//                LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
+//                return Collections.unmodifiableList(files);
+//            }
 
-            // note: caches do not need extra locking, because they get isolated by the scope used
-            final List<Path> files = readCache(deps, cacheName);
-
-            if (!files.isEmpty()) {
-                LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
-                return Collections.unmodifiableList(files);
-            }
-
-            final List<Path> paths;
+            final List<ArtifactProduct> paths;
 
             synchronized (this) {
-                paths = resolveRemote(deps, scope);
+                paths = resolveRemote(deps, classifier, scope);
                 LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
             }
 
-            writeCache(deps, cacheName, paths);
+//            writeCache(deps, cacheName, paths);
 
             return paths;
 
-        } catch (final IOException ioe) {
-            throw new UncheckedIOException(
-                String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
-        }
+//        } catch (final IOException ioe) {
+//            throw new UncheckedIOException(
+//                String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
+//        }
     }
 
     private List<Path> readCache(final List<String> deps, final String cacheName)
@@ -150,20 +156,22 @@ public class MavenResolver implements DependencyResolver {
         return cacheDir.resolve(cacheName + "-dependencies.cache");
     }
 
-    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope) {
+    private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier, final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
         session.setTransferListener(new ProgressLoggingTransferListener(progressIndicator));
 
+        final List<RemoteRepository> repositories = Collections.singletonList(mavenRepository);
+
         final CollectRequest collectRequest = new CollectRequest();
+        collectRequest.setRepositories(repositories);
+        collectRequest.setDependencies(deps.stream()
+            .map(dep -> new Dependency(new DefaultArtifact(dep), mavenScope(scope)))
+            .collect(Collectors.toList())
+        );
 
-        final List<Dependency> dependencies = deps.stream()
-            .map(a -> new Dependency(new DefaultArtifact(a), mavenScope(scope)))
-            .collect(Collectors.toList());
-
-        collectRequest.setDependencies(dependencies);
-        collectRequest.addRepository(mavenRepository);
+        final List<ArtifactProduct> ret = new ArrayList<>();
 
         try {
             final DependencyNode node =
@@ -172,19 +180,40 @@ public class MavenResolver implements DependencyResolver {
             final DependencyRequest dependencyRequest = new DependencyRequest();
             dependencyRequest.setRoot(node);
 
-            system.resolveDependencies(session, dependencyRequest);
+            final DependencyResult dependencyResult =
+                system.resolveDependencies(session, dependencyRequest);
 
             final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
             node.accept(nlg);
 
-            final List<Path> libs = nlg.getFiles().stream()
-                .map(File::toPath)
-                .collect(Collectors.toList());
+            final List<ArtifactResult> artifactResults = dependencyResult.getArtifactResults();
 
-            return Collections.unmodifiableList(libs);
-        } catch (final DependencyCollectionException  e) {
-            throw new IllegalStateException(e);
-        } catch (final DependencyResolutionException e) {
+            if (classifier == null) {
+                for (final ArtifactResult artifactResult : artifactResults) {
+                    final Path mainArtifact = artifactResult.getArtifact().getFile().toPath();
+                    ret.add(new ArtifactProduct(mainArtifact, null));
+                }
+            } else {
+                for (final ArtifactResult artifactResult : artifactResults) {
+                    final Path mainArtifactFile = artifactResult.getArtifact().getFile().toPath();
+
+                    final Artifact sourceArtifact =
+                        new SubArtifact(artifactResult.getArtifact(), "sources", "jar");
+                    final ArtifactRequest sourceArtifactReq =
+                        new ArtifactRequest(sourceArtifact, repositories, mavenScope(scope));
+                    final ArtifactResult sourceArtifactRes =
+                        system.resolveArtifact(session, sourceArtifactReq);
+
+                    final Path sourceArtifactFile =
+                        sourceArtifactRes.getArtifact().getFile().toPath();
+
+                    ret.add(new ArtifactProduct(mainArtifactFile, sourceArtifactFile));
+                }
+            }
+
+            return ret;
+        } catch (final DependencyCollectionException | ArtifactResolutionException
+            | DependencyResolutionException e) {
             throw new IllegalStateException(
                 String.format("Unresolvable dependencies for scope <%s>: %s",
                     scope, e.getMessage()));

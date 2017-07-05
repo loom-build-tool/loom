@@ -1,12 +1,13 @@
 package jobt.plugin.mavenresolver;
 
-import java.nio.file.Path;
 import java.util.List;
 
 import jobt.api.DependencyScope;
+import jobt.api.product.ArtifactProduct;
 
 public interface DependencyResolver {
 
-    List<Path> resolve(List<String> deps, DependencyScope scope, String cacheName);
+    List<ArtifactProduct> resolve(List<String> deps, DependencyScope scope, String classifier,
+                                  String cacheName);
 
 }

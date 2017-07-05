@@ -64,17 +64,17 @@ public class PluginRegistry {
     private final Set<String> configuredPluginSettings = new CopyOnWriteArraySet<>();
 
     static {
-        final Map<String, String> internalPlugins = new HashMap<>();
-        internalPlugins.put("java", "JavaPlugin");
-        internalPlugins.put("junit4", "Junit4Plugin");
-        internalPlugins.put("mavenresolver", "MavenResolverPlugin");
-        internalPlugins.put("checkstyle", "CheckstylePlugin");
-        internalPlugins.put("findbugs", "FindbugsPlugin");
-        internalPlugins.put("pmd", "PmdPlugin");
-        internalPlugins.put("springboot", "SpringBootPlugin");
-        internalPlugins.put("idea", "IdeaPlugin");
-        internalPlugins.put("eclipse", "EclipsePlugin");
-        INTERNAL_PLUGINS = Collections.unmodifiableMap(internalPlugins);
+        final Map<String, String> intPlugins = new HashMap<>();
+        intPlugins.put("java", "builders.loom.plugin.java.JavaPlugin");
+        intPlugins.put("junit4", "builders.loom.plugin.junit4.Junit4Plugin");
+        intPlugins.put("mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin");
+        intPlugins.put("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin");
+        intPlugins.put("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin");
+        intPlugins.put("pmd", "builders.loom.plugin.pmd.PmdPlugin");
+        intPlugins.put("springboot", "builders.loom.plugin.springboot.SpringBootPlugin");
+        intPlugins.put("idea", "builders.loom.plugin.idea.IdeaPlugin");
+        intPlugins.put("eclipse", "builders.loom.plugin.eclipse.EclipsePlugin");
+        INTERNAL_PLUGINS = Collections.unmodifiableMap(intPlugins);
 
         final Set<String> defaultPlugins = new HashSet<>();
         defaultPlugins.add("java");

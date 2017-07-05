@@ -83,7 +83,7 @@ public class Loom {
 
     private static void init() {
         AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
-            .format("Java Optimized Build Tool v%s (on Java %s)",
+            .format("Loom Build System v%s (on Java %s)",
                 Version.getVersion(), System.getProperty("java.version"))
             .reset());
 

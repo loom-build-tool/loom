@@ -3,7 +3,7 @@ set -e
 
 loom_version=1.0.0
 loom_base=~/.loom/binary/$loom_version
-download_url="https://s3.eu-central-1.amazonaws.com/loom/loom-downloader-$loom_version.jar"
+download_url="https://loom.builders/loom-downloader-$loom_version.jar"
 
 if [ ! -d loom-downloader ]; then
     mkdir loom-downloader

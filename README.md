@@ -49,11 +49,11 @@ testDependencies:
 This builds a project with a few dependencies (compile & test), checking sources with Checktsyle, targeting Java 6.
 
 
-# Install loom to your project
+# Install Loom to your project
 
 ```sh
 cd /path-to-your-project
-curl -s https://s3.eu-central-1.amazonaws.com/loom/installer.sh | sh
+curl -s https://loom.builders/installer.sh | sh
 vi build.yml # adjust the build.yml to your needs
 ./loom build
 ```

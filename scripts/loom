@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+VERSION=1.0.0
+LIB=~/.loom/binary/$VERSION/lib/loom-$VERSION.jar
+
+test -e "$LIB" || java -cp loom-downloader/loom-downloader.jar builders.loom.LoomDownloader $VERSION
+
+java -jar $LIB "$@"

@@ -1,6 +1,6 @@
-# Java Optimized Build Tool (jobt)
+# Loom
 
-What is jobt?
+What is Loom?
 
 - A modern build tool for Java projects
 - Very fast build execution
@@ -8,7 +8,7 @@ What is jobt?
 - Configured via YAML build script
 - Dependency management (Maven repository)
 
-What is jobt **not**?
+What is Loom **not**?
 
 - A feature rich and versatile system like [Gradle](https://gradle.org) or [Maven](http://maven.apache.org)
 
@@ -49,11 +49,11 @@ testDependencies:
 This builds a project with a few dependencies (compile & test), checking sources with Checktsyle, targeting Java 6.
 
 
-# Install jobt to your project
+# Install loom to your project
 
 ```sh
 cd /path-to-your-project
-curl -s https://s3.eu-central-1.amazonaws.com/jobt/installer.sh | sh
+curl -s https://s3.eu-central-1.amazonaws.com/loom/installer.sh | sh
 vi build.yml # adjust the build.yml to your needs
-./jobt build
+./loom build
 ```

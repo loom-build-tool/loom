@@ -1,13 +1,13 @@
 apply plugin: 'java'
 
-archivesBaseName = 'jobt'
+archivesBaseName = 'loom'
 
 allprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'pmd'
 
-    group = 'jobt'
+    group = 'builders.loom'
     version = '1.0.0'
 
     sourceCompatibility = 1.8
@@ -55,7 +55,7 @@ dependencies {
 jar {
     manifest {
         attributes(
-            'Main-Class': 'jobt.Jobt',
+            'Main-Class': 'builders.loom.Loom',
             'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
         )
     }
@@ -104,7 +104,7 @@ task zip(type: Zip) {
     }
     into("scripts") {
         from 'scripts/build.yml'
-        from 'scripts/jobt'
-        from 'scripts/jobt.bat'
+        from 'scripts/loom'
+        from 'scripts/loom.cmd'
     }
 }

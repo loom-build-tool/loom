@@ -48,7 +48,7 @@ public class UsedProducts {
 
         final Object value = productPromise.getAndWaitForProduct();
 
-        final long timeElapsed = (System.nanoTime() - start) / 1000;
+        final long timeElapsed = (System.nanoTime() - start) / 1_000_000;
         LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
 
         return clazz.cast(value);

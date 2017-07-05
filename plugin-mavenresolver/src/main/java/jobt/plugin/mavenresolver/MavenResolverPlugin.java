@@ -1,6 +1,5 @@
 package jobt.plugin.mavenresolver;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import jobt.api.AbstractPlugin;
@@ -37,10 +36,11 @@ public class MavenResolverPlugin extends AbstractPlugin<PluginSettings> {
             .register();
 
         service("mavenDependencyResolver")
-            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) -> {
-                final List<ArtifactProduct> resolve = MavenResolverSingleton.getInstance().resolve(deps, scope, null);
-                return resolve.stream().map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
-            })
+            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
+                MavenResolverSingleton.getInstance()
+                    .resolve(deps, scope, null).stream()
+                    .map(ArtifactProduct::getMainArtifact)
+                    .collect(Collectors.toList()))
             .register();
     }
 

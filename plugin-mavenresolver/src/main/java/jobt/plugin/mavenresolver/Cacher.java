@@ -23,38 +23,39 @@ public class Cacher<T extends Serializable> {
     }
 
     public void writeCache(final T data) {
-        final Path cacheFile = resolveCacheFile(cacheName);
-        final Path parent = cacheFile.getParent();
-
         try {
-            Files.createDirectories(parent);
+            final Path cacheDir = Files.createDirectories(resolveCacheDir());
+            final Path cacheFile = resolveCacheFile(cacheDir);
 
-
-            try (ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(cacheFile, StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING)))) {
-
-
-                out.writeObject(new CacheWrapper(cacheSignature, data));
+            try (ObjectOutputStream out = newOut(cacheFile)) {
+                out.writeObject(new CacheWrapper<>(cacheSignature, data));
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private Path resolveCacheFile(final String cacheName) {
-        final Path cacheDir = Paths.get(".jobt", "cache", "mavenresolver");
+    private ObjectOutputStream newOut(final Path cacheFile) throws IOException {
+        return new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(cacheFile,
+            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)));
+    }
+
+    private Path resolveCacheDir() {
+        return Paths.get(".jobt", "cache", "mavenresolver");
+    }
+
+    private Path resolveCacheFile(final Path cacheDir) {
         return cacheDir.resolve(cacheName + ".cache");
     }
 
-
     public T readCache() {
-        final Path cacheFile = resolveCacheFile(cacheName);
+        final Path cacheFile = resolveCacheFile(resolveCacheDir());
 
         if (Files.notExists(cacheFile)) {
             return null;
         }
 
-        try (ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(Files.newInputStream(cacheFile)))) {
+        try (ObjectInputStream in = newIn(cacheFile)) {
             final CacheWrapper<T> cw = (CacheWrapper) in.readObject();
 
             if (cw.getSignature().equals(cacheSignature)) {
@@ -67,6 +68,10 @@ public class Cacher<T extends Serializable> {
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private ObjectInputStream newIn(final Path cacheFile) throws IOException {
+        return new ObjectInputStream(new BufferedInputStream(Files.newInputStream(cacheFile)));
     }
 
 }

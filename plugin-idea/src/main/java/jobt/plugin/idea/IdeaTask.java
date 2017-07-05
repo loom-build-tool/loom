@@ -125,33 +125,31 @@ public class IdeaTask extends AbstractTask {
             final Document doc = parser.build(resourceAsStream);
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
+            // add compile artifacts
             final List<ArtifactProduct> mainArtifacts =
                 getUsedProducts().readProduct("compileArtifacts",
                 ArtifactListProduct.class).getArtifacts();
+            buildOrderEntries(component, mainArtifacts, "COMPILE");
 
-            for (final ArtifactProduct artifact : mainArtifacts) {
-                final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
-                final Path sourceArtifact = artifact.getSourceArtifact();
-                final String sourceJar = sourceArtifact != null
-                    ? sourceArtifact.toAbsolutePath().toString() : null;
-
-                component.appendChild(buildOrderEntry("COMPILE", mainJar, sourceJar));
-            }
-
+            // add test artifacts
             final List<ArtifactProduct> testArtifacts = getUsedProducts()
                 .readProduct("testArtifacts",
                 ArtifactListProduct.class).getArtifacts();
-
-            for (final ArtifactProduct artifact : testArtifacts) {
-                final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
-                final Path sourceArtifact = artifact.getSourceArtifact();
-                final String sourceJar = sourceArtifact != null
-                    ? sourceArtifact.toAbsolutePath().toString() : null;
-
-                component.appendChild(buildOrderEntry("TEST", mainJar, sourceJar));
-            }
+            buildOrderEntries(component, testArtifacts, "TEST");
 
             return doc;
+        }
+    }
+
+    private void buildOrderEntries(final Element component,
+                                   final List<ArtifactProduct> mainArtifacts, final String scope) {
+        for (final ArtifactProduct artifact : mainArtifacts) {
+            final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
+            final Path sourceArtifact = artifact.getSourceArtifact();
+            final String sourceJar = sourceArtifact != null
+                ? sourceArtifact.toAbsolutePath().toString() : null;
+
+            component.appendChild(buildOrderEntry(scope, mainJar, sourceJar));
         }
     }
 

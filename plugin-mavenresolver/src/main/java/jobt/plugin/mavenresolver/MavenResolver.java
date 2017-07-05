@@ -129,7 +129,8 @@ public class MavenResolver implements DependencyResolver {
         return artifacts;
     }
 
-    private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier, final DependencyScope scope) {
+    private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier,
+                                                final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);

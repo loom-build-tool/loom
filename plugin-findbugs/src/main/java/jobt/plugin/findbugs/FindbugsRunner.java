@@ -53,9 +53,7 @@ public class FindbugsRunner {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public void executeFindbugs()
-        throws InterruptedException, IOException, NoSuchFieldException, IllegalAccessException {
-
+    public void executeFindbugs() throws IOException, InterruptedException {
         prepareEnvironment();
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();

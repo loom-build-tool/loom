@@ -38,7 +38,7 @@ public class MavenResolverPlugin extends AbstractPlugin<PluginSettings> {
 
         service("mavenDependencyResolver")
             .impl(() -> (DependencyResolverService) (deps, scope, cacheName) -> {
-                final List<ArtifactProduct> resolve = MavenResolverSingleton.getInstance().resolve(deps, scope, null, cacheName);
+                final List<ArtifactProduct> resolve = MavenResolverSingleton.getInstance().resolve(deps, scope, null);
                 return resolve.stream().map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
             })
             .register();

@@ -1,12 +1,8 @@
 package jobt.plugin.mavenresolver;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -102,58 +98,35 @@ public class MavenResolver implements DependencyResolver {
 
     @Override
     public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
-                                         final String classifier, final String cacheName) {
+                                         final String classifier) {
+
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
-//        try {
-//
-//             note: caches do not need extra locking, because they get isolated by the scope used
-//            final List<Path> files = readCache(deps, cacheName);
-//
-//            if (!files.isEmpty()) {
-//                LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
-//                return Collections.unmodifiableList(files);
-//            }
 
-            final List<ArtifactProduct> paths;
+        final String cacheName = "maven-" + mavenScope(scope) + "-" + classifier;
+        final String cacheSignature = Hasher.hash(deps);
+        final Cacher<CachedArtifactProductList> cacher = new Cacher<>(cacheName, cacheSignature);
 
-            synchronized (this) {
-                paths = resolveRemote(deps, classifier, scope);
-                LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
-            }
+        // note: caches do not need extra locking, because they get isolated by the scope used
+        final CachedArtifactProductList cachedArtifacts = cacher.readCache();
 
-//            writeCache(deps, cacheName, paths);
-
-            return paths;
-
-//        } catch (final IOException ioe) {
-//            throw new UncheckedIOException(
-//                String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
-//        }
-    }
-
-    private List<Path> readCache(final List<String> deps, final String cacheName)
-        throws IOException {
-        final Path cacheFile = resolveCacheFile(cacheName);
-        if (Files.exists(cacheFile)) {
-            final List<String> strings = Files.readAllLines(cacheFile);
-            final String[] split = strings.get(0).split("\t");
-
-            final String hash = Hasher.hash(deps);
-            if (hash.equals(split[0])) {
-                final String[] pathNames = split[1].split(",");
-                return Arrays.stream(pathNames).map(Paths::get).collect(Collectors.toList());
-            }
+        if (cachedArtifacts != null) {
+            final List<ArtifactProduct> artifacts = cachedArtifacts.buildArtifactProductList();
+            LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
+            return Collections.unmodifiableList(artifacts);
         }
 
-        return Collections.emptyList();
-    }
+        final List<ArtifactProduct> artifacts;
 
-    private Path resolveCacheFile(final String cacheName) throws IOException {
-        final Path cacheDir = Files.createDirectories(
-            Paths.get(".jobt", "cache", "mavenresolver"));
-        return cacheDir.resolve(cacheName + "-dependencies.cache");
+        synchronized (this) {
+            artifacts = resolveRemote(deps, classifier, scope);
+            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
+        }
+
+        cacher.writeCache(CachedArtifactProductList.build(artifacts));
+
+        return artifacts;
     }
 
     private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier, final DependencyScope scope) {
@@ -229,16 +202,6 @@ public class MavenResolver implements DependencyResolver {
             default:
                 throw new IllegalStateException("Unknown scope: " + scope);
         }
-    }
-
-    private void writeCache(final List<String> deps, final String cacheName,
-                            final List<Path> files) throws IOException {
-        final String sb = Hasher.hash(deps) + '\t' + files.stream()
-            .map(f -> f.toAbsolutePath().toString())
-            .collect(Collectors.joining(","));
-
-        Files.write(resolveCacheFile(cacheName), Collections.singletonList(sb),
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
 }

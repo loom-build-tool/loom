@@ -20,4 +20,12 @@ public final class ArtifactProduct {
         return sourceArtifact;
     }
 
+    @Override
+    public String toString() {
+        return "ArtifactProduct{"
+            + "mainArtifact=" + mainArtifact
+            + ", sourceArtifact=" + sourceArtifact
+            + '}';
+    }
+
 }

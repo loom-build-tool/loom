@@ -7,7 +7,6 @@ import jobt.api.product.ArtifactProduct;
 
 public interface DependencyResolver {
 
-    List<ArtifactProduct> resolve(List<String> deps, DependencyScope scope, String classifier,
-                                  String cacheName);
+    List<ArtifactProduct> resolve(List<String> deps, DependencyScope scope, String classifier);
 
 }

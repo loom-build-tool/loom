@@ -5,8 +5,6 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -17,15 +15,15 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
-import edu.umd.cs.findbugs.NoOpFindBugsProgress;
+import edu.umd.cs.findbugs.HTMLBugReporter;
 import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
+import jobt.api.CompileTarget;
 import jobt.api.product.ClasspathProduct;
 import jobt.util.Util;
 
@@ -38,29 +36,24 @@ public class FindbugsRunner {
 
     private static final String EFFORT_DEFAULT = "default";
 
+    private final CompileTarget compileTarget;
     private final Path sourcesDir;
     private final Path classesDir;
     private final ClasspathProduct classpath;
 
     private final Optional<Integer> priorityThreshold;
 
-    FindbugsRunner(
-        final Path sourcesDir,
-        final Path classesDir,
-        final ClasspathProduct classpath,
-        final Optional<Integer> priorityThreshold) {
-
+    FindbugsRunner(final CompileTarget compileTarget, final Path sourcesDir, final Path classesDir,
+                   final ClasspathProduct classpath, final Optional<Integer> priorityThreshold) {
+        this.compileTarget = compileTarget;
         this.sourcesDir = sourcesDir;
         this.classesDir = classesDir;
         this.classpath = classpath;
-
         this.priorityThreshold = priorityThreshold;
-
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public List<BugInstance> executeFindbugs() throws InterruptedException {
-
+    public void executeFindbugs() throws IOException, InterruptedException {
         prepareEnvironment();
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
@@ -68,48 +61,46 @@ public class FindbugsRunner {
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        try (PrintStream outputStream =
-            new PrintStream(getTargetXMLReport().toFile(), "UTF-8")) {
+        final Project project = createFindbugsProject();
+        if (project.getFileCount() == 0) {
+            LOG.info("Findbugs analysis skipped for this project.");
+            return;
+        }
+
+        final Integer threshold = priorityThreshold.orElse(DEFAULT_PRIORITY_THRESHOLD);
+
+        final LoggingBugReporter loggingBugReporter = new LoggingBugReporter();
+        loggingBugReporter.setPriorityThreshold(threshold);
+
+        final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
+        xmlBugReporter.setPriorityThreshold(threshold);
+        xmlBugReporter.setAddMessages(true);
+        xmlBugReporter.setOutputStream(new PrintStream(getTargetXMLReport().toFile(), "UTF-8"));
+
+        final HTMLBugReporter htmlBugReporter = new HTMLBugReporter(project, "default.xsl");
+        htmlBugReporter.setPriorityThreshold(threshold);
+        htmlBugReporter.setOutputStream(new PrintStream(getTargetHTMLReport().toFile(), "UTF-8"));
+
+        final MultiplexingBugReporter multiplexingBugReporter =
+            new MultiplexingBugReporter(loggingBugReporter, xmlBugReporter, htmlBugReporter);
+
+        try {
             final FindBugs2 engine = new FindBugs2();
-            final Project project = createFindbugsProject();
-
-            if (project.getFileCount() == 0) {
-                LOG.info("Findbugs analysis skipped for this project.");
-                return Collections.emptyList();
-            }
-
             engine.setProject(project);
-
-            final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
-            xmlBugReporter.setPriorityThreshold(
-                priorityThreshold.orElse(DEFAULT_PRIORITY_THRESHOLD));
-            xmlBugReporter.setAddMessages(true);
-            xmlBugReporter.setOutputStream(outputStream);
-
-            engine.setBugReporter(xmlBugReporter);
-
+            engine.setBugReporter(multiplexingBugReporter);
             engine.setNoClassOk(true);
-
-            final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
-            userPreferences.setEffort(EFFORT_DEFAULT);
-            engine.setUserPreferences(userPreferences);
-
+            engine.setUserPreferences(buildUserPreferences());
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
             engine.setAnalysisFeatureSettings(FindBugs.DEFAULT_EFFORT);
-
-            engine.setProgressCallback(new NoOpFindBugsProgress());
-
             engine.finishSettings();
 
             engine.execute();
 
-            final ArrayList<BugInstance> bugs = new ArrayList<>();
-            xmlBugReporter.getBugCollection().forEach(bugs::add);
-            return bugs;
-
-        } catch (final IOException e) {
-            throw new IllegalStateException("Error execution Findbugs", e);
+            if (engine.getErrorCount() + engine.getBugCount() > 0) {
+                throw new IllegalStateException("Findbugs reported bugs!");
+            }
         } finally {
+            multiplexingBugReporter.finish();
             System.setSecurityManager(currentSecurityManager);
             Locale.setDefault(initialLocale);
         }
@@ -127,7 +118,13 @@ public class FindbugsRunner {
     }
 
     public Path getTargetXMLReport() {
-        return FindbugsTask.REPORT_PATH.resolve("findbugs-result.xml");
+        return FindbugsTask.REPORT_PATH.resolve(String.format("findbugs-%s-result.xml",
+            compileTarget.name().toLowerCase()));
+    }
+
+    public Path getTargetHTMLReport() {
+        return FindbugsTask.REPORT_PATH.resolve(String.format("findbugs-%s-result.html",
+            compileTarget.name().toLowerCase()));
     }
 
     private Project createFindbugsProject() throws IOException {
@@ -153,9 +150,14 @@ public class FindbugsRunner {
         return findbugsProject;
     }
 
+    private UserPreferences buildUserPreferences() {
+        final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
+        userPreferences.setEffort(EFFORT_DEFAULT);
+        return userPreferences;
+    }
+
     private static List<String> getClassesToScan(final Path classesDir) throws IOException {
-        return
-        Files.walk(classesDir)
+        return Files.walk(classesDir)
             .filter(filterByExtension("class"))
             .map(FindbugsRunner::pathToString)
             .collect(Collectors.toList());
@@ -170,16 +172,12 @@ public class FindbugsRunner {
         return file.toAbsolutePath().normalize().toString();
     }
 
-    private static List<String> getSourceFiles(final Path sourcesDir) {
-        try {
-            return Files.walk(sourcesDir)
-                .filter(Files::isRegularFile)
-                .filter(filterByExtension("java"))
-                .map(FindbugsRunner::pathToString)
-                .collect(Collectors.toList());
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    private static List<String> getSourceFiles(final Path sourcesDir) throws IOException {
+        return Files.walk(sourcesDir)
+            .filter(Files::isRegularFile)
+            .filter(filterByExtension("java"))
+            .map(FindbugsRunner::pathToString)
+            .collect(Collectors.toList());
     }
 
 }

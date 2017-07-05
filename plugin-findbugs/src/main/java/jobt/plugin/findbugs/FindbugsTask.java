@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.Priorities;
 import jobt.api.AbstractTask;
 import jobt.api.CompileTarget;
@@ -96,7 +95,8 @@ public class FindbugsTask extends AbstractTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        final List<BugInstance> bugs = new FindbugsRunner(
+        new FindbugsRunner(
+            compileTarget,
             getSourceTree().getSrcDir(),
             getClasses().getClassesDir(),
             calcClasspath(),
@@ -104,20 +104,7 @@ public class FindbugsTask extends AbstractTask {
             )
             .executeFindbugs();
 
-
-        if (bugs.isEmpty()) {
-            return complete(TaskStatus.OK);
-        }
-
-        final StringBuilder report = new StringBuilder();
-        for (final BugInstance bug : bugs) {
-            report.append(String.format(" >>> %s ", bug.getMessage()));
-            report.append('\n');
-        }
-        LOG.warn("Findbugs report for {}: \n{}", compileTarget, report);
-
-        throw new IllegalStateException(
-            String.format("Findbugs reported %d bugs!", bugs.size()));
+        return complete(TaskStatus.OK);
     }
 
     private TaskStatus complete(final TaskStatus status) {

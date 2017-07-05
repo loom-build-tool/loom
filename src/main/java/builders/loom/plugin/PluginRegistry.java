@@ -169,7 +169,7 @@ public class PluginRegistry {
 
     private URL findPluginUrl(final String name) {
         final Path baseDir = Paths.get(System.getProperty("user.home"), ".loom", "binary",
-            Version.getVersion(), "plugin-" + name);
+            "loom-" + Version.getVersion(), "plugin-" + name);
         return buildUrl(baseDir.resolve(
             String.format("plugin-%s-%s.jar", name, Version.getVersion())));
     }

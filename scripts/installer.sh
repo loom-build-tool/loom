@@ -20,9 +20,9 @@ if [ ! -e loom ]; then
     chmod 755 loom
 fi
 
-if [ ! -e loom.bat ]; then
-    echo "Create loom.bat build script"
-    cp "$loom_base/scripts/loom.bat" .
+if [ ! -e loom.cmd ]; then
+    echo "Create loom.cmd build script"
+    cp "$loom_base/scripts/loom.cmd" .
 fi
 
 if [ ! -e build.yml ]; then

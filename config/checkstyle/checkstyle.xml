@@ -57,6 +57,12 @@
 
     <module name="SuppressWarningsFilter"/>
 
+    <!-- Checks for Header - http://checkstyle.sf.net/config_header.html -->
+    <module name="Header">
+        <property name="headerFile" value="${samedir}/java.header"/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
     <module name="TreeWalker">
 
 		<!-- project_loc: property defined by eclipse-cs; see build.gradle for compatibility -->
@@ -163,9 +169,6 @@
         <module name="OneStatementPerLine"/>
         <module name="VariableDeclarationUsageDistance"/>
         <module name="OverloadMethodsDeclarationOrder"/>
-
-        <!-- Checks for Header - http://checkstyle.sf.net/config_header.html -->
-        <!-- none -->
 
         <!-- Checks for Imports - http://checkstyle.sf.net/config_imports.html -->
         <module name="AvoidStarImport"/>

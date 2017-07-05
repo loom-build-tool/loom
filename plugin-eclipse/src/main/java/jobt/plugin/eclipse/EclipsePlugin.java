@@ -10,7 +10,7 @@ public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
         task("configureEclipse")
             .impl(() -> new EclipseTask(getBuildConfig()))
             .provides("eclipse")
-            .uses("testDependencies")
+            .uses("testArtifacts")
             .register();
     }
 

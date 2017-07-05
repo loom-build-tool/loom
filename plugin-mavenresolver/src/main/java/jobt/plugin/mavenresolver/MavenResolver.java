@@ -1,13 +1,8 @@
 package jobt.plugin.mavenresolver;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.DependencyCollectionException;
 import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
@@ -37,13 +33,19 @@ import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.repository.RemoteRepository;
+import org.sonatype.aether.resolution.ArtifactRequest;
+import org.sonatype.aether.resolution.ArtifactResolutionException;
+import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
+import org.sonatype.aether.resolution.DependencyResult;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+import org.sonatype.aether.util.artifact.SubArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import jobt.api.DependencyScope;
+import jobt.api.product.ArtifactProduct;
 import jobt.util.Hasher;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -95,75 +97,55 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<Path> resolve(final List<String> deps, final DependencyScope scope,
-                              final String cacheName) {
+    public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
+                                         final String classifier) {
+
         LOG.info("Resolve {} dependencies: {}", scope, deps);
         progressIndicator.reportProgress("resolving dependencies for scope " + scope);
 
-        try {
 
-            // note: caches do not need extra locking, because they get isolated by the scope used
-            final List<Path> files = readCache(deps, cacheName);
+        final String cacheName = "maven-" + mavenScope(scope) + "-" + classifier;
+        final String cacheSignature = Hasher.hash(deps);
+        final Cacher<CachedArtifactProductList> cacher = new Cacher<>(cacheName, cacheSignature);
 
-            if (!files.isEmpty()) {
-                LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, files);
-                return Collections.unmodifiableList(files);
-            }
+        // note: caches do not need extra locking, because they get isolated by the scope used
+        final CachedArtifactProductList cachedArtifacts = cacher.readCache();
 
-            final List<Path> paths;
-
-            synchronized (this) {
-                paths = resolveRemote(deps, scope);
-                LOG.debug("Resolved {} dependencies {} to {}", scope, deps, paths);
-            }
-
-            writeCache(deps, cacheName, paths);
-
-            return paths;
-
-        } catch (final IOException ioe) {
-            throw new UncheckedIOException(
-                String.format("Error resolving dependences %s for scope %s", deps, scope), ioe);
-        }
-    }
-
-    private List<Path> readCache(final List<String> deps, final String cacheName)
-        throws IOException {
-        final Path cacheFile = resolveCacheFile(cacheName);
-        if (Files.exists(cacheFile)) {
-            final List<String> strings = Files.readAllLines(cacheFile);
-            final String[] split = strings.get(0).split("\t");
-
-            final String hash = Hasher.hash(deps);
-            if (hash.equals(split[0])) {
-                final String[] pathNames = split[1].split(",");
-                return Arrays.stream(pathNames).map(Paths::get).collect(Collectors.toList());
-            }
+        if (cachedArtifacts != null) {
+            final List<ArtifactProduct> artifacts = cachedArtifacts.buildArtifactProductList();
+            LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
+            return Collections.unmodifiableList(artifacts);
         }
 
-        return Collections.emptyList();
+        final List<ArtifactProduct> artifacts;
+
+        synchronized (this) {
+            artifacts = resolveRemote(deps, classifier, scope);
+            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
+        }
+
+        cacher.writeCache(CachedArtifactProductList.build(artifacts));
+
+        return artifacts;
     }
 
-    private Path resolveCacheFile(final String cacheName) throws IOException {
-        final Path cacheDir = Files.createDirectories(
-            Paths.get(".jobt", "cache", "mavenresolver"));
-        return cacheDir.resolve(cacheName + "-dependencies.cache");
-    }
-
-    private List<Path> resolveRemote(final List<String> deps, final DependencyScope scope) {
+    private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier,
+                                                final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
         session.setTransferListener(new ProgressLoggingTransferListener(progressIndicator));
 
+        final List<RemoteRepository> repositories = Collections.singletonList(mavenRepository);
+
         final CollectRequest collectRequest = new CollectRequest();
+        collectRequest.setRepositories(repositories);
+        collectRequest.setDependencies(deps.stream()
+            .map(dep -> new Dependency(new DefaultArtifact(dep), mavenScope(scope)))
+            .collect(Collectors.toList())
+        );
 
-        final List<Dependency> dependencies = deps.stream()
-            .map(a -> new Dependency(new DefaultArtifact(a), mavenScope(scope)))
-            .collect(Collectors.toList());
-
-        collectRequest.setDependencies(dependencies);
-        collectRequest.addRepository(mavenRepository);
+        final List<ArtifactProduct> ret = new ArrayList<>();
 
         try {
             final DependencyNode node =
@@ -172,19 +154,40 @@ public class MavenResolver implements DependencyResolver {
             final DependencyRequest dependencyRequest = new DependencyRequest();
             dependencyRequest.setRoot(node);
 
-            system.resolveDependencies(session, dependencyRequest);
+            final DependencyResult dependencyResult =
+                system.resolveDependencies(session, dependencyRequest);
 
             final PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
             node.accept(nlg);
 
-            final List<Path> libs = nlg.getFiles().stream()
-                .map(File::toPath)
-                .collect(Collectors.toList());
+            final List<ArtifactResult> artifactResults = dependencyResult.getArtifactResults();
 
-            return Collections.unmodifiableList(libs);
-        } catch (final DependencyCollectionException  e) {
-            throw new IllegalStateException(e);
-        } catch (final DependencyResolutionException e) {
+            if (classifier == null) {
+                for (final ArtifactResult artifactResult : artifactResults) {
+                    final Path mainArtifact = artifactResult.getArtifact().getFile().toPath();
+                    ret.add(new ArtifactProduct(mainArtifact, null));
+                }
+            } else {
+                for (final ArtifactResult artifactResult : artifactResults) {
+                    final Path mainArtifactFile = artifactResult.getArtifact().getFile().toPath();
+
+                    final Artifact sourceArtifact =
+                        new SubArtifact(artifactResult.getArtifact(), "sources", "jar");
+                    final ArtifactRequest sourceArtifactReq =
+                        new ArtifactRequest(sourceArtifact, repositories, mavenScope(scope));
+                    final ArtifactResult sourceArtifactRes =
+                        system.resolveArtifact(session, sourceArtifactReq);
+
+                    final Path sourceArtifactFile =
+                        sourceArtifactRes.getArtifact().getFile().toPath();
+
+                    ret.add(new ArtifactProduct(mainArtifactFile, sourceArtifactFile));
+                }
+            }
+
+            return ret;
+        } catch (final DependencyCollectionException | ArtifactResolutionException
+            | DependencyResolutionException e) {
             throw new IllegalStateException(
                 String.format("Unresolvable dependencies for scope <%s>: %s",
                     scope, e.getMessage()));
@@ -200,16 +203,6 @@ public class MavenResolver implements DependencyResolver {
             default:
                 throw new IllegalStateException("Unknown scope: " + scope);
         }
-    }
-
-    private void writeCache(final List<String> deps, final String cacheName,
-                            final List<Path> files) throws IOException {
-        final String sb = Hasher.hash(deps) + '\t' + files.stream()
-            .map(f -> f.toAbsolutePath().toString())
-            .collect(Collectors.joining(","));
-
-        Files.write(resolveCacheFile(cacheName), Collections.singletonList(sb),
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
 }

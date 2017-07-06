@@ -18,6 +18,8 @@ package builders.loom.plugin.findbugs;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,7 +75,6 @@ public final class FindbugsSingleton {
 
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
                 .map(FindbugsSingleton::normalizeUrl)
-                .map(Paths::get)
                 .filter(Files::exists)
                 .filter(file ->
                     loadFbContrib && file.getFileName().toString().startsWith("fb-contrib")
@@ -98,12 +99,22 @@ public final class FindbugsSingleton {
 
     }
 
-    public static String normalizeUrl(final URL url) {
-        return url.getPath().split("!")[0].replace("file:", "");
+    /**
+     * jar:file:/C:/Users/leftout/plugin-findbugs/findbugs-3.0.1.jar!/findbugs.xml
+     * will become C:/Users/leftout/plugin-findbugs/findbugs-3.0.1.jar
+     * .
+     */
+    private static Path normalizeUrl(final URL url) {
+        try {
+            return Paths.get(new URL(url.getPath().split("!")[0]).toURI());
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalStateException("Unable to normalize url: " + url);
+        }
     }
 
     /**
-     * Disable the update check for every plugin. See http://findbugs.sourceforge.net/updateChecking.html
+     * Disable the update check for every plugin.
+     * See http://findbugs.sourceforge.net/updateChecking.html.
      */
     private static void disableUpdateChecksOnEveryPlugin() {
         for (final Plugin plugin : Plugin.getAllPlugins()) {

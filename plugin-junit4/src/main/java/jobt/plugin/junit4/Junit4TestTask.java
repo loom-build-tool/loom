@@ -48,17 +48,25 @@ public class Junit4TestTask extends AbstractTask {
         final Class[] testClasses = collectClasses(urlClassLoader)
             .toArray(new Class[] {});
 
-        final Class<?> wrapperClass = urlClassLoader.loadClass("jobt.plugin.junit4.Junit4Wrapper");
+        final ClassLoader clPlusWrapper = new InjectingClassLoader(
+            urlClassLoader, Junit4TestTask.class.getClassLoader(),
+            className -> className.startsWith("jobt.plugin.junit4.wrapper."));
+
+        final Class<?> wrapperClass = clPlusWrapper.loadClass("jobt.plugin.junit4.wrapper.Junit4Wrapper");
         final Object wrapper = wrapperClass.newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", Class[].class);
 
-        boolean successful = (boolean) wrapperRun.invoke(wrapper, (Object) testClasses);
+        final boolean successful = (boolean) wrapperRun.invoke(wrapper, (Object) testClasses);
 
         if (successful) {
             return complete(TaskStatus.OK);
         }
 
-        throw new IllegalStateException("Failed");
+        throw new IllegalStateException("Some tests failed");
+    }
+
+    static String classRes(final String className) {
+        return className.replace('.', '/') + ".class";
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
@@ -84,10 +92,8 @@ public class Junit4TestTask extends AbstractTask {
             ClasspathProduct.class).getEntriesAsUrls();
         urls.addAll(testDependencies);
 
-        System.out.println("Classloader URLs:" + urls);
-
         return new URLClassLoader(urls.toArray(new URL[] {}),
-            Junit4TestTask.class.getClassLoader());
+            Junit4TestTask.class.getClassLoader().getParent());
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)

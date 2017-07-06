@@ -22,38 +22,42 @@ import builders.loom.api.AbstractPlugin;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.PluginSettings;
 import builders.loom.api.product.ArtifactProduct;
 
-public class MavenResolverPlugin extends AbstractPlugin<PluginSettings> {
+public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
+
+    public MavenResolverPlugin() {
+        super(new MavenResolverPluginSettings());
+    }
 
     @Override
     public void configure() {
         final BuildConfig cfg = getBuildConfig();
+        final MavenResolverPluginSettings pluginSettings = getPluginSettings();
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg))
+            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings))
             .provides("compileDependencies")
             .register();
 
         task("resolveCompileArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg))
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings))
             .provides("compileArtifacts")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg))
+            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg, pluginSettings))
             .provides("testDependencies")
             .register();
 
         task("resolveTestArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg))
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings))
             .provides("testArtifacts")
             .register();
 
         service("mavenDependencyResolver")
             .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
-                MavenResolverSingleton.getInstance()
+                MavenResolverSingleton.getInstance(pluginSettings)
                     .resolve(deps, scope, null).stream()
                     .map(ArtifactProduct::getMainArtifact)
                     .collect(Collectors.toList()))

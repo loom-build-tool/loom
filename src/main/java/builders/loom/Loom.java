@@ -72,12 +72,16 @@ public class Loom {
             }
         } catch (final Throwable e) {
             Runtime.getRuntime().removeShutdownHook(ctrlCHook);
-            AnsiConsole.err().println(Ansi.ansi().reset().fgBrightRed().a(e.getMessage()).reset()
-                .newline());
+            if (!(e instanceof BuildException)) {
+                // BuildExceptions are already logged
+                e.printStackTrace(System.err);
+            }
+            AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
+                .format("BUILD FAILED - see %s for details", LogConfiguration.LOOM_BUILD_LOG)
+                .reset());
             System.exit(1);
         }
 
-        AnsiConsole.out().println(Ansi.ansi().reset());
         System.exit(0);
     }
 
@@ -196,7 +200,8 @@ public class Loom {
         final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);
 
         AnsiConsole.out.println(Ansi.ansi()
-            .render("Initialized configuration for @|bold %s|@ version @|bold %s|@",
+            .render("Initialized configuration of @|bold %s:%s|@ version @|bold %s|@",
+                buildConfig.getProject().getGroupId(),
                 buildConfig.getProject().getArtifactId(),
                 buildConfig.getProject().getVersion())
             .reset());
@@ -222,8 +227,8 @@ public class Loom {
             final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
 
             AnsiConsole.out().print(Ansi.ansi().reset().fgBrightGreen()
-                .format("Cooked your pasta in %.2fs%n", duration)
-                .reset());
+                .a("BUILD SUCCESSFUL").reset()
+                .format(" in %.2fs%n", duration));
         }
 
         loomProcessor.logMemoryUsage();

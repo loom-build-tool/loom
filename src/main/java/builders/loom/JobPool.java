@@ -86,7 +86,7 @@ public class JobPool {
         }, executor);
     }
 
-    public void shutdown() throws InterruptedException {
+    public void shutdown() throws InterruptedException, BuildException {
         LOG.debug("Shutting down Job Pool");
         executor.shutdown();
 
@@ -97,14 +97,16 @@ public class JobPool {
         timer.cancel();
 
         if (firstException.get() != null) {
-            throw new IllegalStateException(firstException.get());
+            throw new BuildException(firstException.get());
         }
     }
 
     public void submitAll(final Collection<Job> jobs) {
         Objects.requireNonNull(jobs, "jobs must not be null");
         for (final Job job : jobs) {
-            submitJob(job);
+            if (!executor.isShutdown()) {
+                submitJob(job);
+            }
         }
     }
 

@@ -31,10 +31,10 @@ public final class ProgressMonitor {
     private static final int JANSI_BUF = 80;
     private static final PrintStream OUT = AnsiConsole.out();
 
-    private static AtomicInteger tasks = new AtomicInteger();
-    private static AtomicInteger completedTasks = new AtomicInteger();
-    private static AtomicInteger lastProgress = new AtomicInteger();
-    private static Timer timer = new Timer("ProgressMonitor", true);
+    private static final AtomicInteger tasks = new AtomicInteger();
+    private static final AtomicInteger completedTasks = new AtomicInteger();
+    private static final AtomicInteger lastProgress = new AtomicInteger();
+    private static final Timer timer = new Timer("ProgressMonitor", true);
 
     private ProgressMonitor() {
     }
@@ -61,7 +61,7 @@ public final class ProgressMonitor {
 
     public static void stop() {
         timer.cancel();
-        OUT.print(Ansi.ansi().reset().cursorUpLine().eraseLine());
+        OUT.print(Ansi.ansi().reset().cursorUp(1).eraseLine());
     }
 
     private static void update() {
@@ -74,7 +74,7 @@ public final class ProgressMonitor {
         final int progress = progressBarLength * cpl / taskCnt;
         final int nullProgress = progressBarLength - progress;
 
-        final Ansi a = Ansi.ansi(JANSI_BUF).cursorUpLine().cursorToColumn(0)
+        final Ansi a = Ansi.ansi(JANSI_BUF).cursorUp(1)
             .fg(Ansi.Color.WHITE)
             .a('[')
             .a(String.join("", Collections.nCopies(progress, "=")))

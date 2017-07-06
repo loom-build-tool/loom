@@ -16,13 +16,32 @@
 
 package builders.loom;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.util.Properties;
+
 public final class Version {
+
+    private static final String VERSION;
+
+    static {
+        final Properties properties = new Properties();
+        try {
+            try (InputStream in = Version.class.getResourceAsStream("/loom.properties")) {
+                properties.load(in);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        VERSION = properties.getProperty("version");
+    }
 
     private Version() {
     }
 
     public static String getVersion() {
-        return "1.0.0";
+        return VERSION;
     }
 
 }

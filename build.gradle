@@ -52,6 +52,14 @@ dependencies {
     testCompile('junit:junit:4.12')
 }
 
+processResources {
+    filesMatching('**/loom.properties') {
+        filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+            "version" : project.version
+        ]
+    }
+}
+
 jar {
     manifest {
         attributes(

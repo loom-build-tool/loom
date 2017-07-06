@@ -17,7 +17,6 @@
 package builders.loom.plugin.mavenresolver;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +62,7 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.util.Hasher;
+import builders.loom.util.SystemUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenResolver implements DependencyResolver {
@@ -106,7 +106,7 @@ public class MavenResolver implements DependencyResolver {
         mavenRepository =
             new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
 
-        final Path repository = Paths.get(System.getProperty("user.home"), ".loom", "repository");
+        final Path repository = SystemUtil.determineLoomBaseDir().resolve("repository");
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
         LOG.debug("MavenResolver initialized");

@@ -1,7 +1,9 @@
 #!/bin/sh
 set -e
 
-loom_version=1.0.0
+DEFAULT_VERSION=1.0.0
+
+loom_version=${1:-$DEFAULT_VERSION}
 downloader_url="https://loom.builders/loom-downloader-$loom_version.jar"
 lib_url="https://loom.builders/loom-$loom_version.zip"
 
@@ -14,30 +16,25 @@ case "$(uname -s)" in
         ;;
 esac
 
-if [ ! -d loom-downloader ]; then
-    mkdir loom-downloader
-    echo "distributionUrl=$lib_url" > loom-downloader/loom-downloader.properties
-    curl -s "$downloader_url" > loom-downloader/loom-downloader.jar
-fi
+test -d loom-downloader || mkdir loom-downloader
+
+echo "Fetch Loom Downloader $loom_version from $downloader_url ..."
+echo "distributionUrl=$lib_url" > loom-downloader/loom-downloader.properties
+curl -f -s -S "$downloader_url" > loom-downloader/loom-downloader.jar
 
 if [ ! -d $loom_base ]; then
     java -jar loom-downloader/loom-downloader.jar
 fi
 
-if [ ! -e loom ]; then
-    echo "Create loom build script"
-    cp "$loom_base/scripts/loom" .
-    chmod 755 loom
-fi
+echo "Create loom build scripts"
+cp "$loom_base/scripts/loom" .
+chmod 755 loom
 
-if [ ! -e loom.cmd ]; then
-    echo "Create loom.cmd build script"
-    cp "$loom_base/scripts/loom.cmd" .
-fi
+cp "$loom_base/scripts/loom.cmd" .
 
 if [ ! -e build.yml ]; then
-    echo "Create build.yml"
+    echo "Create initial build.yml"
     cp "$loom_base/scripts/build.yml" .
 fi
 
-echo "Done. Run ``./loom build`` to start your build."
+echo "Done. Adjust \`build.yml\` to your needs and then run \`./loom build\` to start your build."

@@ -29,6 +29,8 @@ import ch.qos.logback.core.FileAppender;
 
 public final class LogConfiguration {
 
+    public static final String LOOM_BUILD_LOG = ".loom/build.log";
+
     private LogConfiguration() {
     }
 
@@ -44,7 +46,7 @@ public final class LogConfiguration {
 
         final PatternLayoutEncoder consoleEncoder = new PatternLayoutEncoder();
         consoleEncoder.setContext(lc);
-        consoleEncoder.setPattern("%highlight(%level) %cyan(%logger) - %msg%n%n");
+        consoleEncoder.setPattern("%highlight(%level) [%thread] %cyan(%logger{32}) - %msg%n%n");
         consoleEncoder.start();
 
         final ThresholdFilter filter = new ThresholdFilter();
@@ -65,12 +67,12 @@ public final class LogConfiguration {
         final FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
         fileAppender.setContext(lc);
         fileAppender.setName("Loom File Appender");
-        fileAppender.setFile(".loom/build.log");
+        fileAppender.setFile(LOOM_BUILD_LOG);
         fileAppender.setAppend(false);
         fileAppender.setEncoder(encoder);
         fileAppender.start();
 
-        final Logger loomLogger = lc.getLogger("loom");
+        final Logger loomLogger = lc.getLogger("builders.loom");
         loomLogger.setAdditive(false);
         loomLogger.setLevel(Level.DEBUG);
         loomLogger.detachAppender("console");

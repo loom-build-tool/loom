@@ -50,7 +50,7 @@ public class TaskRunner {
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")
-    public void execute(final Set<String> productIds) throws InterruptedException {
+    public void execute(final Set<String> productIds) throws InterruptedException, BuildException {
         final Collection<String> resolvedTasks = resolveTasks(productIds);
 
         if (resolvedTasks.isEmpty()) {

@@ -44,6 +44,7 @@ import builders.loom.Version;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
 import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.util.SystemUtil;
 import builders.loom.util.ThreadUtil;
 
 @SuppressWarnings({
@@ -57,6 +58,7 @@ public class PluginRegistry {
     private static final Map<String, String> INTERNAL_PLUGINS;
     private static final Set<String> DEFAULT_PLUGINS;
 
+    private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final TaskRegistryLookup taskRegistry;
@@ -168,10 +170,10 @@ public class PluginRegistry {
     }
 
     private URL findPluginUrl(final String name) {
-        final Path baseDir = Paths.get(System.getProperty("user.home"), ".loom", "binary",
-            "loom-" + Version.getVersion(), "plugin-" + name);
-        return buildUrl(baseDir.resolve(
-            String.format("plugin-%s-%s.jar", name, Version.getVersion())));
+        final String pluginVersion = Version.getVersion();
+        final Path baseDir = loomBaseDir.resolve(
+            Paths.get("binary", "loom-" + pluginVersion, "plugin-" + name));
+        return buildUrl(baseDir.resolve(String.format("plugin-%s-%s.jar", name, pluginVersion)));
     }
 
     private static URL buildUrl(final Path f) {

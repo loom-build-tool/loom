@@ -1,7 +1,15 @@
 #!/bin/sh
 set -e
 VERSION=1.0.0
-LIB=~/.loom/binary/loom-$VERSION/lib/loom-$VERSION.jar
+
+case "$(uname -s)" in
+    CYGWIN*)
+        LIB=$LOCALAPPDATA/Loom/binary/loom-$VERSION/lib/loom-$VERSION.jar
+        ;;
+    *)
+        LIB=~/.loom/binary/loom-$VERSION/lib/loom-$VERSION.jar
+        ;;
+esac
 
 test -e "$LIB" || java -jar loom-downloader/loom-downloader.jar
 

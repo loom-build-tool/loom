@@ -2,9 +2,17 @@
 set -e
 
 loom_version=1.0.0
-loom_base=~/.loom/binary/loom-$loom_version
 downloader_url="https://loom.builders/loom-downloader-$loom_version.jar"
 lib_url="https://loom.builders/loom-$loom_version.zip"
+
+case "$(uname -s)" in
+    CYGWIN*)
+        loom_base=$LOCALAPPDATA/Loom/binary/loom-$loom_version
+        ;;
+    *)
+        loom_base=~/.loom/binary/loom-$loom_version
+        ;;
+esac
 
 if [ ! -d loom-downloader ]; then
     mkdir loom-downloader

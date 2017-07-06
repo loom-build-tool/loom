@@ -13,7 +13,7 @@ if [ ! -d loom-downloader ]; then
 fi
 
 if [ ! -d $loom_base ]; then
-    java -cp loom-downloader/loom-downloader.jar builders.loom.downloader.LoomDownloader
+    java -jar loom-downloader/loom-downloader.jar
 fi
 
 if [ ! -e loom ]; then

@@ -31,7 +31,7 @@ public class LoggingBugReporter extends AbstractBugReporter {
 
     @Override
     protected void doReportBug(final BugInstance bugInstance) {
-        LOG.error("Findbugs bug: {}", bugInstance);
+        LOG.error("Findbugs bug: {}", bugInstance.getMessage());
     }
 
     @Override

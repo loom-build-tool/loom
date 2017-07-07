@@ -107,7 +107,7 @@ public final class FindbugsSingleton {
     private static Path normalizeUrl(final URL url) {
         try {
             return Paths.get(new URL(url.getPath().split("!")[0]).toURI());
-        } catch (MalformedURLException | URISyntaxException e) {
+        } catch (final MalformedURLException | URISyntaxException e) {
             throw new IllegalStateException("Unable to normalize url: " + url);
         }
     }

@@ -1,6 +1,5 @@
 package jobt.plugin.junit4;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -26,6 +25,7 @@ import jobt.api.product.ClasspathProduct;
 import jobt.api.product.CompilationProduct;
 import jobt.api.product.ProcessedResourceProduct;
 import jobt.api.product.ReportProduct;
+import jobt.util.Util;
 
 public class Junit4TestTask extends AbstractTask {
 
@@ -42,31 +42,27 @@ public class Junit4TestTask extends AbstractTask {
             return complete(TaskStatus.SKIP);
         }
 
-        final URLClassLoader urlClassLoader = buildClassLoader();
-        Thread.currentThread().setContextClassLoader(urlClassLoader);
+        final URLClassLoader targetClassLoader = buildClassLoader();
 
-        final Class[] testClasses = collectClasses(urlClassLoader)
+        final Class[] testClasses = collectClasses(targetClassLoader)
             .toArray(new Class[] {});
 
-        final ClassLoader clPlusWrapper = new InjectingClassLoader(
-            urlClassLoader, Junit4TestTask.class.getClassLoader(),
+        final ClassLoader wrappedClassLoader = new InjectingClassLoader(
+            targetClassLoader, Junit4TestTask.class.getClassLoader(),
             className -> className.startsWith("jobt.plugin.junit4.wrapper."));
 
-        final Class<?> wrapperClass = clPlusWrapper.loadClass("jobt.plugin.junit4.wrapper.Junit4Wrapper");
+        final Class<?> wrapperClass =
+            wrappedClassLoader.loadClass("jobt.plugin.junit4.wrapper.Junit4Wrapper");
         final Object wrapper = wrapperClass.newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", Class[].class);
 
-        final boolean successful = (boolean) wrapperRun.invoke(wrapper, (Object) testClasses);
+        final TestResult result = (TestResult) wrapperRun.invoke(wrapper, (Object) testClasses);
 
-        if (successful) {
+        if (result.isSuccessful()) {
             return complete(TaskStatus.OK);
         }
 
         throw new IllegalStateException("Some tests failed");
-    }
-
-    static String classRes(final String className) {
-        return className.replace('.', '/') + ".class";
     }
 
     private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
@@ -93,7 +89,7 @@ public class Junit4TestTask extends AbstractTask {
         urls.addAll(testDependencies);
 
         return new URLClassLoader(urls.toArray(new URL[] {}),
-            Junit4TestTask.class.getClassLoader().getParent());
+            Junit4TestTask.class.getClassLoader());
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
@@ -110,7 +106,9 @@ public class Junit4TestTask extends AbstractTask {
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
                 throws IOException {
 
-                buildClasses(file, rootPath, urlClassLoader, classes);
+                final String filename = rootPath.relativize(file).toString();
+                buildClasses(Util.classnameFromFilename(filename), urlClassLoader, classes);
+
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -118,12 +116,8 @@ public class Junit4TestTask extends AbstractTask {
         return classes;
     }
 
-    private void buildClasses(final Path file, final Path rootPath,
+    private void buildClasses(final String classname,
                               final URLClassLoader urlClassLoader, final List<Class<?>> classes) {
-        final String filename = rootPath.relativize(file).toString();
-        final String classname = filename
-            .substring(0, filename.indexOf(".class"))
-            .replace(File.separatorChar, '.');
 
         final Class<? extends Annotation> testAnnotation;
         try {
@@ -142,6 +136,7 @@ public class Junit4TestTask extends AbstractTask {
             if (classHasTestMethod) {
                 classes.add(clazz);
             }
+
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }

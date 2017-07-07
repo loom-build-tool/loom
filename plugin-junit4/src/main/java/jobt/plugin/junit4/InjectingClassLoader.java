@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import jobt.util.Util;
+
 /**
  * Wrap parent classloader enriching it with classes loader from extraClassesLoader.
  *
@@ -30,11 +32,10 @@ public class InjectingClassLoader extends ClassLoader {
             return super.loadClass(name);
         }
         try(InputStream in =
-            extraClassesLoader.getResourceAsStream(Junit4TestTask.classRes(name))) {
+            extraClassesLoader.getResourceAsStream(Util.resourceNameFromClassName(name))) {
             Objects.requireNonNull(in, "Failed to load class for injection: " + name);
-            final byte[] a = new byte[10000]; // FIXME
-            final int len  = in.read(a);
-            return defineClass(name, a, 0, len);
+            final byte[] classBytes = Util.toByteArray(in);
+            return defineClass(name, classBytes, 0, classBytes.length);
         } catch (final IOException e) {
             throw new ClassNotFoundException();
         }

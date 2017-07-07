@@ -43,7 +43,7 @@ public class Junit4TestTask extends AbstractTask {
         }
 
         final ClassLoader targetClassLoader =
-            new SharedApiClassLoader(buildClassLoader(), Junit4TestTask.class.getClassLoader());
+            new SharedApiClassLoader(buildClassLoader(), new RestrictedClassLoader(Junit4TestTask.class.getClassLoader()));
 
         final Class[] testClasses = collectClasses(targetClassLoader)
             .toArray(new Class[] {});

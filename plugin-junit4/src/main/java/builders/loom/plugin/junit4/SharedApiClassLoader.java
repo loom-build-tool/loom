@@ -23,31 +23,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wrap main loader to allow access to shared classes from sharedClassLoader.
+ * Wrap main loader to allow access to shared classes from sharedApiClassLoader.
  */
 public final class SharedApiClassLoader extends ClassLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(SharedApiClassLoader.class);
 
     // please add DOTs
-    private static final List<String> WHITELISTED_PACKAGES =
+    private static final List<String> API_PACKAGES =
         Arrays.asList("builders.loom.plugin.junit4.shared.");
 
     private final ClassLoader sharedClassLoader;
 
     public SharedApiClassLoader(
-        final ClassLoader mainClassLoader, final ClassLoader sharedClassLoader) {
+        final ClassLoader mainClassLoader, final ClassLoader sharedApiClassLoader) {
         super(mainClassLoader);
-        this.sharedClassLoader = sharedClassLoader;
+        this.sharedClassLoader = sharedApiClassLoader;
     }
 
     @Override
     protected Class<?> loadClass(final String name, final boolean resolve)
         throws ClassNotFoundException {
+        final boolean isApiClass = isApiClass(name);
         try {
-            return super.loadClass(name, resolve);
+            final Class<?> fromParent = super.loadClass(name, resolve);
+            if (isApiClass) {
+                throw new IllegalStateException(
+                    "Api class must not exist in parent classloader: " + name);
+            }
+            return fromParent;
         } catch (final ClassNotFoundException notFound) {
-            if (classAllowed(name)) {
+            if (isApiClass) {
                 return sharedClassLoader.loadClass(name);
             } else {
                 throw notFound;
@@ -55,7 +61,7 @@ public final class SharedApiClassLoader extends ClassLoader {
         }
     }
 
-    private boolean classAllowed(final String className) {
+    private boolean isApiClass(final String className) {
 
         final boolean allowed = isWhitelistedPackage(className);
 
@@ -65,7 +71,7 @@ public final class SharedApiClassLoader extends ClassLoader {
     }
 
     private boolean isWhitelistedPackage(final String className) {
-        return WHITELISTED_PACKAGES.stream().anyMatch(className::startsWith);
+        return API_PACKAGES.stream().anyMatch(className::startsWith);
     }
 
 }

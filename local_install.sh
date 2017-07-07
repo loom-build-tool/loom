@@ -1,6 +1,7 @@
 #!/bin/sh
 VERSION=1.0.0
-TARGET=~/.jobt/binary/$VERSION/
+TARGET=~/.loom/binary/
+test -d $TARGET || mkdir -p $TARGET
 ./gradlew clean zip &&
-    rm -rf $TARGET &&
-    unzip build/distributions/jobt-$VERSION.zip -d $TARGET
+    rm -rf $TARGET/loom-$VERSION &&
+    unzip build/distributions/loom-$VERSION.zip -d $TARGET

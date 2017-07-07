@@ -1,33 +1,40 @@
 #!/bin/sh
 set -e
 
-jobt_version=1.0.0
-jobt_base=~/.jobt/binary/$jobt_version
-download_url="https://s3.eu-central-1.amazonaws.com/jobt/jobt-downloader-$jobt_version.jar"
+DEFAULT_VERSION=1.0.0
 
-if [ ! -d jobt-downloader ]; then
-    mkdir jobt-downloader
-    curl -s "$download_url" > jobt-downloader/jobt-downloader.jar
+loom_version=${1:-$DEFAULT_VERSION}
+downloader_url="https://loom.builders/loom-downloader-$loom_version.jar"
+lib_url="https://loom.builders/loom-$loom_version.zip"
+
+case "$(uname -s)" in
+    CYGWIN*)
+        loom_base=$LOCALAPPDATA/Loom/binary/loom-$loom_version
+        ;;
+    *)
+        loom_base=~/.loom/binary/loom-$loom_version
+        ;;
+esac
+
+test -d loom-downloader || mkdir loom-downloader
+
+echo "Fetch Loom Downloader $loom_version from $downloader_url ..."
+echo "distributionUrl=$lib_url" > loom-downloader/loom-downloader.properties
+curl -f -s -S "$downloader_url" > loom-downloader/loom-downloader.jar
+
+if [ ! -d $loom_base ]; then
+    java -jar loom-downloader/loom-downloader.jar
 fi
 
-if [ ! -d $jobt_base ]; then
-    java -cp jobt-downloader/jobt-downloader.jar jobt.JobtDownloader $jobt_version
-fi
+echo "Create loom build scripts"
+cp "$loom_base/scripts/loom" .
+chmod 755 loom
 
-if [ ! -e jobt ]; then
-    echo "Create jobt build script"
-    cp "$jobt_base/scripts/jobt" .
-    chmod 755 jobt
-fi
-
-if [ ! -e jobt.bat ]; then
-    echo "Create jobt.bat build script"
-    cp "$jobt_base/scripts/jobt.bat" .
-fi
+cp "$loom_base/scripts/loom.cmd" .
 
 if [ ! -e build.yml ]; then
-    echo "Create build.yml"
-    cp "$jobt_base/scripts/build.yml" .
+    echo "Create initial build.yml"
+    cp "$loom_base/scripts/build.yml" .
 fi
 
-echo "Done. Run ``./jobt build`` to start your build."
+echo "Done. Adjust \`build.yml\` to your needs and then run \`./loom build\` to start your build."

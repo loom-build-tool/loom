@@ -1,4 +1,4 @@
-package builders.loom.plugin.junit4;
+package builders.loom.plugin.junit4.shared;
 
 public final class TestResult {
 

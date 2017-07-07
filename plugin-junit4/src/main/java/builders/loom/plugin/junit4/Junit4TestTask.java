@@ -24,6 +24,7 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
+import builders.loom.plugin.junit4.shared.TestResult;
 import builders.loom.util.Util;
 
 public class Junit4TestTask extends AbstractTask {
@@ -41,7 +42,8 @@ public class Junit4TestTask extends AbstractTask {
             return complete(TaskStatus.SKIP);
         }
 
-        final URLClassLoader targetClassLoader = buildClassLoader();
+        final ClassLoader targetClassLoader =
+            new SharedApiClassLoader(buildClassLoader(), Junit4TestTask.class.getClassLoader());
 
         final Class[] testClasses = collectClasses(targetClassLoader)
             .toArray(new Class[] {});
@@ -58,10 +60,10 @@ public class Junit4TestTask extends AbstractTask {
         final Object wrapper = wrapperClass.newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Class[].class);
 
-        final boolean successful = (boolean) wrapperRun.invoke(
+        final TestResult result = (TestResult) wrapperRun.invoke(
             wrapper, targetClassLoader, testClasses);
 
-        if (successful) {
+        if (result.isSuccessful()) {
             return complete(TaskStatus.OK);
         }
 
@@ -109,7 +111,7 @@ public class Junit4TestTask extends AbstractTask {
         return new URLClassLoader(urls.toArray(new URL[] {}), null);
     }
 
-    private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
+    private List<Class<?>> collectClasses(final ClassLoader urlClassLoader)
         throws IOException, InterruptedException {
 
         final List<Class<?>> classes = new ArrayList<>();
@@ -134,18 +136,18 @@ public class Junit4TestTask extends AbstractTask {
     }
 
     private void buildClasses(final String classname,
-                              final URLClassLoader urlClassLoader, final List<Class<?>> classes) {
+                              final ClassLoader classLoader, final List<Class<?>> classes) {
 
         final Class<? extends Annotation> testAnnotation;
         try {
             testAnnotation = (Class<? extends Annotation>)
-                urlClassLoader.loadClass("org.junit.Test");
+                classLoader.loadClass("org.junit.Test");
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
 
         try {
-            final Class<?> clazz = urlClassLoader.loadClass(classname);
+            final Class<?> clazz = classLoader.loadClass(classname);
 
             final boolean classHasTestMethod = Arrays.stream(clazz.getDeclaredMethods())
                 .anyMatch(m -> m.isAnnotationPresent(testAnnotation));

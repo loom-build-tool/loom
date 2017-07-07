@@ -3,7 +3,6 @@ package jobt.plugin.junit4;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
@@ -65,28 +64,43 @@ public class Junit4TestTask extends AbstractTask {
         throw new IllegalStateException("Some tests failed");
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
-        final List<URL> urls = new ArrayList<>();
+    private URLClassLoader buildClassLoader() throws InterruptedException {
+        final List<Path> paths = new ArrayList<>();
 
         final CompilationProduct testCompilation = getUsedProducts().readProduct(
             "testCompilation", CompilationProduct.class);
-        urls.add(testCompilation.getClassesDir().toUri().toURL());
+        paths.add(testCompilation.getClassesDir());
 
         final ProcessedResourceProduct processedTestResources = getUsedProducts().readProduct(
             "processedTestResources", ProcessedResourceProduct.class);
-        urls.add(processedTestResources.getSrcDir().toUri().toURL());
+        paths.add(processedTestResources.getSrcDir());
 
         final CompilationProduct compilation = getUsedProducts().readProduct(
             "compilation", CompilationProduct.class);
-        urls.add(compilation.getClassesDir().toUri().toURL());
+        paths.add(compilation.getClassesDir());
 
         final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
             "processedResources", ProcessedResourceProduct.class);
-        urls.add(processedResources.getSrcDir().toUri().toURL());
+        paths.add(processedResources.getSrcDir());
 
         final List<URL> testDependencies = getUsedProducts().readProduct("testDependencies",
             ClasspathProduct.class).getEntriesAsUrls();
+
+        final List<URL> urls = new ArrayList<>();
+
+        paths.stream()
+            .filter(p -> Files.isDirectory(p))
+            .map(Util::toUrl)
+            .forEach(urls::add);
         urls.addAll(testDependencies);
+
+        // TODO remove
+        System.out.println();
+        System.out.println();
+        urls.forEach(u -> System.out.println(" - " + u));
+
+        System.out.println();
+        System.out.println();
 
         return new URLClassLoader(urls.toArray(new URL[] {}),
             Junit4TestTask.class.getClassLoader());

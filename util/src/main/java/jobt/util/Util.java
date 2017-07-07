@@ -1,11 +1,16 @@
 package jobt.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public final class Util {
 
@@ -16,6 +21,17 @@ public final class Util {
     private static final char WINDOWS_SEPARATOR = '\\';
 
     private Util() {
+    }
+
+    public static URL toUrl(final Path file) {
+        if (file == null) {
+            return null;
+        }
+        try {
+            return file.toUri().toURL();
+        } catch (final MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getFileExtension(final String filename) {
@@ -60,10 +76,11 @@ public final class Util {
      * "com/example/Foo.class" -> "com.example.Foo".
      */
     public static String classnameFromFilename(final String filename) {
-        final String classname = filename
-            .substring(0, filename.indexOf(".class"))
-            .replace(File.separatorChar, '.');
-        return classname;
+        return
+            StreamSupport.stream(
+                Paths.get(filename.replaceFirst("\\.class$", "")).spliterator(), false)
+            .map(Path::toString)
+            .collect(Collectors.joining("."));
     }
 
     public static byte[] toByteArray(final InputStream in) throws IOException {

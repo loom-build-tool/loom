@@ -74,7 +74,7 @@ public class MavenResolver implements DependencyResolver {
     private final LocalRepositoryManager localRepositoryManager;
     private final ProgressIndicator progressIndicator;
 
-    MavenResolver(final ProgressIndicator progressIndicator) {
+    MavenResolver(final ProgressIndicator progressIndicator, final String repositoryUrl) {
         LOG.debug("Initialize MavenResolver");
         this.progressIndicator = progressIndicator;
         final DefaultServiceLocator locator = new DefaultServiceLocator();
@@ -104,7 +104,7 @@ public class MavenResolver implements DependencyResolver {
         system = locator.getService(RepositorySystem.class);
 
         mavenRepository =
-            new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+            new RemoteRepository("central", "default", repositoryUrl);
 
         final Path repository = SystemUtil.determineLoomBaseDir().resolve("repository");
         final LocalRepository localRepo = new LocalRepository(repository.toFile());

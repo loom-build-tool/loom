@@ -23,7 +23,7 @@ public final class MavenResolverSingleton {
     private MavenResolverSingleton() {
     }
 
-    public static MavenResolver getInstance() {
+    public static MavenResolver getInstance(final MavenResolverPluginSettings pluginSettings) {
 
         if (instance == null) {
             synchronized (MavenResolverSingleton.class) {
@@ -32,7 +32,8 @@ public final class MavenResolverSingleton {
                     final ProgressIndicator progressIndicator =
                         new ProgressIndicator("mavenResolver");
 
-                    instance = new MavenResolver(progressIndicator);
+                    instance = new MavenResolver(progressIndicator,
+                        pluginSettings.getRepositoryUrl());
                 }
             }
         }

@@ -1,16 +1,50 @@
-#!/bin/sh
-set -e
-VERSION=1.0.0
+#!/usr/bin/env sh
 
+set -e
+
+loom_version=1.0.0
+
+# Detect environment for special handling
+cygwin=false
 case "$(uname -s)" in
     CYGWIN*)
-        LIB=$LOCALAPPDATA/Loom/binary/loom-$VERSION/lib/loom-$VERSION.jar
-        ;;
-    *)
-        LIB=~/.loom/binary/loom-$VERSION/lib/loom-$VERSION.jar
+        cygwin=true
         ;;
 esac
 
-test -e "$LIB" || java -jar loom-downloader/loom-downloader.jar
+# Define location for Loom library
+if $cygwin; then
+    loom_base_dir="$LOCALAPPDATA/Loom"
+else
+    loom_base_dir=~/.loom
+fi
 
-java -jar $LIB "$@"
+# Find the java executable
+if [ -n "$JAVA_HOME" ] ; then
+    javacmd="$JAVA_HOME/bin/java"
+    if [ ! -x "$javacmd" ] ; then
+        echo "ERROR: Can't execute $javacmd" >&2
+        echo "Please ensure JAVA_HOME is configured correctly: $JAVA_HOME" >&2
+        exit 1
+    fi
+else
+    if ! which java >/dev/null 2>&1 ; then
+        echo "ERROR: Can't find Java - JAVA_HOME is not set and no java was found in your PATH" >&2
+        exit 1
+    fi
+
+    javacmd="$(which java)"
+    echo "Warning: JAVA_HOME environment variable is not set - using $javacmd from path" >&2
+fi
+
+# Adjust paths for Cygwin
+if $cygwin; then
+    javacmd=$(cygpath --unix "$javacmd")
+fi
+
+
+loom_lib="$loom_base_dir/binary/loom-$loom_version/lib/loom-$loom_version.jar"
+
+test -e "$loom_lib" || exec "$javacmd" -jar loom-downloader/loom-downloader.jar
+
+exec "$javacmd" $LOOM_OPTS -jar "$loom_lib" "$@"

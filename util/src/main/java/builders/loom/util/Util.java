@@ -1,4 +1,4 @@
-package jobt.util;
+package builders.loom.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

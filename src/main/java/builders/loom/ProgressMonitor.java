@@ -31,19 +31,19 @@ public final class ProgressMonitor {
     private static final int JANSI_BUF = 80;
     private static final PrintStream OUT = AnsiConsole.out();
 
-    private static final AtomicInteger tasks = new AtomicInteger();
-    private static final AtomicInteger completedTasks = new AtomicInteger();
-    private static final AtomicInteger lastProgress = new AtomicInteger();
-    private static final Timer timer = new Timer("ProgressMonitor", true);
+    private static final AtomicInteger TASKS = new AtomicInteger();
+    private static final AtomicInteger COMPLETED_TASKS = new AtomicInteger();
+    private static final AtomicInteger LAST_PROGRESS = new AtomicInteger();
+    private static final Timer TIMER = new Timer("ProgressMonitor", true);
 
     private ProgressMonitor() {
     }
 
     public static void start() {
-        timer.schedule(new TimerTask() {
+        TIMER.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (completedTasks.get() > lastProgress.get()) {
+                if (COMPLETED_TASKS.get() > LAST_PROGRESS.get()) {
                     update();
                 }
             }
@@ -52,23 +52,23 @@ public final class ProgressMonitor {
 
     public static void setTasks(final int tasks) {
         OUT.println();
-        ProgressMonitor.tasks.set(tasks);
+        ProgressMonitor.TASKS.set(tasks);
     }
 
     public static void progress() {
-        completedTasks.incrementAndGet();
+        COMPLETED_TASKS.incrementAndGet();
     }
 
     public static void stop() {
-        timer.cancel();
+        TIMER.cancel();
         OUT.print(Ansi.ansi().reset().cursorUp(1).eraseLine());
     }
 
     private static void update() {
         final int progressBarLength = 25;
 
-        final int cpl = completedTasks.get();
-        final int taskCnt = tasks.get();
+        final int cpl = COMPLETED_TASKS.get();
+        final int taskCnt = TASKS.get();
 
         final int pct = 100 * cpl / taskCnt;
         final int progress = progressBarLength * cpl / taskCnt;
@@ -84,7 +84,7 @@ public final class ProgressMonitor {
 
         OUT.println(a);
 
-        lastProgress.set(cpl);
+        LAST_PROGRESS.set(cpl);
     }
 
 }

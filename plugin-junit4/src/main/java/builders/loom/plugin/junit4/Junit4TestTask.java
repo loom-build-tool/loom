@@ -19,18 +19,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractTask;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
-import jobt.util.Util;
+import builders.loom.util.Util;
 
 public class Junit4TestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(Junit4TestTask.class);
 
-    private static final Path REPORT_PATH = Paths.get("jobtbuild", "reports", "tests");
+    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("tests");
 
     @Override
     public TaskStatus run() throws Exception {
@@ -48,10 +49,10 @@ public class Junit4TestTask extends AbstractTask {
 
         final ClassLoader wrappedClassLoader = new InjectingClassLoader(
             targetClassLoader, Junit4TestTask.class.getClassLoader(),
-            className -> className.startsWith("jobt.plugin.junit4.wrapper."));
+            className -> className.startsWith("builders.loom.plugin.junit4.wrapper."));
 
         final Class<?> wrapperClass =
-            wrappedClassLoader.loadClass("jobt.plugin.junit4.wrapper.Junit4Wrapper");
+            wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.Junit4Wrapper");
         final Object wrapper = wrapperClass.newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Class[].class);
 

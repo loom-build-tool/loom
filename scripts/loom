@@ -45,6 +45,6 @@ fi
 
 loom_lib="$loom_base_dir/binary/loom-$loom_version/lib/loom-$loom_version.jar"
 
-test -e "$loom_lib" || exec "$javacmd" -jar loom-downloader/loom-downloader.jar
+test -e "$loom_lib" || "$javacmd" -jar loom-downloader/loom-downloader.jar
 
 exec "$javacmd" $LOOM_OPTS -jar "$loom_lib" "$@"

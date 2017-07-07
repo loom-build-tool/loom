@@ -53,9 +53,9 @@ public class Junit4TestTask extends AbstractTask {
         final Class<?> wrapperClass =
             wrappedClassLoader.loadClass("jobt.plugin.junit4.wrapper.Junit4Wrapper");
         final Object wrapper = wrapperClass.newInstance();
-        final Method wrapperRun = wrapperClass.getMethod("run", Class[].class);
+        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Class[].class);
 
-        final TestResult result = (TestResult) wrapperRun.invoke(wrapper, (Object) testClasses);
+        final TestResult result = (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, testClasses);
 
         if (result.isSuccessful()) {
             return complete(TaskStatus.OK);

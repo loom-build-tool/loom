@@ -9,7 +9,9 @@ import jobt.plugin.junit4.TestResult;
 
 public class Junit4Wrapper {
 
-    public TestResult run(final Class[] testClasses) {
+    public TestResult run(final ClassLoader classLoader, final Class[] testClasses) {
+
+        Thread.currentThread().setContextClassLoader(classLoader);
 
         final Computer computer = new Computer();
         final JUnitCore jUnitCore = new JUnitCore();

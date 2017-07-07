@@ -67,7 +67,7 @@ fi
 loom_versioned_base="$loom_base_dir/binary/loom-$loom_version"
 
 if [ ! -d $loom_versioned_base ]; then
-    exec "$javacmd" -jar loom-downloader/loom-downloader.jar
+    "$javacmd" -jar loom-downloader/loom-downloader.jar
 fi
 
 # Create scripts

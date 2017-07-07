@@ -8,7 +8,6 @@ import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -53,12 +52,16 @@ public class Junit4TestTask extends AbstractTask {
 
         final Class<?> wrapperClass =
             wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.Junit4Wrapper");
+        // TODO
+        LOG.info("wrapperClass.classloader="+wrapperClass.getClassLoader());
+
         final Object wrapper = wrapperClass.newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Class[].class);
 
-        final TestResult result = (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, testClasses);
+        final boolean successful = (boolean) wrapperRun.invoke(
+            wrapper, targetClassLoader, testClasses);
 
-        if (result.isSuccessful()) {
+        if (successful) {
             return complete(TaskStatus.OK);
         }
 
@@ -103,8 +106,7 @@ public class Junit4TestTask extends AbstractTask {
         System.out.println();
         System.out.println();
 
-        return new URLClassLoader(urls.toArray(new URL[] {}),
-            Junit4TestTask.class.getClassLoader());
+        return new URLClassLoader(urls.toArray(new URL[] {}), null);
     }
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)

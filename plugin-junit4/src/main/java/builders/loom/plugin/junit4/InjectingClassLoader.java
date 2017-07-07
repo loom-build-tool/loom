@@ -28,7 +28,6 @@ public class InjectingClassLoader extends ClassLoader {
 
     @Override
     public Class<?> loadClass(final String name) throws ClassNotFoundException {
-        System.out.println(" --INJECT=-> " + name);
         if (!injectPredicate.test(name)) {
             return super.loadClass(name);
         }

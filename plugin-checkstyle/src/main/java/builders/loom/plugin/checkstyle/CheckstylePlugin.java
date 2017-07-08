@@ -18,20 +18,23 @@ package builders.loom.plugin.checkstyle;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.PluginSettings;
 
-public class CheckstylePlugin extends AbstractPlugin<PluginSettings> {
+public class CheckstylePlugin extends AbstractPlugin<CheckstylePluginSettings> {
+
+    public CheckstylePlugin() {
+        super(new CheckstylePluginSettings());
+    }
 
     @Override
     public void configure() {
         task("checkstyleMain")
-            .impl(() -> new CheckstyleTask(CompileTarget.MAIN))
+            .impl(() -> new CheckstyleTask(CompileTarget.MAIN, getPluginSettings()))
             .provides("checkstyleMainReport")
             .uses("source", "compileDependencies")
             .register();
 
         task("checkstyleTest")
-            .impl(() -> new CheckstyleTask(CompileTarget.TEST))
+            .impl(() -> new CheckstyleTask(CompileTarget.TEST, getPluginSettings()))
             .provides("checkstyleTestReport")
             .uses("testSource", "testDependencies")
             .register();

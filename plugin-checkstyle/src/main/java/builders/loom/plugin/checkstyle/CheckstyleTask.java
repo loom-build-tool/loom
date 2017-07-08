@@ -49,13 +49,15 @@ public class CheckstyleTask extends AbstractTask {
 
     public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "checkstyle");
 
-    private static final String CONFIG_LOCATION = "config/checkstyle/checkstyle.xml";
     private static final boolean OMIT_IGNORED_MODULES = true;
 
     private final CompileTarget compileTarget;
+    private final CheckstylePluginSettings pluginSettings;
 
-    public CheckstyleTask(final CompileTarget compileTarget) {
+    public CheckstyleTask(final CompileTarget compileTarget,
+                          final CheckstylePluginSettings pluginSettings) {
         this.compileTarget = compileTarget;
+        this.pluginSettings = pluginSettings;
     }
 
     @Override
@@ -125,7 +127,7 @@ public class CheckstyleTask extends AbstractTask {
             final Properties props = createOverridingProperties();
             final Configuration config =
                 ConfigurationLoader.loadConfiguration(
-                    CONFIG_LOCATION,
+                    pluginSettings.getConfigLocation(),
                     new PropertiesExpander(props),
                     OMIT_IGNORED_MODULES);
 
@@ -147,10 +149,8 @@ public class CheckstyleTask extends AbstractTask {
             rootModule.configure(config);
         } catch (final CheckstyleException ex) {
             throw new IllegalStateException(String.format(Locale.ROOT,
-                "Unable to create Root Module: "
-                    + "configLocation {%s}, classpath {%s}.", CONFIG_LOCATION, classpath), ex);
-//            throw new BuildException(String.format(Locale.ROOT, "Unable to create Root Module: "
-//                + "configLocation {%s}, classpath {%s}.", configLocation, classpath), ex);
+                "Unable to create Root Module: configLocation {%s}, classpath {%s}.",
+                pluginSettings.getConfigLocation(), classpath), ex);
         }
         return rootModule;
     }

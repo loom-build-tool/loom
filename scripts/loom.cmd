@@ -30,7 +30,7 @@ echo Please ensure JAVA_HOME is configured correctly: %JAVA_HOME%
 goto error
 
 :init
-set LIB=%LOCALAPPDATA%\Loom\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
+set LIB=%LOCALAPPDATA%\Loom\Loom\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
 if exist %LIB% %JAVA_CMD% goto launch
 
 rem download Loom Installer

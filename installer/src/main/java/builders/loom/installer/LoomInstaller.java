@@ -171,7 +171,7 @@ public class LoomInstaller {
                 + "a non existing directory: " + localAppDataDir);
         }
 
-        return localAppDataDir.resolve("Loom");
+        return localAppDataDir.resolve(Paths.get("Loom", "Loom"));
     }
 
     private static Path determineGenericBaseDir() throws IOException {

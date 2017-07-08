@@ -14,7 +14,7 @@ esac
 
 # Define location for Loom library
 if $cygwin; then
-    loom_base_dir="$LOCALAPPDATA/Loom"
+    loom_base_dir="$LOCALAPPDATA/Loom/Loom"
 else
     loom_base_dir=~/.loom
 fi

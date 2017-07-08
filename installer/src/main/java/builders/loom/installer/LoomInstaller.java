@@ -143,7 +143,10 @@ public class LoomInstaller {
     private static Path determineTargetDir() throws IOException {
         final Path baseDir;
 
-        if (isWindowsOS()) {
+        final String loomUserHome = System.getenv("LOOM_USER_HOME");
+        if (loomUserHome != null) {
+            baseDir = Paths.get(loomUserHome);
+        } else if (isWindowsOS()) {
             baseDir = determineWindowsBaseDir();
         } else {
             baseDir = determineGenericBaseDir();

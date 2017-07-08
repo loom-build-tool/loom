@@ -16,11 +16,13 @@ case "$(uname -s)" in
         ;;
 esac
 
-# Define location for Loom library
-if $cygwin; then
-    loom_base_dir="$LOCALAPPDATA/Loom/Loom"
-else
-    loom_base_dir=~/.loom
+# Define location for Loom Library
+if [ -z "$LOOM_USER_HOME" ]; then
+    if $cygwin; then
+        LOOM_USER_HOME="$LOCALAPPDATA/Loom/Loom"
+    else
+        LOOM_USER_HOME=~/.loom
+    fi
 fi
 
 # Find the java executable
@@ -64,7 +66,7 @@ else
 fi
 
 # Launch Loom Installer
-loom_versioned_base="$loom_base_dir/binary/loom-$loom_version"
+loom_versioned_base="$LOOM_USER_HOME/binary/loom-$loom_version"
 
 "$javacmd" -jar loom-installer/loom-installer.jar
 

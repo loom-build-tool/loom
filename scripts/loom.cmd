@@ -11,7 +11,7 @@ set JAVACMD=java.exe
 %JAVACMD% -version >NUL 2>&1
 if "%ERRORLEVEL%" == "0" (
     echo Warning: JAVA_HOME environment variable is not set - using %JAVACMD% from path
-    goto init
+    goto define_lib
 )
 
 echo ERROR: Can't find Java - JAVA_HOME is not set and no java was found in your PATH
@@ -22,15 +22,19 @@ goto error
 set JAVA_HOME=%JAVA_HOME:"=%
 set JAVACMD=%JAVA_HOME%\bin\java.exe
 
-if exist "%JAVACMD%" goto init
+if exist "%JAVACMD%" goto define_lib
 
 echo ERROR: Can't execute %JAVACMD%
 echo Please ensure JAVA_HOME is configured correctly: %JAVA_HOME%
 
 goto error
 
+:define_lib
+if defined LOOM_USER_HOME goto :init
+set LOOM_USER_HOME=%LOCALAPPDATA%\Loom\Loom
+
 :init
-set LIB=%LOCALAPPDATA%\Loom\Loom\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
+set LIB=%LOOM_USER_HOME%\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
 if exist %LIB% %JAVA_CMD% goto launch
 
 rem download Loom Installer

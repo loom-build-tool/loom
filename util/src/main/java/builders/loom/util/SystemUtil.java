@@ -28,6 +28,11 @@ public final class SystemUtil {
     }
 
     public static Path determineLoomBaseDir() {
+        final String loomUserHome = System.getenv("LOOM_USER_HOME");
+        if (loomUserHome != null) {
+            return Paths.get(loomUserHome);
+        }
+
         if (isWindowsOS()) {
             return determineWindowsBaseDir();
         }

@@ -33,8 +33,8 @@ goto error
 set LIB=%LOCALAPPDATA%\Loom\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
 if exist %LIB% %JAVA_CMD% goto launch
 
-rem download Loom Downloader
-"%JAVACMD%" -jar loom-downloader\loom-downloader.jar
+rem download Loom Installer
+"%JAVACMD%" -jar loom-installer\loom-installer.jar
 if ERRORLEVEL 1 goto error
 
 :launch

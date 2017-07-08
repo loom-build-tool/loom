@@ -1,0 +1,12 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-installer'
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Version': "${project.version}",
+                'Main-Class': 'builders.loom.installer.LoomInstaller'
+        )
+    }
+}

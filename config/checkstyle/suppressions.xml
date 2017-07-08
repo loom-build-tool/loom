@@ -2,6 +2,7 @@
 <!DOCTYPE suppressions PUBLIC "-//Puppy Crawl//DTD Suppressions 1.1//EN" "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 <suppressions>
 
-    <suppress files=".*Test.java|.*IT\.java|.*TestCase\.java|AuthHelper.java" checks="MagicNumber|MultipleStringLiterals|AvoidStaticImport"/>
+    <suppress files=".*Test\.java" checks="MagicNumber|MultipleStringLiterals|AvoidStaticImport"/>
+    <suppress files="LoomInstaller\.java" checks="HideUtilityClassConstructor|UncommentedMain|IllegalCatch|RegexpMultiline"/>
 
 </suppressions>

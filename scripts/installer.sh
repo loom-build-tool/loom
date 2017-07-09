@@ -66,7 +66,7 @@ else
 fi
 
 # Launch Loom Installer
-loom_versioned_base="$LOOM_USER_HOME/binary/loom-$loom_version"
+loom_versioned_base="$LOOM_USER_HOME/library/loom-$loom_version"
 
 "$javacmd" -jar loom-installer/loom-installer.jar
 

@@ -24,14 +24,16 @@ import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.jar.Attributes;
@@ -46,29 +48,14 @@ public class LoomInstaller {
     private static final int BUF_SIZE = 8192;
 
     public static void main(final String[] args) {
-        Path tmpFile = null;
-
         try {
             System.out.println("Starting Loom Installer v" + readVersion());
 
-            // Read config
-            final URL downloadUrl = determineDownloadUrl();
-
-            // Download
-            tmpFile = Files.createTempFile("loom", null);
-            downloadZip(downloadUrl, tmpFile);
-
-            // Extract
-            final Path rootDirectory = extractZip(tmpFile, determineTargetDir());
-
-            // Copy scripts
-            copyScripts(rootDirectory, Paths.get(""));
+            final Path installDir = extract(download(), determineLibBaseDir());
+            copyScripts(installDir, Paths.get(""));
         } catch (final Throwable e) {
             e.printStackTrace(System.err);
             System.exit(1);
-        } finally {
-            // Cleanup
-            cleanup(tmpFile);
         }
     }
 
@@ -88,7 +75,16 @@ public class LoomInstaller {
         }
     }
 
-    private static URL determineDownloadUrl() throws IOException {
+    private static Path download() throws IOException {
+        final String downloadUrl = determineDownloadUrl();
+        final Path zipDir = Files.createDirectories(determineBaseDir()
+            .resolve(Paths.get("zip", sha1(downloadUrl))));
+        final Path downloadFile = zipDir.resolve(extractFilenameFromUrl(downloadUrl));
+        downloadZip(new URL(downloadUrl), downloadFile);
+        return downloadFile;
+    }
+
+    private static String determineDownloadUrl() throws IOException {
         final Path propertiesFile = Paths.get("loom-installer", "loom-installer.properties");
 
         if (Files.notExists(propertiesFile)) {
@@ -101,10 +97,46 @@ public class LoomInstaller {
             properties.load(in);
         }
 
-        return new URL(properties.getProperty("distributionUrl"));
+        return properties.getProperty("distributionUrl");
+    }
+
+    private static String extractFilenameFromUrl(final String downloadUrl) {
+        final int idx = downloadUrl.lastIndexOf('/');
+        if (idx == -1) {
+            throw new IllegalStateException("Cant' parse url: " + downloadUrl);
+        }
+        return downloadUrl.substring(idx + 1, downloadUrl.length());
+    }
+
+    private static String sha1(final String url) {
+        try {
+            final MessageDigest md = MessageDigest.getInstance("SHA");
+            final byte[] digest = md.digest(url.getBytes(StandardCharsets.UTF_8));
+            return encodeHexString(digest);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @SuppressWarnings("checkstyle:magicnumber")
+    private static String encodeHexString(final byte[] bytes) {
+        final char[] hexArray = "0123456789abcdef".toCharArray();
+        final char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            final int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
     }
 
     private static void downloadZip(final URL url, final Path target) throws IOException {
+        if (Files.exists(target)) {
+            System.out.println("Skip download of Loom Library from " + url + " - it already "
+                + "exists: " + target);
+            return;
+        }
+
         System.out.println("Downloading Loom Library from " + url + " ...");
 
         final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -121,7 +153,7 @@ public class LoomInstaller {
 
             try (final InputStream inputStream = conn.getInputStream();
                  final OutputStream out = Files.newOutputStream(target,
-                     StandardOpenOption.TRUNCATE_EXISTING)) {
+                     StandardOpenOption.CREATE_NEW)) {
                 copy(inputStream, out, new ProgressMonitor(totalSize));
             }
         } finally {
@@ -140,19 +172,22 @@ public class LoomInstaller {
         }
     }
 
-    private static Path determineTargetDir() throws IOException {
-        final Path baseDir;
+    private static Path determineLibBaseDir() throws IOException {
+        final Path baseDir = determineBaseDir();
+        return Files.createDirectories(baseDir.resolve("library"));
+    }
 
+    private static Path determineBaseDir() throws IOException {
         final String loomUserHome = System.getenv("LOOM_USER_HOME");
         if (loomUserHome != null) {
-            baseDir = Paths.get(loomUserHome);
-        } else if (isWindowsOS()) {
-            baseDir = determineWindowsBaseDir();
-        } else {
-            baseDir = determineGenericBaseDir();
+            return Paths.get(loomUserHome);
         }
 
-        return Files.createDirectories(baseDir.resolve("binary"));
+        if (isWindowsOS()) {
+            return determineWindowsBaseDir();
+        }
+
+        return determineGenericBaseDir();
     }
 
     private static boolean isWindowsOS() {
@@ -188,7 +223,7 @@ public class LoomInstaller {
         return userHome.resolve(".loom");
     }
 
-    private static Path extractZip(final Path zipFile, final Path dstDir) throws IOException {
+    private static Path extract(final Path zipFile, final Path dstDir) throws IOException {
         final Path installDir;
 
         try (final ZipInputStream in = new ZipInputStream(Files.newInputStream(zipFile))) {
@@ -258,25 +293,7 @@ public class LoomInstaller {
             return;
         }
 
-        view.setPermissions(EnumSet.of(
-            PosixFilePermission.OWNER_READ,
-            PosixFilePermission.OWNER_WRITE,
-            PosixFilePermission.OWNER_EXECUTE,
-            PosixFilePermission.GROUP_READ,
-            PosixFilePermission.GROUP_EXECUTE,
-            PosixFilePermission.OTHERS_READ,
-            PosixFilePermission.OTHERS_EXECUTE
-        ));
-    }
-
-    private static void cleanup(final Path tmpFile) {
-        try {
-            if (tmpFile != null) {
-                Files.deleteIfExists(tmpFile);
-            }
-        } catch (final IOException ignore) {
-            // ignore
-        }
+        view.setPermissions(PosixFilePermissions.fromString("rwxr-xr-x"));
     }
 
     private static class ProgressMonitor {

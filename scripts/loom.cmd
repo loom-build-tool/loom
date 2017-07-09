@@ -34,7 +34,7 @@ if defined LOOM_USER_HOME goto :init
 set LOOM_USER_HOME=%LOCALAPPDATA%\Loom\Loom
 
 :init
-set LIB=%LOOM_USER_HOME%\binary\loom-%VERSION%\lib\loom-%VERSION%.jar
+set LIB=%LOOM_USER_HOME%\library\loom-%VERSION%\lib\loom-%VERSION%.jar
 if exist %LIB% %JAVA_CMD% goto launch
 
 rem download Loom Installer

@@ -96,7 +96,13 @@ public class LoomInstaller {
             properties.load(in);
         }
 
-        return properties.getProperty("distributionUrl");
+        final String distributionUrl = properties.getProperty("distributionUrl");
+
+        if (distributionUrl == null) {
+            throw new IllegalStateException("No distributionUrl defined in " + propertiesFile);
+        }
+
+        return distributionUrl;
     }
 
     private static String extractFilenameFromUrl(final String downloadUrl) {

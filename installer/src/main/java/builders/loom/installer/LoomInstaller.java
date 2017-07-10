@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,14 +72,8 @@ public class LoomInstaller {
     }
 
     private static String readVersion() {
-        final URLClassLoader cl = (URLClassLoader) LoomInstaller.class.getClassLoader();
-        final URL resource = cl.findResource("META-INF/MANIFEST.MF");
-
-        if (resource == null) {
-            return "{unknown}";
-        }
-
-        try (InputStream in = resource.openStream()) {
+        final ClassLoader cl = LoomInstaller.class.getClassLoader();
+        try (InputStream in = cl.getResourceAsStream("META-INF/MANIFEST.MF")) {
             final Manifest manifest = new Manifest(in);
             return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         } catch (final IOException e) {

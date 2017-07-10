@@ -170,10 +170,10 @@ public class PluginRegistry {
     }
 
     private URL findPluginUrl(final String name) {
-        final String pluginVersion = Version.getVersion();
-        final Path baseDir = loomBaseDir.resolve(
-            Paths.get("binary", "loom-" + pluginVersion, "plugin-" + name));
-        return buildUrl(baseDir.resolve(String.format("plugin-%s-%s.jar", name, pluginVersion)));
+        final String loomVersion = Version.getVersion();
+        final Path libraryPath = loomBaseDir.resolve(Paths.get("binary", "loom-" + loomVersion));
+        final Path pluginDir = libraryPath.resolve("plugin-" + name);
+        return buildUrl(pluginDir.resolve(String.format("plugin-%s-%s.jar", name, loomVersion)));
     }
 
     private static URL buildUrl(final Path f) {

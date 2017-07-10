@@ -23,17 +23,12 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.jar.Attributes;
@@ -46,6 +41,7 @@ public class LoomInstaller {
     private static final int CONNECT_TIMEOUT = 15000;
     private static final int READ_TIMEOUT = 10000;
     private static final int BUF_SIZE = 8192;
+    private static final long DOWNLOAD_PROGRESS_INTERVAL = 5_000_000_000L;
 
     public static void main(final String[] args) {
         try {
@@ -60,14 +56,8 @@ public class LoomInstaller {
     }
 
     private static String readVersion() {
-        final URLClassLoader cl = (URLClassLoader) LoomInstaller.class.getClassLoader();
-        final URL resource = cl.findResource("META-INF/MANIFEST.MF");
-
-        if (resource == null) {
-            return "{unknown}";
-        }
-
-        try (InputStream in = resource.openStream()) {
+        final ClassLoader cl = LoomInstaller.class.getClassLoader();
+        try (InputStream in = cl.getResourceAsStream("META-INF/MANIFEST.MF")) {
             final Manifest manifest = new Manifest(in);
             return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         } catch (final IOException e) {
@@ -162,14 +152,32 @@ public class LoomInstaller {
     }
 
     private static void copy(final InputStream in, final OutputStream out,
-                             final ProgressMonitor monitor) throws IOException {
+                             final long totalSize) throws IOException {
+
+        long start = System.nanoTime();
 
         final byte[] buf = new byte[BUF_SIZE];
         int cnt;
+        int transferred = 0;
+        boolean progressShown = false;
         while ((cnt = in.read(buf)) != -1) {
             out.write(buf, 0, cnt);
-            monitor.progress(cnt);
+            transferred += cnt;
+            if (System.nanoTime() - start > DOWNLOAD_PROGRESS_INTERVAL) {
+                showProgress(totalSize, transferred);
+                start = System.nanoTime();
+                progressShown = true;
+            }
         }
+
+        if (progressShown) {
+            showProgress(totalSize, transferred);
+        }
+    }
+
+    private static void showProgress(final long totalSize, final int transferred) {
+        final int pct = (int) (transferred * 100.0 / totalSize);
+        System.out.println("Downloaded " + pct + " %");
     }
 
     private static Path determineLibBaseDir() throws IOException {
@@ -276,7 +284,7 @@ public class LoomInstaller {
         final Path loomScript = projectRoot.resolve("loom");
         Files.copy(scriptsRoot.resolve("loom"), loomScript,
             StandardCopyOption.REPLACE_EXISTING);
-        chmod755(loomScript);
+        chmod(loomScript, "rwxr-xr-x");
 
         if (Files.notExists(projectRoot.resolve("build.yml"))) {
             System.out.println("Create initial build.yml");
@@ -284,12 +292,12 @@ public class LoomInstaller {
         }
     }
 
-    private static void chmod755(final Path loomScript) throws IOException {
+    private static void chmod(final Path file, final String perms) throws IOException {
         final PosixFileAttributeView view =
-            Files.getFileAttributeView(loomScript, PosixFileAttributeView.class);
+            Files.getFileAttributeView(file, PosixFileAttributeView.class);
 
         if (view == null) {
-            // OS doesn't support POSIX file attributes
+            // OS (Windows) doesn't support POSIX file attributes
             return;
         }
 

@@ -29,8 +29,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.jar.Attributes;
@@ -234,7 +233,7 @@ public class LoomInstaller {
         final Path loomScript = projectRoot.resolve("loom");
         Files.copy(scriptsRoot.resolve("loom"), loomScript,
             StandardCopyOption.REPLACE_EXISTING);
-        chmod755(loomScript);
+        chmod(loomScript, "rwxr-xr-x");
 
         if (Files.notExists(projectRoot.resolve("build.yml"))) {
             System.out.println("Create initial build.yml");
@@ -242,24 +241,16 @@ public class LoomInstaller {
         }
     }
 
-    private static void chmod755(final Path loomScript) throws IOException {
+    private static void chmod(final Path file, final String perms) throws IOException {
         final PosixFileAttributeView view =
-            Files.getFileAttributeView(loomScript, PosixFileAttributeView.class);
+            Files.getFileAttributeView(file, PosixFileAttributeView.class);
 
         if (view == null) {
-            // OS doesn't support POSIX file attributes
+            // OS (Windows) doesn't support POSIX file attributes
             return;
         }
 
-        view.setPermissions(EnumSet.of(
-            PosixFilePermission.OWNER_READ,
-            PosixFilePermission.OWNER_WRITE,
-            PosixFilePermission.OWNER_EXECUTE,
-            PosixFilePermission.GROUP_READ,
-            PosixFilePermission.GROUP_EXECUTE,
-            PosixFilePermission.OTHERS_READ,
-            PosixFilePermission.OTHERS_EXECUTE
-        ));
+        view.setPermissions(PosixFilePermissions.fromString(perms));
     }
 
     private static void cleanup(final Path tmpFile) {

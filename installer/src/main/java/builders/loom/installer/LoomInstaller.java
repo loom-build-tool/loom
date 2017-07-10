@@ -74,7 +74,7 @@ public class LoomInstaller {
         final Path downloadFile = zipDir.resolve(extractFilenameFromUrl(downloadUrl));
 
         if (Files.exists(downloadFile)) {
-            System.out.println("Skip download of Loom Library from " + downloadUrl + " - "
+            System.out.println("Skip download of Loom Library from " + downloadUrl + " as "
                 + "it already exists: " + downloadFile);
         } else {
             downloadZip(new URL(downloadUrl), downloadFile);
@@ -132,7 +132,13 @@ public class LoomInstaller {
     private static void downloadZip(final URL url, final Path target) throws IOException {
         System.out.println("Downloading Loom Library from " + url + " ...");
 
-        final Path tmpFile = Paths.get(target.toAbsolutePath().toString() + ".tmp");
+        final Path parent = target.getParent();
+
+        if (parent == null) {
+            throw new IllegalStateException();
+        }
+
+        final Path tmpFile = Files.createTempFile(parent, null, null);
 
         final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         try {
@@ -148,7 +154,7 @@ public class LoomInstaller {
 
             try (final InputStream inputStream = conn.getInputStream();
                  final OutputStream out = Files.newOutputStream(tmpFile,
-                     StandardOpenOption.CREATE_NEW)) {
+                     StandardOpenOption.APPEND)) {
                 copy(inputStream, out, totalSize);
             }
         } finally {

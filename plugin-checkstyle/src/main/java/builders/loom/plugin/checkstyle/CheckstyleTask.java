@@ -50,11 +50,14 @@ public class CheckstyleTask extends AbstractTask {
 
     private final CompileTarget compileTarget;
     private final CheckstylePluginSettings pluginSettings;
+    private final Path cacheDir;
 
     public CheckstyleTask(final CompileTarget compileTarget,
-                          final CheckstylePluginSettings pluginSettings) {
+                          final CheckstylePluginSettings pluginSettings,
+                          final Path cacheDir) {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
+        this.cacheDir = cacheDir;
     }
 
     @Override
@@ -156,8 +159,8 @@ public class CheckstyleTask extends AbstractTask {
         final Path checkstyleConfigDir =
             baseDir.resolve(Paths.get("config", "checkstyle"));
 
-        properties.setProperty("cacheFile", String.format(".loom/checkstyle/%s.cache",
-            compileTarget.name().toLowerCase()));
+        properties.setProperty("cacheFile", cacheDir.resolve(compileTarget.name().toLowerCase()
+             + ".cache").toString());
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties

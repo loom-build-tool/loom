@@ -66,9 +66,10 @@ public class PmdTask extends AbstractTask {
 
     private final CompileTarget compileTarget;
     private final PMDConfiguration configuration = new PMDConfiguration();
+    private final Path cacheDir;
 
     public PmdTask(final BuildConfig buildConfig, final PmdPluginSettings pluginSettings,
-                   final CompileTarget compileTarget) {
+                   final CompileTarget compileTarget, final Path cacheDir) {
 
         // Ensure SLF4J is used (instead of java.util.logging)
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -88,6 +89,8 @@ public class PmdTask extends AbstractTask {
         if (configuration.getSuppressMarker() != null) {
             LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
         }
+
+        this.cacheDir = cacheDir;
     }
 
     private LanguageVersion getLanguageVersion(final BuildConfig buildConfig) {
@@ -105,8 +108,8 @@ public class PmdTask extends AbstractTask {
     }
 
     private Path resolveCacheFile() {
-        return Paths.get(".loom/", "cache", "pmd",
-            String.format("%s.cache", compileTarget.name().toLowerCase()));
+        return cacheDir.resolve(Paths.get("pmd",
+            String.format("%s.cache", compileTarget.name().toLowerCase())));
     }
 
     @Override

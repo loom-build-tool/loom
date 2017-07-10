@@ -16,6 +16,7 @@
 
 package builders.loom.plugin.mavenresolver;
 
+import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractPlugin;
@@ -34,33 +35,39 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
     public void configure() {
         final BuildConfig cfg = getBuildConfig();
         final MavenResolverPluginSettings pluginSettings = getPluginSettings();
+        final Path repositoryPath = getRepositoryPath();
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings))
+            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
+                repositoryPath))
             .provides("compileDependencies")
             .register();
 
         task("resolveCompileArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings))
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
+                repositoryPath))
             .provides("compileArtifacts")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg, pluginSettings))
+            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg, pluginSettings,
+                repositoryPath))
             .provides("testDependencies")
             .register();
 
         task("resolveTestArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings))
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings,
+                repositoryPath))
             .provides("testArtifacts")
             .register();
 
         service("mavenDependencyResolver")
-            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
-                MavenResolverSingleton.getInstance(pluginSettings)
+            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) -> {
+                return MavenResolverSingleton.getInstance(pluginSettings, repositoryPath)
                     .resolve(deps, scope, null).stream()
                     .map(ArtifactProduct::getMainArtifact)
-                    .collect(Collectors.toList()))
+                    .collect(Collectors.toList());
+            })
             .register();
     }
 

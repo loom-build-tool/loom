@@ -16,6 +16,7 @@
 
 package builders.loom.plugin.mavenresolver;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,19 +32,22 @@ public class MavenArtifactResolverTask extends AbstractTask {
     private final BuildConfig buildConfig;
     private final MavenResolverPluginSettings pluginSettings;
     private MavenResolver mavenResolver;
+    private Path cacheDir;
 
     public MavenArtifactResolverTask(final DependencyScope dependencyScope,
                                      final BuildConfig buildConfig,
-                                     final MavenResolverPluginSettings pluginSettings) {
+                                     final MavenResolverPluginSettings pluginSettings,
+                                     final Path cacheDir) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
         this.pluginSettings = pluginSettings;
+        this.cacheDir = cacheDir;
     }
 
     @Override
     public TaskStatus run() throws Exception {
-        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings);
+        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
         switch (dependencyScope) {
             case COMPILE:
                 compileScope();

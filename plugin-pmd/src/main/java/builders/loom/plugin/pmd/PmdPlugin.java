@@ -28,13 +28,15 @@ public class PmdPlugin extends AbstractPlugin<PmdPluginSettings> {
     @Override
     public void configure() {
         task("pmdMain")
-            .impl(() -> new PmdTask(getBuildConfig(), getPluginSettings(), CompileTarget.MAIN))
+            .impl(() -> new PmdTask(getBuildConfig(), getPluginSettings(), CompileTarget.MAIN,
+                getRepositoryPath()))
             .provides("pmdMainReport")
             .uses("source", "compileDependencies")
             .register();
 
         task("pmdTest")
-            .impl(() -> new PmdTask(getBuildConfig(), getPluginSettings(), CompileTarget.TEST))
+            .impl(() -> new PmdTask(getBuildConfig(), getPluginSettings(), CompileTarget.TEST,
+                getRepositoryPath()))
             .provides("pmdTestReport")
             .uses("testSource", "testDependencies")
             .register();

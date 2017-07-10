@@ -16,6 +16,8 @@
 
 package builders.loom.plugin.mavenresolver;
 
+import java.nio.file.Path;
+
 public final class MavenResolverSingleton {
 
     private static volatile MavenResolver instance;
@@ -23,7 +25,8 @@ public final class MavenResolverSingleton {
     private MavenResolverSingleton() {
     }
 
-    public static MavenResolver getInstance(final MavenResolverPluginSettings pluginSettings) {
+    public static MavenResolver getInstance(final MavenResolverPluginSettings pluginSettings,
+                                            final Path cacheDir) {
 
         if (instance == null) {
             synchronized (MavenResolverSingleton.class) {
@@ -33,7 +36,7 @@ public final class MavenResolverSingleton {
                         new ProgressIndicator("mavenResolver");
 
                     instance = new MavenResolver(progressIndicator,
-                        pluginSettings.getRepositoryUrl());
+                        pluginSettings.getRepositoryUrl(), cacheDir);
                 }
             }
         }

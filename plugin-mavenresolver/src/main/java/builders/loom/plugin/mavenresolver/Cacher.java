@@ -25,23 +25,24 @@ import java.io.Serializable;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class Cacher<T extends Serializable> {
 
+    private final Path cacheDir;
     private final String cacheName;
     private final String cacheSignature;
 
-    public Cacher(final String cacheName, final String cacheSignature) {
+    public Cacher(final Path cacheDir, final String cacheName, final String cacheSignature) {
+        this.cacheDir = cacheDir;
         this.cacheName = cacheName;
         this.cacheSignature = cacheSignature;
     }
 
     public void writeCache(final T data) {
         try {
-            final Path cacheDir = Files.createDirectories(resolveCacheDir());
-            final Path cacheFile = resolveCacheFile(cacheDir);
+            final Path createdCacheDir = Files.createDirectories(this.cacheDir);
+            final Path cacheFile = resolveCacheFile(createdCacheDir);
 
             try (ObjectOutputStream out = newOut(cacheFile)) {
                 out.writeObject(new CacheWrapper<>(cacheSignature, data));
@@ -56,16 +57,12 @@ public class Cacher<T extends Serializable> {
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)));
     }
 
-    private Path resolveCacheDir() {
-        return Paths.get(".loom", "cache", "mavenresolver");
-    }
-
-    private Path resolveCacheFile(final Path cacheDir) {
-        return cacheDir.resolve(cacheName + ".cache");
+    private Path resolveCacheFile(final Path dir) {
+        return dir.resolve(cacheName + ".cache");
     }
 
     public T readCache() {
-        final Path cacheFile = resolveCacheFile(resolveCacheDir());
+        final Path cacheFile = resolveCacheFile(this.cacheDir);
 
         if (Files.notExists(cacheFile)) {
             return null;

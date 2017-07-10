@@ -64,14 +64,16 @@ public class JavaCompileTask extends AbstractTask {
     private final CompileTarget compileTarget;
     private final Path buildDir;
     private final String subdirName;
+    private final Path cacheDir;
 
     public JavaCompileTask(final BuildConfig buildConfig,
                            final RuntimeConfiguration runtimeConfiguration,
-                           final CompileTarget compileTarget
-                           ) {
+                           final CompileTarget compileTarget,
+                           final Path cacheDir) {
         this.buildConfig = Objects.requireNonNull(buildConfig);
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
+        this.cacheDir = cacheDir;
 
         switch (compileTarget) {
             case MAIN:
@@ -168,7 +170,7 @@ public class JavaCompileTask extends AbstractTask {
             .collect(Collectors.toList());
 
         final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacherImpl(subdirName) : new NullCacher();
+            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
 
         if (fileCacher.filesCached(srcPaths)) {
             return complete(TaskStatus.UP_TO_DATE);

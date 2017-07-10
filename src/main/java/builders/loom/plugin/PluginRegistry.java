@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.Constants;
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
 import builders.loom.api.Plugin;
@@ -163,6 +164,8 @@ public class PluginRegistry {
         regPlugin.setServiceLocator(serviceLocator);
         regPlugin.setBuildConfig(buildConfig);
         regPlugin.setRuntimeConfiguration(runtimeConfiguration);
+        regPlugin.setRepositoryPath(Constants.PROJECT_LOOM_PATH.resolve(
+            Paths.get(Version.getVersion(), plugin)));
         injectPluginSettings(plugin, regPlugin);
         regPlugin.configure();
 

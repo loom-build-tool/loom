@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -49,8 +48,6 @@ public class CheckstyleTask extends AbstractTask {
 
     public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "checkstyle");
 
-    private static final boolean OMIT_IGNORED_MODULES = true;
-
     private final CompileTarget compileTarget;
     private final CheckstylePluginSettings pluginSettings;
 
@@ -68,26 +65,29 @@ public class CheckstyleTask extends AbstractTask {
             return complete(TaskStatus.SKIP);
         }
 
-        final List<File> collect = Files.walk(sourceTree.getSrcDir())
+        final List<File> files = Files.walk(sourceTree.getSrcDir())
             .filter(Files::isRegularFile)
             .map(Path::toFile)
             .collect(Collectors.toList());
 
         final RootModule checker = createRootModule();
 
-        final LoggingAuditListener listener = new LoggingAuditListener();
-        checker.addListener(listener);
+        try {
+            final LoggingAuditListener listener = new LoggingAuditListener();
+            checker.addListener(listener);
 
-        Files.createDirectories(REPORT_PATH);
-        final XMLLogger xmlLogger = new XMLLogger(
-            new PrintStream(REPORT_PATH.resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
-        checker.addListener(xmlLogger);
+            Files.createDirectories(REPORT_PATH);
+            final XMLLogger xmlLogger = new XMLLogger(
+                new PrintStream(REPORT_PATH.resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+            checker.addListener(xmlLogger);
 
-        final int errors = checker.process(collect);
-        checker.destroy();
+            final int errors = checker.process(files);
 
-        if (errors == 0) {
-            return complete(TaskStatus.OK);
+            if (errors == 0) {
+                return complete(TaskStatus.OK);
+            }
+        } finally {
+            checker.destroy();
         }
 
         throw new IllegalStateException("Checkstyle reported errors!");
@@ -120,24 +120,18 @@ public class CheckstyleTask extends AbstractTask {
     }
 
     private RootModule createRootModule() throws InterruptedException {
-        final RootModule rootModule;
-        final String classpath = "";
-
         try {
             final Properties props = createOverridingProperties();
             final Configuration config =
-                ConfigurationLoader.loadConfiguration(
-                    pluginSettings.getConfigLocation(),
-                    new PropertiesExpander(props),
-                    OMIT_IGNORED_MODULES);
+                ConfigurationLoader.loadConfiguration(pluginSettings.getConfigLocation(),
+                    new PropertiesExpander(props));
 
-            final ClassLoader moduleClassLoader =
-                Checker.class.getClassLoader();
+            final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
 
             final ModuleFactory factory = new PackageObjectFactory(
-                Checker.class.getPackage().getName() + ".", moduleClassLoader);
+                Checker.class.getPackage().getName(), moduleClassLoader);
 
-            rootModule = (RootModule) factory.createModule(config.getName());
+            final RootModule rootModule = (RootModule) factory.createModule(config.getName());
             rootModule.setModuleClassLoader(moduleClassLoader);
 
             if (rootModule instanceof Checker) {
@@ -147,12 +141,12 @@ public class CheckstyleTask extends AbstractTask {
             }
 
             rootModule.configure(config);
-        } catch (final CheckstyleException ex) {
-            throw new IllegalStateException(String.format(Locale.ROOT,
-                "Unable to create Root Module: configLocation {%s}, classpath {%s}.",
-                pluginSettings.getConfigLocation(), classpath), ex);
+
+            return rootModule;
+        } catch (final CheckstyleException e) {
+            throw new IllegalStateException("Unable to create Root Module with configuration: "
+                + pluginSettings.getConfigLocation(), e);
         }
-        return rootModule;
     }
 
     private Properties createOverridingProperties() {
@@ -161,6 +155,9 @@ public class CheckstyleTask extends AbstractTask {
         final Path baseDir = Paths.get("").toAbsolutePath();
         final Path checkstyleConfigDir =
             baseDir.resolve(Paths.get("config", "checkstyle"));
+
+        properties.setProperty("cacheFile", String.format(".loom/checkstyle/%s.cache",
+            compileTarget.name().toLowerCase()));
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties

@@ -16,6 +16,7 @@
 
 package builders.loom.api;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private ServiceLocatorRegistration serviceLocator;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
+    private Path repositoryPath;
 
     public AbstractPlugin() {
         this.pluginSettings = null;
@@ -73,6 +75,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
     public RuntimeConfiguration getRuntimeConfiguration() {
         return runtimeConfiguration;
+    }
+
+    @Override
+    public void setRepositoryPath(final Path repositoryPath) {
+        this.repositoryPath = repositoryPath;
+    }
+
+    public Path getRepositoryPath() {
+        return repositoryPath;
     }
 
     protected TaskBuilder task(final String taskName) {

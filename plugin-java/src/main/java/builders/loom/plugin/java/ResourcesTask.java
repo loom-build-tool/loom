@@ -37,11 +37,12 @@ public class ResourcesTask extends AbstractTask {
     private final JavaPluginSettings pluginSettings;
     private final Path destPath;
     private final CompileTarget compileTarget;
+    private final Path cacheDir;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
                   final BuildConfig buildConfig,
                   final JavaPluginSettings pluginSettings,
-                  final CompileTarget compileTarget) {
+                  final CompileTarget compileTarget, final Path cacheDir) {
 
         this.runtimeConfiguration = runtimeConfiguration;
         this.buildConfig = buildConfig;
@@ -49,6 +50,8 @@ public class ResourcesTask extends AbstractTask {
         this.compileTarget = compileTarget;
 
         destPath = Paths.get("loombuild", "resources", compileTarget.name().toLowerCase());
+
+        this.cacheDir = cacheDir;
     }
 
     @Override
@@ -83,10 +86,8 @@ public class ResourcesTask extends AbstractTask {
 
         FileUtil.assertDirectory(srcPath);
 
-        final Path cacheFile = getCacheFileName();
-
         final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
-            ? new DiskKeyValueCache(cacheFile)
+            ? new DiskKeyValueCache(getCacheFileName())
             : new NullKeyValueCache();
 
         final Map<String, String> variables = new HashMap<>();
@@ -105,9 +106,7 @@ public class ResourcesTask extends AbstractTask {
     }
 
     private Path getCacheFileName() {
-        return Paths.get(
-            ".loom", "cache", "java",
-            "resource-" + compileTarget.name().toLowerCase() + ".cache");
+        return cacheDir.resolve("resource-" + compileTarget.name().toLowerCase() + ".cache");
     }
 
     private TaskStatus complete(final TaskStatus status) {

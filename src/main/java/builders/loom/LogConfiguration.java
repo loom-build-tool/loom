@@ -29,7 +29,8 @@ import ch.qos.logback.core.FileAppender;
 
 public final class LogConfiguration {
 
-    public static final String LOOM_BUILD_LOG = ".loom/build.log";
+    public static final String LOOM_BUILD_LOG =
+        Constants.PROJECT_LOOM_PATH.resolve("build.log").toAbsolutePath().toString();
 
     private LogConfiguration() {
     }

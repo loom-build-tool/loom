@@ -21,7 +21,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
@@ -66,8 +65,8 @@ public class LoomProcessor {
     }
 
     public void clean() {
-        cleanDir(Paths.get("loombuild"));
-        cleanDir(Paths.get(".loom"));
+        cleanDir(Constants.BUILD_PATH);
+        cleanDir(Constants.PROJECT_LOOM_PATH);
     }
 
     private static void cleanDir(final Path rootPath) {

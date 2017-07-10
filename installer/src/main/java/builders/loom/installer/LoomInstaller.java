@@ -16,19 +16,22 @@
 
 package builders.loom.installer;
 
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.jar.Attributes;
@@ -70,7 +73,14 @@ public class LoomInstaller {
         final Path zipDir = Files.createDirectories(determineBaseDir()
             .resolve(Paths.get("zip", sha1(downloadUrl))));
         final Path downloadFile = zipDir.resolve(extractFilenameFromUrl(downloadUrl));
-        downloadZip(new URL(downloadUrl), downloadFile);
+
+        if (Files.exists(downloadFile)) {
+            System.out.println("Skip download of Loom Library from " + downloadUrl + " - "
+                + "it already exists: " + downloadFile);
+        } else {
+            downloadZip(new URL(downloadUrl), downloadFile);
+        }
+
         return downloadFile;
     }
 
@@ -121,13 +131,9 @@ public class LoomInstaller {
     }
 
     private static void downloadZip(final URL url, final Path target) throws IOException {
-        if (Files.exists(target)) {
-            System.out.println("Skip download of Loom Library from " + url + " - it already "
-                + "exists: " + target);
-            return;
-        }
-
         System.out.println("Downloading Loom Library from " + url + " ...");
+
+        final Path tmpFile = Paths.get(target.toAbsolutePath().toString() + ".tmp");
 
         final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         try {
@@ -142,12 +148,16 @@ public class LoomInstaller {
             final long totalSize = conn.getContentLengthLong();
 
             try (final InputStream inputStream = conn.getInputStream();
-                 final OutputStream out = Files.newOutputStream(target,
+                 final OutputStream out = Files.newOutputStream(tmpFile,
                      StandardOpenOption.CREATE_NEW)) {
-                copy(inputStream, out, new ProgressMonitor(totalSize));
+                copy(inputStream, out, totalSize);
             }
         } finally {
             conn.disconnect();
+        }
+
+        if (Files.notExists(target)) {
+            Files.move(tmpFile, target, StandardCopyOption.ATOMIC_MOVE);
         }
     }
 
@@ -233,6 +243,7 @@ public class LoomInstaller {
 
     private static Path extract(final Path zipFile, final Path dstDir) throws IOException {
         final Path installDir;
+        final Path okFile;
 
         try (final ZipInputStream in = new ZipInputStream(Files.newInputStream(zipFile))) {
             ZipEntry nextEntry = in.getNextEntry();
@@ -243,8 +254,9 @@ public class LoomInstaller {
             }
 
             installDir = dstDir.resolve(nextEntry.getName());
+            okFile = installDir.resolve("loom.ok");
 
-            if (Files.exists(installDir)) {
+            if (Files.exists(okFile)) {
                 System.out.println("Skip installation to " + installDir + " as it exists already");
                 return installDir;
             }
@@ -260,7 +272,7 @@ public class LoomInstaller {
                 if (nextEntry.isDirectory()) {
                     Files.createDirectories(destFile);
                 } else {
-                    Files.copy(in, destFile);
+                    Files.copy(in, destFile, StandardCopyOption.REPLACE_EXISTING);
                 }
 
                 nextEntry = in.getNextEntry();
@@ -268,6 +280,8 @@ public class LoomInstaller {
 
             in.closeEntry();
         }
+
+        Files.createFile(okFile);
 
         return installDir;
     }
@@ -302,42 +316,6 @@ public class LoomInstaller {
         }
 
         view.setPermissions(PosixFilePermissions.fromString("rwxr-xr-x"));
-    }
-
-    private static class ProgressMonitor {
-
-        private static final Console CONSOLE = System.console();
-        private static final int PCT_100 = 100;
-
-        private final long totalSize;
-        private long progress;
-        private long lastProgress;
-
-        ProgressMonitor(final long totalSize) {
-            this.totalSize = totalSize;
-        }
-
-        void progress(final long newProgress) {
-            progress += newProgress;
-            if (CONSOLE != null) {
-                updateProgressIndicator();
-            }
-        }
-
-        private void updateProgressIndicator() {
-            final int pct = (int) (progress * PCT_100 / totalSize);
-            if (pct != lastProgress) {
-                if (lastProgress != 0) {
-                    System.out.print("\r");
-                }
-                System.out.print("Downloaded " + pct + "%");
-                if (pct == PCT_100) {
-                    System.out.print("\r");
-                }
-                lastProgress = pct;
-            }
-        }
-
     }
 
 }

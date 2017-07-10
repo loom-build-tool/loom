@@ -19,7 +19,6 @@ package builders.loom.plugin.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,10 +30,8 @@ public class FileCacherImpl implements FileCacher {
 
     private final Path cacheFile;
 
-    public FileCacherImpl(final String type) throws IOException {
-        final Path path = Paths.get(".loom/", "cache", "java");
-        Files.createDirectories(path);
-        cacheFile = path.resolve("java-" + type + ".cache");
+    public FileCacherImpl(final Path cacheDir, final String type) throws IOException {
+        cacheFile = cacheDir.resolve("java-" + type + ".cache");
     }
 
     @Override
@@ -73,6 +70,15 @@ public class FileCacherImpl implements FileCacher {
 
     @Override
     public void cacheFiles(final List<Path> srcPaths) throws IOException {
+        final Path parent = cacheFile.getParent();
+
+        if (parent == null) {
+            // keep Findbugs happy
+            throw new IllegalStateException();
+        }
+
+        Files.createDirectories(parent);
+
         final Map<String, Long> cachedFiles = new HashMap<>();
 
         for (final Path srcFile : srcPaths) {

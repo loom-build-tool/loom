@@ -16,6 +16,8 @@
 
 package builders.loom.api;
 
+import java.nio.file.Path;
+
 import builders.loom.api.service.ServiceLocatorRegistration;
 
 /**
@@ -36,6 +38,8 @@ public interface Plugin {
     void setBuildConfig(BuildConfig buildConfig);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+
+    void setRepositoryPath(Path path);
 
     void configure();
 

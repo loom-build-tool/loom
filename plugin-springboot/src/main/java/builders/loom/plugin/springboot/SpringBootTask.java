@@ -61,11 +61,11 @@ public class SpringBootTask extends AbstractTask {
 
         final Path buildDir = baseDir.resolve("build");
 
-        final Path jarFile = baseDir.resolve(String.format("%s-%s.jar",
+        final Path jarFile = baseDir.resolve(String.format("%s-%s-fatjar.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
 
-        final Path assemblyFile = baseDir.resolve(jarFile.getFileName());
+        final Path fatJarFile = baseDir.resolve(jarFile.getFileName());
 
         // copy resources
         final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts()
@@ -93,9 +93,9 @@ public class SpringBootTask extends AbstractTask {
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
 
         // assemble jar
-        new JarAssembler(pluginSettings).assemble(buildDir, assemblyFile, applicationClassname);
+        new JarAssembler(pluginSettings).assemble(buildDir, fatJarFile, applicationClassname);
 
-        return complete(TaskStatus.OK, assemblyFile);
+        return complete(TaskStatus.OK, fatJarFile);
     }
 
     private Path resolveSpringBootLoaderJar() {

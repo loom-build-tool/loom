@@ -73,8 +73,11 @@ public class MavenResolver implements DependencyResolver {
     private final RemoteRepository mavenRepository;
     private final LocalRepositoryManager localRepositoryManager;
     private final ProgressIndicator progressIndicator;
+    private final Path cacheDir;
 
-    MavenResolver(final ProgressIndicator progressIndicator, final String repositoryUrl) {
+    MavenResolver(final ProgressIndicator progressIndicator, final String repositoryUrl,
+                  final Path cacheDir) {
+
         LOG.debug("Initialize MavenResolver");
         this.progressIndicator = progressIndicator;
         final DefaultServiceLocator locator = new DefaultServiceLocator();
@@ -109,6 +112,8 @@ public class MavenResolver implements DependencyResolver {
         final Path repository = SystemUtil.determineLoomBaseDir().resolve("repository");
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
+
+        this.cacheDir = cacheDir;
         LOG.debug("MavenResolver initialized");
     }
 
@@ -122,7 +127,8 @@ public class MavenResolver implements DependencyResolver {
 
         final String cacheName = "maven-" + mavenScope(scope) + "-" + classifier;
         final String cacheSignature = Hasher.hash(deps);
-        final Cacher<CachedArtifactProductList> cacher = new Cacher<>(cacheName, cacheSignature);
+        final Cacher<CachedArtifactProductList> cacher =
+            new Cacher<>(cacheDir, cacheName, cacheSignature);
 
         // note: caches do not need extra locking, because they get isolated by the scope used
         final CachedArtifactProductList cachedArtifacts = cacher.readCache();

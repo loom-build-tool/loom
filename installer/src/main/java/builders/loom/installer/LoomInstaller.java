@@ -16,7 +16,6 @@
 
 package builders.loom.installer;
 
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,6 +41,7 @@ public class LoomInstaller {
     private static final int CONNECT_TIMEOUT = 15000;
     private static final int READ_TIMEOUT = 10000;
     private static final int BUF_SIZE = 8192;
+    private static final long DOWNLOAD_PROGRESS_INTERVAL = 5_000_000_000L;
 
     public static void main(final String[] args) {
         Path tmpFile = null;
@@ -114,7 +114,7 @@ public class LoomInstaller {
             try (final InputStream inputStream = conn.getInputStream();
                  final OutputStream out = Files.newOutputStream(target,
                      StandardOpenOption.TRUNCATE_EXISTING)) {
-                copy(inputStream, out, new ProgressMonitor(totalSize));
+                copy(inputStream, out, totalSize);
             }
         } finally {
             conn.disconnect();
@@ -122,14 +122,32 @@ public class LoomInstaller {
     }
 
     private static void copy(final InputStream in, final OutputStream out,
-                             final ProgressMonitor monitor) throws IOException {
+                             final long totalSize) throws IOException {
+
+        long start = System.nanoTime();
 
         final byte[] buf = new byte[BUF_SIZE];
         int cnt;
+        int transferred = 0;
+        boolean progressShown = false;
         while ((cnt = in.read(buf)) != -1) {
             out.write(buf, 0, cnt);
-            monitor.progress(cnt);
+            transferred += cnt;
+            if (System.nanoTime() - start > DOWNLOAD_PROGRESS_INTERVAL) {
+                showProgress(totalSize, transferred);
+                start = System.nanoTime();
+                progressShown = true;
+            }
         }
+
+        if (progressShown) {
+            showProgress(totalSize, transferred);
+        }
+    }
+
+    private static void showProgress(final long totalSize, final int transferred) {
+        final int pct = (int) (transferred * 100.0 / totalSize);
+        System.out.println("Downloaded " + pct + " %");
     }
 
     private static Path determineTargetDir() throws IOException {
@@ -261,42 +279,6 @@ public class LoomInstaller {
         } catch (final IOException ignore) {
             // ignore
         }
-    }
-
-    private static class ProgressMonitor {
-
-        private static final Console CONSOLE = System.console();
-        private static final int PCT_100 = 100;
-
-        private final long totalSize;
-        private long progress;
-        private long lastProgress;
-
-        ProgressMonitor(final long totalSize) {
-            this.totalSize = totalSize;
-        }
-
-        void progress(final long newProgress) {
-            progress += newProgress;
-            if (CONSOLE != null) {
-                updateProgressIndicator();
-            }
-        }
-
-        private void updateProgressIndicator() {
-            final int pct = (int) (progress * PCT_100 / totalSize);
-            if (pct != lastProgress) {
-                if (lastProgress != 0) {
-                    System.out.print("\r");
-                }
-                System.out.print("Downloaded " + pct + "%");
-                if (pct == PCT_100) {
-                    System.out.print("\r");
-                }
-                lastProgress = pct;
-            }
-        }
-
     }
 
 }

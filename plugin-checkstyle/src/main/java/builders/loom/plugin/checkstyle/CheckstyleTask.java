@@ -80,8 +80,8 @@ public class CheckstyleTask extends AbstractTask {
             checker.addListener(listener);
 
             Files.createDirectories(REPORT_PATH);
-            final XMLLogger xmlLogger = new XMLLogger(
-                new PrintStream(REPORT_PATH.resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(REPORT_PATH
+                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
             checker.addListener(xmlLogger);
 
             final int errors = checker.process(files);

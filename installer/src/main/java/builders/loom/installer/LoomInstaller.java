@@ -34,13 +34,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class LoomInstaller {
 
+    private static final String PROPERTIES_RESOURCE = "/loom-installer.properties";
     private static final int CONNECT_TIMEOUT = 15000;
     private static final int READ_TIMEOUT = 10000;
     private static final int BUF_SIZE = 8192;
@@ -58,11 +57,11 @@ public class LoomInstaller {
         }
     }
 
-    private static String readVersion() {
-        final ClassLoader cl = LoomInstaller.class.getClassLoader();
-        try (InputStream in = cl.getResourceAsStream("META-INF/MANIFEST.MF")) {
-            final Manifest manifest = new Manifest(in);
-            return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+    private static String readVersion() throws IOException {
+        final Properties properties = new Properties();
+        try (InputStream in = LoomInstaller.class.getResourceAsStream(PROPERTIES_RESOURCE)) {
+            properties.load(in);
+            return properties.getProperty("version");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

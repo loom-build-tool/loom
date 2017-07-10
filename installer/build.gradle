@@ -5,8 +5,15 @@ archivesBaseName = 'loom-installer'
 jar {
     manifest {
         attributes(
-                'Implementation-Version': "${project.version}",
                 'Main-Class': 'builders.loom.installer.LoomInstaller'
         )
+    }
+}
+
+processResources {
+    filesMatching('**/loom-installer.properties') {
+        filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+                "version": project.version
+        ]
     }
 }

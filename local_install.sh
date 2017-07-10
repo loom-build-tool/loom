@@ -1,6 +1,6 @@
 #!/bin/sh
 VERSION=1.0.0
-TARGET=~/.loom/binary/
+TARGET=~/.loom/library/
 test -d $TARGET || mkdir -p $TARGET
 ./gradlew clean zip &&
     rm -rf $TARGET/loom-$VERSION &&

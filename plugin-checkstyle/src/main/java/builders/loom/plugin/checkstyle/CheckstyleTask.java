@@ -58,6 +58,10 @@ public class CheckstyleTask extends AbstractTask {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
+
+        if (pluginSettings.getConfigLocation() == null) {
+            throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
+        }
     }
 
     @Override

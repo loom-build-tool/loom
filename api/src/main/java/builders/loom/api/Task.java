@@ -21,6 +21,6 @@ package builders.loom.api;
  */
 public interface Task {
 
-    TaskStatus run() throws Exception;
+    TaskResult run() throws Exception;
 
 }

@@ -17,7 +17,6 @@
 package builders.loom.plugin.findbugs;
 
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -30,12 +29,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.LoomPaths;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ReportProduct;
@@ -45,16 +42,11 @@ import edu.umd.cs.findbugs.Priorities;
 public class FindbugsTask extends AbstractTask {
 
     public static final Path BUILD_MAIN_PATH = Paths.get("loombuild", "classes", "main");
-    public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "findbugs");
-
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
-
     private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
 
     private final CompileTarget compileTarget;
-
+    private final Path reportPath;
     private Optional<Integer> priorityThreshold;
-
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
@@ -62,6 +54,9 @@ public class FindbugsTask extends AbstractTask {
                         final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
+
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("findbugs",
+            compileTarget.name().toLowerCase()));
 
         readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
@@ -102,79 +97,75 @@ public class FindbugsTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-
-        if (Files.notExists(getSourceTree().getSrcDir())
-            || Files.notExists(getClasses().getClassesDir())) {
-            return complete(TaskStatus.SKIP);
+    public TaskResult run() throws Exception {
+        if (!getSourceTree().isPresent() || !getClasses().isPresent()) {
+            return completeSkip();
         }
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        new FindbugsRunner(
-            compileTarget,
-            getSourceTree().getSrcDir(),
-            getClasses().getClassesDir(),
-            calcClasspath(),
-            priorityThreshold
-            )
+        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
+            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
             .executeFindbugs();
 
-        return complete(TaskStatus.OK);
+        return completeOk(product());
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private ReportProduct product() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("findbugsMainReport",
-                    new ReportProduct(REPORT_PATH));
-                return status;
+                return new ReportProduct(reportPath, "Findbugs main report");
             case TEST:
-                getProvidedProducts().complete("findbugsTestReport",
-                    new ReportProduct(REPORT_PATH));
-                return status;
+                return new ReportProduct(reportPath, "Findbugs test report");
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private SourceTreeProduct getSourceTree() throws InterruptedException {
+    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+                return useProduct("testSource", SourceTreeProduct.class);
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private CompilationProduct getClasses() throws InterruptedException {
+    private Optional<CompilationProduct> getClasses() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compilation", CompilationProduct.class);
+                return useProduct("compilation", CompilationProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testCompilation", CompilationProduct.class);
+                return useProduct("testCompilation", CompilationProduct.class);
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private ClasspathProduct calcClasspath() throws InterruptedException {
+    private List<Path> calcClasspath() throws InterruptedException {
+        final List<Path> classpath = new ArrayList<>();
+
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compileDependencies",
-                    ClasspathProduct.class);
+                useProduct("compileDependencies",
+                    ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
+                break;
             case TEST:
-                final List<Path> classpath = new ArrayList<>();
                 classpath.add(BUILD_MAIN_PATH);
-                classpath.addAll(
-                    getUsedProducts().readProduct("testDependencies",
-                        ClasspathProduct.class).getEntries());
-                return new ClasspathProduct(classpath);
+
+                useProduct("testDependencies",
+                    ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }
+        return classpath;
     }
 
     private static Map<String, Integer> buildPrioritiesMap() {

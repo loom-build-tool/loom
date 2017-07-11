@@ -21,12 +21,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
@@ -55,36 +56,20 @@ public class ResourcesTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
+        final Optional<ResourcesTreeProduct> resourcesProduct = getResourcesTreeProduct();
 
-        final Path srcPath;
-
-        switch (compileTarget) {
-            case MAIN:
-                srcPath = getUsedProducts().readProduct(
-                    "resources", ResourcesTreeProduct.class).getSrcDir();
-                break;
-            case TEST:
-                srcPath = getUsedProducts().readProduct(
-                    "testResources", ResourcesTreeProduct.class).getSrcDir();
-                break;
-            default:
-                throw new IllegalStateException();
+        if (!resourcesProduct.isPresent()) {
+            if (Files.exists(destPath)) {
+                FileUtil.deleteDirectoryRecursively(destPath, true);
+            }
+            return completeSkip();
         }
 
-        if (Files.notExists(srcPath) && Files.notExists(destPath)) {
-            return complete(TaskStatus.SKIP);
-        }
+        final Path srcPath = resourcesProduct.get().getSrcDir();
 
         assertDirectoryOrMissing(srcPath);
         assertDirectoryOrMissing(destPath);
-
-        if (Files.notExists(srcPath) && Files.exists(destPath)) {
-            FileUtil.deleteDirectoryRecursively(destPath, true);
-            return complete(TaskStatus.OK);
-        }
-
-        FileUtil.assertDirectory(srcPath);
 
         final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
             ? new DiskKeyValueCache(getCacheFileName())
@@ -102,26 +87,22 @@ public class ResourcesTask extends AbstractTask {
 
         cache.saveCache();
 
-        return complete(TaskStatus.OK);
+        return completeOk(new ProcessedResourceProduct(destPath));
+    }
+
+    private Optional<ResourcesTreeProduct> getResourcesTreeProduct() throws InterruptedException {
+        switch (compileTarget) {
+            case MAIN:
+                return useProduct("resources", ResourcesTreeProduct.class);
+            case TEST:
+                return useProduct("testResources", ResourcesTreeProduct.class);
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private Path getCacheFileName() {
         return cacheDir.resolve("resource-" + compileTarget.name().toLowerCase() + ".cache");
-    }
-
-    private TaskStatus complete(final TaskStatus status) {
-        switch (compileTarget) {
-            case MAIN:
-                getProvidedProducts().complete(
-                    "processedResources", new ProcessedResourceProduct(destPath));
-                return status;
-            case TEST:
-                getProvidedProducts().complete(
-                    "processedTestResources", new ProcessedResourceProduct(destPath));
-                return status;
-            default:
-                throw new IllegalStateException();
-        }
     }
 
     private void assertDirectoryOrMissing(final Path path) {

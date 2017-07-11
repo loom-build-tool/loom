@@ -24,11 +24,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import builders.loom.api.product.Product;
+import builders.loom.api.product.AbstractProduct;
 
 public class ProductsTest {
 
@@ -37,29 +36,29 @@ public class ProductsTest {
     @Test
     public void successProvideAndUse() throws InterruptedException {
 
-        final ProvidedProducts providedProducts = provides("a", "b");
+        final ProvidedProduct providedProduct = provides("a");
 
         final UsedProducts usedProducts = uses("a");
 
-        providedProducts.complete("a", new StringProduct("foo"));
+        providedProduct.complete("a", new StringProduct("foo"));
 
-        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class).toString());
+        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class)
+            .get().toString());
 
     }
 
     @Test
     public void failDoubleComplete() {
 
-        final ProvidedProducts providedProducts = provides("a");
+        final ProvidedProduct providedProduct = provides("a");
 
-        providedProducts.complete("a", new StringProduct("result"));
+        providedProduct.complete("a", new StringProduct("result"));
 
         try {
-            providedProducts.complete("a", new StringProduct("result-double"));
+            providedProduct.complete("a", new StringProduct("result-double"));
             fail();
         } catch (final IllegalStateException e) {
-            assertEquals("Task <sampleTask> has tried to complete"
-                + " the already completed product <a>", e.getMessage());
+            assertEquals("Product promise <a> already completed", e.getMessage());
         }
 
     }
@@ -67,10 +66,10 @@ public class ProductsTest {
     @Test
     public void failCompleteWithNull() {
 
-        final ProvidedProducts providedProducts = provides("a");
+        final ProvidedProduct providedProduct = provides("a");
 
         try {
-            providedProducts.complete("a", null);
+            providedProduct.complete("a", null);
         } catch (final NullPointerException e) {
             assertEquals("Must not complete product <a> in task <sampleTask> with null value",
                 e.getMessage());
@@ -110,11 +109,9 @@ public class ProductsTest {
             new HashSet<>(Arrays.asList(productIdLists)), productRepository);
     }
 
-    private ProvidedProducts provides(final String... productIdLists) {
-        Stream.of(productIdLists)
-            .forEach(productRepository::createProduct);
-        return new ProvidedProducts(
-            new HashSet<>(Arrays.asList(productIdLists)), productRepository, "sampleTask");
+    private ProvidedProduct provides(final String productId) {
+        productRepository.createProduct(productId);
+        return new ProvidedProduct(productId, productRepository, "sampleTask");
     }
 
     private static class ProductRepositoryDummy implements ProductRepository {
@@ -138,7 +135,7 @@ public class ProductsTest {
         }
     }
 
-    static class StringProduct implements Product {
+    static class StringProduct extends AbstractProduct {
 
         private final String str;
 

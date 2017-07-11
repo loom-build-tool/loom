@@ -17,6 +17,7 @@
 package builders.loom.api;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -26,13 +27,15 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.product.Product;
+
 public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
 
     private static final int FUTURE_WAIT_THRESHOLD = 10;
 
-    private final CompletableFuture<Object> promise = new CompletableFuture<>();
+    private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
     private final String productId;
 
@@ -40,8 +43,8 @@ public final class ProductPromise {
         this.productId = Objects.requireNonNull(productId);
     }
 
-    public void complete(final Object withValue) {
-        final boolean completed = promise.complete(withValue);
+    public void complete(final Product withValue) {
+        final boolean completed = promise.complete(Optional.ofNullable(withValue));
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
@@ -52,20 +55,17 @@ public final class ProductPromise {
         return productId;
     }
 
-    public Object getAndWaitForProduct() throws InterruptedException {
+    public Optional<Product> getAndWaitForProduct() throws InterruptedException {
         return waitAndGet(promise);
     }
 
-    public boolean isCompleted() {
-        return promise.isDone();
-    }
-
-    private Object waitAndGet(final Future<Object> future) throws InterruptedException {
+    private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
+        throws InterruptedException {
 
         LOG.debug("Requesting product <{}> ...", productId);
 
         try {
-            final Object product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
+            final Optional<Product> product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
 
             LOG.debug("Return product <{}> with value: {}", productId, product);
 

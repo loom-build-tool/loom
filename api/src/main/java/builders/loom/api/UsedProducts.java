@@ -19,6 +19,7 @@ package builders.loom.api;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -41,13 +42,13 @@ public class UsedProducts {
         final Set<String> allowedProductIds,
         final ProductRepository productRepository) {
         Objects.requireNonNull(allowedProductIds);
-        allowedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
+        allowedProductIds.forEach(ProvidedProduct::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
         this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
         this.productRepository = productRepository;
     }
 
-    public <T extends Product> T readProduct(final String productId, final Class<T> clazz)
+    public <T extends Product> Optional<T> readProduct(final String productId, final Class<T> clazz)
         throws InterruptedException {
 
         Objects.requireNonNull(productId);
@@ -62,12 +63,12 @@ public class UsedProducts {
                 "Access to productId <" + productId + "> not configured for task");
         }
 
-        final Object value = productPromise.getAndWaitForProduct();
+        final Optional<Product> value = productPromise.getAndWaitForProduct();
 
         final long timeElapsed = (System.nanoTime() - start) / 1_000_000;
         LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
 
-        return clazz.cast(value);
+        return value.map(clazz::cast);
     }
 
     public void waitForProduct(final String productId) throws InterruptedException {

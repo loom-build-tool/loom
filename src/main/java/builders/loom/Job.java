@@ -17,26 +17,23 @@
 package builders.loom;
 
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.ProductDependenciesAware;
-import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
-import builders.loom.api.ProvidedProducts;
+import builders.loom.api.ProvidedProduct;
 import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
+import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Preconditions;
 import builders.loom.util.Stopwatch;
 
 public class Job implements Callable<TaskStatus> {
@@ -66,10 +63,11 @@ public class Job implements Callable<TaskStatus> {
     @Override
     public TaskStatus call() throws Exception {
         status.set(JobStatus.RUNNING);
-        final TaskStatus taskStatus = runTask();
-        status.set(JobStatus.STOPPED);
-
-        return taskStatus;
+        try {
+            return runTask();
+        } finally {
+            status.set(JobStatus.STOPPED);
+        }
     }
 
     public TaskStatus runTask() throws Exception {
@@ -80,38 +78,35 @@ public class Job implements Callable<TaskStatus> {
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
-        final TaskStatus taskStatus = task.run();
+        final TaskResult taskResult = task.run();
         Stopwatch.stopProcess();
 
-        LOG.info("Task {} resulted with {}", name, taskStatus);
+        LOG.info("Task {} resulted with {}", name, taskResult);
 
-        Objects.requireNonNull(taskStatus, "Task <" + name + "> must not return null");
-        checkIfAllProductsCompleted();
+        if (taskResult == null) {
+            throw new IllegalStateException("Task <" + name + "> must not return null");
+        }
+        if (taskResult.getStatus() == null) {
+            throw new IllegalStateException("Task <" + name + "> must not return null status");
+        }
+        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.SKIP) {
+            throw new IllegalStateException("Task <" + name + "> returned null product with "
+                + "status: " + taskResult.getStatus());
+        }
 
-        return taskStatus;
-    }
+        productRepository
+            .lookup(configuredTask.getProvidedProduct())
+            .complete(taskResult.getProduct());
 
-    private void checkIfAllProductsCompleted() {
-
-        final Set<String> uncompletedProduct =
-            configuredTask.getProvidedProducts().stream()
-            .map(productRepository::lookup)
-            .filter(product -> !product.isCompleted())
-            .map(ProductPromise::getProductId)
-            .collect(Collectors.toSet());
-
-        Preconditions.checkState(uncompletedProduct.isEmpty(),
-            "task.run <%s> did not complete(provide) the following products: %s",
-            name, uncompletedProduct);
-
+        return taskResult.getStatus();
     }
 
     private void injectTaskProperties(final Task task) {
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
-            pdaTask.setProvidedProducts(
-                new ProvidedProducts(
-                    configuredTask.getProvidedProducts(), productRepository, name));
+            pdaTask.setProvidedProduct(
+                new ProvidedProduct(
+                    configuredTask.getProvidedProduct(), productRepository, name));
             pdaTask.setUsedProducts(
                 new UsedProducts(configuredTask.getUsedProducts(), productRepository));
         }

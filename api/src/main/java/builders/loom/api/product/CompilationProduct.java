@@ -18,7 +18,7 @@ package builders.loom.api.product;
 
 import java.nio.file.Path;
 
-public final class CompilationProduct implements Product {
+public final class CompilationProduct extends AbstractProduct {
 
     private final Path classesDir;
 

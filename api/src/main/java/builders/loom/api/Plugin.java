@@ -29,6 +29,8 @@ import builders.loom.api.service.ServiceLocatorRegistration;
  */
 public interface Plugin {
 
+    void setName(final String pluginName);
+
     PluginSettings getPluginSettings();
 
     void setTaskRegistry(TaskRegistry taskRegistry);

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
@@ -44,7 +45,7 @@ import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.SourceTreeProduct;
@@ -135,45 +136,51 @@ public class JavaCompileTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final List<Path> classpath = new ArrayList<>();
 
-        final Path srcPath;
+        final Optional<SourceTreeProduct> sourceTreeProduct = getSourceTreeProduct();
+
+        if (!sourceTreeProduct.isPresent()) {
+            if (Files.exists(buildDir)) {
+                FileUtil.deleteDirectoryRecursively(buildDir, false);
+            }
+
+            return completeSkip();
+        }
+
+        final Path srcDir = sourceTreeProduct.get().getSrcDir();
+
         switch (compileTarget) {
             case MAIN:
-                srcPath = getUsedProducts().readProduct(
-                    "source", SourceTreeProduct.class).getSrcDir();
-                classpath.add(srcPath);
-                classpath.addAll(getUsedProducts().readProduct(
-                    "compileDependencies", ClasspathProduct.class).getEntries());
+                classpath.add(srcDir);
+                useProduct("compileDependencies", ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                srcPath = getUsedProducts().readProduct(
-                    "testSource", SourceTreeProduct.class).getSrcDir();
-                classpath.add(srcPath);
-                classpath.add(getUsedProducts().readProduct(
-                    "compilation", CompilationProduct.class).getClassesDir());
-                classpath.addAll(getUsedProducts().readProduct(
-                    "testDependencies", ClasspathProduct.class).getEntries());
+                classpath.add(srcDir);
+
+                useProduct("compilation", CompilationProduct.class)
+                    .map(CompilationProduct::getClassesDir)
+                    .ifPresent(classpath::add);
+
+                useProduct("testDependencies", ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
+
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        if (Files.notExists(srcPath)) {
-            return complete(TaskStatus.SKIP);
-        }
-
-        final List<Path> srcPaths = Files.walk(srcPath)
-            .filter(Files::isRegularFile)
-            .filter(f -> f.toString().endsWith(".java"))
-            .collect(Collectors.toList());
+        final List<Path> srcPaths = sourceTreeProduct.get().getSourceFiles();
 
         final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
             ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
 
         if (fileCacher.filesCached(srcPaths)) {
-            return complete(TaskStatus.UP_TO_DATE);
+            return completeUpToDate(product());
         }
 
         if (Files.notExists(buildDir)) {
@@ -190,17 +197,26 @@ public class JavaCompileTask extends AbstractTask {
 
         fileCacher.cacheFiles(srcPaths);
 
-        return  complete(TaskStatus.OK);
+        return completeOk(product());
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private Optional<SourceTreeProduct> getSourceTreeProduct() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("compilation", new CompilationProduct(buildDir));
-                return status;
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                getProvidedProducts().complete("testCompilation", new CompilationProduct(buildDir));
-                return status;
+                return useProduct("testSource", SourceTreeProduct.class);
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
+    }
+
+    private CompilationProduct product() {
+        switch (compileTarget) {
+            case MAIN:
+                return new CompilationProduct(buildDir);
+            case TEST:
+                return new CompilationProduct(buildDir);
             default:
                 throw new IllegalStateException();
         }

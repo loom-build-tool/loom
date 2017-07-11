@@ -135,18 +135,18 @@ public class PluginRegistry {
 
     }
 
-    private void initPlugin(final String plugin)
+    private void initPlugin(final String pluginName)
         throws Exception {
 
-        LOG.info("Initialize plugin {}", plugin);
-        final String pluginClassname = INTERNAL_PLUGINS.get(plugin);
+        LOG.info("Initialize plugin {}", pluginName);
+        final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
-            throw new IllegalArgumentException("Unknown plugin: " + plugin);
+            throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         }
 
-        final URL pluginJarUrl = findPluginUrl(plugin);
+        final URL pluginJarUrl = findPluginUrl(pluginName);
 
-        LOG.info("Load plugin {} using jar file from {}", plugin, pluginJarUrl);
+        LOG.info("Load plugin {} using jar file from {}", pluginName, pluginJarUrl);
 
         // Note that plugin dependencies are specified in MANIFEST.MF
         // @link https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html
@@ -158,18 +158,19 @@ public class PluginRegistry {
                 Thread.currentThread().getContextClassLoader()
                 ));
 
-        final Class<?> aClass = classLoader.loadClass(pluginClassname);
-        final Plugin regPlugin = (Plugin) aClass.newInstance();
-        regPlugin.setTaskRegistry(taskRegistry);
-        regPlugin.setServiceLocator(serviceLocator);
-        regPlugin.setBuildConfig(buildConfig);
-        regPlugin.setRuntimeConfiguration(runtimeConfiguration);
-        regPlugin.setRepositoryPath(Constants.PROJECT_LOOM_PATH.resolve(
-            Paths.get(Version.getVersion(), plugin)));
-        injectPluginSettings(plugin, regPlugin);
-        regPlugin.configure();
+        final Class<?> pluginClass = classLoader.loadClass(pluginClassname);
+        final Plugin plugin = (Plugin) pluginClass.newInstance();
+        plugin.setName(pluginName);
+        plugin.setTaskRegistry(taskRegistry);
+        plugin.setServiceLocator(serviceLocator);
+        plugin.setBuildConfig(buildConfig);
+        plugin.setRuntimeConfiguration(runtimeConfiguration);
+        plugin.setRepositoryPath(Constants.PROJECT_LOOM_PATH.resolve(
+            Paths.get(Version.getVersion(), pluginName)));
+        injectPluginSettings(pluginName, plugin);
+        plugin.configure();
 
-        LOG.info("Plugin {} initialized", plugin);
+        LOG.info("Plugin {} initialized", pluginName);
     }
 
     private URL findPluginUrl(final String name) {
@@ -230,7 +231,7 @@ public class PluginRegistry {
         unknownSettings.removeAll(configuredPluginSettings);
 
         if (!unknownSettings.isEmpty()) {
-            throw new IllegalStateException("Unknown settings: " + unknownSettings);
+            LOG.warn("Unknown settings: " + unknownSettings);
         }
     }
 

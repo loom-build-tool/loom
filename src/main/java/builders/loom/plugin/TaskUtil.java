@@ -30,12 +30,11 @@ public final class TaskUtil {
 
         for (final String taskName : taskRegistry.getTaskNames()) {
             final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
-            for (final String providedProduct : configuredTask.getProvidedProducts()) {
-                final String oldTaskName = producersMap.putIfAbsent(providedProduct, taskName);
-                if (oldTaskName != null) {
-                    throw new IllegalStateException("Product " + providedProduct + " provided by "
-                        + taskName + " but was already provided by " + oldTaskName);
-                }
+            final String providedProduct = configuredTask.getProvidedProduct();
+            final String oldTaskName = producersMap.putIfAbsent(providedProduct, taskName);
+            if (oldTaskName != null) {
+                throw new IllegalStateException("Product " + providedProduct + " provided by "
+                    + taskName + " but was already provided by " + oldTaskName);
             }
         }
 

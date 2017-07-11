@@ -16,30 +16,31 @@
 
 package builders.loom.api;
 
-import java.util.Set;
-
 import builders.loom.api.product.DummyProduct;
 
-public class WaitForAllProductsTask extends AbstractTask {
+public class WaitForAllProductsTask implements Task, ProductDependenciesAware {
+
+    private ProvidedProduct providedProduct;
+    private UsedProducts usedProducts;
 
     @Override
-    public TaskStatus run() throws Exception {
-        final ProvidedProducts providedProducts = getProvidedProducts();
-        final Set<String> producedProductIds = providedProducts.getProducedProductIds();
+    public void setProvidedProduct(final ProvidedProduct providedProduct) {
+        this.providedProduct = providedProduct;
+    }
 
-        if (producedProductIds.size() != 1) {
-            throw new IllegalStateException("WaitForAllProductsTask accepts only exact 1 product");
-        }
+    @Override
+    public void setUsedProducts(final UsedProducts usedProducts) {
+        this.usedProducts = usedProducts;
+    }
 
-        final UsedProducts usedProducts = getUsedProducts();
+    @Override
+    public TaskResult run() throws Exception {
         for (final String productId : usedProducts.getAllowedProductIds()) {
             usedProducts.waitForProduct(productId);
         }
 
-        final String productId = producedProductIds.iterator().next();
-        providedProducts.complete(productId, new DummyProduct(productId));
-
-        return TaskStatus.OK;
+        return new TaskResult(TaskStatus.OK,
+            new DummyProduct(providedProduct.getProducedProductId()));
     }
 
 }

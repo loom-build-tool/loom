@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.api.product;
 
-public interface ProductDependenciesAware {
+import java.util.Optional;
 
-    void setProvidedProduct(ProvidedProduct providedProduct);
+public abstract class AbstractProduct implements Product {
 
-    void setUsedProducts(UsedProducts usedProducts);
+    @Override
+    public Optional<String> outputInfo() {
+        return Optional.empty();
+    }
 
 }

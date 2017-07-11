@@ -20,11 +20,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class ArtifactListProduct implements Product {
+public final class ArtifactListProduct extends AbstractProduct {
 
     private final List<ArtifactProduct> artifacts;
 
     public ArtifactListProduct(final List<ArtifactProduct> artifacts) {
+        if (artifacts == null || artifacts.isEmpty()) {
+            throw new IllegalArgumentException("artifacts must not be null or empty");
+        }
         this.artifacts = Collections.unmodifiableList(new ArrayList<>(artifacts));
     }
 

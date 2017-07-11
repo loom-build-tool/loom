@@ -22,23 +22,19 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * Must be immutable!
  */
-public final class ClasspathProduct implements Product {
+public final class ClasspathProduct extends AbstractProduct {
 
     private final List<Path> entries;
 
-    public ClasspathProduct(final Path entry) {
-        Objects.requireNonNull(entry);
-        this.entries = Collections.unmodifiableList(
-            Collections.singletonList(entry));
-    }
-
     public ClasspathProduct(final List<Path> entries) {
+        if (entries == null || entries.isEmpty()) {
+            throw new IllegalArgumentException("entries must not be null");
+        }
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
     }
 
@@ -66,13 +62,6 @@ public final class ClasspathProduct implements Product {
         } catch (final MalformedURLException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    public Path getSingleEntry() {
-        if (entries.size() != 1) {
-            throw new IllegalStateException();
-        }
-        return entries.get(0);
     }
 
     @Override

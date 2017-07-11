@@ -56,9 +56,15 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("compilation", "testSource", "testDependencies")
             .register();
 
-        task("assemble")
+        task("assembleJar")
             .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
-            .provides("jar", "sourcesJar")
+            .provides("jar")
+            .uses("source", "resources", "processedResources", "compilation")
+            .register();
+
+        task("assembleSourcesJar")
+            .impl(() -> new JavaAssembleSourcesJarTask(buildConfig))
+            .provides("sourcesJar")
             .uses("source", "resources", "processedResources", "compilation")
             .register();
 

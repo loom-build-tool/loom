@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,7 @@ import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 import net.sourceforge.pmd.PMD;
@@ -65,6 +66,7 @@ public class PmdTask extends AbstractTask {
     private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
 
     private final CompileTarget compileTarget;
+    private final Path reportPath;
     private final PMDConfiguration configuration = new PMDConfiguration();
     private final Path cacheDir;
 
@@ -76,6 +78,9 @@ public class PmdTask extends AbstractTask {
         SLF4JBridgeHandler.install();
 
         this.compileTarget = compileTarget;
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("pmd",
+            compileTarget.name().toLowerCase()));
+        this.cacheDir = cacheDir;
 
         configuration.setReportShortNames(true);
         configuration.setRuleSets(pluginSettings.getRuleSets());
@@ -89,8 +94,6 @@ public class PmdTask extends AbstractTask {
         if (configuration.getSuppressMarker() != null) {
             LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
         }
-
-        this.cacheDir = cacheDir;
     }
 
     private LanguageVersion getLanguageVersion(final BuildConfig buildConfig) {
@@ -113,22 +116,22 @@ public class PmdTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final RuleSetFactory ruleSetFactory = buildRuleSetFactory();
 
         final RuleContext ctx = new RuleContext();
         final AtomicInteger ruleViolations = new AtomicInteger(0);
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
-        final Path srcDir = getSource();
+        final Optional<SourceTreeProduct> sourceTreeProduct = getSource();
 
-        if (Files.notExists(srcDir)) {
-            return complete(TaskStatus.SKIP);
+        if (!sourceTreeProduct.isPresent()) {
+            return completeSkip();
         }
 
-        final List<DataSource> files = Files.walk(srcDir)
-            .filter(Files::isRegularFile)
-            .filter(f -> f.toString().endsWith(".java"))
+        final Path srcDir = sourceTreeProduct.get().getSrcDir();
+
+        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
             .map(f -> new FileDataSource(f.toFile()))
             .collect(Collectors.toList());
 
@@ -158,11 +161,11 @@ public class PmdTask extends AbstractTask {
                 + " rule violations in the code");
         }
 
-        return complete(TaskStatus.OK);
+        return completeOk(product());
     }
 
     private HTMLRenderer buildHtmlRenderer() throws IOException {
-        final Path reportDir = Files.createDirectories(LoomPaths.REPORT_PATH.resolve("pmd"));
+        final Path reportDir = Files.createDirectories(reportPath);
 
         final HTMLRenderer htmlRenderer = new HTMLRenderer();
         final String reportFileName = compileTarget.name().toLowerCase() + ".html";
@@ -196,33 +199,26 @@ public class PmdTask extends AbstractTask {
         return ruleSetFactory;
     }
 
-    private Path getSource() throws InterruptedException {
+    private Optional<SourceTreeProduct> getSource() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("source", SourceTreeProduct.class)
-                    .getSrcDir();
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class)
-                    .getSrcDir();
+                return useProduct("testSource", SourceTreeProduct.class);
             default:
                 throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
         }
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private ReportProduct product() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("pmdMainReport",
-                    new ReportProduct(LoomPaths.REPORT_PATH.resolve("pmd")));
-                break;
+                return new ReportProduct(reportPath, "PMD main report");
             case TEST:
-                getProvidedProducts().complete("pmdTestReport",
-                    new ReportProduct(LoomPaths.REPORT_PATH.resolve("pmd")));
-                break;
+                return new ReportProduct(reportPath, "PMD test report");
             default:
                 throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
         }
-        return status;
     }
 
     private static class LogRenderer extends AbstractRenderer {

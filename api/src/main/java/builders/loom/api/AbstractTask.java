@@ -16,22 +16,26 @@
 
 package builders.loom.api;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import builders.loom.api.product.Product;
 import builders.loom.api.service.ServiceLocator;
 
 public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
 
-    private ProvidedProducts providedProducts;
+    private ProvidedProduct providedProduct;
     private UsedProducts usedProducts;
     private ServiceLocator serviceLocator;
 
     @Override
-    public void setProvidedProducts(final ProvidedProducts providedProducts) {
-        this.providedProducts = providedProducts;
+    public void setProvidedProduct(final ProvidedProduct providedProduct) {
+        this.providedProduct = providedProduct;
     }
 
-    public ProvidedProducts getProvidedProducts() {
-        return providedProducts;
+    public ProvidedProduct getProvidedProduct() {
+        return providedProduct;
     }
 
     @Override
@@ -43,6 +47,22 @@ public abstract class AbstractTask implements Task,
         return usedProducts;
     }
 
+    public <P extends Product> P requireProduct(final String productId, final Class<P> productClass)
+        throws InterruptedException {
+
+        return useProduct(productId, productClass)
+            .orElseThrow(() -> new IllegalStateException("Requested product <"
+                + productId + "> is not present"));
+    }
+
+    public <P extends Product> Optional<P> useProduct(final String productId,
+                                                      final Class<P> productClass)
+        throws InterruptedException {
+        Objects.requireNonNull(productId, "productId required");
+        Objects.requireNonNull(productClass, "productClass required");
+        return usedProducts.readProduct(productId, productClass);
+    }
+
     @Override
     public void setServiceLocator(final ServiceLocator serviceLocator) {
         this.serviceLocator = serviceLocator;
@@ -50,6 +70,18 @@ public abstract class AbstractTask implements Task,
 
     public ServiceLocator getServiceLocator() {
         return serviceLocator;
+    }
+
+    public TaskResult completeOk(final Product product) {
+        return new TaskResult(TaskStatus.OK, product);
+    }
+
+    public TaskResult completeUpToDate(final Product product) {
+        return new TaskResult(TaskStatus.UP_TO_DATE, product);
+    }
+
+    public TaskResult completeSkip() {
+        return new TaskResult();
     }
 
 }

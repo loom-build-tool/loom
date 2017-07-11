@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.TaskStatus;
 import builders.loom.util.ThreadUtil;
 
 public class JobPool {
@@ -44,6 +43,7 @@ public class JobPool {
 
     private final Timer timer;
     private final ConcurrentHashMap<String, Job> currentJobs = new ConcurrentHashMap<>();
+    private final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
     public JobPool() {
         timer = new Timer("JobPoolMonitor", true);
@@ -64,16 +64,13 @@ public class JobPool {
         CompletableFuture.runAsync(() -> {
             Thread.currentThread().setName("job-" + jobName);
 
-            final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-
-            LOG.info("Start job {}", jobName);
             try {
                 currentJobs.put(jobName, job);
-                final TaskStatus status = job.call();
-                LOG.info("Job {} resulted with {}", jobName, status);
+                job.call();
 
                 ProgressMonitor.progress();
             } catch (final Throwable e) {
+                // In case of any Task error we end up here
                 firstException.compareAndSet(null, e);
                 if (!(e instanceof InterruptedException)) {
                     LOG.error(e.getMessage(), e);
@@ -81,6 +78,8 @@ public class JobPool {
                 executor.shutdownNow();
             } finally {
                 currentJobs.remove(jobName);
+
+                // Maybe someone set a new ContextClassLoader -- restore for thread re-use
                 Thread.currentThread().setContextClassLoader(contextClassLoader);
             }
         }, executor);

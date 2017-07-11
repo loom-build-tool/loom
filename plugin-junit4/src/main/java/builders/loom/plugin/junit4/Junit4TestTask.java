@@ -57,7 +57,7 @@ public class Junit4TestTask extends AbstractTask {
     @Override
     public TaskResult run() throws Exception {
         final Optional<CompilationProduct> testCompilationProduct = useProduct(
-            "testCompilationProduct", CompilationProduct.class);
+            "testCompilation", CompilationProduct.class);
 
         if (!testCompilationProduct.isPresent()) {
             return completeSkip();

@@ -89,7 +89,7 @@ public class ResourcesTask extends AbstractTask {
 
         return completeOk(new ProcessedResourceProduct(destPath));
     }
-    
+
     private Optional<ResourcesTreeProduct> getResourcesTreeProduct() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:

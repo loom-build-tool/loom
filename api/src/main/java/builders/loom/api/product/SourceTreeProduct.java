@@ -29,7 +29,7 @@ public final class SourceTreeProduct extends AbstractProduct {
 
     public SourceTreeProduct(final Path srcDir, final List<Path> sourceFiles) {
         this.srcDir = Objects.requireNonNull(srcDir, "srcDir must not be null");
-        if (sourceFiles == null ||sourceFiles.isEmpty()) {
+        if (sourceFiles == null || sourceFiles.isEmpty()) {
             throw new IllegalArgumentException("sourceFiles must not be null or empty");
         }
         this.sourceFiles = Collections.unmodifiableList(new ArrayList<>(sourceFiles));

@@ -25,6 +25,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -32,7 +33,7 @@ import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -55,7 +56,7 @@ public class SpringBootTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final Path baseDir = Paths.get("loombuild", "springboot");
         FileUtils.cleanDir(baseDir);
 
@@ -67,24 +68,27 @@ public class SpringBootTask extends AbstractTask {
 
         final Path fatJarFile = baseDir.resolve(jarFile.getFileName());
 
-        // copy resources
-        final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts()
-            .readProduct("processedResources", ProcessedResourceProduct.class);
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
-        FileUtils.copyFiles(resourcesTreeProduct.getSrcDir(), classesDir);
+
+        // copy resources
+        final Optional<ProcessedResourceProduct> resourcesTreeProduct =
+            useProduct("processedResources", ProcessedResourceProduct.class);
+        if (resourcesTreeProduct.isPresent()) {
+            FileUtils.copyFiles(resourcesTreeProduct.get().getSrcDir(), classesDir);
+        }
 
         // copy classes
-        final CompilationProduct compilationProduct = getUsedProducts()
-            .readProduct("compilation", CompilationProduct.class);
+        final CompilationProduct compilationProduct =
+            requireProduct("compilation", CompilationProduct.class);
         FileUtils.copyFiles(compilationProduct.getClassesDir(), classesDir);
 
         // scan for @SpringBootApplication
         final String applicationClassname = scanForApplicationStarter(compilationProduct);
 
         // copy libs
-        final ClasspathProduct compileDependenciesProduct = getUsedProducts()
-            .readProduct("compileDependencies", ClasspathProduct.class);
+        final ClasspathProduct compileDependenciesProduct =
+            requireProduct("compileDependencies", ClasspathProduct.class);
         final Path libDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "lib")));
         FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
@@ -95,7 +99,7 @@ public class SpringBootTask extends AbstractTask {
         // assemble jar
         new JarAssembler(pluginSettings).assemble(buildDir, fatJarFile, applicationClassname);
 
-        return complete(TaskStatus.OK, fatJarFile);
+        return completeOk(new AssemblyProduct(fatJarFile, "Spring Boot application"));
     }
 
     private Path resolveSpringBootLoaderJar() {
@@ -148,12 +152,6 @@ public class SpringBootTask extends AbstractTask {
                 }
             }
         }
-    }
-
-    private TaskStatus complete(final TaskStatus status, final Path assemblyFile) {
-        getProvidedProduct().complete("springBootApplication",
-            new AssemblyProduct(assemblyFile, "Spring Boot application"));
-        return status;
     }
 
 }

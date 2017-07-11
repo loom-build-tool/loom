@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -146,10 +147,10 @@ public class LoomProcessor {
         for (final String taskName : resolvedTasks) {
             final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
             final String productId = configuredTask.getProvidedProduct();
-            final Product product = productRepository.lookup(productId)
+            final Optional<Product> product = productRepository.lookup(productId)
                 .getAndWaitForProduct();
-            if (product.outputInfo().isPresent()) {
-                final String outputInfo = product.outputInfo().get();
+            if (product.isPresent() && product.get().outputInfo().isPresent()) {
+                final String outputInfo = product.get().outputInfo().get();
                 final String pluginName = configuredTask.getPluginName();
                 aggProducts.putIfAbsent(pluginName, new ArrayList<>());
                 aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));

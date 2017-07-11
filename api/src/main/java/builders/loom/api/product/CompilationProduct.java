@@ -30,4 +30,5 @@ public final class CompilationProduct extends AbstractProduct {
         return classesDir;
     }
 
+
 }

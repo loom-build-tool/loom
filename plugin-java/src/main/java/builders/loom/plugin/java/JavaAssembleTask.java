@@ -20,13 +20,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
@@ -43,27 +44,34 @@ public class JavaAssembleTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
 
-        try (final JarOutputStream os = buildJarOutput(jarFile)) {
-            final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts().readProduct(
-                "processedResources", ProcessedResourceProduct.class);
-            FileUtil.copy(resourcesTreeProduct.getSrcDir(), os);
+        final Optional<ProcessedResourceProduct> resourcesTreeProduct = useProduct(
+            "processedResources", ProcessedResourceProduct.class);
 
-            final CompilationProduct compilation = getUsedProducts().readProduct(
-                "compilation", CompilationProduct.class);
-            FileUtil.copy(compilation.getClassesDir(), os);
+        final Optional<CompilationProduct> compilation = useProduct(
+            "compilation", CompilationProduct.class);
+
+        if (!resourcesTreeProduct.isPresent() && !compilation.isPresent()) {
+            return completeSkip();
         }
 
-        getProvidedProduct().complete("jar", new AssemblyProduct(jarFile,
-            "Jar of compiled classes"));
+        try (final JarOutputStream os = buildJarOutput(jarFile)) {
+            if (resourcesTreeProduct.isPresent()) {
+                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            }
 
-        return TaskStatus.OK;
+            if (compilation.isPresent()) {
+                FileUtil.copy(compilation.get().getClassesDir(), os);
+            }
+        }
+
+        return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
     private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {

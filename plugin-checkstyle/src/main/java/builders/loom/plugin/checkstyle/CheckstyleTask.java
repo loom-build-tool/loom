@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
@@ -69,15 +70,14 @@ public class CheckstyleTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        final SourceTreeProduct sourceTree = getSourceTree();
+    public TaskResult run() throws Exception {
+        final Optional<SourceTreeProduct> sourceTree = getSourceTree();
 
-        if (Files.notExists(sourceTree.getSrcDir())) {
-            return complete(TaskStatus.SKIP);
+        if (!sourceTree.isPresent()) {
+            return completeSkip();
         }
 
-        final List<File> files = Files.walk(sourceTree.getSrcDir())
-            .filter(Files::isRegularFile)
+        final List<File> files = sourceTree.get().getSourceFiles().stream()
             .map(Path::toFile)
             .collect(Collectors.toList());
 
@@ -95,7 +95,7 @@ public class CheckstyleTask extends AbstractTask {
             final int errors = checker.process(files);
 
             if (errors == 0) {
-                return complete(TaskStatus.OK);
+                return completeOk(product());
             }
         } finally {
             checker.destroy();
@@ -104,27 +104,23 @@ public class CheckstyleTask extends AbstractTask {
         throw new IllegalStateException("Checkstyle reported errors!");
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private ReportProduct product() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProduct().complete("checkstyleMainReport",
-                    new ReportProduct(reportPath, "Checkstyle main report"));
-                return status;
+                return new ReportProduct(reportPath, "Checkstyle main report");
             case TEST:
-                getProvidedProduct().complete("checkstyleTestReport",
-                    new ReportProduct(reportPath, "Checkstyle test report"));
-                return status;
+                return new ReportProduct(reportPath, "Checkstyle test report");
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private SourceTreeProduct getSourceTree() throws InterruptedException {
+    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+                return useProduct("testSource", SourceTreeProduct.class);
             default:
                 throw new IllegalStateException();
         }
@@ -146,9 +142,11 @@ public class CheckstyleTask extends AbstractTask {
             rootModule.setModuleClassLoader(moduleClassLoader);
 
             if (rootModule instanceof Checker) {
-                final ClassLoader loader = buildClassLoader();
-
-                ((Checker) rootModule).setClassLoader(loader);
+                final Optional<ClasspathProduct> classpathProduct = buildClassLoader();
+                classpathProduct
+                    .map(ClasspathProduct::getEntriesAsUrlArray)
+                    .map(URLClassLoader::new)
+                    .ifPresent(((Checker) rootModule)::setClassLoader);
             }
 
             rootModule.configure(config);
@@ -180,22 +178,15 @@ public class CheckstyleTask extends AbstractTask {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader() throws InterruptedException {
-        final ClasspathProduct classpath;
+    private Optional<ClasspathProduct> buildClassLoader() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                classpath = getUsedProducts().readProduct(
-                    "compileDependencies", ClasspathProduct.class);
-                break;
+                return useProduct("compileDependencies", ClasspathProduct.class);
             case TEST:
-                classpath = getUsedProducts().readProduct(
-                    "testDependencies", ClasspathProduct.class);
-                break;
+                return useProduct("testDependencies", ClasspathProduct.class);
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
-
-        return new URLClassLoader(classpath.getEntriesAsUrlArray());
     }
 
 }

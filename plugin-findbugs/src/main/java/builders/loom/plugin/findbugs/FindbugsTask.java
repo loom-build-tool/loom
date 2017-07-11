@@ -17,7 +17,6 @@
 package builders.loom.plugin.findbugs;
 
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,7 +32,7 @@ import java.util.stream.Stream;
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ReportProduct;
@@ -98,73 +97,75 @@ public class FindbugsTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-
-        if (Files.notExists(getSourceTree().getSrcDir())
-            || Files.notExists(getClasses().getClassesDir())) {
-            return complete(TaskStatus.SKIP);
+    public TaskResult run() throws Exception {
+        if (!getSourceTree().isPresent() || !getClasses().isPresent()) {
+            return completeSkip();
         }
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        new FindbugsRunner(reportPath, getSourceTree().getSrcDir(),
-            getClasses().getClassesDir(), calcClasspath(), priorityThreshold).executeFindbugs();
+        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
+            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
+            .executeFindbugs();
 
-        return complete(TaskStatus.OK);
+        return completeOk(product());
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private ReportProduct product() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProduct().complete("findbugsMainReport",
-                    new ReportProduct(reportPath, "Findbugs main report"));
-                return status;
+                return new ReportProduct(reportPath, "Findbugs main report");
             case TEST:
-                getProvidedProduct().complete("findbugsTestReport",
-                    new ReportProduct(reportPath, "Findbugs test report"));
-                return status;
+                return new ReportProduct(reportPath, "Findbugs test report");
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private SourceTreeProduct getSourceTree() throws InterruptedException {
+    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+                return useProduct("testSource", SourceTreeProduct.class);
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private CompilationProduct getClasses() throws InterruptedException {
+    private Optional<CompilationProduct> getClasses() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compilation", CompilationProduct.class);
+                return useProduct("compilation", CompilationProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testCompilation", CompilationProduct.class);
+                return useProduct("testCompilation", CompilationProduct.class);
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private ClasspathProduct calcClasspath() throws InterruptedException {
+    private List<Path> calcClasspath() throws InterruptedException {
+        final List<Path> classpath = new ArrayList<>();
+
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("compileDependencies",
-                    ClasspathProduct.class);
+                useProduct("compileDependencies",
+                    ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
+                break;
             case TEST:
-                final List<Path> classpath = new ArrayList<>();
                 classpath.add(BUILD_MAIN_PATH);
-                classpath.addAll(
-                    getUsedProducts().readProduct("testDependencies",
-                        ClasspathProduct.class).getEntries());
-                return new ClasspathProduct(classpath);
+
+                useProduct("testDependencies",
+                    ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntries)
+                    .ifPresent(classpath::addAll);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }
+        return classpath;
     }
 
     private static Map<String, Integer> buildPrioritiesMap() {

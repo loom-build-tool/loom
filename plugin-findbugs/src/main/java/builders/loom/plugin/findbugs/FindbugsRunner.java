@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.product.ClasspathProduct;
 import builders.loom.util.Util;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
@@ -51,17 +50,17 @@ public class FindbugsRunner {
 
     private static final String EFFORT_DEFAULT = "default";
 
-    private final Path sourcesDir;
+    private final List<Path> sourceFiles;
     private final Path classesDir;
-    private final ClasspathProduct classpath;
+    private final List<Path> classpath;
 
     private final Optional<Integer> priorityThreshold;
-    private Path reportPath;
+    private final Path reportPath;
 
-    FindbugsRunner(final Path reportPath, final Path sourcesDir, final Path classesDir,
-                   final ClasspathProduct classpath, final Optional<Integer> priorityThreshold) {
+    FindbugsRunner(final Path reportPath, final List<Path> sourceFiles, final Path classesDir,
+                   final List<Path> classpath, final Optional<Integer> priorityThreshold) {
         this.reportPath = reportPath;
-        this.sourcesDir = sourcesDir;
+        this.sourceFiles = sourceFiles;
         this.classesDir = classesDir;
         this.classpath = classpath;
         this.priorityThreshold = priorityThreshold;
@@ -137,7 +136,8 @@ public class FindbugsRunner {
     private Project createFindbugsProject() throws IOException {
         final Project findbugsProject = new Project();
 
-        getSourceFiles(sourcesDir).stream()
+        sourceFiles.stream()
+            .map(Path::toString)
             .peek(p -> LOG.debug(" +source {}", p))
             .forEach(findbugsProject::addFile);
 
@@ -145,7 +145,7 @@ public class FindbugsRunner {
             .peek(p -> LOG.debug(" +class {}", p))
             .forEach(findbugsProject::addFile);
 
-        classpath.getEntries().stream()
+        classpath.stream()
             .map(FindbugsRunner::pathToString)
             .peek(p -> LOG.debug(" +aux {}", p))
             .forEach(findbugsProject::addAuxClasspathEntry);

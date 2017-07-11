@@ -42,7 +42,8 @@ public class ProductsTest {
 
         providedProduct.complete("a", new StringProduct("foo"));
 
-        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class).toString());
+        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class)
+            .get().toString());
 
     }
 

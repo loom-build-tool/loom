@@ -25,11 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.ProductDependenciesAware;
-import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.ProvidedProduct;
 import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
+import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.service.ServiceLocator;
@@ -63,10 +63,11 @@ public class Job implements Callable<TaskStatus> {
     @Override
     public TaskStatus call() throws Exception {
         status.set(JobStatus.RUNNING);
-        final TaskStatus taskStatus = runTask();
-        status.set(JobStatus.STOPPED);
-
-        return taskStatus;
+        try {
+            return runTask();
+        } finally {
+            status.set(JobStatus.STOPPED);
+        }
     }
 
     public TaskStatus runTask() throws Exception {
@@ -77,26 +78,27 @@ public class Job implements Callable<TaskStatus> {
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
-        final TaskStatus taskStatus = task.run();
+        final TaskResult taskResult = task.run();
         Stopwatch.stopProcess();
 
-        LOG.info("Task {} resulted with {}", name, taskStatus);
+        LOG.info("Task {} resulted with {}", name, taskResult);
 
-        Objects.requireNonNull(taskStatus, "Task <" + name + "> must not return null");
-        checkIfAllProductsCompleted();
-
-        return taskStatus;
-    }
-
-    private void checkIfAllProductsCompleted() {
-        final ProductPromise promise =
-            productRepository.lookup(configuredTask.getProvidedProduct());
-
-        if (!promise.isCompleted()) {
-            throw new IllegalStateException(
-                String.format("task.run <%s> did not complete(provide) the following product: %s",
-                name, promise.getProductId()));
+        if (taskResult == null) {
+            throw new IllegalStateException("Task <" + name + "> must not return null");
         }
+        if (taskResult.getStatus() == null) {
+            throw new IllegalStateException("Task <" + name + "> must not return null status");
+        }
+        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.SKIP) {
+            throw new IllegalStateException("Task <" + name + "> returned null product with "
+                + "status: " + taskResult.getStatus());
+        }
+
+        productRepository
+            .lookup(configuredTask.getProvidedProduct())
+            .complete(taskResult.getProduct());
+
+        return taskResult.getStatus();
     }
 
     private void injectTaskProperties(final Task task) {

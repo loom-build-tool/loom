@@ -17,6 +17,7 @@
 package builders.loom.api;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,7 +35,7 @@ public final class ProductPromise {
 
     private static final int FUTURE_WAIT_THRESHOLD = 10;
 
-    private final CompletableFuture<Product> promise = new CompletableFuture<>();
+    private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
     private final String productId;
 
@@ -43,7 +44,7 @@ public final class ProductPromise {
     }
 
     public void complete(final Product withValue) {
-        final boolean completed = promise.complete(withValue);
+        final boolean completed = promise.complete(Optional.ofNullable(withValue));
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
@@ -54,20 +55,17 @@ public final class ProductPromise {
         return productId;
     }
 
-    public Product getAndWaitForProduct() throws InterruptedException {
+    public Optional<Product> getAndWaitForProduct() throws InterruptedException {
         return waitAndGet(promise);
     }
 
-    public boolean isCompleted() {
-        return promise.isDone();
-    }
-
-    private Product waitAndGet(final Future<Product> future) throws InterruptedException {
+    private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
+        throws InterruptedException {
 
         LOG.debug("Requesting product <{}> ...", productId);
 
         try {
-            final Product product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
+            final Optional<Product> product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
 
             LOG.debug("Return product <{}> with value: {}", productId, product);
 

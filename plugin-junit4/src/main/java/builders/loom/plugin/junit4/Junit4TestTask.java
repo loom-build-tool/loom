@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.Computer;
@@ -41,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
@@ -54,17 +55,17 @@ public class Junit4TestTask extends AbstractTask {
     private static final Path REPORT_PATH = Paths.get("loombuild", "reports", "tests");
 
     @Override
-    public TaskStatus run() throws Exception {
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
-            "testCompilation", CompilationProduct.class);
+    public TaskResult run() throws Exception {
+        final Optional<CompilationProduct> testCompilationProduct = useProduct(
+            "testCompilationProduct", CompilationProduct.class);
 
-        if (Files.notExists(testCompilation.getClassesDir())) {
-            return complete(TaskStatus.SKIP);
+        if (!testCompilationProduct.isPresent()) {
+            return completeSkip();
         }
 
-        final URLClassLoader urlClassLoader = buildClassLoader();
-
-        final Class<?>[] testClasses = collectClasses(urlClassLoader)
+        final CompilationProduct testCompilation = testCompilationProduct.get();
+        final URLClassLoader urlClassLoader = buildClassLoader(testCompilation);
+        final Class<?>[] testClasses = collectClasses(urlClassLoader, testCompilation)
             .toArray(new Class<?>[] {});
 
         final Computer computer = new Computer();
@@ -77,47 +78,52 @@ public class Junit4TestTask extends AbstractTask {
         });
         final Result run = jUnitCore.run(computer, testClasses);
 
-        if (run.wasSuccessful()) {
-            return complete(TaskStatus.OK);
+        if (!run.wasSuccessful()) {
+            throw new IllegalStateException("Failed");
         }
 
-        throw new IllegalStateException("Failed");
+        return completeOk(new ReportProduct(REPORT_PATH, "Junit test report"));
     }
 
-    private URLClassLoader buildClassLoader() throws MalformedURLException, InterruptedException {
-        final List<URL> urls = new ArrayList<>();
+    private URLClassLoader buildClassLoader(final CompilationProduct testCompilation)
+        throws MalformedURLException, InterruptedException {
 
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
-            "testCompilation", CompilationProduct.class);
+        final List<URL> urls = new ArrayList<>();
         urls.add(testCompilation.getClassesDir().toUri().toURL());
 
-        final ProcessedResourceProduct processedTestResources = getUsedProducts().readProduct(
+        final Optional<ProcessedResourceProduct> processedTestResources = useProduct(
             "processedTestResources", ProcessedResourceProduct.class);
-        urls.add(processedTestResources.getSrcDir().toUri().toURL());
+        if (processedTestResources.isPresent()) {
+            urls.add(processedTestResources.get().getSrcDir().toUri().toURL());
+        }
 
-        final CompilationProduct compilation = getUsedProducts().readProduct(
+        final Optional<CompilationProduct> compilation = useProduct(
             "compilation", CompilationProduct.class);
-        urls.add(compilation.getClassesDir().toUri().toURL());
+        if (compilation.isPresent()) {
+            urls.add(compilation.get().getClassesDir().toUri().toURL());
+        }
 
-        final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
+        final Optional<ProcessedResourceProduct> processedResources = useProduct(
             "processedResources", ProcessedResourceProduct.class);
-        urls.add(processedResources.getSrcDir().toUri().toURL());
+        if (processedResources.isPresent()) {
+            urls.add(processedResources.get().getSrcDir().toUri().toURL());
+        }
 
-        final List<URL> testDependencies = getUsedProducts().readProduct("testDependencies",
-            ClasspathProduct.class).getEntriesAsUrls();
-        urls.addAll(testDependencies);
+        final Optional<ClasspathProduct> testDependencies = useProduct(
+            "testDependencies", ClasspathProduct.class);
+        if (testDependencies.isPresent()) {
+            urls.addAll(testDependencies.get().getEntriesAsUrls());
+        }
 
         return new URLClassLoader(urls.toArray(new URL[] {}),
             Junit4TestTask.class.getClassLoader());
     }
 
-    private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader)
+    private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader,
+                                          final CompilationProduct testCompilation)
         throws IOException, InterruptedException {
 
         final List<Class<?>> classes = new ArrayList<>();
-
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
-            "testCompilation", CompilationProduct.class);
 
         final Path rootPath = testCompilation.getClassesDir();
         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
@@ -152,11 +158,6 @@ public class Junit4TestTask extends AbstractTask {
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private TaskStatus complete(final TaskStatus status) {
-        getProvidedProduct().complete("test", new ReportProduct(REPORT_PATH, "Junit test report"));
-        return status;
     }
 
 }

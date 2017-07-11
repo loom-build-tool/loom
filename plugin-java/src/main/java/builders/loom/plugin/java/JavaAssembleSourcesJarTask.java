@@ -19,11 +19,12 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 import builders.loom.api.product.SourceTreeProduct;
@@ -37,27 +38,34 @@ public class JavaAssembleSourcesJarTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
-            final ResourcesTreeProduct resourcesTreeProduct = getUsedProducts().readProduct(
-                "resources", ResourcesTreeProduct.class);
-            FileUtil.copy(resourcesTreeProduct.getSrcDir(), os);
+        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
+            "resources", ResourcesTreeProduct.class);
 
-            final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
-                "source", SourceTreeProduct.class);
-            FileUtil.copy(sourceTree.getSrcDir(), os);
+        final Optional<SourceTreeProduct> sourceTree = useProduct(
+            "source", SourceTreeProduct.class);
+
+        if (!resourcesTreeProduct.isPresent() && !sourceTree.isPresent()) {
+            return completeSkip();
         }
 
-        getProvidedProduct().complete("sourcesJar", new AssemblyProduct(sourceJarFile,
-            "Jar of sources"));
+        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
+            if (resourcesTreeProduct.isPresent()) {
+                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            }
 
-        return TaskStatus.OK;
+            if (sourceTree.isPresent()) {
+                FileUtil.copy(sourceTree.get().getSrcDir(), os);
+            }
+        }
+
+        return completeOk(new AssemblyProduct(sourceJarFile, "Jar of sources"));
     }
 
 }

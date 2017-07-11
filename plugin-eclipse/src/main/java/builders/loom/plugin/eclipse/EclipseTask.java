@@ -69,7 +69,7 @@ public class EclipseTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("eclipse", new DummyProduct("Eclipse project files"));
+        getProvidedProduct().complete("eclipse", new DummyProduct("Eclipse project files"));
         return status;
     }
 

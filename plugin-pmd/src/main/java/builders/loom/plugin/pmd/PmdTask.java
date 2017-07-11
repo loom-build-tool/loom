@@ -214,11 +214,11 @@ public class PmdTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("pmdMainReport",
+                getProvidedProduct().complete("pmdMainReport",
                     new ReportProduct(reportPath, "PMD main report"));
                 break;
             case TEST:
-                getProvidedProducts().complete("pmdTestReport",
+                getProvidedProduct().complete("pmdTestReport",
                     new ReportProduct(reportPath, "PMD test report"));
                 break;
             default:

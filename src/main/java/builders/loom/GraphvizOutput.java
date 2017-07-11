@@ -65,15 +65,13 @@ public final class GraphvizOutput {
 
             final ConfiguredTask task = taskRegistryLookup.lookupTask(taskName);
 
-            for (final String productId :  task.getProvidedProducts()) {
+            final String productId = task.getProvidedProduct();
 
-                writeKeyValue(pw, productId,
-                    productId + "\\n" + taskName, Collections.emptyList());
+            writeKeyValue(pw, productId,
+                productId + "\\n" + taskName, Collections.emptyList());
 
-                writeKeyValue(pw, productId, null,
-                    new ArrayList<>(task.getUsedProducts()));
-
-            }
+            writeKeyValue(pw, productId, null,
+                new ArrayList<>(task.getUsedProducts()));
 
         }
 

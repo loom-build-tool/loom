@@ -70,7 +70,7 @@ public class MavenResolverTask extends AbstractTask {
         final List<Path> collect = artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
 
-        getProvidedProducts().complete("compileDependencies",
+        getProvidedProduct().complete("compileDependencies",
             new ClasspathProduct(collect));
     }
 
@@ -84,7 +84,7 @@ public class MavenResolverTask extends AbstractTask {
         final List<Path> collect = artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
 
-        getProvidedProducts().complete("testDependencies",
+        getProvidedProduct().complete("testDependencies",
             new ClasspathProduct(collect));
     }
 

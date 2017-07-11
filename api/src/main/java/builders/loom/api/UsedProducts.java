@@ -41,7 +41,7 @@ public class UsedProducts {
         final Set<String> allowedProductIds,
         final ProductRepository productRepository) {
         Objects.requireNonNull(allowedProductIds);
-        allowedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
+        allowedProductIds.forEach(ProvidedProduct::validateProductIdFormat);
         Objects.requireNonNull(productRepository);
         this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
         this.productRepository = productRepository;

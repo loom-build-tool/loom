@@ -27,14 +27,14 @@ public class ConfiguredTask {
 
     private final String pluginName;
     private final Supplier<Task> taskSupplier;
-    private final Set<String> providedProducts;
+    private final String providedProduct;
     private final Set<String> usedProducts;
 
     ConfiguredTask(final String pluginName, final Supplier<Task> taskSupplier,
-                   final Set<String> providedProducts, final Set<String> usedProducts) {
+                   final String providedProduct, final Set<String> usedProducts) {
         this.pluginName = pluginName;
         this.taskSupplier = taskSupplier;
-        this.providedProducts = new HashSet<>(providedProducts);
+        this.providedProduct = providedProduct;
         this.usedProducts = new HashSet<>(usedProducts);
     }
 
@@ -46,8 +46,8 @@ public class ConfiguredTask {
         return taskSupplier;
     }
 
-    public Set<String> getProvidedProducts() {
-        return Collections.unmodifiableSet(providedProducts);
+    public String getProvidedProduct() {
+        return providedProduct;
     }
 
     public Set<String> getUsedProducts() {

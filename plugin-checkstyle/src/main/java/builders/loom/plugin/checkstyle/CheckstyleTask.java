@@ -107,11 +107,11 @@ public class CheckstyleTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("checkstyleMainReport",
+                getProvidedProduct().complete("checkstyleMainReport",
                     new ReportProduct(reportPath, "Checkstyle main report"));
                 return status;
             case TEST:
-                getProvidedProducts().complete("checkstyleTestReport",
+                getProvidedProduct().complete("checkstyleTestReport",
                     new ReportProduct(reportPath, "Checkstyle test report"));
                 return status;
             default:

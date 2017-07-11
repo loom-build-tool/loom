@@ -17,11 +17,9 @@
 package builders.loom;
 
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +27,13 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
-import builders.loom.api.ProvidedProducts;
+import builders.loom.api.ProvidedProduct;
 import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Preconditions;
 import builders.loom.util.Stopwatch;
 
 public class Job implements Callable<TaskStatus> {
@@ -92,26 +89,22 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private void checkIfAllProductsCompleted() {
+        final ProductPromise promise =
+            productRepository.lookup(configuredTask.getProvidedProduct());
 
-        final Set<String> uncompletedProduct =
-            configuredTask.getProvidedProducts().stream()
-            .map(productRepository::lookup)
-            .filter(product -> !product.isCompleted())
-            .map(ProductPromise::getProductId)
-            .collect(Collectors.toSet());
-
-        Preconditions.checkState(uncompletedProduct.isEmpty(),
-            "task.run <%s> did not complete(provide) the following products: %s",
-            name, uncompletedProduct);
-
+        if (!promise.isCompleted()) {
+            throw new IllegalStateException(
+                String.format("task.run <%s> did not complete(provide) the following product: %s",
+                name, promise.getProductId()));
+        }
     }
 
     private void injectTaskProperties(final Task task) {
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
-            pdaTask.setProvidedProducts(
-                new ProvidedProducts(
-                    configuredTask.getProvidedProducts(), productRepository, name));
+            pdaTask.setProvidedProduct(
+                new ProvidedProduct(
+                    configuredTask.getProvidedProduct(), productRepository, name));
             pdaTask.setUsedProducts(
                 new UsedProducts(configuredTask.getUsedProducts(), productRepository));
         }

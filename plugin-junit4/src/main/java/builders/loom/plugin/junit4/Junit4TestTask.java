@@ -155,7 +155,7 @@ public class Junit4TestTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("test", new ReportProduct(REPORT_PATH, "Junit test report"));
+        getProvidedProduct().complete("test", new ReportProduct(REPORT_PATH, "Junit test report"));
         return status;
     }
 

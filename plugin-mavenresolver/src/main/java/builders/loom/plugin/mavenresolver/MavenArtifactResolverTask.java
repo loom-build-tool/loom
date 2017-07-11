@@ -62,7 +62,7 @@ public class MavenArtifactResolverTask extends AbstractTask {
 
     private void compileScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
-        getProvidedProducts().complete("compileArtifacts",
+        getProvidedProduct().complete("compileArtifacts",
             new ArtifactListProduct(mavenResolver.resolve(dependencies,
                 DependencyScope.COMPILE, "sources")));
     }
@@ -71,7 +71,7 @@ public class MavenArtifactResolverTask extends AbstractTask {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 
-        getProvidedProducts().complete("testArtifacts",
+        getProvidedProduct().complete("testArtifacts",
             new ArtifactListProduct(mavenResolver.resolve(dependencies,
                 DependencyScope.TEST, "sources")));
     }

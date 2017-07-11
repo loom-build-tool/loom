@@ -32,17 +32,17 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
 
     @Override
     public void registerTask(final String pluginName, final String taskName,
-                             final Supplier<Task> taskSupplier, final Set<String> providedProducts,
+                             final Supplier<Task> taskSupplier, final String providedProduct,
                              final Set<String> usedProducts) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");
         Objects.requireNonNull(taskSupplier, "taskSupplier missing on task <" + taskName + ">");
-        Objects.requireNonNull(providedProducts,
+        Objects.requireNonNull(providedProduct,
             "providedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
 
         if (taskMap.putIfAbsent(taskName, new ConfiguredTask(pluginName, taskSupplier,
-            providedProducts, usedProducts)) != null) {
+            providedProduct, usedProducts)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
         }
@@ -58,8 +58,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
 
         taskMap.compute(goalName, (name, configuredTask) -> configuredTask != null
             ? configuredTask.addUsedProducts(usedProducts)
-            : new ConfiguredTask(pluginName, WaitForAllProductsTask::new,
-                Collections.singleton(goalName), usedProducts));
+            : new ConfiguredTask(pluginName, WaitForAllProductsTask::new, goalName, usedProducts));
     }
 
     @Override

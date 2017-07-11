@@ -108,7 +108,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         private final String taskName;
         private Supplier<Task> taskSupplier;
-        private Set<String> providedProducts;
+        private String providedProduct;
         private Set<String> usedProducts = Collections.emptySet();
 
         public TaskBuilder(final String taskName) {
@@ -120,8 +120,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public TaskBuilder provides(final String... products) {
-            providedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+        public TaskBuilder provides(final String product) {
+            providedProduct = Objects.requireNonNull(product);
             return this;
         }
 
@@ -131,7 +131,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProducts,
+            taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
                 usedProducts);
         }
 

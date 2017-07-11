@@ -116,11 +116,11 @@ public class FindbugsTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("findbugsMainReport",
+                getProvidedProduct().complete("findbugsMainReport",
                     new ReportProduct(reportPath, "Findbugs main report"));
                 return status;
             case TEST:
-                getProvidedProducts().complete("findbugsTestReport",
+                getProvidedProduct().complete("findbugsTestReport",
                     new ReportProduct(reportPath, "Findbugs test report"));
                 return status;
             default:

@@ -75,7 +75,7 @@ public class IdeaTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("idea", new DummyProduct("Idea project files"));
+        getProvidedProduct().complete("idea", new DummyProduct("Idea project files"));
         return status;
     }
 

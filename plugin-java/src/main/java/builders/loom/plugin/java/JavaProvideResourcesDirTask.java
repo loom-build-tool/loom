@@ -42,11 +42,11 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("resources",
+                getProvidedProduct().complete("resources",
                     new ResourcesTreeProduct(SRC_RES_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testResources",
+                getProvidedProduct().complete("testResources",
                     new ResourcesTreeProduct(SRC_TESTRES_PATH));
                 return status;
             default:

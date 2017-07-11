@@ -43,10 +43,10 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("source", new SourceTreeProduct(SRC_MAIN_PATH));
+                getProvidedProduct().complete("source", new SourceTreeProduct(SRC_MAIN_PATH));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testSource", new SourceTreeProduct(SRC_TEST_PATH));
+                getProvidedProduct().complete("testSource", new SourceTreeProduct(SRC_TEST_PATH));
                 return status;
             default:
                 throw new IllegalStateException();

@@ -17,14 +17,10 @@
 package builders.loom.plugin.java;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -34,8 +30,6 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
-import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaAssembleTask extends AbstractTask {
 
@@ -50,52 +44,30 @@ public class JavaAssembleTask extends AbstractTask {
 
     @Override
     public TaskStatus run() throws Exception {
-        final Manifest preparedManifest = prepareManifest();
-
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
-        // main jar
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),
             buildConfig.getProject().getVersion()));
 
-        try (final JarOutputStream os = newJarOutputStream(jarFile, preparedManifest)) {
+        try (final JarOutputStream os = buildJarOutput(jarFile)) {
             final ProcessedResourceProduct resourcesTreeProduct = getUsedProducts().readProduct(
                 "processedResources", ProcessedResourceProduct.class);
-            copy(resourcesTreeProduct.getSrcDir(), os);
+            FileUtil.copy(resourcesTreeProduct.getSrcDir(), os);
 
             final CompilationProduct compilation = getUsedProducts().readProduct(
                 "compilation", CompilationProduct.class);
-            copy(compilation.getClassesDir(), os);
+            FileUtil.copy(compilation.getClassesDir(), os);
         }
 
-        // sources jar
-        final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
-
-        try (final JarOutputStream os = newJarOutputStream(sourceJarFile, null)) {
-            final ResourcesTreeProduct resourcesTreeProduct = getUsedProducts().readProduct(
-                "resources", ResourcesTreeProduct.class);
-            copy(resourcesTreeProduct.getSrcDir(), os);
-
-            final SourceTreeProduct sourceTree = getUsedProducts().readProduct(
-                "source", SourceTreeProduct.class);
-            copy(sourceTree.getSrcDir(), os);
-        }
-
-        getProvidedProducts().complete("jar", new AssemblyProduct(jarFile,
+        getProvidedProduct().complete("jar", new AssemblyProduct(jarFile,
             "Jar of compiled classes"));
-        getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile,
-            "Jar of sources"));
 
         return TaskStatus.OK;
     }
 
-    private void copy(final Path srcDir, final JarOutputStream os) throws IOException {
-        if (Files.isDirectory(srcDir)) {
-            Files.walkFileTree(srcDir, new CreateJarFileVisitor(srcDir, os));
-        }
+    private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
+        return new JarOutputStream(Files.newOutputStream(jarFile), prepareManifest());
     }
 
     private Manifest prepareManifest() {
@@ -115,52 +87,4 @@ public class JavaAssembleTask extends AbstractTask {
         return newManifest;
     }
 
-    private JarOutputStream newJarOutputStream(final Path targetFile, final Manifest manifest)
-        throws IOException {
-        return manifest == null
-            ? new JarOutputStream(Files.newOutputStream(targetFile))
-            : new JarOutputStream(Files.newOutputStream(targetFile), manifest);
-    }
-
-    private static class CreateJarFileVisitor extends SimpleFileVisitor<Path> {
-
-        private final Path sourceDir;
-        private final JarOutputStream os;
-
-        CreateJarFileVisitor(final Path sourceDir, final JarOutputStream os) {
-            this.sourceDir = sourceDir;
-            this.os = os;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(final Path dir,
-                                                 final BasicFileAttributes attrs)
-            throws IOException {
-
-            if (dir.equals(sourceDir)) {
-                return FileVisitResult.CONTINUE;
-            }
-
-            final JarEntry entry = new JarEntry(sourceDir.relativize(dir).toString() + "/");
-            entry.setTime(attrs.lastModifiedTime().toMillis());
-            os.putNextEntry(entry);
-            os.closeEntry();
-
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(final Path file,
-                                         final BasicFileAttributes attrs)
-            throws IOException {
-
-            final JarEntry entry = new JarEntry(sourceDir.relativize(file).toString());
-            entry.setTime(attrs.lastModifiedTime().toMillis());
-            os.putNextEntry(entry);
-            Files.copy(file, os);
-            os.closeEntry();
-            return FileVisitResult.CONTINUE;
-        }
-
-    }
 }

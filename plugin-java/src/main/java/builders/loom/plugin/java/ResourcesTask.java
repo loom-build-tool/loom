@@ -112,11 +112,11 @@ public class ResourcesTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete(
+                getProvidedProduct().complete(
                     "processedResources", new ProcessedResourceProduct(destPath));
                 return status;
             case TEST:
-                getProvidedProducts().complete(
+                getProvidedProduct().complete(
                     "processedTestResources", new ProcessedResourceProduct(destPath));
                 return status;
             default:

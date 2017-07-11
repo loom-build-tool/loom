@@ -196,10 +196,10 @@ public class JavaCompileTask extends AbstractTask {
     private TaskStatus complete(final TaskStatus status) {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("compilation", new CompilationProduct(buildDir));
+                getProvidedProduct().complete("compilation", new CompilationProduct(buildDir));
                 return status;
             case TEST:
-                getProvidedProducts().complete("testCompilation", new CompilationProduct(buildDir));
+                getProvidedProduct().complete("testCompilation", new CompilationProduct(buildDir));
                 return status;
             default:
                 throw new IllegalStateException();

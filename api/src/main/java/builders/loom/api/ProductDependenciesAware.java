@@ -18,7 +18,7 @@ package builders.loom.api;
 
 public interface ProductDependenciesAware {
 
-    void setProvidedProducts(ProvidedProducts providedProducts);
+    void setProvidedProduct(ProvidedProduct providedProduct);
 
     void setUsedProducts(UsedProducts usedProducts);
 

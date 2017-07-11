@@ -18,7 +18,7 @@ package builders.loom.api.product;
 
 import java.nio.file.Path;
 
-public final class ProcessedResourceProduct implements Product {
+public final class ProcessedResourceProduct extends AbstractProduct {
 
     private final Path resourcesDir;
 

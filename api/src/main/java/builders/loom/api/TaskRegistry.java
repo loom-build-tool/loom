@@ -21,9 +21,9 @@ import java.util.function.Supplier;
 
 public interface TaskRegistry {
 
-    void registerTask(String taskName, Supplier<Task> taskSupplier,
+    void registerTask(final String pluginName, String taskName, Supplier<Task> taskSupplier,
                       Set<String> providedProducts, Set<String> usedProducts);
 
-    void registerGoal(String goalName, Set<String> usedProducts);
+    void registerGoal(final String pluginName, String goalName, Set<String> usedProducts);
 
 }

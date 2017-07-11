@@ -17,21 +17,35 @@
 package builders.loom.api.product;
 
 import java.nio.file.Path;
+import java.util.Optional;
+
+import builders.loom.api.LoomPaths;
 
 /**
  * E.g. a "jar" file.
  *
  */
-public final class AssemblyProduct implements Product {
+public final class AssemblyProduct extends AbstractProduct {
 
     private final Path assemblyFile;
+    private final String outputInfo;
 
-    public AssemblyProduct(final Path assemblyFile) {
+    public AssemblyProduct(final Path assemblyFile, final String outputInfo) {
         this.assemblyFile = assemblyFile;
+        this.outputInfo = outputInfo;
     }
 
     public Path getAssemblyFile() {
         return assemblyFile;
+    }
+
+    @Override
+    public Optional<String> outputInfo() {
+        if (outputInfo == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(outputInfo + ": " + LoomPaths.relativize(assemblyFile));
     }
 
 }

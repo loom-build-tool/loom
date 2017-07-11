@@ -17,6 +17,7 @@
 package builders.loom;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,11 +51,13 @@ public class TaskRunner {
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")
-    public void execute(final Set<String> productIds) throws InterruptedException, BuildException {
+    public Collection<String> execute(final Set<String> productIds)
+        throws InterruptedException, BuildException {
+
         final Collection<String> resolvedTasks = resolveTasks(productIds);
 
         if (resolvedTasks.isEmpty()) {
-            return;
+            return Collections.emptyList();
         }
 
         LOG.info("Execute {}", resolvedTasks);
@@ -64,6 +67,8 @@ public class TaskRunner {
         final JobPool jobPool = new JobPool();
         jobPool.submitAll(buildJobs(resolvedTasks));
         jobPool.shutdown();
+
+        return resolvedTasks;
     }
 
     private List<String> resolveTasks(final Set<String> productIds) {

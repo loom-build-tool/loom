@@ -151,7 +151,8 @@ public class SpringBootTask extends AbstractTask {
     }
 
     private TaskStatus complete(final TaskStatus status, final Path assemblyFile) {
-        getProvidedProducts().complete("springBootApplication", new AssemblyProduct(assemblyFile));
+        getProvidedProducts().complete("springBootApplication",
+            new AssemblyProduct(assemblyFile, "Spring Boot application"));
         return status;
     }
 

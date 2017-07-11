@@ -38,6 +38,7 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ReportProduct;
@@ -46,11 +47,11 @@ import builders.loom.api.product.SourceTreeProduct;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
 
-    public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "checkstyle");
-
     private final CompileTarget compileTarget;
+
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
+    private final Path reportPath;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final CheckstylePluginSettings pluginSettings,
@@ -58,6 +59,9 @@ public class CheckstyleTask extends AbstractTask {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
+
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle",
+            compileTarget.name().toLowerCase()));
 
         if (pluginSettings.getConfigLocation() == null) {
             throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
@@ -83,8 +87,8 @@ public class CheckstyleTask extends AbstractTask {
             final LoggingAuditListener listener = new LoggingAuditListener();
             checker.addListener(listener);
 
-            Files.createDirectories(REPORT_PATH);
-            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(REPORT_PATH
+            Files.createDirectories(reportPath);
+            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
                 .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
             checker.addListener(xmlLogger);
 
@@ -104,11 +108,11 @@ public class CheckstyleTask extends AbstractTask {
         switch (compileTarget) {
             case MAIN:
                 getProvidedProducts().complete("checkstyleMainReport",
-                    new ReportProduct(REPORT_PATH));
+                    new ReportProduct(reportPath, "Checkstyle main report"));
                 return status;
             case TEST:
                 getProvidedProducts().complete("checkstyleTestReport",
-                    new ReportProduct(REPORT_PATH));
+                    new ReportProduct(reportPath, "Checkstyle test report"));
                 return status;
             default:
                 throw new IllegalStateException();

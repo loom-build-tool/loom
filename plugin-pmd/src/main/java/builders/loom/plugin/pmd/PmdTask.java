@@ -63,9 +63,9 @@ import net.sourceforge.pmd.util.datasource.FileDataSource;
 public class PmdTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
-    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("pmd");
 
     private final CompileTarget compileTarget;
+    private final Path reportPath;
     private final PMDConfiguration configuration = new PMDConfiguration();
     private final Path cacheDir;
 
@@ -77,6 +77,8 @@ public class PmdTask extends AbstractTask {
         SLF4JBridgeHandler.install();
 
         this.compileTarget = compileTarget;
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("pmd",
+            compileTarget.name().toLowerCase()));
         this.cacheDir = cacheDir;
 
         configuration.setReportShortNames(true);
@@ -162,7 +164,7 @@ public class PmdTask extends AbstractTask {
     }
 
     private HTMLRenderer buildHtmlRenderer() throws IOException {
-        final Path reportDir = Files.createDirectories(REPORT_PATH);
+        final Path reportDir = Files.createDirectories(reportPath);
 
         final HTMLRenderer htmlRenderer = new HTMLRenderer();
         final String reportFileName = compileTarget.name().toLowerCase() + ".html";
@@ -213,11 +215,11 @@ public class PmdTask extends AbstractTask {
         switch (compileTarget) {
             case MAIN:
                 getProvidedProducts().complete("pmdMainReport",
-                    new ReportProduct(LoomPaths.REPORT_PATH.resolve("pmd")));
+                    new ReportProduct(reportPath, "PMD main report"));
                 break;
             case TEST:
                 getProvidedProducts().complete("pmdTestReport",
-                    new ReportProduct(LoomPaths.REPORT_PATH.resolve("pmd")));
+                    new ReportProduct(reportPath, "PMD test report"));
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget: " + compileTarget);

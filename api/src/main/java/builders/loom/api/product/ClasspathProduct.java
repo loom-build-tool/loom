@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Must be immutable!
  */
-public final class ClasspathProduct implements Product {
+public final class ClasspathProduct extends AbstractProduct {
 
     private final List<Path> entries;
 

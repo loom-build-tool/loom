@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -216,11 +217,14 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
 
+            final Collection<String> resolvedTasks;
             try {
-                loomProcessor.execute(cmd.getArgList());
+                resolvedTasks = loomProcessor.execute(cmd.getArgList());
             } finally {
                 ProgressMonitor.stop();
             }
+
+            loomProcessor.printProductInfos(resolvedTasks);
 
             printExecutionStatistics();
 

@@ -23,15 +23,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.ProductRepository;
+import builders.loom.api.product.Product;
 import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginRegistry;
 import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
@@ -40,6 +50,7 @@ import builders.loom.plugin.TaskRegistryLookup;
 import builders.loom.plugin.TaskUtil;
 import builders.loom.util.Stopwatch;
 
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class LoomProcessor {
 
     private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
@@ -58,10 +69,10 @@ public class LoomProcessor {
         Stopwatch.stopProcess();
     }
 
-    public void execute(final List<String> productIds) throws Exception {
+    public Collection<String> execute(final List<String> productIds) throws Exception {
         final TaskRunner taskRunner = new TaskRunner(
             taskRegistry, productRepository, serviceLocator);
-        taskRunner.execute(new HashSet<>(productIds));
+        return taskRunner.execute(new HashSet<>(productIds));
     }
 
     public void clean() {
@@ -115,6 +126,99 @@ public class LoomProcessor {
     public Collection<String> getAvailableProducts() {
         return
             TaskUtil.buildInvertedProducersMap(taskRegistry).keySet();
+    }
+
+    public void printProductInfos(final Collection<String> resolvedTasks)
+        throws InterruptedException {
+
+        // aggregate plugin -> products
+        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
+
+        if (!aggProducts.isEmpty()) {
+            outputProductInfos(aggProducts);
+        }
+    }
+
+    private Map<String, List<ProductInfo>> aggregateProducts(final Collection<String> resolvedTasks)
+        throws InterruptedException {
+
+        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
+
+        for (final String taskName : resolvedTasks) {
+            final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
+            final Set<String> providedProductIds = configuredTask.getProvidedProducts();
+            for (final String productId : providedProductIds) {
+                final Product product = productRepository.lookup(productId).getAndWaitForProduct();
+                if (product.outputInfo().isPresent()) {
+                    final String outputInfo = product.outputInfo().get();
+                    final String pluginName = configuredTask.getPluginName();
+                    aggProducts.putIfAbsent(pluginName, new ArrayList<>());
+                    aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
+                }
+            }
+        }
+        return aggProducts;
+    }
+
+    private void outputProductInfos(final Map<String, List<ProductInfo>> aggProducts) {
+        AnsiConsole.out().println();
+
+        final List<String> pluginNames = new ArrayList<>(aggProducts.keySet());
+        Collections.sort(pluginNames);
+
+        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
+            final String pluginName = iterator.next();
+
+            final List<ProductInfo> productInfos = aggProducts.get(pluginName);
+
+            final Ansi ansi = Ansi.ansi()
+                .a("Products of ")
+                .bold()
+                .a(pluginName)
+                .reset()
+                .a(":")
+                .newline();
+
+            for (final ProductInfo productInfo : productInfos) {
+                ansi
+                    .fgBrightYellow()
+                    .a("> ")
+                    .fgBrightGreen()
+                    .a(productInfo.getOutputInfo())
+                    .reset()
+                    .fgBlack().bold()
+                    .format(" [%s]", productInfo.getProductId())
+                    .newline();
+            }
+
+            ansi.reset();
+
+            if (iterator.hasNext()) {
+                ansi.newline();
+            }
+
+            AnsiConsole.out().print(ansi);
+        }
+    }
+
+    private static final class ProductInfo {
+
+        private final String productId;
+        private final String outputInfo;
+
+        ProductInfo(final String productId, final String outputInfo) {
+            this.productId = productId;
+            this.outputInfo = outputInfo;
+        }
+
+        public String getProductId() {
+            return productId;
+        }
+
+        public String getOutputInfo() {
+            return outputInfo;
+        }
+
     }
 
 }

@@ -16,6 +16,13 @@
 
 package builders.loom.api.product;
 
+import java.util.Optional;
+
 public interface Product {
+
+    /**
+     * Spring Boot application: loombuild/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
+     */
+    Optional<String> outputInfo();
 
 }

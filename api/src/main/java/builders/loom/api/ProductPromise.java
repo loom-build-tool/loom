@@ -26,13 +26,15 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.product.Product;
+
 public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
 
     private static final int FUTURE_WAIT_THRESHOLD = 10;
 
-    private final CompletableFuture<Object> promise = new CompletableFuture<>();
+    private final CompletableFuture<Product> promise = new CompletableFuture<>();
 
     private final String productId;
 
@@ -40,7 +42,7 @@ public final class ProductPromise {
         this.productId = Objects.requireNonNull(productId);
     }
 
-    public void complete(final Object withValue) {
+    public void complete(final Product withValue) {
         final boolean completed = promise.complete(withValue);
         if (!completed) {
             throw new IllegalStateException(
@@ -52,7 +54,7 @@ public final class ProductPromise {
         return productId;
     }
 
-    public Object getAndWaitForProduct() throws InterruptedException {
+    public Product getAndWaitForProduct() throws InterruptedException {
         return waitAndGet(promise);
     }
 
@@ -60,12 +62,12 @@ public final class ProductPromise {
         return promise.isDone();
     }
 
-    private Object waitAndGet(final Future<Object> future) throws InterruptedException {
+    private Product waitAndGet(final Future<Product> future) throws InterruptedException {
 
         LOG.debug("Requesting product <{}> ...", productId);
 
         try {
-            final Object product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
+            final Product product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
 
             LOG.debug("Return product <{}> with value: {}", productId, product);
 

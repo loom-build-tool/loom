@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import builders.loom.api.product.Product;
+import builders.loom.api.product.AbstractProduct;
 
 public class ProductsTest {
 
@@ -58,8 +58,7 @@ public class ProductsTest {
             providedProducts.complete("a", new StringProduct("result-double"));
             fail();
         } catch (final IllegalStateException e) {
-            assertEquals("Task <sampleTask> has tried to complete"
-                + " the already completed product <a>", e.getMessage());
+            assertEquals("Product promise <a> already completed", e.getMessage());
         }
 
     }
@@ -138,7 +137,7 @@ public class ProductsTest {
         }
     }
 
-    static class StringProduct implements Product {
+    static class StringProduct extends AbstractProduct {
 
         private final String str;
 

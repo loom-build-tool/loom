@@ -30,11 +30,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -45,16 +43,11 @@ import edu.umd.cs.findbugs.Priorities;
 public class FindbugsTask extends AbstractTask {
 
     public static final Path BUILD_MAIN_PATH = Paths.get("loombuild", "classes", "main");
-    public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "findbugs");
-
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsTask.class);
-
     private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
 
     private final CompileTarget compileTarget;
-
+    private final Path reportPath;
     private Optional<Integer> priorityThreshold;
-
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
@@ -62,6 +55,9 @@ public class FindbugsTask extends AbstractTask {
                         final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
+
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("findbugs",
+            compileTarget.name().toLowerCase()));
 
         readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
@@ -111,14 +107,8 @@ public class FindbugsTask extends AbstractTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        new FindbugsRunner(
-            compileTarget,
-            getSourceTree().getSrcDir(),
-            getClasses().getClassesDir(),
-            calcClasspath(),
-            priorityThreshold
-            )
-            .executeFindbugs();
+        new FindbugsRunner(reportPath, getSourceTree().getSrcDir(),
+            getClasses().getClassesDir(), calcClasspath(), priorityThreshold).executeFindbugs();
 
         return complete(TaskStatus.OK);
     }
@@ -127,11 +117,11 @@ public class FindbugsTask extends AbstractTask {
         switch (compileTarget) {
             case MAIN:
                 getProvidedProducts().complete("findbugsMainReport",
-                    new ReportProduct(REPORT_PATH));
+                    new ReportProduct(reportPath, "Findbugs main report"));
                 return status;
             case TEST:
                 getProvidedProducts().complete("findbugsTestReport",
-                    new ReportProduct(REPORT_PATH));
+                    new ReportProduct(reportPath, "Findbugs test report"));
                 return status;
             default:
                 throw new IllegalStateException();

@@ -84,8 +84,10 @@ public class JavaAssembleTask extends AbstractTask {
             copy(sourceTree.getSrcDir(), os);
         }
 
-        getProvidedProducts().complete("jar", new AssemblyProduct(jarFile));
-        getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile));
+        getProvidedProducts().complete("jar", new AssemblyProduct(jarFile,
+            "Jar of compiled classes"));
+        getProvidedProducts().complete("sourcesJar", new AssemblyProduct(sourceJarFile,
+            "Jar of sources"));
 
         return TaskStatus.OK;
     }

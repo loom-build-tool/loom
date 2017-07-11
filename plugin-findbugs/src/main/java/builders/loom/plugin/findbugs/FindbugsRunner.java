@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.CompileTarget;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.util.Util;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
@@ -52,16 +51,16 @@ public class FindbugsRunner {
 
     private static final String EFFORT_DEFAULT = "default";
 
-    private final CompileTarget compileTarget;
     private final Path sourcesDir;
     private final Path classesDir;
     private final ClasspathProduct classpath;
 
     private final Optional<Integer> priorityThreshold;
+    private Path reportPath;
 
-    FindbugsRunner(final CompileTarget compileTarget, final Path sourcesDir, final Path classesDir,
+    FindbugsRunner(final Path reportPath, final Path sourcesDir, final Path classesDir,
                    final ClasspathProduct classpath, final Optional<Integer> priorityThreshold) {
-        this.compileTarget = compileTarget;
+        this.reportPath = reportPath;
         this.sourcesDir = sourcesDir;
         this.classesDir = classesDir;
         this.classpath = classpath;
@@ -91,11 +90,13 @@ public class FindbugsRunner {
         final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
         xmlBugReporter.setPriorityThreshold(threshold);
         xmlBugReporter.setAddMessages(true);
-        xmlBugReporter.setOutputStream(new PrintStream(getTargetXMLReport().toFile(), "UTF-8"));
+        xmlBugReporter.setOutputStream(new PrintStream(
+            reportPath.resolve("findbugs-result.xml").toFile(), "UTF-8"));
 
         final HTMLBugReporter htmlBugReporter = new HTMLBugReporter(project, "default.xsl");
         htmlBugReporter.setPriorityThreshold(threshold);
-        htmlBugReporter.setOutputStream(new PrintStream(getTargetHTMLReport().toFile(), "UTF-8"));
+        htmlBugReporter.setOutputStream(new PrintStream(
+            reportPath.resolve("findbugs-result.html").toFile(), "UTF-8"));
 
         final MultiplexingBugReporter multiplexingBugReporter =
             new MultiplexingBugReporter(loggingBugReporter, xmlBugReporter, htmlBugReporter);
@@ -125,22 +126,12 @@ public class FindbugsRunner {
     private void prepareEnvironment() {
         LOG.debug("Prepare/cleanup findbugs environment...");
         try {
-            Files.deleteIfExists(getTargetXMLReport());
-            Files.createDirectories(FindbugsTask.REPORT_PATH);
+            Files.deleteIfExists(reportPath.resolve("findbugs-result.xml"));
+            Files.createDirectories(reportPath);
         } catch (final IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
         LOG.debug("...cleanup done");
-    }
-
-    public Path getTargetXMLReport() {
-        return FindbugsTask.REPORT_PATH.resolve(String.format("findbugs-%s-result.xml",
-            compileTarget.name().toLowerCase()));
-    }
-
-    public Path getTargetHTMLReport() {
-        return FindbugsTask.REPORT_PATH.resolve(String.format("findbugs-%s-result.html",
-            compileTarget.name().toLowerCase()));
     }
 
     private Project createFindbugsProject() throws IOException {

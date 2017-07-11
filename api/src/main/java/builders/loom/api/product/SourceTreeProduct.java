@@ -18,7 +18,7 @@ package builders.loom.api.product;
 
 import java.nio.file.Path;
 
-public final class SourceTreeProduct implements Product {
+public final class SourceTreeProduct extends AbstractProduct {
 
     private final Path srcDir;
 

@@ -30,6 +30,7 @@ import builders.loom.api.service.ServiceLocatorRegistration;
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
     private final S pluginSettings;
+    private String pluginName;
     private TaskRegistry taskRegistry;
     private ServiceLocatorRegistration serviceLocator;
     private BuildConfig buildConfig;
@@ -42,6 +43,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
     public AbstractPlugin(final S pluginSettings) {
         this.pluginSettings = pluginSettings;
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.pluginName = name;
     }
 
     @Override
@@ -125,7 +131,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
+            taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProducts,
+                usedProducts);
         }
 
     }
@@ -145,7 +152,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            taskRegistry.registerGoal(goalName, usedProducts);
+            taskRegistry.registerGoal(pluginName, goalName, usedProducts);
         }
 
     }

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class ArtifactListProduct implements Product {
+public final class ArtifactListProduct extends AbstractProduct {
 
     private final List<ArtifactProduct> artifacts;
 

@@ -16,27 +16,13 @@
 
 package builders.loom.api.product;
 
-import java.util.Objects;
+import java.util.Optional;
 
-public final class DummyProduct extends AbstractProduct {
-
-    private final String text;
-
-    /**
-     * Provide a justification.
-     */
-    public DummyProduct(final String text) {
-        Objects.requireNonNull(text);
-        this.text = text;
-    }
-
-    public String getText() {
-        return text;
-    }
+public abstract class AbstractProduct implements Product {
 
     @Override
-    public String toString() {
-        return text;
+    public Optional<String> outputInfo() {
+        return Optional.empty();
     }
 
 }

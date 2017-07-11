@@ -66,13 +66,6 @@ public class ProvidedProducts {
         }
 
         final ProductPromise productPromise = productRepository.lookup(productId);
-
-        if (productPromise.isCompleted()) {
-            throw new IllegalStateException(
-                String.format("Task <%s> has tried to complete the already completed product <%s>",
-                    taskName, productId));
-        }
-
         productPromise.complete(value);
 
         LOG.debug("Product promise <{}> completed by task <{}> with value (type {}): {}",

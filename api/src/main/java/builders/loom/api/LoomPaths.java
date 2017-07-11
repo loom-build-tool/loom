@@ -30,7 +30,7 @@ public final class LoomPaths {
     public static final Path REPORT_PATH;
 
     static {
-        final Path currentDir = Paths.get(".").toAbsolutePath().normalize();
+        final Path currentDir = Paths.get("").toAbsolutePath().normalize();
         PROJECT_DIR = currentDir;
 
         SRC_MAIN_PATH = PROJECT_DIR.resolve(Paths.get("src", "main", "java"));
@@ -49,6 +49,10 @@ public final class LoomPaths {
         if (!expression) {
             throw new IllegalStateException(errorMessage);
         }
+    }
+
+    public static Path relativize(final Path path) {
+        return PROJECT_DIR.relativize(path.toAbsolutePath().normalize());
     }
 
 }

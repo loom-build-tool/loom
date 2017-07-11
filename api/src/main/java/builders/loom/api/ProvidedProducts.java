@@ -32,7 +32,7 @@ import builders.loom.api.product.Product;
  */
 public class ProvidedProducts {
 
-    public static final Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z.]*");
+    public static final Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvidedProducts.class);
 

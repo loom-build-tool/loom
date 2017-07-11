@@ -63,6 +63,7 @@ import net.sourceforge.pmd.util.datasource.FileDataSource;
 public class PmdTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
+    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("pmd");
 
     private final CompileTarget compileTarget;
     private final PMDConfiguration configuration = new PMDConfiguration();
@@ -76,6 +77,7 @@ public class PmdTask extends AbstractTask {
         SLF4JBridgeHandler.install();
 
         this.compileTarget = compileTarget;
+        this.cacheDir = cacheDir;
 
         configuration.setReportShortNames(true);
         configuration.setRuleSets(pluginSettings.getRuleSets());
@@ -89,8 +91,6 @@ public class PmdTask extends AbstractTask {
         if (configuration.getSuppressMarker() != null) {
             LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
         }
-
-        this.cacheDir = cacheDir;
     }
 
     private LanguageVersion getLanguageVersion(final BuildConfig buildConfig) {
@@ -162,7 +162,7 @@ public class PmdTask extends AbstractTask {
     }
 
     private HTMLRenderer buildHtmlRenderer() throws IOException {
-        final Path reportDir = Files.createDirectories(LoomPaths.REPORT_PATH.resolve("pmd"));
+        final Path reportDir = Files.createDirectories(REPORT_PATH);
 
         final HTMLRenderer htmlRenderer = new HTMLRenderer();
         final String reportFileName = compileTarget.name().toLowerCase() + ".html";

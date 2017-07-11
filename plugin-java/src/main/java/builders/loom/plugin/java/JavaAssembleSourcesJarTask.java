@@ -39,12 +39,6 @@ public class JavaAssembleSourcesJarTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
-
-        final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
-
         final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
             "resources", ResourcesTreeProduct.class);
 
@@ -54,6 +48,12 @@ public class JavaAssembleSourcesJarTask extends AbstractTask {
         if (!resourcesTreeProduct.isPresent() && !sourceTree.isPresent()) {
             return completeSkip();
         }
+
+        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
+
+        final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
+            buildConfig.getProject().getArtifactId(),
+            buildConfig.getProject().getVersion()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
             if (resourcesTreeProduct.isPresent()) {

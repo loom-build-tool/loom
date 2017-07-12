@@ -30,7 +30,7 @@ public class FileCacherImpl implements FileCacher {
 
     private final Path cacheFile;
 
-    public FileCacherImpl(final Path cacheDir, final String type) throws IOException {
+    public FileCacherImpl(final Path cacheDir, final String type) {
         cacheFile = cacheDir.resolve("java-" + type + ".cache");
     }
 

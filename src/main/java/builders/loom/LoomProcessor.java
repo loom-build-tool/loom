@@ -47,7 +47,6 @@ import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
 import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.plugin.TaskRegistryLookup;
-import builders.loom.plugin.TaskUtil;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -69,7 +68,7 @@ public class LoomProcessor {
         Stopwatch.stopProcess();
     }
 
-    public Collection<String> execute(final List<String> productIds) throws Exception {
+    public Collection<ConfiguredTask> execute(final List<String> productIds) throws Exception {
         final TaskRunner taskRunner = new TaskRunner(
             taskRegistry, productRepository, serviceLocator);
         return taskRunner.execute(new HashSet<>(productIds));
@@ -119,16 +118,15 @@ public class LoomProcessor {
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 
+    public void generateTextProductOverview() {
+        TextOutput.generate(taskRegistry);
+    }
+
     public void generateDotProductOverview() {
         GraphvizOutput.generateDot(taskRegistry);
     }
 
-    public Collection<String> getAvailableProducts() {
-        return
-            TaskUtil.buildInvertedProducersMap(taskRegistry).keySet();
-    }
-
-    public void printProductInfos(final Collection<String> resolvedTasks)
+    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
         throws InterruptedException {
 
         // aggregate plugin -> products
@@ -139,13 +137,13 @@ public class LoomProcessor {
         }
     }
 
-    private Map<String, List<ProductInfo>> aggregateProducts(final Collection<String> resolvedTasks)
-        throws InterruptedException {
+    private Map<String, List<ProductInfo>> aggregateProducts(
+        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
 
+        // plugin -> products
         final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
 
-        for (final String taskName : resolvedTasks) {
-            final ConfiguredTask configuredTask = taskRegistry.lookupTask(taskName);
+        for (final ConfiguredTask configuredTask : resolvedTasks) {
             final String productId = configuredTask.getProvidedProduct();
             final Optional<Product> product = productRepository.lookup(productId)
                 .getAndWaitForProduct();

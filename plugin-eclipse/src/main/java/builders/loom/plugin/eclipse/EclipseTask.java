@@ -120,8 +120,8 @@ public class EclipseTask extends AbstractTask {
             final Optional<ArtifactListProduct> testArtifacts =
                 useProduct("testArtifacts", ArtifactListProduct.class);
 
-            if (testArtifacts.isPresent()) {
-                for (final ArtifactProduct path : testArtifacts.get().getArtifacts()) {
+            testArtifacts.ifPresent(artifactListProduct -> {
+                for (final ArtifactProduct path : artifactListProduct.getArtifacts()) {
                     final String jar = path.getMainArtifact().toAbsolutePath().toString();
                     final Path sourceArtifact = path.getSourceArtifact();
                     final String sourceJar = sourceArtifact != null
@@ -129,7 +129,7 @@ public class EclipseTask extends AbstractTask {
 
                     root.appendChild(buildClasspathElement(jar, sourceJar));
                 }
-            }
+            });
 
             return doc;
         }

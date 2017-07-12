@@ -28,6 +28,7 @@ public class Junit4Plugin extends AbstractPlugin<PluginSettings> {
             .provides("test")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")
+            .desc("Executes tests with JUnit 4 and creates test report.")
             .register();
 
         goal("check")

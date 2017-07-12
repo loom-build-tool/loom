@@ -27,6 +27,7 @@ public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
             .impl(() -> new EclipseTask(getBuildConfig()))
             .provides("eclipse")
             .uses("testArtifacts")
+            .desc("Generates .classpath and .project file for Eclipse.")
             .register();
     }
 

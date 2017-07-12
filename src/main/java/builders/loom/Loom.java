@@ -41,6 +41,7 @@ import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.config.BuildConfigWithSettings;
 import builders.loom.config.ConfigReader;
+import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.Stopwatch;
 import builders.loom.util.Watch;
 
@@ -217,7 +218,7 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
 
-            final Collection<String> resolvedTasks;
+            final Collection<ConfiguredTask> resolvedTasks;
             try {
                 resolvedTasks = loomProcessor.execute(cmd.getArgList());
             } finally {
@@ -255,11 +256,7 @@ public class Loom {
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {
         if (format == null || "text".equals(format)) {
-            System.out.println();
-            System.out.println("Available products:");
-            System.out.println();
-            loomProcessor.getAvailableProducts().stream().sorted()
-                .forEach(System.out::println);
+            loomProcessor.generateTextProductOverview();
         } else if ("dot".equals(format)) {
             loomProcessor.generateDotProductOverview();
         } else {

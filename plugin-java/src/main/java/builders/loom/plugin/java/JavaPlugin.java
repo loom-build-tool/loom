@@ -34,12 +34,14 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
         task("provideSource")
             .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
-            .provides("source")
+            .provides("source", true)
+            .desc("Provides main sources for other products.")
             .register();
 
         task("provideTestSource")
             .impl(() -> new JavaProvideSourceDirTask(CompileTarget.TEST))
-            .provides("testSource")
+            .provides("testSource", true)
+            .desc("Provides test sources for other products.")
             .register();
 
         task("compileJava")
@@ -47,6 +49,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 getRepositoryPath()))
             .provides("compilation")
             .uses("source", "compileDependencies")
+            .desc("Compiles main sources.")
             .register();
 
         task("compileTestJava")
@@ -54,28 +57,33 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 getRepositoryPath()))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
+            .desc("Compiles test sources.")
             .register();
 
         task("assembleJar")
             .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
             .provides("jar")
             .uses("processedResources", "compilation")
+            .desc("Assembles .jar file from compiled classes.")
             .register();
 
         task("assembleSourcesJar")
             .impl(() -> new JavaAssembleSourcesJarTask(buildConfig))
             .provides("sourcesJar")
             .uses("source", "resources")
+            .desc("Assembles .jar file from main sources and main resources.")
             .register();
 
         task("provideResources")
             .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.MAIN))
-            .provides("resources")
+            .provides("resources", true)
+            .desc("Provides main resources for other products.")
             .register();
 
         task("provideTestResources")
             .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.TEST))
-            .provides("testResources")
+            .provides("testResources", true)
+            .desc("Provides test resources for other products.")
             .register();
 
         task("processResources")
@@ -83,6 +91,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 CompileTarget.MAIN, getRepositoryPath()))
             .provides("processedResources")
             .uses("resources")
+            .desc("Processes main resources (copy and replace variables if necessary).")
             .register();
 
         task("processTestResources")
@@ -90,6 +99,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 CompileTarget.TEST, getRepositoryPath()))
             .provides("processedTestResources")
             .uses("testResources")
+            .desc("Processes test resources (copy and replace variables if necessary).")
             .register();
 
         goal("check")

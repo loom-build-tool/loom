@@ -18,12 +18,8 @@ package builders.loom;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +28,6 @@ import builders.loom.api.ProductRepository;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.TaskRegistryLookup;
-import builders.loom.plugin.TaskUtil;
 
 public class TaskRunner {
 
@@ -51,16 +46,21 @@ public class TaskRunner {
     }
 
     @SuppressWarnings("checkstyle:regexpmultiline")
-    public Collection<String> execute(final Set<String> productIds)
+    public Collection<ConfiguredTask> execute(final Set<String> productIds)
         throws InterruptedException, BuildException {
 
-        final Collection<String> resolvedTasks = resolveTasks(productIds);
+        final Collection<ConfiguredTask> resolvedTasks = taskRegistry.resolve(productIds);
 
         if (resolvedTasks.isEmpty()) {
             return Collections.emptyList();
         }
 
-        LOG.info("Execute {}", resolvedTasks);
+        LOG.info("Execute {}", resolvedTasks.stream()
+            .map(ConfiguredTask::getName)
+            .collect(Collectors.joining(", ")));
+
+        // TODO product validate here -- to late?
+        registerProducts(resolvedTasks);
 
         ProgressMonitor.setTasks(resolvedTasks.size());
 
@@ -71,48 +71,16 @@ public class TaskRunner {
         return resolvedTasks;
     }
 
-    private List<String> resolveTasks(final Set<String> productIds) {
-        // Map productId -> taskName
-        final Map<String, String> producersMap =
-            TaskUtil.buildInvertedProducersMap(taskRegistry);
-
-        producersMap.keySet().forEach(productRepository::createProduct);
-
-        final List<String> resolvedTasks = new LinkedList<>();
-        final Queue<String> workingProductIds = new LinkedList<>(productIds);
-        while (!workingProductIds.isEmpty()) {
-            final String workingProductId = workingProductIds.remove();
-
-            final String taskName = producersMap.get(workingProductId);
-
-            if (taskName == null) {
-                throw new IllegalStateException("No task found providing " + workingProductId);
-            }
-
-            final ConfiguredTask configuredTask =
-                taskRegistry.lookupTask(taskName);
-
-            resolvedTasks.remove(taskName);
-            resolvedTasks.add(0, taskName);
-
-            workingProductIds.addAll(configuredTask.getUsedProducts());
-        }
-
-        LOG.info("Registered products: {}", producersMap.keySet());
-        LOG.info("Registered services: {}", serviceLocator.getServiceNames());
-
-        return resolvedTasks;
+    private void registerProducts(final Collection<ConfiguredTask> resolvedTasks) {
+        resolvedTasks.stream()
+            .map(ConfiguredTask::getProvidedProduct)
+            .forEach(productRepository::createProduct);
     }
 
-    private Collection<Job> buildJobs(final Collection<String> resolvedTasks) {
-        // LinkedHashMap to guaranty same order to support single thread execution
-        final Map<String, Job> jobs = new LinkedHashMap<>();
-        for (final String resolvedTask : resolvedTasks) {
-            final ConfiguredTask task = taskRegistry.lookupTask(resolvedTask);
-            jobs.put(resolvedTask, new Job(resolvedTask, task, productRepository, serviceLocator));
-        }
-
-        return jobs.values();
+    private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
+        return resolvedTasks.stream()
+            .map(ct -> new Job(ct.getName(), ct, productRepository, serviceLocator))
+            .collect(Collectors.toList());
     }
 
 }

@@ -32,6 +32,7 @@ public class PmdPlugin extends AbstractPlugin<PmdPluginSettings> {
                 getRepositoryPath()))
             .provides("pmdMainReport")
             .uses("source", "compileDependencies")
+            .desc("Runs PMD against main sources and creates report.")
             .register();
 
         task("pmdTest")
@@ -39,6 +40,7 @@ public class PmdPlugin extends AbstractPlugin<PmdPluginSettings> {
                 getRepositoryPath()))
             .provides("pmdTestReport")
             .uses("testSource", "testDependencies")
+            .desc("Runs PMD against test sources and creates report.")
             .register();
 
         goal("check")

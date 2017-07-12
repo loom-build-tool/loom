@@ -133,6 +133,7 @@ public class PluginRegistry {
 
         validateSettings();
 
+        // TODO validate registered tasks and dependencies -- goal can require X without error here
     }
 
     private void initPlugin(final String pluginName)

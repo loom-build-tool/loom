@@ -121,7 +121,7 @@ public class Junit4TestTask extends AbstractTask {
 
     private List<Class<?>> collectClasses(final URLClassLoader urlClassLoader,
                                           final CompilationProduct testCompilation)
-        throws IOException, InterruptedException {
+        throws IOException {
 
         final List<Class<?>> classes = new ArrayList<>();
 

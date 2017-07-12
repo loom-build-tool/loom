@@ -38,7 +38,7 @@ public class JarAssembler {
     private static final String SPRING_BOOT_LAUNCHER =
         "org.springframework.boot.loader.JarLauncher";
 
-    private SpringBootPluginSettings pluginSettings;
+    private final SpringBootPluginSettings pluginSettings;
 
     public JarAssembler(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;

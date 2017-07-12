@@ -16,6 +16,7 @@
 
 package builders.loom.plugin;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import builders.loom.DependencyGraph;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
 
@@ -33,16 +35,18 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
     @Override
     public void registerTask(final String pluginName, final String taskName,
                              final Supplier<Task> taskSupplier, final String providedProduct,
-                             final Set<String> usedProducts) {
+                             final boolean intermediateProduct, final Set<String> usedProducts,
+                             final String description) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");
         Objects.requireNonNull(taskSupplier, "taskSupplier missing on task <" + taskName + ">");
         Objects.requireNonNull(providedProduct,
             "providedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(description, "description missing on task <" + taskName + ">");
 
-        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(pluginName, taskSupplier,
-            providedProduct, usedProducts)) != null) {
+        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(taskName, pluginName, taskSupplier,
+            providedProduct, intermediateProduct, usedProducts, false, description)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
         }
@@ -57,23 +61,19 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
             "usedProducts missing on goal <" + goalName + ">");
 
         taskMap.compute(goalName, (name, configuredTask) -> configuredTask != null
-            ? configuredTask.addUsedProducts(usedProducts)
-            : new ConfiguredTask(pluginName, WaitForAllProductsTask::new, goalName, usedProducts));
+            ? configuredTask.addUsedProducts(pluginName, usedProducts)
+            : new ConfiguredTask(name, pluginName, WaitForAllProductsTask::new, goalName, false,
+            usedProducts, true, null));
     }
 
     @Override
-    public Set<String> getTaskNames() {
-        return Collections.unmodifiableSet(taskMap.keySet());
+    public Collection<ConfiguredTask> configuredTasks() {
+        return Collections.unmodifiableCollection(taskMap.values());
     }
 
     @Override
-    public ConfiguredTask lookupTask(final String taskName) {
-        Objects.requireNonNull(taskName, "taskName is required");
-        final ConfiguredTask configuredTask = taskMap.get(taskName);
-        if (configuredTask == null) {
-            throw new IllegalStateException("Task " + taskName + " doesn't exist");
-        }
-        return configuredTask;
+    public Collection<ConfiguredTask> resolve(final Set<String> productIds) {
+        return new DependencyGraph(this).resolve(productIds);
     }
 
 }

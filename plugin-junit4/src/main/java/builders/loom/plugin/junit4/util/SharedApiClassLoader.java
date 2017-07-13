@@ -55,9 +55,8 @@ public final class SharedApiClassLoader extends ClassLoader {
         } catch (final ClassNotFoundException notFound) {
             if (isApiClass) {
                 return sharedClassLoader.loadClass(name);
-            } else {
-                throw notFound;
             }
+            throw notFound;
         }
     }
 

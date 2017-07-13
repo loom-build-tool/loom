@@ -21,16 +21,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +93,7 @@ public class JUnit4TestTask extends AbstractTask {
             throw new IllegalStateException("JUnit4 report: " + result);
         }
 
+        // note: junit reports are not yet supported, but product expects the folder
         Files.createDirectories(REPORT_PATH);
 
         return completeOk(new ReportProduct(REPORT_PATH, "Junit4 report"));
@@ -133,8 +132,6 @@ public class JUnit4TestTask extends AbstractTask {
     private List<Class<?>> collectClasses(final ClassLoader urlClassLoader)
         throws IOException, InterruptedException {
 
-        final List<Class<?>> classes = new ArrayList<>();
-
         final Optional<CompilationProduct> testCompilation = useProduct(
             "testCompilation", CompilationProduct.class);
         if (!testCompilation.isPresent()) {
@@ -142,26 +139,22 @@ public class JUnit4TestTask extends AbstractTask {
         }
 
         final Path rootPath = testCompilation.get().getClassesDir();
-        Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                throws IOException {
 
-                final String filename = rootPath.relativize(file).toString();
-                buildClasses(
-                    ClassLoaderUtil.classnameFromFilename(filename), urlClassLoader, classes);
+        final Class<Annotation> testAnnotation = annotationClass(urlClassLoader);
 
-                return FileVisitResult.CONTINUE;
-            }
-        });
-
-        return classes;
+        return
+            Files.walk(rootPath)
+                .filter(Files::isRegularFile)
+                .map(file -> rootPath.relativize(file).toString())
+                .map(ClassLoaderUtil::classnameFromFilename)
+                .flatMap(className -> buildClasses(
+                    className, testAnnotation, urlClassLoader).stream())
+                .collect(Collectors.toList());
     }
 
-    private void buildClasses(final String classname,
-                              final ClassLoader classLoader, final List<Class<?>> classes) {
-
-        final Class<Annotation> testAnnotation = annotationClass(classLoader);
+    private final List<Class<?>> buildClasses(final String classname,
+                              final Class<Annotation> testAnnotation,
+                              final ClassLoader classLoader) {
 
         try {
             final Class<?> clazz = classLoader.loadClass(classname);
@@ -170,13 +163,17 @@ public class JUnit4TestTask extends AbstractTask {
                 .anyMatch(m -> m.isAnnotationPresent(testAnnotation));
 
             if (classHasTestMethod) {
-                classes.add(clazz);
+                return Collections.singletonList(clazz);
+            } else {
+                return Collections.emptyList();
             }
 
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
     }
+
+
 
     @SuppressWarnings("unchecked")
     private static Class<Annotation> annotationClass(final ClassLoader classLoader) {

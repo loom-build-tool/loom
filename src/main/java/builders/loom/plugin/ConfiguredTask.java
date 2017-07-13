@@ -94,4 +94,8 @@ public class ConfiguredTask {
         return type == TaskType.GOAL;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
 }

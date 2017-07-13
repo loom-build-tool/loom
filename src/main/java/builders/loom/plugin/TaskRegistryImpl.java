@@ -18,16 +18,19 @@ package builders.loom.plugin;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import builders.loom.DependencyGraph;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
+import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 
@@ -88,7 +91,25 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
 
     @Override
     public Collection<ConfiguredTask> resolve(final Set<String> productIds) {
-        return new DependencyGraph(this).resolve(productIds);
+        final DirectedGraph<ConfiguredTask> graph = new DirectedGraph<>();
+
+        final Map<String, ConfiguredTask> products = new HashMap<>();
+        for (final ConfiguredTask configuredTask : taskMap.values()) {
+            products.put(configuredTask.getProvidedProduct(), configuredTask);
+            graph.addNode(configuredTask);
+        }
+
+        for (final ConfiguredTask configuredTask : taskMap.values()) {
+            for (final String usedProduct : configuredTask.getUsedProducts()) {
+                graph.addEdge(configuredTask, products.get(usedProduct));
+            }
+        }
+
+        final List<ConfiguredTask> collect = productIds.stream()
+            .map(products::get)
+            .collect(Collectors.toList());
+
+        return graph.resolve(collect);
     }
 
 }

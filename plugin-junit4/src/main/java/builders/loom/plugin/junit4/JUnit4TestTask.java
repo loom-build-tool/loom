@@ -147,12 +147,14 @@ public class JUnit4TestTask extends AbstractTask {
                 .filter(Files::isRegularFile)
                 .map(file -> rootPath.relativize(file).toString())
                 .map(ClassLoaderUtil::classnameFromFilename)
-                .flatMap(className -> buildClasses(
-                    className, testAnnotation, urlClassLoader).stream())
+                .map(className -> buildClasses(
+                    className, testAnnotation, urlClassLoader))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
-    private final List<Class<?>> buildClasses(final String classname,
+    private final Optional<Class<?>> buildClasses(final String classname,
                               final Class<Annotation> testAnnotation,
                               final ClassLoader classLoader) {
 
@@ -162,11 +164,10 @@ public class JUnit4TestTask extends AbstractTask {
             final boolean classHasTestMethod = Arrays.stream(clazz.getDeclaredMethods())
                 .anyMatch(m -> m.isAnnotationPresent(testAnnotation));
 
-            if (classHasTestMethod) {
-                return Collections.singletonList(clazz);
-            } else {
-                return Collections.emptyList();
+            if (!classHasTestMethod) {
+                return Optional.empty();
             }
+            return Optional.of(clazz);
 
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit4;
+package builders.loom.plugin.junit4.util;
 
 import java.util.Arrays;
 import java.util.List;

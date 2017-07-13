@@ -25,11 +25,14 @@ import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.plugin.junit4.shared.TestResult;
+import builders.loom.plugin.junit4.util.InjectingClassLoader;
+import builders.loom.plugin.junit4.util.RestrictedClassLoader;
+import builders.loom.plugin.junit4.util.SharedApiClassLoader;
 import builders.loom.util.Util;
 
-public class Junit4TestTask extends AbstractTask {
+public class JUnit4TestTask extends AbstractTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Junit4TestTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JUnit4TestTask.class);
 
     private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("tests");
 
@@ -43,13 +46,14 @@ public class Junit4TestTask extends AbstractTask {
         }
 
         final ClassLoader targetClassLoader =
-            new SharedApiClassLoader(buildClassLoader(), new RestrictedClassLoader(Junit4TestTask.class.getClassLoader()));
+            new SharedApiClassLoader(buildJunitExecClassLoader(),
+                new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader()));
 
         final Class[] testClasses = collectClasses(targetClassLoader)
             .toArray(new Class[] {});
 
         final ClassLoader wrappedClassLoader = new InjectingClassLoader(
-            targetClassLoader, Junit4TestTask.class.getClassLoader(),
+            targetClassLoader, JUnit4TestTask.class.getClassLoader(),
             className -> className.startsWith("builders.loom.plugin.junit4.wrapper."));
 
         final Class<?> wrapperClass =
@@ -70,7 +74,7 @@ public class Junit4TestTask extends AbstractTask {
         throw new IllegalStateException("Some tests failed");
     }
 
-    private URLClassLoader buildClassLoader() throws InterruptedException {
+    private URLClassLoader buildJunitExecClassLoader() throws InterruptedException {
         final List<Path> paths = new ArrayList<>();
 
         final CompilationProduct testCompilation = getUsedProducts().readProduct(

@@ -4,10 +4,17 @@ import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import builders.loom.plugin.junit4.shared.TestResult;
 
-public class Junit4Wrapper {
+/**
+ * Wrapper gets injected into final classloader.
+ */
+public class JUnit4Wrapper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JUnit4Wrapper.class);
 
     public TestResult run(final ClassLoader classLoader, final Class[] testClasses) {
 
@@ -21,7 +28,7 @@ public class Junit4Wrapper {
         });
 
         run.getFailures().forEach(f ->
-        System.out.println(" -F-> " + f));
+            LOG.info(" Test failure: " + f));
 
         return new TestResult(run.wasSuccessful());
 

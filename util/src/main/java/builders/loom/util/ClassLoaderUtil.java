@@ -43,9 +43,6 @@ public final class ClassLoaderUtil {
         }
     }
 
-    /**
-     * "com/example/Foo.class" -> "com.example.Foo".
-     */
     public static String classnameFromFilename(final String filename) {
         Objects.requireNonNull(filename);
         return
@@ -55,9 +52,6 @@ public final class ClassLoaderUtil {
             .collect(Collectors.joining("."));
     }
 
-    /**
-     * "com.example.Foo" -> "com/example/Foo.class".
-     */
     public static String resourceNameFromClassName(final String className) {
         Objects.requireNonNull(className);
         return className.replace('.', '/') + ".class";

@@ -21,6 +21,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public final class SystemUtil {
 
@@ -58,19 +59,15 @@ public final class SystemUtil {
         }
     }
 
-    public static int indexOfExtension(final String filename) {
-        if (filename == null) {
-            return -1;
-        }
+    private static int indexOfExtension(final String filename) {
+        Objects.requireNonNull(filename);
         final int extensionPos = filename.lastIndexOf(EXTENSION_SEPARATOR);
         final int lastSeparator = indexOfLastSeparator(filename);
         return lastSeparator > extensionPos ? -1 : extensionPos;
     }
 
-    public static int indexOfLastSeparator(final String filename) {
-        if (filename == null) {
-            return -1;
-        }
+    private static int indexOfLastSeparator(final String filename) {
+        Objects.requireNonNull(filename);
         final int lastUnixPos = filename.lastIndexOf(UNIX_SEPARATOR);
         final int lastWindowsPos = filename.lastIndexOf(WINDOWS_SEPARATOR);
         return Math.max(lastUnixPos, lastWindowsPos);

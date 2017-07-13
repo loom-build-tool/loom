@@ -154,7 +154,7 @@ public class JUnit4TestTask extends AbstractTask {
                 .collect(Collectors.toList());
     }
 
-    private final Optional<Class<?>> buildClasses(final String classname,
+    private Optional<Class<?>> buildClasses(final String classname,
                               final Class<Annotation> testAnnotation,
                               final ClassLoader classLoader) {
 
@@ -173,8 +173,6 @@ public class JUnit4TestTask extends AbstractTask {
             throw new IllegalStateException(e);
         }
     }
-
-
 
     @SuppressWarnings("unchecked")
     private static Class<Annotation> annotationClass(final ClassLoader classLoader) {

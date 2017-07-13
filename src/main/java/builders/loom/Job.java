@@ -73,7 +73,8 @@ public class Job implements Callable<TaskStatus> {
     public TaskStatus runTask() throws Exception {
         LOG.info("Start task {}", name);
 
-        Stopwatch.startProcess("Task " + name);
+        final String taskType = configuredTask.isGoal() ? "Goal" : "Task";
+        Stopwatch.startProcess(taskType + " " + name);
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();

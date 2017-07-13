@@ -105,11 +105,11 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
             }
         }
 
-        final List<ConfiguredTask> collect = productIds.stream()
+        final List<ConfiguredTask> tasksToResolve = productIds.stream()
             .map(products::get)
             .collect(Collectors.toList());
 
-        return graph.resolve(collect);
+        return graph.resolve(tasksToResolve);
     }
 
 }

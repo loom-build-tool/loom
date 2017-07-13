@@ -21,7 +21,8 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import builders.loom.util.Util;
+import builders.loom.util.ClassLoaderUtil;
+import builders.loom.util.IOUtil;
 
 /**
  * Wrap parent classloader enriching it with classes loader from extraClassesLoader.
@@ -49,10 +50,10 @@ public class InjectingClassLoader extends ClassLoader {
         }
 
         try (InputStream in = extraClassesLoader.getResourceAsStream(
-            Util.resourceNameFromClassName(name))) {
+            ClassLoaderUtil.resourceNameFromClassName(name))) {
 
             Objects.requireNonNull(in, "Failed to load class for injection: " + name);
-            final byte[] classBytes = Util.toByteArray(in);
+            final byte[] classBytes = IOUtil.toByteArray(in);
             return defineClass(name, classBytes, 0, classBytes.length);
 
         } catch (final IOException e) {

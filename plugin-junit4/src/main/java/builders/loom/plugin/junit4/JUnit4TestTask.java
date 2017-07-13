@@ -26,14 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +46,7 @@ import builders.loom.plugin.junit4.shared.TestResult;
 import builders.loom.plugin.junit4.util.InjectingClassLoader;
 import builders.loom.plugin.junit4.util.RestrictedClassLoader;
 import builders.loom.plugin.junit4.util.SharedApiClassLoader;
-import builders.loom.util.Util;
+import builders.loom.util.ClassLoaderUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class JUnit4TestTask extends AbstractTask {
@@ -68,25 +65,22 @@ public class JUnit4TestTask extends AbstractTask {
         final List<URL> junitClassPath = buildJunitClassPath();
 
         final URLClassLoader junitUrlClassLoader =
-            privileged(() -> new URLClassLoader(junitClassPath.toArray(new URL[] {}), null));
+            ClassLoaderUtil.privileged(() ->
+            new URLClassLoader(junitClassPath.toArray(new URL[] {}), null));
 
-        final ClassLoader targetClassLoader =
-            AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-                @Override
-                public ClassLoader run() {
-                    return new SharedApiClassLoader(junitUrlClassLoader,
-                        new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader()));
-                }
-            });
+        final ClassLoader targetClassLoader = ClassLoaderUtil.privileged(
+            () -> new SharedApiClassLoader(junitUrlClassLoader,
+            new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader())));
 
         final List<Class<?>> testClasses = collectClasses(targetClassLoader);
         if (testClasses.isEmpty()) {
             return completeSkip();
         }
 
-        final ClassLoader wrappedClassLoader = privileged(() -> new InjectingClassLoader(
-            targetClassLoader, JUnit4TestTask.class.getClassLoader(),
-            className -> className.startsWith("builders.loom.plugin.junit4.wrapper.")));
+        final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(
+            () -> new InjectingClassLoader(
+                targetClassLoader, JUnit4TestTask.class.getClassLoader(),
+                className -> className.startsWith("builders.loom.plugin.junit4.wrapper.")));
 
         final Class<?> wrapperClass =
             wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.JUnit4Wrapper");
@@ -111,22 +105,22 @@ public class JUnit4TestTask extends AbstractTask {
 
         useProduct("testCompilation", CompilationProduct.class)
             .map(CompilationProduct::getClassesDir)
-            .map(Util::toUrl)
+            .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
         useProduct("processedTestResources", ProcessedResourceProduct.class)
             .map(ProcessedResourceProduct::getSrcDir)
-            .map(Util::toUrl)
+            .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
         useProduct("compilation", CompilationProduct.class)
             .map(CompilationProduct::getClassesDir)
-            .map(Util::toUrl)
+            .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
         useProduct("processedResources", ProcessedResourceProduct.class)
             .map(ProcessedResourceProduct::getSrcDir)
-            .map(Util::toUrl)
+            .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
         useProduct("testDependencies", ClasspathProduct.class)
@@ -154,7 +148,8 @@ public class JUnit4TestTask extends AbstractTask {
                 throws IOException {
 
                 final String filename = rootPath.relativize(file).toString();
-                buildClasses(Util.classnameFromFilename(filename), urlClassLoader, classes);
+                buildClasses(
+                    ClassLoaderUtil.classnameFromFilename(filename), urlClassLoader, classes);
 
                 return FileVisitResult.CONTINUE;
             }
@@ -191,17 +186,6 @@ public class JUnit4TestTask extends AbstractTask {
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private static <CT extends ClassLoader> CT privileged(
-        final Supplier<CT> classLoaderSupplier) {
-        return
-            AccessController.doPrivileged(new PrivilegedAction<CT>() {
-                @Override
-                public CT run() {
-                    return classLoaderSupplier.get();
-                }
-            });
     }
 
 }

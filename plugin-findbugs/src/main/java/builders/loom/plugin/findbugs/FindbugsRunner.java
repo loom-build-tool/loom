@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.util.Util;
+import builders.loom.util.SystemUtil;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
@@ -172,7 +172,7 @@ public class FindbugsRunner {
 
     private static Predicate<Path> filterByExtension(final String extension) {
         Objects.requireNonNull(extension);
-        return p -> extension.equals(Util.getFileExtension(p.getFileName().toString()));
+        return p -> extension.equals(SystemUtil.getFileExtension(p.getFileName().toString()));
     }
 
     private static String pathToString(final Path file) {

@@ -30,11 +30,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
@@ -43,15 +41,9 @@ import builders.loom.util.Preconditions;
 
 public class SpringBootTask extends AbstractTask {
 
-    private static final String SPRING_BOOT_APPLICATION_ANNOTATION =
-        "org.springframework.boot.autoconfigure.SpringBootApplication";
-
-    private final BuildConfig buildConfig;
     private final SpringBootPluginSettings pluginSettings;
 
-    public SpringBootTask(final BuildConfig buildConfig,
-                          final SpringBootPluginSettings pluginSettings) {
-        this.buildConfig = buildConfig;
+    public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 
@@ -61,12 +53,6 @@ public class SpringBootTask extends AbstractTask {
         FileUtils.cleanDir(baseDir);
 
         final Path buildDir = baseDir.resolve("build");
-
-        final Path jarFile = baseDir.resolve(String.format("%s-%s-fatjar.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
-
-        final Path fatJarFile = baseDir.resolve(jarFile.getFileName());
 
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
@@ -83,9 +69,6 @@ public class SpringBootTask extends AbstractTask {
             requireProduct("compilation", CompilationProduct.class);
         FileUtils.copyFiles(compilationProduct.getClassesDir(), classesDir);
 
-        // scan for @SpringBootApplication
-        final String applicationClassname = scanForApplicationStarter(compilationProduct);
-
         // copy libs
         final ClasspathProduct compileDependenciesProduct =
             requireProduct("compileDependencies", ClasspathProduct.class);
@@ -96,10 +79,7 @@ public class SpringBootTask extends AbstractTask {
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
 
-        // assemble jar
-        new JarAssembler(pluginSettings).assemble(buildDir, fatJarFile, applicationClassname);
-
-        return completeOk(new AssemblyProduct(fatJarFile, "Spring Boot application"));
+        return completeOk(new CompilationProduct(baseDir));
     }
 
     private Path resolveSpringBootLoaderJar() {
@@ -114,20 +94,6 @@ public class SpringBootTask extends AbstractTask {
             DependencyScope.COMPILE, "springBootApplication");
 
         return Iterables.getOnlyElement(resolvedArtifacts);
-    }
-
-    private String scanForApplicationStarter(final CompilationProduct compilationProduct)
-        throws IOException {
-
-        final String applicationClassname = new ClassScanner()
-            .scanArchives(compilationProduct.getClassesDir(), SPRING_BOOT_APPLICATION_ANNOTATION);
-
-        if (applicationClassname == null) {
-            throw new IllegalStateException("Couldn't find class with "
-                + SPRING_BOOT_APPLICATION_ANNOTATION + " annotation");
-        }
-
-        return applicationClassname;
     }
 
     private void copySpringBootLoader(final Path springBootLoaderJar, final Path baseDir)

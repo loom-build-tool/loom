@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.util;
+package builders.loom.plugin.findbugs;
 
 public final class Util {
 

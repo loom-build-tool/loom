@@ -44,7 +44,7 @@ import edu.umd.cs.findbugs.config.UserPreferences;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class FindbugsRunner {
 
-    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.LOW_PRIORITY;
+    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
 

@@ -47,32 +47,6 @@ public final class SystemUtil {
         return determineGenericBaseDir();
     }
 
-    public static String getFileExtension(final String filename) {
-        if (filename == null) {
-            return null;
-        }
-        final int index = indexOfExtension(filename);
-        if (index == -1) {
-            return "";
-        } else {
-            return filename.substring(index + 1);
-        }
-    }
-
-    private static int indexOfExtension(final String filename) {
-        Objects.requireNonNull(filename);
-        final int extensionPos = filename.lastIndexOf(EXTENSION_SEPARATOR);
-        final int lastSeparator = indexOfLastSeparator(filename);
-        return lastSeparator > extensionPos ? -1 : extensionPos;
-    }
-
-    private static int indexOfLastSeparator(final String filename) {
-        Objects.requireNonNull(filename);
-        final int lastUnixPos = filename.lastIndexOf(UNIX_SEPARATOR);
-        final int lastWindowsPos = filename.lastIndexOf(WINDOWS_SEPARATOR);
-        return Math.max(lastUnixPos, lastWindowsPos);
-    }
-
     private static boolean isWindowsOS() {
         final String osName = System.getProperty("os.name");
         return osName != null && osName.startsWith("Windows");
@@ -111,6 +85,32 @@ public final class SystemUtil {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static String getFileExtension(final String filename) {
+        if (filename == null) {
+            return null;
+        }
+        final int index = indexOfExtension(filename);
+        if (index == -1) {
+            return "";
+        } else {
+            return filename.substring(index + 1);
+        }
+    }
+
+    private static int indexOfExtension(final String filename) {
+        Objects.requireNonNull(filename);
+        final int extensionPos = filename.lastIndexOf(EXTENSION_SEPARATOR);
+        final int lastSeparator = indexOfLastSeparator(filename);
+        return lastSeparator > extensionPos ? -1 : extensionPos;
+    }
+
+    private static int indexOfLastSeparator(final String filename) {
+        Objects.requireNonNull(filename);
+        final int lastUnixPos = filename.lastIndexOf(UNIX_SEPARATOR);
+        final int lastWindowsPos = filename.lastIndexOf(WINDOWS_SEPARATOR);
+        return Math.max(lastUnixPos, lastWindowsPos);
     }
 
 }

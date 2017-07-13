@@ -43,21 +43,29 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("compileJava")
-            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN))
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN,
+                getRepositoryPath()))
             .provides("compilation")
             .uses("source", "compileDependencies")
             .register();
 
         task("compileTestJava")
-            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST))
+            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST,
+                getRepositoryPath()))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
             .register();
 
-        task("assemble")
+        task("assembleJar")
             .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
-            .provides("jar", "sourcesJar")
-            .uses("source", "resources", "processedResources", "compilation")
+            .provides("jar")
+            .uses("processedResources", "compilation")
+            .register();
+
+        task("assembleSourcesJar")
+            .impl(() -> new JavaAssembleSourcesJarTask(buildConfig))
+            .provides("sourcesJar")
+            .uses("source", "resources")
             .register();
 
         task("provideResources")
@@ -72,14 +80,14 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
         task("processResources")
             .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
-                CompileTarget.MAIN))
+                CompileTarget.MAIN, getRepositoryPath()))
             .provides("processedResources")
             .uses("resources")
             .register();
 
         task("processTestResources")
             .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
-                CompileTarget.TEST))
+                CompileTarget.TEST, getRepositoryPath()))
             .provides("processedTestResources")
             .uses("testResources")
             .register();

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package builders.loom.plugin.junit4;
 
 import java.io.IOException;
@@ -10,16 +26,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.LoomPaths;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
@@ -30,89 +51,89 @@ import builders.loom.plugin.junit4.util.RestrictedClassLoader;
 import builders.loom.plugin.junit4.util.SharedApiClassLoader;
 import builders.loom.util.Util;
 
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class JUnit4TestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JUnit4TestTask.class);
 
-    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("tests");
+    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("tests").resolve("test");
 
     @Override
-    public TaskStatus run() throws Exception {
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
-            "testCompilation", CompilationProduct.class);
+    public TaskResult run() throws Exception {
 
-        if (Files.notExists(testCompilation.getClassesDir())) {
-            return complete(TaskStatus.SKIP);
+        if (!useProduct("testCompilation", CompilationProduct.class).isPresent()) {
+            return completeSkip();
         }
 
+        final List<URL> junitClassPath = buildJunitClassPath();
+
+        final URLClassLoader junitUrlClassLoader =
+            privileged(() -> new URLClassLoader(junitClassPath.toArray(new URL[] {}), null));
+
         final ClassLoader targetClassLoader =
-            new SharedApiClassLoader(buildJunitExecClassLoader(),
-                new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader()));
+            AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
+                public ClassLoader run() {
+                    return new SharedApiClassLoader(junitUrlClassLoader,
+                        new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader()));
+                }
+            });
 
-        final Class[] testClasses = collectClasses(targetClassLoader)
-            .toArray(new Class[] {});
+        final List<Class<?>> testClasses = collectClasses(targetClassLoader);
+        if (testClasses.isEmpty()) {
+            return completeSkip();
+        }
 
-        final ClassLoader wrappedClassLoader = new InjectingClassLoader(
+        final ClassLoader wrappedClassLoader = privileged(() -> new InjectingClassLoader(
             targetClassLoader, JUnit4TestTask.class.getClassLoader(),
-            className -> className.startsWith("builders.loom.plugin.junit4.wrapper."));
+            className -> className.startsWith("builders.loom.plugin.junit4.wrapper.")));
 
         final Class<?> wrapperClass =
-            wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.Junit4Wrapper");
-        // TODO
-        LOG.info("wrapperClass.classloader="+wrapperClass.getClassLoader());
+            wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.JUnit4Wrapper");
 
         final Object wrapper = wrapperClass.newInstance();
-        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Class[].class);
+        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, List.class);
 
         final TestResult result = (TestResult) wrapperRun.invoke(
             wrapper, targetClassLoader, testClasses);
 
-        if (result.isSuccessful()) {
-            return complete(TaskStatus.OK);
+        if (!result.isSuccessful()) {
+            throw new IllegalStateException("JUnit4 report: " + result);
         }
 
-        throw new IllegalStateException("Some tests failed");
+        Files.createDirectories(REPORT_PATH);
+
+        return completeOk(new ReportProduct(REPORT_PATH, "Junit4 report"));
     }
 
-    private URLClassLoader buildJunitExecClassLoader() throws InterruptedException {
-        final List<Path> paths = new ArrayList<>();
-
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
-            "testCompilation", CompilationProduct.class);
-        paths.add(testCompilation.getClassesDir());
-
-        final ProcessedResourceProduct processedTestResources = getUsedProducts().readProduct(
-            "processedTestResources", ProcessedResourceProduct.class);
-        paths.add(processedTestResources.getSrcDir());
-
-        final CompilationProduct compilation = getUsedProducts().readProduct(
-            "compilation", CompilationProduct.class);
-        paths.add(compilation.getClassesDir());
-
-        final ProcessedResourceProduct processedResources = getUsedProducts().readProduct(
-            "processedResources", ProcessedResourceProduct.class);
-        paths.add(processedResources.getSrcDir());
-
-        final List<URL> testDependencies = getUsedProducts().readProduct("testDependencies",
-            ClasspathProduct.class).getEntriesAsUrls();
-
+    private List<URL> buildJunitClassPath() throws InterruptedException {
         final List<URL> urls = new ArrayList<>();
 
-        paths.stream()
-            .filter(p -> Files.isDirectory(p))
+        useProduct("testCompilation", CompilationProduct.class)
+            .map(CompilationProduct::getClassesDir)
             .map(Util::toUrl)
-            .forEach(urls::add);
-        urls.addAll(testDependencies);
+            .ifPresent(urls::add);
 
-        // TODO remove
-        System.out.println();
-        System.out.println();
-        urls.forEach(u -> System.out.println(" - " + u));
+        useProduct("processedTestResources", ProcessedResourceProduct.class)
+            .map(ProcessedResourceProduct::getSrcDir)
+            .map(Util::toUrl)
+            .ifPresent(urls::add);
 
-        System.out.println();
-        System.out.println();
+        useProduct("compilation", CompilationProduct.class)
+            .map(CompilationProduct::getClassesDir)
+            .map(Util::toUrl)
+            .ifPresent(urls::add);
 
-        return new URLClassLoader(urls.toArray(new URL[] {}), null);
+        useProduct("processedResources", ProcessedResourceProduct.class)
+            .map(ProcessedResourceProduct::getSrcDir)
+            .map(Util::toUrl)
+            .ifPresent(urls::add);
+
+        useProduct("testDependencies", ClasspathProduct.class)
+            .map(ClasspathProduct::getEntriesAsUrls)
+            .ifPresent(urls::addAll);
+
+        return urls;
     }
 
     private List<Class<?>> collectClasses(final ClassLoader urlClassLoader)
@@ -120,10 +141,13 @@ public class JUnit4TestTask extends AbstractTask {
 
         final List<Class<?>> classes = new ArrayList<>();
 
-        final CompilationProduct testCompilation = getUsedProducts().readProduct(
+        final Optional<CompilationProduct> testCompilation = useProduct(
             "testCompilation", CompilationProduct.class);
+        if (!testCompilation.isPresent()) {
+            return Collections.emptyList();
+        }
 
-        final Path rootPath = testCompilation.getClassesDir();
+        final Path rootPath = testCompilation.get().getClassesDir();
         Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
@@ -142,13 +166,7 @@ public class JUnit4TestTask extends AbstractTask {
     private void buildClasses(final String classname,
                               final ClassLoader classLoader, final List<Class<?>> classes) {
 
-        final Class<? extends Annotation> testAnnotation;
-        try {
-            testAnnotation = (Class<? extends Annotation>)
-                classLoader.loadClass("org.junit.Test");
-        } catch (final ClassNotFoundException e) {
-            throw new IllegalStateException(e);
-        }
+        final Class<Annotation> testAnnotation = annotationClass(classLoader);
 
         try {
             final Class<?> clazz = classLoader.loadClass(classname);
@@ -165,9 +183,25 @@ public class JUnit4TestTask extends AbstractTask {
         }
     }
 
-    private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("test", new ReportProduct(REPORT_PATH));
-        return status;
+    @SuppressWarnings("unchecked")
+    private static Class<Annotation> annotationClass(final ClassLoader classLoader) {
+        try {
+            return (Class<Annotation>)
+                classLoader.loadClass("org.junit.Test");
+        } catch (final ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static <CT extends ClassLoader> CT privileged(
+        final Supplier<CT> classLoaderSupplier) {
+        return
+            AccessController.doPrivileged(new PrivilegedAction<CT>() {
+                @Override
+                public CT run() {
+                    return classLoaderSupplier.get();
+                }
+            });
     }
 
 }

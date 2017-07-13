@@ -23,7 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -39,7 +39,8 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.LoomPaths;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
@@ -47,112 +48,114 @@ import builders.loom.api.product.SourceTreeProduct;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
 
-    public static final Path REPORT_PATH = Paths.get("loombuild", "reports", "checkstyle");
-
-    private static final String CONFIG_LOCATION = "config/checkstyle/checkstyle.xml";
-    private static final boolean OMIT_IGNORED_MODULES = true;
-
     private final CompileTarget compileTarget;
 
-    public CheckstyleTask(final CompileTarget compileTarget) {
+    private final CheckstylePluginSettings pluginSettings;
+    private final Path cacheDir;
+    private final Path reportPath;
+
+    public CheckstyleTask(final CompileTarget compileTarget,
+                          final CheckstylePluginSettings pluginSettings,
+                          final Path cacheDir) {
         this.compileTarget = compileTarget;
+        this.pluginSettings = pluginSettings;
+        this.cacheDir = cacheDir;
+
+        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle",
+            compileTarget.name().toLowerCase()));
+
+        if (pluginSettings.getConfigLocation() == null) {
+            throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
+        }
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        final SourceTreeProduct sourceTree = getSourceTree();
+    public TaskResult run() throws Exception {
+        final Optional<SourceTreeProduct> sourceTree = getSourceTree();
 
-        if (Files.notExists(sourceTree.getSrcDir())) {
-            return complete(TaskStatus.SKIP);
+        if (!sourceTree.isPresent()) {
+            return completeSkip();
         }
 
-        final List<File> collect = Files.walk(sourceTree.getSrcDir())
-            .filter(Files::isRegularFile)
+        final List<File> files = sourceTree.get().getSourceFiles().stream()
             .map(Path::toFile)
             .collect(Collectors.toList());
 
         final RootModule checker = createRootModule();
 
-        final LoggingAuditListener listener = new LoggingAuditListener();
-        checker.addListener(listener);
+        try {
+            final LoggingAuditListener listener = new LoggingAuditListener();
+            checker.addListener(listener);
 
-        Files.createDirectories(REPORT_PATH);
-        final XMLLogger xmlLogger = new XMLLogger(
-            new PrintStream(REPORT_PATH.resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
-        checker.addListener(xmlLogger);
+            Files.createDirectories(reportPath);
+            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
+                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+            checker.addListener(xmlLogger);
 
-        final int errors = checker.process(collect);
-        checker.destroy();
+            final int errors = checker.process(files);
 
-        if (errors == 0) {
-            return complete(TaskStatus.OK);
+            if (errors == 0) {
+                return completeOk(product());
+            }
+        } finally {
+            checker.destroy();
         }
 
         throw new IllegalStateException("Checkstyle reported errors!");
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private ReportProduct product() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("checkstyleMainReport",
-                    new ReportProduct(REPORT_PATH));
-                return status;
+                return new ReportProduct(reportPath, "Checkstyle main report");
             case TEST:
-                getProvidedProducts().complete("checkstyleTestReport",
-                    new ReportProduct(REPORT_PATH));
-                return status;
+                return new ReportProduct(reportPath, "Checkstyle test report");
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private SourceTreeProduct getSourceTree() throws InterruptedException {
+    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                return getUsedProducts().readProduct("source", SourceTreeProduct.class);
+                return useProduct("source", SourceTreeProduct.class);
             case TEST:
-                return getUsedProducts().readProduct("testSource", SourceTreeProduct.class);
+                return useProduct("testSource", SourceTreeProduct.class);
             default:
                 throw new IllegalStateException();
         }
     }
 
     private RootModule createRootModule() throws InterruptedException {
-        final RootModule rootModule;
-        final String classpath = "";
-
         try {
             final Properties props = createOverridingProperties();
             final Configuration config =
-                ConfigurationLoader.loadConfiguration(
-                    CONFIG_LOCATION,
-                    new PropertiesExpander(props),
-                    OMIT_IGNORED_MODULES);
+                ConfigurationLoader.loadConfiguration(pluginSettings.getConfigLocation(),
+                    new PropertiesExpander(props));
 
-            final ClassLoader moduleClassLoader =
-                Checker.class.getClassLoader();
+            final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
 
             final ModuleFactory factory = new PackageObjectFactory(
-                Checker.class.getPackage().getName() + ".", moduleClassLoader);
+                Checker.class.getPackage().getName(), moduleClassLoader);
 
-            rootModule = (RootModule) factory.createModule(config.getName());
+            final RootModule rootModule = (RootModule) factory.createModule(config.getName());
             rootModule.setModuleClassLoader(moduleClassLoader);
 
             if (rootModule instanceof Checker) {
-                final ClassLoader loader = buildClassLoader();
-
-                ((Checker) rootModule).setClassLoader(loader);
+                final Optional<ClasspathProduct> classpathProduct = buildClassLoader();
+                classpathProduct
+                    .map(ClasspathProduct::getEntriesAsUrlArray)
+                    .map(URLClassLoader::new)
+                    .ifPresent(((Checker) rootModule)::setClassLoader);
             }
 
             rootModule.configure(config);
-        } catch (final CheckstyleException ex) {
-            throw new IllegalStateException(String.format(Locale.ROOT,
-                "Unable to create Root Module: "
-                    + "configLocation {%s}, classpath {%s}.", CONFIG_LOCATION, classpath), ex);
-//            throw new BuildException(String.format(Locale.ROOT, "Unable to create Root Module: "
-//                + "configLocation {%s}, classpath {%s}.", configLocation, classpath), ex);
+
+            return rootModule;
+        } catch (final CheckstyleException e) {
+            throw new IllegalStateException("Unable to create Root Module with configuration: "
+                + pluginSettings.getConfigLocation(), e);
         }
-        return rootModule;
     }
 
     private Properties createOverridingProperties() {
@@ -161,6 +164,9 @@ public class CheckstyleTask extends AbstractTask {
         final Path baseDir = Paths.get("").toAbsolutePath();
         final Path checkstyleConfigDir =
             baseDir.resolve(Paths.get("config", "checkstyle"));
+
+        properties.setProperty("cacheFile", cacheDir.resolve(compileTarget.name().toLowerCase()
+             + ".cache").toString());
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties
@@ -172,22 +178,15 @@ public class CheckstyleTask extends AbstractTask {
         return properties;
     }
 
-    private URLClassLoader buildClassLoader() throws InterruptedException {
-        final ClasspathProduct classpath;
+    private Optional<ClasspathProduct> buildClassLoader() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                classpath = getUsedProducts().readProduct(
-                    "compileDependencies", ClasspathProduct.class);
-                break;
+                return useProduct("compileDependencies", ClasspathProduct.class);
             case TEST:
-                classpath = getUsedProducts().readProduct(
-                    "testDependencies", ClasspathProduct.class);
-                break;
+                return useProduct("testDependencies", ClasspathProduct.class);
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
-
-        return new URLClassLoader(classpath.getEntriesAsUrlArray());
     }
 
 }

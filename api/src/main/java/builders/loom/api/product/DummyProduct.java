@@ -18,7 +18,7 @@ package builders.loom.api.product;
 
 import java.util.Objects;
 
-public final class DummyProduct implements Product {
+public final class DummyProduct extends AbstractProduct {
 
     private final String text;
 

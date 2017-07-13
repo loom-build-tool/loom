@@ -17,17 +17,31 @@
 package builders.loom.api.product;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
-public class ReportProduct implements Product {
+import builders.loom.api.LoomPaths;
+
+public class ReportProduct extends AbstractProduct {
 
     private final Path reportBaseDir;
+    private final String outputInfo;
 
-    public ReportProduct(final Path reportBaseDir) {
+    public ReportProduct(final Path reportBaseDir, final String outputInfo) {
         this.reportBaseDir = reportBaseDir;
+        this.outputInfo = outputInfo;
     }
 
     public Path getReportBaseDir() {
         return reportBaseDir;
+    }
+
+    @Override
+    public Optional<String> outputInfo() {
+        if (outputInfo == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(outputInfo + ": " + LoomPaths.relativize(reportBaseDir));
     }
 
 }

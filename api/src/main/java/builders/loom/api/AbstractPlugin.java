@@ -16,6 +16,7 @@
 
 package builders.loom.api;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,10 +30,12 @@ import builders.loom.api.service.ServiceLocatorRegistration;
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
     private final S pluginSettings;
+    private String pluginName;
     private TaskRegistry taskRegistry;
     private ServiceLocatorRegistration serviceLocator;
     private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
+    private Path repositoryPath;
 
     public AbstractPlugin() {
         this.pluginSettings = null;
@@ -40,6 +43,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
     public AbstractPlugin(final S pluginSettings) {
         this.pluginSettings = pluginSettings;
+    }
+
+    @Override
+    public void setName(final String name) {
+        this.pluginName = name;
     }
 
     @Override
@@ -75,6 +83,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         return runtimeConfiguration;
     }
 
+    @Override
+    public void setRepositoryPath(final Path repositoryPath) {
+        this.repositoryPath = repositoryPath;
+    }
+
+    public Path getRepositoryPath() {
+        return repositoryPath;
+    }
+
     protected TaskBuilder task(final String taskName) {
         return new TaskBuilder(taskName);
     }
@@ -91,7 +108,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         private final String taskName;
         private Supplier<Task> taskSupplier;
-        private Set<String> providedProducts;
+        private String providedProduct;
         private Set<String> usedProducts = Collections.emptySet();
 
         public TaskBuilder(final String taskName) {
@@ -103,8 +120,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public TaskBuilder provides(final String... products) {
-            providedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+        public TaskBuilder provides(final String product) {
+            providedProduct = Objects.requireNonNull(product);
             return this;
         }
 
@@ -114,7 +131,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            taskRegistry.registerTask(taskName, taskSupplier, providedProducts, usedProducts);
+            taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
+                usedProducts);
         }
 
     }
@@ -134,7 +152,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public void register() {
-            taskRegistry.registerGoal(goalName, usedProducts);
+            taskRegistry.registerGoal(pluginName, goalName, usedProducts);
         }
 
     }

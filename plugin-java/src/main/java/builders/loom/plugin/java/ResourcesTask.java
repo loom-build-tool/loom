@@ -21,12 +21,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
@@ -37,11 +38,12 @@ public class ResourcesTask extends AbstractTask {
     private final JavaPluginSettings pluginSettings;
     private final Path destPath;
     private final CompileTarget compileTarget;
+    private final Path cacheDir;
 
     ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
                   final BuildConfig buildConfig,
                   final JavaPluginSettings pluginSettings,
-                  final CompileTarget compileTarget) {
+                  final CompileTarget compileTarget, final Path cacheDir) {
 
         this.runtimeConfiguration = runtimeConfiguration;
         this.buildConfig = buildConfig;
@@ -49,44 +51,28 @@ public class ResourcesTask extends AbstractTask {
         this.compileTarget = compileTarget;
 
         destPath = Paths.get("loombuild", "resources", compileTarget.name().toLowerCase());
+
+        this.cacheDir = cacheDir;
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
+        final Optional<ResourcesTreeProduct> resourcesProduct = getResourcesTreeProduct();
 
-        final Path srcPath;
-
-        switch (compileTarget) {
-            case MAIN:
-                srcPath = getUsedProducts().readProduct(
-                    "resources", ResourcesTreeProduct.class).getSrcDir();
-                break;
-            case TEST:
-                srcPath = getUsedProducts().readProduct(
-                    "testResources", ResourcesTreeProduct.class).getSrcDir();
-                break;
-            default:
-                throw new IllegalStateException();
+        if (!resourcesProduct.isPresent()) {
+            if (Files.exists(destPath)) {
+                FileUtil.deleteDirectoryRecursively(destPath, true);
+            }
+            return completeSkip();
         }
 
-        if (Files.notExists(srcPath) && Files.notExists(destPath)) {
-            return complete(TaskStatus.SKIP);
-        }
+        final Path srcPath = resourcesProduct.get().getSrcDir();
 
         assertDirectoryOrMissing(srcPath);
         assertDirectoryOrMissing(destPath);
 
-        if (Files.notExists(srcPath) && Files.exists(destPath)) {
-            FileUtil.deleteDirectoryRecursively(destPath, true);
-            return complete(TaskStatus.OK);
-        }
-
-        FileUtil.assertDirectory(srcPath);
-
-        final Path cacheFile = getCacheFileName();
-
         final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
-            ? new DiskKeyValueCache(cacheFile)
+            ? new DiskKeyValueCache(getCacheFileName())
             : new NullKeyValueCache();
 
         final Map<String, String> variables = new HashMap<>();
@@ -101,28 +87,22 @@ public class ResourcesTask extends AbstractTask {
 
         cache.saveCache();
 
-        return complete(TaskStatus.OK);
+        return completeOk(new ProcessedResourceProduct(destPath));
     }
 
-    private Path getCacheFileName() {
-        return Paths.get(
-            ".loom", "cache", "java",
-            "resource-" + compileTarget.name().toLowerCase() + ".cache");
-    }
-
-    private TaskStatus complete(final TaskStatus status) {
+    private Optional<ResourcesTreeProduct> getResourcesTreeProduct() throws InterruptedException {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete(
-                    "processedResources", new ProcessedResourceProduct(destPath));
-                return status;
+                return useProduct("resources", ResourcesTreeProduct.class);
             case TEST:
-                getProvidedProducts().complete(
-                    "processedTestResources", new ProcessedResourceProduct(destPath));
-                return status;
+                return useProduct("testResources", ResourcesTreeProduct.class);
             default:
                 throw new IllegalStateException();
         }
+    }
+
+    private Path getCacheFileName() {
+        return cacheDir.resolve("resource-" + compileTarget.name().toLowerCase() + ".cache");
     }
 
     private void assertDirectoryOrMissing(final Path path) {

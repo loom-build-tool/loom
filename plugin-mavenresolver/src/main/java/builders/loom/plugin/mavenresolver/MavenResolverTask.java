@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
 
@@ -32,31 +32,39 @@ public class MavenResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
+    private final MavenResolverPluginSettings pluginSettings;
+    private final Path cacheDir;
     private MavenResolver mavenResolver;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig) {
+                             final BuildConfig buildConfig,
+                             final MavenResolverPluginSettings pluginSettings,
+                             final Path cacheDir) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
+        this.pluginSettings = pluginSettings;
+        this.cacheDir = cacheDir;
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        this.mavenResolver = MavenResolverSingleton.getInstance();
+    public TaskResult run() throws Exception {
+        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
+        return completeOk(product());
+    }
+
+    private ClasspathProduct product() {
         switch (dependencyScope) {
             case COMPILE:
-                compileScope();
-                return TaskStatus.OK;
+                return compileScope();
             case TEST:
-                testScope();
-                return TaskStatus.OK;
+                return testScope();
             default:
                 throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
     }
 
-    private void compileScope() {
+    private ClasspathProduct compileScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
             DependencyScope.COMPILE, null);
@@ -64,11 +72,10 @@ public class MavenResolverTask extends AbstractTask {
         final List<Path> collect = artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
 
-        getProvidedProducts().complete("compileDependencies",
-            new ClasspathProduct(collect));
+        return new ClasspathProduct(collect);
     }
 
-    private void testScope() {
+    private ClasspathProduct testScope() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 
@@ -78,8 +85,7 @@ public class MavenResolverTask extends AbstractTask {
         final List<Path> collect = artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
 
-        getProvidedProducts().complete("testDependencies",
-            new ClasspathProduct(collect));
+        return new ClasspathProduct(collect);
     }
 
 }

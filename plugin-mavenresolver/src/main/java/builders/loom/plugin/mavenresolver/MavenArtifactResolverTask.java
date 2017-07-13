@@ -16,56 +16,60 @@
 
 package builders.loom.plugin.mavenresolver;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 
 public class MavenArtifactResolverTask extends AbstractTask {
 
     private final DependencyScope dependencyScope;
     private final BuildConfig buildConfig;
+    private final MavenResolverPluginSettings pluginSettings;
+    private final Path cacheDir;
     private MavenResolver mavenResolver;
 
     public MavenArtifactResolverTask(final DependencyScope dependencyScope,
-                                     final BuildConfig buildConfig) {
+                                     final BuildConfig buildConfig,
+                                     final MavenResolverPluginSettings pluginSettings,
+                                     final Path cacheDir) {
 
         this.dependencyScope = dependencyScope;
         this.buildConfig = buildConfig;
+        this.pluginSettings = pluginSettings;
+        this.cacheDir = cacheDir;
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        this.mavenResolver = MavenResolverSingleton.getInstance();
+    public TaskResult run() throws Exception {
+        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
         switch (dependencyScope) {
             case COMPILE:
-                compileScope();
-                return TaskStatus.OK;
+                return completeOk(productCompile());
             case TEST:
-                testScope();
-                return TaskStatus.OK;
+                return completeOk(productTest());
             default:
                 throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
     }
 
-    private void compileScope() {
+    private ArtifactListProduct productCompile() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
-        getProvidedProducts().complete("compileArtifacts",
-            new ArtifactListProduct(mavenResolver.resolve(dependencies,
-                DependencyScope.COMPILE, "sources")));
+        return new ArtifactListProduct(mavenResolver.resolve(dependencies, DependencyScope.COMPILE,
+            "sources"));
     }
 
-    private void testScope() {
+    private ArtifactListProduct productTest() {
         final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
         dependencies.addAll(buildConfig.getTestDependencies());
 
-        getProvidedProducts().complete("testArtifacts",
-            new ArtifactListProduct(mavenResolver.resolve(dependencies,
-                DependencyScope.TEST, "sources")));
+        return new ArtifactListProduct(mavenResolver.resolve(dependencies, DependencyScope.TEST,
+            "sources"));
     }
+
 }

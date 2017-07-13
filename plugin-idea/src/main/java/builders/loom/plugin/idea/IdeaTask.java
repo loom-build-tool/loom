@@ -25,10 +25,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Optional;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
@@ -53,7 +54,7 @@ public class IdeaTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final Path currentDir = Paths.get("");
 
         final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
@@ -71,12 +72,7 @@ public class IdeaTask extends AbstractTask {
         writeDocumentToFile(currentDir.resolve(imlFilename), createImlFile());
         writeDocumentToFile(ideaDirectory.resolve("modules.xml"), createModulesFile(imlFilename));
 
-        return complete(TaskStatus.OK);
-    }
-
-    private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("idea", new DummyProduct("Idea project files"));
-        return status;
+        return completeOk(new DummyProduct("Idea project files"));
     }
 
     private void createEncodingsFile(final Path encodingsFile) throws IOException {
@@ -142,16 +138,18 @@ public class IdeaTask extends AbstractTask {
             final Element component = doc.getRootElement().getFirstChildElement("component");
 
             // add compile artifacts
-            final List<ArtifactProduct> mainArtifacts =
-                getUsedProducts().readProduct("compileArtifacts",
-                ArtifactListProduct.class).getArtifacts();
-            buildOrderEntries(component, mainArtifacts, "COMPILE");
+            final Optional<ArtifactListProduct> compileArtifacts =
+                useProduct("compileArtifacts", ArtifactListProduct.class);
+            compileArtifacts
+                .map(ArtifactListProduct::getArtifacts)
+                .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
 
             // add test artifacts
-            final List<ArtifactProduct> testArtifacts = getUsedProducts()
-                .readProduct("testArtifacts",
-                ArtifactListProduct.class).getArtifacts();
-            buildOrderEntries(component, testArtifacts, "TEST");
+            final Optional<ArtifactListProduct> testArtifacts =
+                useProduct("testArtifacts", ArtifactListProduct.class);
+            testArtifacts
+                .map(ArtifactListProduct::getArtifacts)
+                .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
 
             return doc;
         }

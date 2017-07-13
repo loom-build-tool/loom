@@ -16,12 +16,15 @@
 
 package builders.loom.plugin.java;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaProvideSourceDirTask extends AbstractTask {
@@ -36,20 +39,38 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        return complete(TaskStatus.OK);
+    public TaskResult run() throws Exception {
+        final Path path = srcPath();
+
+        if (!Files.isDirectory(path)) {
+            return completeSkip();
+        }
+
+        final List<Path> sourceFiles = Files.walk(path)
+            .filter(Files::isRegularFile)
+            .collect(Collectors.toList());
+
+        final List<Path> illegalFiles = sourceFiles.stream()
+            .filter(f -> !f.toString().endsWith(".java"))
+            .collect(Collectors.toList());
+
+        if (!illegalFiles.isEmpty()) {
+            throw new IllegalStateException("Found files with other suffix than .java: "
+                + illegalFiles);
+        }
+
+        return completeOk(new SourceTreeProduct(path, sourceFiles));
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private Path srcPath() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("source", new SourceTreeProduct(SRC_MAIN_PATH));
-                return status;
+                return SRC_MAIN_PATH;
             case TEST:
-                getProvidedProducts().complete("testSource", new SourceTreeProduct(SRC_TEST_PATH));
-                return status;
+                return SRC_TEST_PATH;
             default:
                 throw new IllegalStateException();
         }
     }
+
 }

@@ -25,23 +25,29 @@ import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
+    private final String pluginName;
     private final Supplier<Task> taskSupplier;
-    private final Set<String> providedProducts;
+    private final String providedProduct;
     private final Set<String> usedProducts;
 
-    ConfiguredTask(final Supplier<Task> taskSupplier, final Set<String> providedProducts,
-                   final Set<String> usedProducts) {
+    ConfiguredTask(final String pluginName, final Supplier<Task> taskSupplier,
+                   final String providedProduct, final Set<String> usedProducts) {
+        this.pluginName = pluginName;
         this.taskSupplier = taskSupplier;
-        this.providedProducts = new HashSet<>(providedProducts);
+        this.providedProduct = providedProduct;
         this.usedProducts = new HashSet<>(usedProducts);
+    }
+
+    public String getPluginName() {
+        return pluginName;
     }
 
     public Supplier<Task> getTaskSupplier() {
         return taskSupplier;
     }
 
-    public Set<String> getProvidedProducts() {
-        return Collections.unmodifiableSet(providedProducts);
+    public String getProvidedProduct() {
+        return providedProduct;
     }
 
     public Set<String> getUsedProducts() {

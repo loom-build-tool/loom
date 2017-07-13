@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 public final class FileUtil {
 
@@ -60,4 +62,51 @@ public final class FileUtil {
         }
     }
 
+    public static void copy(final Path srcDir, final JarOutputStream os) throws IOException {
+        if (Files.isDirectory(srcDir)) {
+            Files.walkFileTree(srcDir, new CreateJarFileVisitor(srcDir, os));
+        }
+    }
+
+    private static class CreateJarFileVisitor extends SimpleFileVisitor<Path> {
+
+        private final Path sourceDir;
+        private final JarOutputStream os;
+
+        CreateJarFileVisitor(final Path sourceDir, final JarOutputStream os) {
+            this.sourceDir = sourceDir;
+            this.os = os;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir,
+                                                 final BasicFileAttributes attrs)
+            throws IOException {
+
+            if (dir.equals(sourceDir)) {
+                return FileVisitResult.CONTINUE;
+            }
+
+            final JarEntry entry = new JarEntry(sourceDir.relativize(dir).toString() + "/");
+            entry.setTime(attrs.lastModifiedTime().toMillis());
+            os.putNextEntry(entry);
+            os.closeEntry();
+
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(final Path file,
+                                         final BasicFileAttributes attrs)
+            throws IOException {
+
+            final JarEntry entry = new JarEntry(sourceDir.relativize(file).toString());
+            entry.setTime(attrs.lastModifiedTime().toMillis());
+            os.putNextEntry(entry);
+            Files.copy(file, os);
+            os.closeEntry();
+            return FileVisitResult.CONTINUE;
+        }
+
+    }
 }

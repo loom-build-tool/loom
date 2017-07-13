@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.Constants;
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
 import builders.loom.api.Plugin;
@@ -68,7 +69,7 @@ public class PluginRegistry {
     static {
         final Map<String, String> intPlugins = new HashMap<>();
         intPlugins.put("java", "builders.loom.plugin.java.JavaPlugin");
-        intPlugins.put("junit4", "builders.loom.plugin.junit4.Junit4Plugin");
+        intPlugins.put("junit4", "builders.loom.plugin.junit4.JUnit4Plugin");
         intPlugins.put("mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin");
         intPlugins.put("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin");
         intPlugins.put("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin");
@@ -134,18 +135,18 @@ public class PluginRegistry {
 
     }
 
-    private void initPlugin(final String plugin)
+    private void initPlugin(final String pluginName)
         throws Exception {
 
-        LOG.info("Initialize plugin {}", plugin);
-        final String pluginClassname = INTERNAL_PLUGINS.get(plugin);
+        LOG.info("Initialize plugin {}", pluginName);
+        final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
-            throw new IllegalArgumentException("Unknown plugin: " + plugin);
+            throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         }
 
-        final URL pluginJarUrl = findPluginUrl(plugin);
+        final URL pluginJarUrl = findPluginUrl(pluginName);
 
-        LOG.info("Load plugin {} using jar file from {}", plugin, pluginJarUrl);
+        LOG.info("Load plugin {} using jar file from {}", pluginName, pluginJarUrl);
 
         // Note that plugin dependencies are specified in MANIFEST.MF
         // @link https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html
@@ -157,23 +158,26 @@ public class PluginRegistry {
                 Thread.currentThread().getContextClassLoader()
                 ));
 
-        final Class<?> aClass = classLoader.loadClass(pluginClassname);
-        final Plugin regPlugin = (Plugin) aClass.newInstance();
-        regPlugin.setTaskRegistry(taskRegistry);
-        regPlugin.setServiceLocator(serviceLocator);
-        regPlugin.setBuildConfig(buildConfig);
-        regPlugin.setRuntimeConfiguration(runtimeConfiguration);
-        injectPluginSettings(plugin, regPlugin);
-        regPlugin.configure();
+        final Class<?> pluginClass = classLoader.loadClass(pluginClassname);
+        final Plugin plugin = (Plugin) pluginClass.newInstance();
+        plugin.setName(pluginName);
+        plugin.setTaskRegistry(taskRegistry);
+        plugin.setServiceLocator(serviceLocator);
+        plugin.setBuildConfig(buildConfig);
+        plugin.setRuntimeConfiguration(runtimeConfiguration);
+        plugin.setRepositoryPath(Constants.PROJECT_LOOM_PATH.resolve(
+            Paths.get(Version.getVersion(), pluginName)));
+        injectPluginSettings(pluginName, plugin);
+        plugin.configure();
 
-        LOG.info("Plugin {} initialized", plugin);
+        LOG.info("Plugin {} initialized", pluginName);
     }
 
     private URL findPluginUrl(final String name) {
-        final String pluginVersion = Version.getVersion();
-        final Path baseDir = loomBaseDir.resolve(
-            Paths.get("binary", "loom-" + pluginVersion, "plugin-" + name));
-        return buildUrl(baseDir.resolve(String.format("plugin-%s-%s.jar", name, pluginVersion)));
+        final String loomVersion = Version.getVersion();
+        final Path libraryPath = loomBaseDir.resolve(Paths.get("library", "loom-" + loomVersion));
+        final Path pluginDir = libraryPath.resolve("plugin-" + name);
+        return buildUrl(pluginDir.resolve(String.format("plugin-%s-%s.jar", name, loomVersion)));
     }
 
     private static URL buildUrl(final Path f) {
@@ -227,7 +231,7 @@ public class PluginRegistry {
         unknownSettings.removeAll(configuredPluginSettings);
 
         if (!unknownSettings.isEmpty()) {
-            throw new IllegalStateException("Unknown settings: " + unknownSettings);
+            LOG.warn("Unknown settings: " + unknownSettings);
         }
     }
 

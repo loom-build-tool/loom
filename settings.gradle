@@ -1,3 +1,4 @@
+include 'installer'
 include 'api'
 include 'util'
 include 'plugin-java'

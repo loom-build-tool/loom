@@ -23,11 +23,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
+import java.util.Optional;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
@@ -52,7 +52,7 @@ public class EclipseTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
+    public TaskResult run() throws Exception {
         final Path currentDir = Paths.get("");
 
         final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
@@ -65,12 +65,7 @@ public class EclipseTask extends AbstractTask {
         writeDocumentToFile(currentDir.resolve(".project"), createProjectFile(projectName));
         writeDocumentToFile(currentDir.resolve(".classpath"), createClasspathFile());
 
-        return complete(TaskStatus.OK);
-    }
-
-    private TaskStatus complete(final TaskStatus status) {
-        getProvidedProducts().complete("eclipse", new DummyProduct("Eclipse project files"));
-        return status;
+        return completeOk(new DummyProduct("Eclipse project files"));
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
@@ -122,16 +117,18 @@ public class EclipseTask extends AbstractTask {
                     projectJdkName)));
             root.appendChild(jdkEntry);
 
-            final List<ArtifactProduct> artifacts = getUsedProducts().readProduct("testArtifacts",
-                ArtifactListProduct.class).getArtifacts();
+            final Optional<ArtifactListProduct> testArtifacts =
+                useProduct("testArtifacts", ArtifactListProduct.class);
 
-            for (final ArtifactProduct path : artifacts) {
-                final String jar = path.getMainArtifact().toAbsolutePath().toString();
-                final Path sourceArtifact = path.getSourceArtifact();
-                final String sourceJar = sourceArtifact != null
-                    ? sourceArtifact.toAbsolutePath().toString() : null;
+            if (testArtifacts.isPresent()) {
+                for (final ArtifactProduct path : testArtifacts.get().getArtifacts()) {
+                    final String jar = path.getMainArtifact().toAbsolutePath().toString();
+                    final Path sourceArtifact = path.getSourceArtifact();
+                    final String sourceJar = sourceArtifact != null
+                        ? sourceArtifact.toAbsolutePath().toString() : null;
 
-                root.appendChild(buildClasspathElement(jar, sourceJar));
+                    root.appendChild(buildClasspathElement(jar, sourceJar));
+                }
             }
 
             return doc;

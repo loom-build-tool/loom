@@ -16,15 +16,17 @@
 
 package builders.loom.plugin.java;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.TaskStatus;
+import builders.loom.api.TaskResult;
 import builders.loom.api.product.ResourcesTreeProduct;
 
 public class JavaProvideResourcesDirTask extends AbstractTask {
+
     private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");
     private static final Path SRC_TESTRES_PATH = Paths.get("src", "test", "resources");
 
@@ -35,22 +37,25 @@ public class JavaProvideResourcesDirTask extends AbstractTask {
     }
 
     @Override
-    public TaskStatus run() throws Exception {
-        return complete(TaskStatus.OK);
+    public TaskResult run() throws Exception {
+        final Path path = resourcesPath();
+
+        if (!Files.isDirectory(path)) {
+            return completeSkip();
+        }
+
+        return completeOk(new ResourcesTreeProduct(path));
     }
 
-    private TaskStatus complete(final TaskStatus status) {
+    private Path resourcesPath() {
         switch (compileTarget) {
             case MAIN:
-                getProvidedProducts().complete("resources",
-                    new ResourcesTreeProduct(SRC_RES_PATH));
-                return status;
+                return SRC_RES_PATH;
             case TEST:
-                getProvidedProducts().complete("testResources",
-                    new ResourcesTreeProduct(SRC_TESTRES_PATH));
-                return status;
+                return SRC_TESTRES_PATH;
             default:
                 throw new IllegalStateException();
         }
     }
+
 }

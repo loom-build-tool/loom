@@ -118,3 +118,5 @@ task zip(type: Zip) {
         }
     }
 }
+
+build.dependsOn zip

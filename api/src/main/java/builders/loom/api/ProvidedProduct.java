@@ -16,10 +16,7 @@
 
 package builders.loom.api;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -30,27 +27,27 @@ import builders.loom.api.product.Product;
 /**
  * Sink for provided products from upstream task.
  */
-public class ProvidedProducts {
+public class ProvidedProduct {
 
-    public static final Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z.]*");
+    public static final Pattern PATTERN = Pattern.compile("[a-z][a-zA-Z]*");
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProvidedProducts.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProvidedProduct.class);
 
     private final ProductRepository productRepository;
 
-    private final Set<String> producedProductIds;
+    private final String producedProductId;
 
     private final String taskName;
 
-    public ProvidedProducts(final Set<String> producedProductIds,
-                            final ProductRepository productRepository, final String taskName) {
+    public ProvidedProduct(final String producedProductId,
+                           final ProductRepository productRepository, final String taskName) {
         Objects.requireNonNull(taskName);
         this.taskName = taskName;
-        Objects.requireNonNull(producedProductIds);
-        producedProductIds.forEach(ProvidedProducts::validateProductIdFormat);
+        Objects.requireNonNull(producedProductId);
+        validateProductIdFormat(producedProductId);
         Objects.requireNonNull(productRepository);
 
-        this.producedProductIds = Collections.unmodifiableSet(new HashSet<>(producedProductIds));
+        this.producedProductId = producedProductId;
         this.productRepository = productRepository;
     }
 
@@ -60,31 +57,24 @@ public class ProvidedProducts {
             "Must not complete product <" + productId + ">"
                 + " in task <" + taskName + "> with null value");
 
-        if (!producedProductIds.contains(productId)) {
+        if (!producedProductId.equals(productId)) {
             throw new IllegalStateException(
                 "Not allowed to resolve productId <" + productId + "> in task <" + taskName + ">");
         }
 
         final ProductPromise productPromise = productRepository.lookup(productId);
-
-        if (productPromise.isCompleted()) {
-            throw new IllegalStateException(
-                String.format("Task <%s> has tried to complete the already completed product <%s>",
-                    taskName, productId));
-        }
-
         productPromise.complete(value);
 
         LOG.debug("Product promise <{}> completed by task <{}> with value (type {}): {}",
             productId, value.getClass().getSimpleName(), value);
     }
 
-    public Set<String> getProducedProductIds() {
-        return producedProductIds;
+    public String getProducedProductId() {
+        return producedProductId;
     }
 
     public static void validateProductIdFormat(final String id) {
-        if (!ProvidedProducts.PATTERN.matcher(id).matches()) {
+        if (!ProvidedProduct.PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException(
                 String.format("Invalid format of product id <%s>", id));
         }

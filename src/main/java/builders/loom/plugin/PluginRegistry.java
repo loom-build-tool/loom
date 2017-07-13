@@ -69,7 +69,7 @@ public class PluginRegistry {
     static {
         final Map<String, String> intPlugins = new HashMap<>();
         intPlugins.put("java", "builders.loom.plugin.java.JavaPlugin");
-        intPlugins.put("junit4", "builders.loom.plugin.junit4.Junit4Plugin");
+        intPlugins.put("junit4", "builders.loom.plugin.junit4.JUnit4Plugin");
         intPlugins.put("mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin");
         intPlugins.put("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin");
         intPlugins.put("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin");

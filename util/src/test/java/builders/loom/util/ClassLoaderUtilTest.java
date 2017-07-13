@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit4;
+package builders.loom.util;
 
-import builders.loom.api.AbstractPlugin;
-import builders.loom.api.PluginSettings;
+import static org.junit.Assert.assertEquals;
 
-public class Junit4Plugin extends AbstractPlugin<PluginSettings> {
+import org.junit.Test;
 
-    @Override
-    public void configure() {
-        task("runTest")
-            .impl(Junit4TestTask::new)
-            .provides("test")
-            .uses("testDependencies", "processedResources", "compilation",
-                "processedTestResources", "testCompilation")
-            .register();
+public class ClassLoaderUtilTest {
 
-        goal("check")
-            .requires("test")
-            .register();
+    @Test
+    public void classnameFromFilename() throws Exception {
+        assertEquals(
+            "com.example.Foo",
+            ClassLoaderUtil.classnameFromFilename("com/example/Foo.class"));
+    }
+
+    @Test
+    public void resourceNameFromClassName() {
+        assertEquals(
+            "com/example/Foo.class",
+            ClassLoaderUtil.resourceNameFromClassName("com.example.Foo"));
     }
 
 }

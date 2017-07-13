@@ -131,15 +131,13 @@ public class PluginRegistry {
             throw new IllegalStateException(firstException.get());
         }
 
+        validateConfiguredTasks();
         validateSettings();
-
-        // TODO validate registered tasks and dependencies -- goal can require X without error here
     }
 
-    private void initPlugin(final String pluginName)
-        throws Exception {
-
+    private void initPlugin(final String pluginName) throws Exception {
         LOG.info("Initialize plugin {}", pluginName);
+
         final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
             throw new IllegalArgumentException("Unknown plugin: " + pluginName);
@@ -189,7 +187,7 @@ public class PluginRegistry {
         }
     }
 
-    public static ClassLoader getPlatformClassLoader() {
+    private static ClassLoader getPlatformClassLoader() {
         return ClassLoader.getSystemClassLoader().getParent();
     }
 
@@ -225,6 +223,22 @@ public class PluginRegistry {
 
     private static String constructSetter(final String propertyName) {
         return "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+    }
+
+    private void validateConfiguredTasks() {
+        final Set<String> providedProducts = taskRegistry.configuredTasks().stream()
+            .map(ConfiguredTask::getProvidedProduct)
+            .collect(Collectors.toSet());
+
+        for (final ConfiguredTask configuredTask : taskRegistry.configuredTasks()) {
+            final Set<String> usedProducts = configuredTask.getUsedProducts();
+            for (final String usedProduct : usedProducts) {
+                if (!providedProducts.contains(usedProduct)) {
+                    throw new IllegalStateException("Task " + configuredTask.getName()
+                        + " requests non existing product <" + usedProduct + ">");
+                }
+            }
+        }
     }
 
     private void validateSettings() {

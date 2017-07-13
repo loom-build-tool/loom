@@ -29,22 +29,20 @@ public class ConfiguredTask {
     private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
-    private final boolean intermediateProduct;
     private final Set<String> usedProducts;
-    private final boolean isGoal;
     private final String description;
+    private final TaskType type;
 
     ConfiguredTask(final String name, final String pluginName, final Supplier<Task> taskSupplier,
-                   final String providedProduct, final boolean intermediateProduct,
-                   final Set<String> usedProducts, final boolean isGoal, final String description) {
+                   final String providedProduct, final Set<String> usedProducts,
+                   final String description, final TaskType type) {
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
-        this.intermediateProduct = intermediateProduct;
         this.usedProducts = new HashSet<>(usedProducts);
-        this.isGoal = isGoal;
         this.description = description;
+        this.type = type;
     }
 
     public String getName() {
@@ -70,10 +68,6 @@ public class ConfiguredTask {
         return providedProduct;
     }
 
-    public boolean isIntermediateProduct() {
-        return intermediateProduct;
-    }
-
     public Set<String> getUsedProducts() {
         return Collections.unmodifiableSet(usedProducts);
     }
@@ -84,12 +78,20 @@ public class ConfiguredTask {
         return this;
     }
 
-    public boolean isGoal() {
-        return isGoal;
-    }
-
     public String getDescription() {
         return description;
+    }
+
+    public TaskType getType() {
+        return type;
+    }
+
+    public boolean isIntermediateProduct() {
+        return type == TaskType.INTERMEDIATE;
+    }
+
+    public boolean isGoal() {
+        return type == TaskType.GOAL;
     }
 
 }

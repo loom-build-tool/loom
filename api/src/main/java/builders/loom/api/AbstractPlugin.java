@@ -137,8 +137,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public TaskBuilder desc(final String description) {
-            this.description = description;
+        public TaskBuilder desc(final String taskDescription) {
+            this.description = taskDescription;
             return this;
         }
 

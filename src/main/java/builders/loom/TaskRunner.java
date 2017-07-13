@@ -59,7 +59,6 @@ public class TaskRunner {
             .map(ConfiguredTask::getName)
             .collect(Collectors.joining(", ")));
 
-        // TODO product validate here -- to late?
         registerProducts(resolvedTasks);
 
         ProgressMonitor.setTasks(resolvedTasks.size());

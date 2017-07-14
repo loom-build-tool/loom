@@ -65,6 +65,13 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
 
+        task("install")
+            .impl(() -> new MavenInstallTask(getBuildConfig()))
+            .provides("installedAssembly")
+            .uses("jar")
+            .desc("Installs the jar file to the local Maven repository.")
+            .register();
+
         service("mavenDependencyResolver")
             .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
                 MavenResolverSingleton.getInstance(pluginSettings, repositoryPath)

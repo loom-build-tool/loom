@@ -14,6 +14,7 @@
     <allow pkg="java.util"/>
 
     <allow pkg="javax.tools"/>
+    <allow pkg="javax.xml"/>
 
     <allow pkg="ch.qos.logback"/>
 
@@ -21,6 +22,8 @@
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>
     <allow pkg="org.slf4j"/>
+    <allow pkg="org.w3c.dom"/>
+    <allow pkg="org.xml.sax"/>
     <allow pkg="org.junit"/>
     <allow pkg="builders.loom"/>
 
@@ -46,10 +49,6 @@
     </subpackage>
 
     <subpackage name="plugin.idea">
-        <allow pkg="nu.xom"/>
-    </subpackage>
-
-    <subpackage name="plugin.eclipse">
         <allow pkg="nu.xom"/>
     </subpackage>
 

@@ -106,7 +106,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
         task("javadoc")
             .impl(JavadocTask::new)
             .provides("javadoc")
-            .uses("source")
+            .uses("source", "compileDependencies")
             .desc("Creates Javadoc pages.")
             .register();
 

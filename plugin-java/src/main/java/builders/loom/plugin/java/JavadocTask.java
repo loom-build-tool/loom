@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import javax.tools.DiagnosticListener;
 import javax.tools.DocumentationTool;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.AbstractTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
+import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
@@ -53,6 +56,11 @@ public class JavadocTask extends AbstractTask {
             return completeSkip();
         }
 
+        final List<Path> classpath = new ArrayList<>();
+        useProduct("compileDependencies", ClasspathProduct.class)
+            .map(ClasspathProduct::getEntries)
+            .ifPresent(classpath::addAll);
+
         final Path dstDir =
             Files.createDirectories(LoomPaths.BUILD_DIR.resolve(Paths.get("javadoc")));
 
@@ -66,6 +74,9 @@ public class JavadocTask extends AbstractTask {
 
             fileManager.setLocation(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
                 Collections.singletonList(dstDir.toFile()));
+
+            fileManager.setLocation(StandardLocation.CLASS_PATH,
+                classpath.stream().map(Path::toFile).collect(Collectors.toList()));
 
             final List<File> srcFiles = source.get().getSourceFiles().stream()
                 .map(Path::toFile)

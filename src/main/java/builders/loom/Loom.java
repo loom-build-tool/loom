@@ -197,6 +197,7 @@ public class Loom {
 
         configureLogging();
 
+        loomProcessor.logSystemEnvironment();
         loomProcessor.logMemoryUsage();
 
         final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);

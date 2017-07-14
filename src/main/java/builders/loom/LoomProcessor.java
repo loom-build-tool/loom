@@ -105,6 +105,18 @@ public class LoomProcessor {
         }
     }
 
+    public void logSystemEnvironment() {
+        final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
+        log.debug("Running Loom {} on {} {} {}, Java {} ({}) with {} cores",
+            Version.getVersion(),
+            System.getProperty("os.name"),
+            System.getProperty("os.version"),
+            System.getProperty("os.arch"),
+            System.getProperty("java.version"),
+            System.getProperty("java.vendor"),
+            Runtime.getRuntime().availableProcessors());
+    }
+
     public void logMemoryUsage() {
         final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
 

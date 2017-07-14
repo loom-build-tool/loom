@@ -48,8 +48,4 @@
         <allow pkg="javassist.bytecode"/>
     </subpackage>
 
-    <subpackage name="plugin.idea">
-        <allow pkg="nu.xom"/>
-    </subpackage>
-
 </import-control>

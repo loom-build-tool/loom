@@ -16,6 +16,8 @@
 
 package builders.loom.plugin.idea;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,30 +29,55 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Optional;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
-import nu.xom.Attribute;
-import nu.xom.Builder;
-import nu.xom.Document;
-import nu.xom.Element;
-import nu.xom.ParsingException;
-import nu.xom.Serializer;
 
+@SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class IdeaTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private final Builder parser = new Builder();
+    private final DocumentBuilder dBuilder;
+    private final Transformer transformer;
 
     public IdeaTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
+
+        try {
+            final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            dBuilder = dbFactory.newDocumentBuilder();
+
+            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        } catch (final ParserConfigurationException | TransformerConfigurationException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static InputStream readResource(final String resourceName) {
-        return IdeaTask.class.getResourceAsStream(resourceName);
+        return new BufferedInputStream(IdeaTask.class.getResourceAsStream(resourceName));
     }
 
     @Override
@@ -82,10 +109,10 @@ public class IdeaTask extends AbstractTask {
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createMiscFile() throws IOException, ParsingException {
+    private Document createMiscFile() throws IOException, SAXException {
         try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
-            final Document doc = parser.build(resourceAsStream);
-            final Element component = doc.getRootElement().getFirstChildElement("component");
+            final Document doc = dBuilder.parse(resourceAsStream);
+            final Element component = getOnlyElementByTagName(doc, "component");
 
             final String languageLevel;
             final String projectJdkName;
@@ -99,63 +126,82 @@ public class IdeaTask extends AbstractTask {
                 projectJdkName = "" + javaPlatformVersion;
             }
 
-            component.addAttribute(new Attribute("languageLevel", languageLevel));
-            component.addAttribute(new Attribute("project-jdk-name", projectJdkName));
+            component.setAttribute("languageLevel", languageLevel);
+            component.setAttribute("project-jdk-name", projectJdkName);
 
             return doc;
         }
     }
 
-    private void writeDocumentToFile(final Path file, final Document doc) throws IOException {
-        try (final OutputStream outputStream = Files.newOutputStream(file,
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+    private Element getOnlyElementByTagName(final Document doc, final String tagName) {
+        final NodeList nodeList = doc.getElementsByTagName(tagName);
+        if (nodeList.getLength() != 1) {
+            throw new IllegalStateException("Expected NodeList length: 1, but was "
+                + nodeList.getLength());
+        }
+        final Node item = nodeList.item(0);
 
-            final Serializer serializer = new Serializer(outputStream, "UTF-8");
-            serializer.setIndent(2);
-            serializer.write(doc);
+        if (!(item instanceof Element)) {
+            throw new IllegalStateException("Item is not of type Element: " + item);
+        }
+
+        return (Element) item;
+    }
+
+    private void writeDocumentToFile(final Path file, final Document doc)
+        throws IOException, TransformerException {
+
+        try (final OutputStream outputStream = newOut(file)) {
+            doc.setXmlStandalone(true);
+
+            transformer.transform(new DOMSource(doc), new StreamResult(outputStream));
         }
     }
 
-    private Document createModulesFile(final String imlFilename)
-        throws IOException, ParsingException {
-        try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
-            final Document doc = parser.build(resourceAsStream);
-            final Element modules = doc.getRootElement().getFirstChildElement("component")
-                .getFirstChildElement("modules");
+    private OutputStream newOut(final Path file) throws IOException {
+        return new BufferedOutputStream(Files.newOutputStream(file,
+            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+    }
 
-            final Element module = new Element("module");
-            module.addAttribute(new Attribute("fileurl", "file://$PROJECT_DIR$/" + imlFilename));
-            module.addAttribute(new Attribute("filepath", "$PROJECT_DIR$/" + imlFilename));
+    private Document createModulesFile(final String imlFilename)
+        throws IOException, SAXException {
+        try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
+            final Document doc = dBuilder.parse(resourceAsStream);
+            final Element modules = getOnlyElementByTagName(doc, "modules");
+
+            final Element module = doc.createElement("module");
+            module.setAttribute("fileurl", "file://$PROJECT_DIR$/" + imlFilename);
+            module.setAttribute("filepath", "$PROJECT_DIR$/" + imlFilename);
             modules.appendChild(module);
 
             return doc;
         }
     }
 
-    private Document createImlFile() throws IOException, ParsingException, InterruptedException {
+    private Document createImlFile() throws IOException, InterruptedException, SAXException {
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
-            final Document doc = parser.build(resourceAsStream);
-            final Element component = doc.getRootElement().getFirstChildElement("component");
+            final Document doc = dBuilder.parse(resourceAsStream);
+            final Element component = getOnlyElementByTagName(doc, "component");
 
             // add compile artifacts
             final Optional<ArtifactListProduct> compileArtifacts =
                 useProduct("compileArtifacts", ArtifactListProduct.class);
             compileArtifacts
                 .map(ArtifactListProduct::getArtifacts)
-                .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
+                .ifPresent(artifacts -> buildOrderEntries(doc, component, artifacts, "COMPILE"));
 
             // add test artifacts
             final Optional<ArtifactListProduct> testArtifacts =
                 useProduct("testArtifacts", ArtifactListProduct.class);
             testArtifacts
                 .map(ArtifactListProduct::getArtifacts)
-                .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
+                .ifPresent(artifacts -> buildOrderEntries(doc, component, artifacts, "TEST"));
 
             return doc;
         }
     }
 
-    private void buildOrderEntries(final Element component,
+    private void buildOrderEntries(final Document doc, final Node component,
                                    final List<ArtifactProduct> mainArtifacts, final String scope) {
         for (final ArtifactProduct artifact : mainArtifacts) {
             final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
@@ -163,31 +209,32 @@ public class IdeaTask extends AbstractTask {
             final String sourceJar = sourceArtifact != null
                 ? sourceArtifact.toAbsolutePath().toString() : null;
 
-            component.appendChild(buildOrderEntry(scope, mainJar, sourceJar));
+            component.appendChild(buildOrderEntry(doc, scope, mainJar, sourceJar));
         }
     }
 
-    private Element buildOrderEntry(final String scope, final String jar, final String sourceJar) {
-        final Element orderEntry = new Element("orderEntry");
-        orderEntry.addAttribute(new Attribute("type", "module-library"));
+    private Element buildOrderEntry(final Document doc, final String scope,
+                                    final String jar, final String sourceJar) {
+        final Element orderEntry = doc.createElement("orderEntry");
+        orderEntry.setAttribute("type", "module-library");
         if (scope != null) {
-            orderEntry.addAttribute(new Attribute("scope", scope));
+            orderEntry.setAttribute("scope", scope);
         }
 
-        final Element library = new Element("library");
-        library.appendChild(buildJarElement("CLASSES", jar));
-        library.appendChild(buildJarElement("SOURCES", sourceJar));
-        library.appendChild(buildJarElement("JAVADOC", null));
+        final Element library = doc.createElement("library");
+        library.appendChild(buildJarElement(doc, "CLASSES", jar));
+        library.appendChild(buildJarElement(doc, "SOURCES", sourceJar));
+        library.appendChild(buildJarElement(doc, "JAVADOC", null));
         orderEntry.appendChild(library);
 
         return orderEntry;
     }
 
-    private Element buildJarElement(final String name, final String jar) {
-        final Element classes = new Element(name);
+    private Element buildJarElement(final Document doc, final String name, final String jar) {
+        final Element classes = doc.createElement(name);
         if (jar != null) {
-            final Element root = new Element("root");
-            root.addAttribute(new Attribute("url", String.format("jar://%s!/", jar)));
+            final Element root = doc.createElement("root");
+            root.setAttribute("url", String.format("jar://%s!/", jar));
             classes.appendChild(root);
         }
         return classes;

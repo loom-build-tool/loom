@@ -118,7 +118,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         goal("assemble")
-            .requires("jar", "sourcesJar", "javadocJar")
+            .requires("jar", "sourcesJar")
             .register();
 
         goal("check")

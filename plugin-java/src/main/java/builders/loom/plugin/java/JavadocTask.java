@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractTask;
+import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
@@ -50,6 +51,10 @@ public class JavadocTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
+        if (JavaVersion.current().getNumericVersion() < 9) {
+            throw new IllegalStateException("JavadocTask currently supports only Java >= 9");
+        }
+
         final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
 
         if (!source.isPresent()) {

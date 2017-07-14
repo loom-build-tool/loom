@@ -29,7 +29,6 @@ public class ConfiguredTask {
     private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
-    private final boolean intermediateProduct;
     private final Set<String> usedProducts;
     private final String description;
     private final TaskType type;
@@ -41,7 +40,6 @@ public class ConfiguredTask {
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
-        this.intermediateProduct = intermediateProduct;
         this.usedProducts = new HashSet<>(usedProducts);
         this.description = description;
         this.type = type;
@@ -68,10 +66,6 @@ public class ConfiguredTask {
 
     public String getProvidedProduct() {
         return providedProduct;
-    }
-
-    public boolean isIntermediateProduct() {
-        return intermediateProduct;
     }
 
     public Set<String> getUsedProducts() {

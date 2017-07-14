@@ -28,7 +28,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import builders.loom.DependencyGraph;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
 import builders.loom.util.DirectedGraph;

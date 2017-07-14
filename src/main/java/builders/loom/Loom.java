@@ -55,7 +55,7 @@ public class Loom {
     public static void main(final String[] args) {
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
-                .a("Interrupt received - cooking stopped").reset()));
+                .a("Interrupt received - stopping").reset()));
 
         try {
             init();

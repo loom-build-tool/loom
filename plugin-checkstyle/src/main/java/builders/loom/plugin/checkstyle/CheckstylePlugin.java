@@ -32,6 +32,7 @@ public class CheckstylePlugin extends AbstractPlugin<CheckstylePluginSettings> {
                 getRepositoryPath()))
             .provides("checkstyleMainReport")
             .uses("source", "compileDependencies")
+            .desc("Runs Checkstyle against main sources and create report.")
             .register();
 
         task("checkstyleTest")
@@ -39,6 +40,7 @@ public class CheckstylePlugin extends AbstractPlugin<CheckstylePluginSettings> {
                 getRepositoryPath()))
             .provides("checkstyleTestReport")
             .uses("testSource", "testDependencies")
+            .desc("Runs Checkstyle against test sources and create report.")
             .register();
 
         goal("check")

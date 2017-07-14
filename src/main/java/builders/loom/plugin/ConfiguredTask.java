@@ -25,21 +25,39 @@ import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
-    private final String pluginName;
+    private final String name;
+    private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
     private final Set<String> usedProducts;
+    private final String description;
+    private final TaskType type;
 
-    ConfiguredTask(final String pluginName, final Supplier<Task> taskSupplier,
-                   final String providedProduct, final Set<String> usedProducts) {
-        this.pluginName = pluginName;
+    ConfiguredTask(final String name, final String pluginName, final Supplier<Task> taskSupplier,
+                   final String providedProduct, final Set<String> usedProducts,
+                   final String description, final TaskType type) {
+        this.name = name;
+        this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
         this.usedProducts = new HashSet<>(usedProducts);
+        this.description = description;
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Set<String> getPluginNames() {
+        return Collections.unmodifiableSet(pluginNames);
     }
 
     public String getPluginName() {
-        return pluginName;
+        if (pluginNames.size() != 1) {
+            throw new IllegalStateException("Expected exactly 1 Plugin, got " + pluginNames.size());
+        }
+        return pluginNames.iterator().next();
     }
 
     public Supplier<Task> getTaskSupplier() {
@@ -54,9 +72,30 @@ public class ConfiguredTask {
         return Collections.unmodifiableSet(usedProducts);
     }
 
-    ConfiguredTask addUsedProducts(final Set<String> additionalProducts) {
+    ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
+        pluginNames.add(pluginName);
         this.usedProducts.addAll(additionalProducts);
         return this;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public TaskType getType() {
+        return type;
+    }
+
+    public boolean isIntermediateProduct() {
+        return type == TaskType.INTERMEDIATE;
+    }
+
+    public boolean isGoal() {
+        return type == TaskType.GOAL;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

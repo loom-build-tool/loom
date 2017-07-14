@@ -109,7 +109,9 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private final String taskName;
         private Supplier<Task> taskSupplier;
         private String providedProduct;
+        private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
+        private String description;
 
         public TaskBuilder(final String taskName) {
             this.taskName = taskName;
@@ -121,7 +123,12 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         }
 
         public TaskBuilder provides(final String product) {
+            return provides(product, false);
+        }
+
+        public TaskBuilder provides(final String product, final boolean intermediate) {
             providedProduct = Objects.requireNonNull(product);
+            intermediateProduct = intermediate;
             return this;
         }
 
@@ -130,9 +137,14 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
+        public TaskBuilder desc(final String taskDescription) {
+            this.description = taskDescription;
+            return this;
+        }
+
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                usedProducts);
+                intermediateProduct, usedProducts, description);
         }
 
     }

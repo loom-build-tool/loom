@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.eclipse;
+package builders.loom.plugin;
 
-import builders.loom.api.AbstractPlugin;
-import builders.loom.api.PluginSettings;
+public enum TaskType {
 
-public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
-
-    @Override
-    public void configure() {
-        task("configureEclipse")
-            .impl(() -> new EclipseTask(getBuildConfig()))
-            .provides("eclipse")
-            .uses("testArtifacts")
-            .desc("Generates .classpath and .project file for Eclipse.")
-            .register();
-    }
+    STANDARD,
+    INTERMEDIATE,
+    GOAL
 
 }

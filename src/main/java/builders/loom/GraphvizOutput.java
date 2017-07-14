@@ -22,9 +22,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import builders.loom.plugin.ConfiguredTask;
@@ -61,44 +59,56 @@ public final class GraphvizOutput {
         pw.println("    graph [splines=spline, nodesep=1];");
         pw.println("    node [shape=box];");
 
-        for (final String taskName : taskRegistryLookup.getTaskNames()) {
+        for (final ConfiguredTask task : taskRegistryLookup.configuredTasks()) {
+            writeLabel(pw, task);
+        }
 
-            final ConfiguredTask task = taskRegistryLookup.lookupTask(taskName);
-
-            final String productId = task.getProvidedProduct();
-
-            writeKeyValue(pw, productId,
-                productId + "\\n" + taskName, Collections.emptyList());
-
-            writeKeyValue(pw, productId, null,
-                new ArrayList<>(task.getUsedProducts()));
-
+        for (final ConfiguredTask task : taskRegistryLookup.configuredTasks()) {
+            if (!task.getUsedProducts().isEmpty()) {
+                writeEdge(pw, task);
+            }
         }
 
         pw.println("}");
     }
 
-    private static void writeKeyValue(final PrintWriter pw, final String key, final String label,
-                                      final List<String> values) {
+    private static void writeLabel(final PrintWriter pw, final ConfiguredTask task) {
         pw.print("    ");
-        pw.print(key);
-        if (label != null) {
-            pw.print(" [label=\"" + label + "\"] ");
+        pw.print(task.getProvidedProduct());
+        final String label;
+        if (task.isGoal()) {
+            label = task.getProvidedProduct();
+        } else {
+            label = task.getProvidedProduct() + "\\n[" + task.getPluginName() + " Plugin]";
         }
-        if (!values.isEmpty()) {
-            pw.print(" -> ");
-            pw.print(constructValue(values));
+        pw.print(" [label=\"" + label + "\"");
+
+        if (task.isGoal()) {
+            pw.print(", color=gold2, shape=tripleoctagon");
+        } else if (task.isIntermediateProduct()) {
+            pw.print(", color=grey, fontcolor=grey");
         }
+
+        pw.print("]");
+
         pw.println(";");
     }
 
-    private static String constructValue(final List<String> dependentNodes) {
+    private static void writeEdge(final PrintWriter pw, final ConfiguredTask task) {
+        pw.print("    ");
+        pw.print(task.getProvidedProduct());
+        pw.print(" -> ");
+        pw.print(constructValue(task.getUsedProducts()));
+        pw.println(";");
+    }
+
+    private static String constructValue(final Collection<String> dependentNodes) {
         if (dependentNodes == null || dependentNodes.isEmpty()) {
             throw new IllegalArgumentException("dependentNodes must be > 0");
         }
 
         if (dependentNodes.size() == 1) {
-            return dependentNodes.get(0);
+            return dependentNodes.iterator().next();
         }
 
         return "{" + dependentNodes.stream()

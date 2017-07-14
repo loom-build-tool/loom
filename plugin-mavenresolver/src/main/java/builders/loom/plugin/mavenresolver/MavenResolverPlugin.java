@@ -40,34 +40,37 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
         task("resolveCompileDependencies")
             .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
                 repositoryPath))
-            .provides("compileDependencies")
+            .provides("compileDependencies", true)
+            .desc("Fetches dependencies needed for main class compilation.")
             .register();
 
         task("resolveCompileArtifacts")
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
                 repositoryPath))
-            .provides("compileArtifacts")
+            .provides("compileArtifacts", true)
+            .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("resolveTestDependencies")
             .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg, pluginSettings,
                 repositoryPath))
-            .provides("testDependencies")
+            .provides("testDependencies", true)
+            .desc("Fetches dependencies needed for test class compilation.")
             .register();
 
         task("resolveTestArtifacts")
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings,
                 repositoryPath))
-            .provides("testArtifacts")
+            .provides("testArtifacts", true)
+            .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
 
         service("mavenDependencyResolver")
-            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) -> {
-                return MavenResolverSingleton.getInstance(pluginSettings, repositoryPath)
+            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
+                MavenResolverSingleton.getInstance(pluginSettings, repositoryPath)
                     .resolve(deps, scope, null).stream()
                     .map(ArtifactProduct::getMainArtifact)
-                    .collect(Collectors.toList());
-            })
+                    .collect(Collectors.toList()))
             .register();
     }
 

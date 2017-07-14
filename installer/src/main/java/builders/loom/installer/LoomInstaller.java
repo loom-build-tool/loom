@@ -57,7 +57,7 @@ public class LoomInstaller {
         }
     }
 
-    private static String readVersion() throws IOException {
+    private static String readVersion() {
         final Properties properties = new Properties();
         try (InputStream in = LoomInstaller.class.getResourceAsStream(PROPERTIES_RESOURCE)) {
             properties.load(in);
@@ -224,7 +224,7 @@ public class LoomInstaller {
         return osName != null && osName.startsWith("Windows");
     }
 
-    private static Path determineWindowsBaseDir() throws IOException {
+    private static Path determineWindowsBaseDir() {
         final String localAppDataEnv = System.getenv("LOCALAPPDATA");
 
         if (localAppDataEnv == null) {
@@ -241,7 +241,7 @@ public class LoomInstaller {
         return localAppDataDir.resolve(Paths.get("Loom", "Loom"));
     }
 
-    private static Path determineGenericBaseDir() throws IOException {
+    private static Path determineGenericBaseDir() {
         final String userHomeVar = System.getProperty("user.home");
         final Path userHome = Paths.get(userHomeVar);
 

@@ -33,12 +33,14 @@ public class FindbugsPlugin extends AbstractPlugin<FindbugsPluginSettings> {
             .impl(() -> new FindbugsTask(pluginSettings, CompileTarget.MAIN))
             .provides("findbugsMainReport")
             .uses("source", "compileDependencies", "compilation")
+            .desc("Runs FindBugs against main classes and create report.")
             .register();
 
         task("findbugsTest")
             .impl(() -> new FindbugsTask(pluginSettings, CompileTarget.TEST))
             .provides("findbugsTestReport")
             .uses("testSource", "testDependencies", "compilation", "testCompilation")
+            .desc("Runs FindBugs against test classes and create report.")
             .register();
 
         goal("check")

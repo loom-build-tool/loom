@@ -16,14 +16,15 @@
 
 package builders.loom.plugin;
 
+import java.util.Collection;
 import java.util.Set;
 
 import builders.loom.api.TaskRegistry;
 
 public interface TaskRegistryLookup extends TaskRegistry {
 
-    Set<String> getTaskNames();
+    Collection<ConfiguredTask> configuredTasks();
 
-    ConfiguredTask lookupTask(String taskName);
+    Collection<ConfiguredTask> resolve(Set<String> productIds);
 
 }

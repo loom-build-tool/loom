@@ -57,7 +57,7 @@ import builders.loom.api.product.DummyProduct;
 public class IdeaTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private final DocumentBuilder dBuilder;
+    private final DocumentBuilder docBuilder;
     private final Transformer transformer;
 
     public IdeaTask(final BuildConfig buildConfig) {
@@ -65,12 +65,12 @@ public class IdeaTask extends AbstractTask {
 
         try {
             final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            dBuilder = dbFactory.newDocumentBuilder();
+            docBuilder = dbFactory.newDocumentBuilder();
 
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         } catch (final ParserConfigurationException | TransformerConfigurationException e) {
             throw new IllegalStateException(e);
         }
@@ -111,7 +111,7 @@ public class IdeaTask extends AbstractTask {
     @SuppressWarnings("checkstyle:magicnumber")
     private Document createMiscFile() throws IOException, SAXException {
         try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
-            final Document doc = dBuilder.parse(resourceAsStream);
+            final Document doc = docBuilder.parse(resourceAsStream);
             final Element component = getOnlyElementByTagName(doc, "component");
 
             final String languageLevel;
@@ -166,7 +166,7 @@ public class IdeaTask extends AbstractTask {
     private Document createModulesFile(final String imlFilename)
         throws IOException, SAXException {
         try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
-            final Document doc = dBuilder.parse(resourceAsStream);
+            final Document doc = docBuilder.parse(resourceAsStream);
             final Element modules = getOnlyElementByTagName(doc, "modules");
 
             final Element module = doc.createElement("module");
@@ -180,7 +180,7 @@ public class IdeaTask extends AbstractTask {
 
     private Document createImlFile() throws IOException, InterruptedException, SAXException {
         try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
-            final Document doc = dBuilder.parse(resourceAsStream);
+            final Document doc = docBuilder.parse(resourceAsStream);
             final Element component = getOnlyElementByTagName(doc, "component");
 
             // add compile artifacts

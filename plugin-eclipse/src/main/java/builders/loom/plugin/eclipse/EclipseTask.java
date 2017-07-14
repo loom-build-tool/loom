@@ -54,7 +54,7 @@ import builders.loom.api.product.DummyProduct;
 public class EclipseTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private final DocumentBuilder dBuilder;
+    private final DocumentBuilder docBuilder;
     private final Transformer transformer;
 
     public EclipseTask(final BuildConfig buildConfig) {
@@ -62,12 +62,12 @@ public class EclipseTask extends AbstractTask {
 
         try {
             final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            dBuilder = dbFactory.newDocumentBuilder();
+            docBuilder = dbFactory.newDocumentBuilder();
 
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         } catch (final ParserConfigurationException | TransformerConfigurationException e) {
             throw new IllegalStateException(e);
         }
@@ -97,7 +97,7 @@ public class EclipseTask extends AbstractTask {
     @SuppressWarnings("checkstyle:magicnumber")
     private Document createProjectFile(final String name) throws IOException, SAXException {
         try (final InputStream resourceAsStream = readResource("/project-template.xml")) {
-            final Document doc = dBuilder.parse(resourceAsStream);
+            final Document doc = docBuilder.parse(resourceAsStream);
             final Node component = doc.getDocumentElement()
                 .getElementsByTagName("name").item(0);
 
@@ -127,7 +127,7 @@ public class EclipseTask extends AbstractTask {
         throws IOException, InterruptedException, SAXException {
 
         try (final InputStream resourceAsStream = readResource("/classpath-template.xml")) {
-            final Document doc = dBuilder.parse(resourceAsStream);
+            final Document doc = docBuilder.parse(resourceAsStream);
             final Element root = doc.getDocumentElement();
 
             final String projectJdkName;

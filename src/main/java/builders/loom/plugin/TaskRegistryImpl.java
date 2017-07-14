@@ -18,15 +18,20 @@ package builders.loom.plugin;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import builders.loom.DependencyGraph;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
+import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 
@@ -45,8 +50,14 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(description, "description missing on task <" + taskName + ">");
 
+        if (usedProducts.contains(null)) {
+            throw new IllegalArgumentException("usedProducts contains null on task <"
+                + taskName + ">");
+        }
+
+        final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
         if (taskMap.putIfAbsent(taskName, new ConfiguredTask(taskName, pluginName, taskSupplier,
-            providedProduct, intermediateProduct, usedProducts, false, description)) != null) {
+            providedProduct, usedProducts, description, type)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
         }
@@ -60,10 +71,18 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         Objects.requireNonNull(usedProducts,
             "usedProducts missing on goal <" + goalName + ">");
 
-        taskMap.compute(goalName, (name, configuredTask) -> configuredTask != null
-            ? configuredTask.addUsedProducts(pluginName, usedProducts)
-            : new ConfiguredTask(name, pluginName, WaitForAllProductsTask::new, goalName, false,
-            usedProducts, true, null));
+        if (usedProducts.contains(null)) {
+            throw new IllegalArgumentException("usedProducts contains null on goal <"
+                + goalName + ">");
+        }
+
+        final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
+            configuredTask != null
+                ? configuredTask.addUsedProducts(pluginName, usedProducts)
+                : new ConfiguredTask(name, pluginName, WaitForAllProductsTask::new, goalName,
+                usedProducts, null, TaskType.GOAL);
+
+        taskMap.compute(goalName, fn);
     }
 
     @Override
@@ -73,7 +92,25 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
 
     @Override
     public Collection<ConfiguredTask> resolve(final Set<String> productIds) {
-        return new DependencyGraph(this).resolve(productIds);
+        final DirectedGraph<ConfiguredTask> graph = new DirectedGraph<>();
+
+        final Map<String, ConfiguredTask> products = new HashMap<>();
+        for (final ConfiguredTask configuredTask : taskMap.values()) {
+            products.put(configuredTask.getProvidedProduct(), configuredTask);
+            graph.addNode(configuredTask);
+        }
+
+        for (final ConfiguredTask configuredTask : taskMap.values()) {
+            for (final String usedProduct : configuredTask.getUsedProducts()) {
+                graph.addEdge(configuredTask, products.get(usedProduct));
+            }
+        }
+
+        final List<ConfiguredTask> tasksToResolve = productIds.stream()
+            .map(products::get)
+            .collect(Collectors.toList());
+
+        return graph.resolve(tasksToResolve);
     }
 
 }

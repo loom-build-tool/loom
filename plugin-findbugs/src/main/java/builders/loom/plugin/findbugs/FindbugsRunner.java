@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.util.Util;
+import builders.loom.util.SystemUtil;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
@@ -44,7 +44,7 @@ import edu.umd.cs.findbugs.config.UserPreferences;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class FindbugsRunner {
 
-    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.LOW_PRIORITY;
+    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
 
@@ -172,7 +172,7 @@ public class FindbugsRunner {
 
     private static Predicate<Path> filterByExtension(final String extension) {
         Objects.requireNonNull(extension);
-        return p -> extension.equals(Util.getFileExtension(p.getFileName().toString()));
+        return p -> extension.equals(SystemUtil.getFileExtension(p.getFileName().toString()));
     }
 
     private static String pathToString(final Path file) {

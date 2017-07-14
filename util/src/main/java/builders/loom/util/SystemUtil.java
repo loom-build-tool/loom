@@ -21,8 +21,15 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public final class SystemUtil {
+
+    private static final char EXTENSION_SEPARATOR = '.';
+
+    private static final char UNIX_SEPARATOR = '/';
+
+    private static final char WINDOWS_SEPARATOR = '\\';
 
     private SystemUtil() {
     }
@@ -78,6 +85,32 @@ public final class SystemUtil {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static String getFileExtension(final String filename) {
+        if (filename == null) {
+            return null;
+        }
+        final int index = indexOfExtension(filename);
+        if (index == -1) {
+            return "";
+        } else {
+            return filename.substring(index + 1);
+        }
+    }
+
+    private static int indexOfExtension(final String filename) {
+        Objects.requireNonNull(filename);
+        final int extensionPos = filename.lastIndexOf(EXTENSION_SEPARATOR);
+        final int lastSeparator = indexOfLastSeparator(filename);
+        return lastSeparator > extensionPos ? -1 : extensionPos;
+    }
+
+    private static int indexOfLastSeparator(final String filename) {
+        Objects.requireNonNull(filename);
+        final int lastUnixPos = filename.lastIndexOf(UNIX_SEPARATOR);
+        final int lastWindowsPos = filename.lastIndexOf(WINDOWS_SEPARATOR);
+        return Math.max(lastUnixPos, lastWindowsPos);
     }
 
 }

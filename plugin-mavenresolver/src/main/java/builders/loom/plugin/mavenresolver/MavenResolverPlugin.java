@@ -37,8 +37,6 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
         final MavenResolverPluginSettings pluginSettings = getPluginSettings();
         final Path repositoryPath = getRepositoryPath();
 
-        // TODO do we really need resolveCompileDependencies *AND* resolveCompileArtifacts -- documentation the same?
-
         task("resolveCompileDependencies")
             .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
                 repositoryPath))
@@ -50,7 +48,7 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
                 repositoryPath))
             .provides("compileArtifacts", true)
-            .desc("Fetches dependencies needed for main class compilation.")
+            .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("resolveTestDependencies")
@@ -64,7 +62,7 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings,
                 repositoryPath))
             .provides("testArtifacts", true)
-            .desc("Fetches dependencies needed for test class compilation.")
+            .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
 
         service("mavenDependencyResolver")

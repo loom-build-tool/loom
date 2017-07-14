@@ -47,7 +47,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .register();
 
         goal("build")
-            .requires("springBootFatJarApplication")
+            .requires("springBootApplication")
             .register();
     }
 

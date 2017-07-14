@@ -69,7 +69,7 @@ public class PluginRegistry {
     static {
         final Map<String, String> intPlugins = new HashMap<>();
         intPlugins.put("java", "builders.loom.plugin.java.JavaPlugin");
-        intPlugins.put("junit4", "builders.loom.plugin.junit4.Junit4Plugin");
+        intPlugins.put("junit4", "builders.loom.plugin.junit4.JUnit4Plugin");
         intPlugins.put("mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin");
         intPlugins.put("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin");
         intPlugins.put("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin");
@@ -131,15 +131,13 @@ public class PluginRegistry {
             throw new IllegalStateException(firstException.get());
         }
 
+        validateConfiguredTasks();
         validateSettings();
-
-        // TODO validate registered tasks and dependencies -- goal can require X without error here
     }
 
-    private void initPlugin(final String pluginName)
-        throws Exception {
-
+    private void initPlugin(final String pluginName) throws Exception {
         LOG.info("Initialize plugin {}", pluginName);
+
         final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
             throw new IllegalArgumentException("Unknown plugin: " + pluginName);
@@ -189,7 +187,7 @@ public class PluginRegistry {
         }
     }
 
-    public static ClassLoader getPlatformClassLoader() {
+    private static ClassLoader getPlatformClassLoader() {
         return ClassLoader.getSystemClassLoader().getParent();
     }
 
@@ -225,6 +223,22 @@ public class PluginRegistry {
 
     private static String constructSetter(final String propertyName) {
         return "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+    }
+
+    private void validateConfiguredTasks() {
+        final Set<String> providedProducts = taskRegistry.configuredTasks().stream()
+            .map(ConfiguredTask::getProvidedProduct)
+            .collect(Collectors.toSet());
+
+        for (final ConfiguredTask configuredTask : taskRegistry.configuredTasks()) {
+            final Set<String> usedProducts = configuredTask.getUsedProducts();
+            for (final String usedProduct : usedProducts) {
+                if (!providedProducts.contains(usedProduct)) {
+                    throw new IllegalStateException("Task " + configuredTask.getName()
+                        + " requests non existing product <" + usedProduct + ">");
+                }
+            }
+        }
     }
 
     private void validateSettings() {

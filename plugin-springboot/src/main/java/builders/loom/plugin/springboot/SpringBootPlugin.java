@@ -46,7 +46,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .desc("Builds Spring Boot Fat Jar application.")
             .register();
 
-        goal("build")
+        goal("assemble")
             .requires("springBootApplication")
             .register();
     }

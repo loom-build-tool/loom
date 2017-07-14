@@ -23,12 +23,14 @@ import java.nio.file.Paths;
 public final class LoomPaths {
 
     public static final Path PROJECT_DIR;
+    public static final Path BUILD_DIR;
     public static final Path REPORT_PATH;
 
     static {
         final Path currentDir = Paths.get("").toAbsolutePath().normalize();
         PROJECT_DIR = currentDir;
-        REPORT_PATH = PROJECT_DIR.resolve(Paths.get("loombuild", "reports"));
+        BUILD_DIR = PROJECT_DIR.resolve("loombuild");
+        REPORT_PATH = BUILD_DIR.resolve("reports");
 
         checkState(Files.exists(currentDir), "Invalid current directory");
     }

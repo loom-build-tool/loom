@@ -21,6 +21,7 @@ import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.RuntimeConfiguration;
 
+@SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
     public JavaPlugin() {
@@ -102,11 +103,29 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .desc("Processes test resources (copy and replace variables if necessary).")
             .register();
 
+        task("javadoc")
+            .impl(JavadocTask::new)
+            .provides("javadoc")
+            .uses("source")
+            .desc("Creates Javadoc pages.")
+            .register();
+
+        task("assembleJavadocJar")
+            .impl(() -> new JavaAssembleJavadocJarTask(buildConfig))
+            .provides("javadocJar")
+            .uses("javadoc")
+            .desc("Assembles .jar file from Javadocs.")
+            .register();
+
+        goal("assemble")
+            .requires("jar", "sourcesJar", "javadocJar")
+            .register();
+
         goal("check")
             .register();
 
         goal("build")
-            .requires("jar", "sourcesJar", "check")
+            .requires("assemble", "check")
             .register();
     }
 

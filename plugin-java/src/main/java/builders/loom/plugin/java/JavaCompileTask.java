@@ -225,22 +225,7 @@ public class JavaCompileTask extends AbstractTask {
     private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
-            diagnostic -> {
-                switch (diagnostic.getKind()) {
-                    case ERROR:
-                        LOG.error(diagnostic.toString());
-                        break;
-                    case WARNING:
-                    case MANDATORY_WARNING:
-                        LOG.warn(diagnostic.toString());
-                        break;
-                    case NOTE:
-                        LOG.info(diagnostic.toString());
-                        break;
-                    default:
-                        LOG.debug(diagnostic.toString());
-                }
-            };
+            new DiagnosticLogListener(LOG);
 
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {

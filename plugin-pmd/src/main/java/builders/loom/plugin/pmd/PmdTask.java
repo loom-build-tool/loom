@@ -132,7 +132,8 @@ public class PmdTask extends AbstractTask {
         final Path srcDir = sourceTreeProduct.get().getSrcDir();
 
         final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
-            .map(f -> new FileDataSource(f.toFile()))
+            .map(Path::toFile)
+            .map(FileDataSource::new)
             .collect(Collectors.toList());
 
         final String inputPaths = srcDir.toString();

@@ -48,10 +48,11 @@ import builders.loom.api.product.SourceTreeProduct;
 public class JavadocTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavadocTask.class);
+    private static final int MINIMUM_JAVA_VERSION = 9;
 
     @Override
     public TaskResult run() throws Exception {
-        if (JavaVersion.current().getNumericVersion() < 9) {
+        if (JavaVersion.current().getNumericVersion() < MINIMUM_JAVA_VERSION) {
             throw new IllegalStateException("JavadocTask currently supports only Java >= 9");
         }
 

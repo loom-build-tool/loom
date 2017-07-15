@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.java;
+package builders.loom.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class ResourceFilteringOutputStream extends FilterOutputStream {
 
-    private final Map<String, String> resourceFilterVariables;
     private final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    private final Function<String, Optional<String>> propertyResolver;
     private int filtering;
 
-    public ResourceFilteringOutputStream(final OutputStream out,
-                                         final Map<String, String> resourceFilterVariables) {
+    public ResourceFilteringOutputStream(
+        final OutputStream out,
+        final Function<String, Optional<String>> propertyResolver) {
+
         super(out);
-        this.resourceFilterVariables = resourceFilterVariables;
+        this.propertyResolver = propertyResolver;
     }
 
     @SuppressWarnings("checkstyle:nestedifdepth")
@@ -61,9 +64,10 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
 
                 final String placeholder = buf.toString("UTF-8")
                     .substring(2, buf.size() - 1);
-                final String resource = resourceFilterVariables.get(placeholder);
-                if (resource != null) {
-                    out.write(resource.getBytes(StandardCharsets.UTF_8));
+
+                final Optional<String> resource = propertyResolver.apply(placeholder);
+                if (resource.isPresent()) {
+                    out.write(resource.get().getBytes(StandardCharsets.UTF_8));
                 } else {
                     buf.writeTo(out);
                 }

@@ -28,6 +28,10 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+
+import builders.loom.util.ResourceFilteringOutputStream;
 
 class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
@@ -103,9 +107,12 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
     }
 
     private ResourceFilteringOutputStream newOut(final Path destPath) throws IOException {
+        final Function<String, Optional<String>> propertyResolver = (k) ->
+            Optional.ofNullable(resourceFilterVariables.get(k));
+
         return new ResourceFilteringOutputStream(new BufferedOutputStream(Files.newOutputStream(
             destPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)),
-            resourceFilterVariables);
+            propertyResolver);
     }
 
 }

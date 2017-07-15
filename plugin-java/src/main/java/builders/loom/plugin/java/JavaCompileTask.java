@@ -261,8 +261,13 @@ public class JavaCompileTask extends AbstractTask {
 
         options.add("-Xlint:all");
 
-        options.add("-sourcepath");
-        options.add("");
+        // http://blog.ltgt.net/most-build-tools-misuse-javac/
+
+//        options.add("-sourcepath");
+//        options.add("");
+
+//        options.add("--module-source-path");
+//        options.add("src/main/java");
 
         options.add("-Xpkginfo:always");
 

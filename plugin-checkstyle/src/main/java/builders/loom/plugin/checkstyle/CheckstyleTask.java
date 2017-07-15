@@ -79,6 +79,7 @@ public class CheckstyleTask extends AbstractTask {
 
         final List<File> files = sourceTree.get().getSourceFiles().stream()
             .map(Path::toFile)
+            .filter(f -> !f.getName().equals("module-info.java"))
             .collect(Collectors.toList());
 
         final RootModule checker = createRootModule();

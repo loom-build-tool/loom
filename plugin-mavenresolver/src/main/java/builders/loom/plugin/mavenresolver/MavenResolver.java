@@ -208,7 +208,7 @@ public class MavenResolver implements DependencyResolver {
 
                     } catch (final ArtifactResolutionException e) {
                         // not all artifacts have sources attached to
-                        LOG.debug("Couldn't fetch source artifact for {}", e);
+                        LOG.debug("Couldn't fetch source artifact for {}", sourceArtifact, e);
                     }
 
                     ret.add(new ArtifactProduct(mainArtifactFile, sourceArtifactFile));

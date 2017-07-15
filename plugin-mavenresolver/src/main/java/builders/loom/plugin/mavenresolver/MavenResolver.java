@@ -197,19 +197,26 @@ public class MavenResolver implements DependencyResolver {
                         new SubArtifact(artifactResult.getArtifact(), "sources", "jar");
                     final ArtifactRequest sourceArtifactReq =
                         new ArtifactRequest(sourceArtifact, repositories, mavenScope(scope));
-                    final ArtifactResult sourceArtifactRes =
-                        system.resolveArtifact(session, sourceArtifactReq);
 
-                    final Path sourceArtifactFile =
-                        sourceArtifactRes.getArtifact().getFile().toPath();
+                    Path sourceArtifactFile = null;
+
+                    try {
+                        final ArtifactResult sourceArtifactRes =
+                            system.resolveArtifact(session, sourceArtifactReq);
+
+                        sourceArtifactFile = sourceArtifactRes.getArtifact().getFile().toPath();
+
+                    } catch (final ArtifactResolutionException e) {
+                        // not all artifacts have sources attached to
+                        LOG.debug("Couldn't fetch source artifact for {}", e);
+                    }
 
                     ret.add(new ArtifactProduct(mainArtifactFile, sourceArtifactFile));
                 }
             }
 
             return ret;
-        } catch (final DependencyCollectionException | ArtifactResolutionException
-            | DependencyResolutionException e) {
+        } catch (final DependencyCollectionException | DependencyResolutionException e) {
             throw new IllegalStateException(
                 String.format("Unresolvable dependencies for scope <%s>: %s",
                     scope, e.getMessage()));

@@ -16,23 +16,17 @@
 
 package builders.loom.plugin.checkstyle;
 
-import java.io.File;
-import java.io.PrintStream;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
-import com.puppycrawl.tools.checkstyle.XMLLogger;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
@@ -77,30 +71,30 @@ public class CheckstyleTask extends AbstractTask {
             return completeSkip();
         }
 
-        final List<File> files = sourceTree.get().getSourceFiles().stream()
-            .map(Path::toFile)
-            .filter(f -> !f.getName().equals("module-info.java"))
-            .collect(Collectors.toList());
-
-        final RootModule checker = createRootModule();
-
-        try {
-            final LoggingAuditListener listener = new LoggingAuditListener();
-            checker.addListener(listener);
-
-            Files.createDirectories(reportPath);
-            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
-                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
-            checker.addListener(xmlLogger);
-
-            final int errors = checker.process(files);
-
-            if (errors == 0) {
-                return completeOk(product());
-            }
-        } finally {
-            checker.destroy();
-        }
+//        final List<File> files = sourceTree.get().getSourceFiles().stream()
+//            .map(Path::toFile)
+//            .filter(f -> !f.getName().equals("module-info.java"))
+//            .collect(Collectors.toList());
+//
+//        final RootModule checker = createRootModule();
+//
+//        try {
+//            final LoggingAuditListener listener = new LoggingAuditListener();
+//            checker.addListener(listener);
+//
+//            Files.createDirectories(reportPath);
+//            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
+//                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+//            checker.addListener(xmlLogger);
+//
+//            final int errors = checker.process(files);
+//
+//            if (errors == 0) {
+//                return completeOk(product());
+//            }
+//        } finally {
+//            checker.destroy();
+//        }
 
         throw new IllegalStateException("Checkstyle reported errors!");
     }

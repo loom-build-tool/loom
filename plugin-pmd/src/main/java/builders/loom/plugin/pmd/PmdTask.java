@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +37,6 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
-import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.Report;
 import net.sourceforge.pmd.Rule;
@@ -55,10 +53,8 @@ import net.sourceforge.pmd.lang.LanguageRegistry;
 import net.sourceforge.pmd.lang.LanguageVersion;
 import net.sourceforge.pmd.renderers.AbstractRenderer;
 import net.sourceforge.pmd.renderers.HTMLRenderer;
-import net.sourceforge.pmd.renderers.Renderer;
 import net.sourceforge.pmd.stat.Metric;
 import net.sourceforge.pmd.util.datasource.DataSource;
-import net.sourceforge.pmd.util.datasource.FileDataSource;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class PmdTask extends AbstractTask {
@@ -131,36 +127,36 @@ public class PmdTask extends AbstractTask {
 
         final Path srcDir = sourceTreeProduct.get().getSrcDir();
 
-        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
-            .map(Path::toFile)
-            .map(FileDataSource::new)
-            .collect(Collectors.toList());
-
-        final String inputPaths = srcDir.toString();
-        configuration.setInputPaths(inputPaths);
-
-        final HTMLRenderer htmlRenderer = buildHtmlRenderer();
-        final List<Renderer> renderers = Arrays.asList(new LogRenderer(inputPaths), htmlRenderer);
-
-        for (final Renderer renderer : renderers) {
-            renderer.start();
-        }
-
-        PMD.processFiles(configuration, ruleSetFactory, files, ctx,
-            renderers);
-
-        for (final Renderer renderer : renderers) {
-            renderer.end();
-        }
-
-        final int ruleViolationCnt = ruleViolations.get();
-
-        LOG.debug("{} problems found", ruleViolationCnt);
-
-        if (ruleViolationCnt > 0) {
-            throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
-                + " rule violations in the code");
-        }
+//        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
+//            .map(Path::toFile)
+//            .map(FileDataSource::new)
+//            .collect(Collectors.toList());
+//
+//        final String inputPaths = srcDir.toString();
+//        configuration.setInputPaths(inputPaths);
+//
+//        final HTMLRenderer htmlRenderer = buildHtmlRenderer();
+//        final List<Renderer> renderers = Arrays.asList(new LogRenderer(inputPaths), htmlRenderer);
+//
+//        for (final Renderer renderer : renderers) {
+//            renderer.start();
+//        }
+//
+//        PMD.processFiles(configuration, ruleSetFactory, files, ctx,
+//            renderers);
+//
+//        for (final Renderer renderer : renderers) {
+//            renderer.end();
+//        }
+//
+//        final int ruleViolationCnt = ruleViolations.get();
+//
+//        LOG.debug("{} problems found", ruleViolationCnt);
+//
+//        if (ruleViolationCnt > 0) {
+//            throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
+//                + " rule violations in the code");
+//        }
 
         return completeOk(product());
     }

@@ -19,7 +19,10 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractTask;
@@ -42,15 +45,31 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     public TaskResult run() throws Exception {
         final Path path = srcPath();
 
-        if (!Files.isDirectory(path)) {
-            return completeSkip();
-        }
+//        if (!Files.isDirectory(path)) {
+//            return completeSkip();
+//        }
 
-        final List<Path> sourceFiles = Files.walk(path)
-            .filter(Files::isRegularFile)
+        final Map<String, List<Path>> modulesPaths = new HashMap<>();
+
+        final List<Path> modules = Files.walk(Paths.get("modules"), 1)
+            .skip(1)
+            .filter(modulePath -> Files.exists(modulePath.resolve(srcPath())))
             .collect(Collectors.toList());
 
-        final List<Path> illegalFiles = sourceFiles.stream()
+        // TODO check dirs
+
+        for (final Path module : modules) {
+            final String moduleName = module.getFileName().toString();
+
+            final List<Path> sourceFiles = Files.walk(module.resolve(srcPath()))
+                .filter(f -> Files.isRegularFile(f))
+                .collect(Collectors.toList());
+            
+            modulesPaths.put(moduleName, sourceFiles);
+        }
+
+        final List<Path> illegalFiles = modulesPaths.values().stream()
+            .flatMap(Collection::stream)
             .filter(f -> !f.toString().endsWith(".java"))
             .collect(Collectors.toList());
 
@@ -59,7 +78,7 @@ public class JavaProvideSourceDirTask extends AbstractTask {
                 + illegalFiles);
         }
 
-        return completeOk(new SourceTreeProduct(path, sourceFiles));
+        return completeOk(new SourceTreeProduct(path, modulesPaths));
     }
 
     private Path srcPath() {

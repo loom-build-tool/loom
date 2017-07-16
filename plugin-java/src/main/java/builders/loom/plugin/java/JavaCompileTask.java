@@ -24,8 +24,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -174,14 +176,14 @@ public class JavaCompileTask extends AbstractTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcPaths = sourceTreeProduct.get().getSourceFiles();
+        final Map<String, List<Path>> srcPaths = sourceTreeProduct.get().getSourceFiles();
 
-        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
-
-        if (fileCacher.filesCached(srcPaths)) {
-            return completeUpToDate(product());
-        }
+//        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
+//            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
+//
+//        if (fileCacher.filesCached(srcPaths)) {
+//            return completeUpToDate(product());
+//        }
 
         if (Files.notExists(buildDir)) {
             Files.createDirectories(buildDir);
@@ -189,13 +191,13 @@ public class JavaCompileTask extends AbstractTask {
             FileUtil.deleteDirectoryRecursively(buildDir, false);
         }
 
-        final List<File> srcFiles = srcPaths.stream()
-            .map(Path::toFile)
-            .collect(Collectors.toList());
+//        final List<File> srcFiles = srcPaths.stream()
+//            .map(Path::toFile)
+//            .collect(Collectors.toList());
 
-        compile(classpath, srcFiles);
+        compile(classpath, srcPaths);
 
-        fileCacher.cacheFiles(srcPaths);
+//        fileCacher.cacheFiles(srcPaths);
 
         return completeOk(product());
     }
@@ -222,7 +224,7 @@ public class JavaCompileTask extends AbstractTask {
         }
     }
 
-    private void compile(final List<Path> classpath, final List<File> srcFiles) throws IOException {
+    private void compile(final List<Path> classpath, final Map<String, List<Path>> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
@@ -230,13 +232,24 @@ public class JavaCompileTask extends AbstractTask {
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 
-            fileManager.setLocation(StandardLocation.CLASS_PATH,
-                classpath.stream().map(Path::toFile).collect(Collectors.toList()));
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT,
-                Collections.singletonList(buildDir.toFile()));
+            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
+                new ArrayList<>(classpath));
+            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
+                Collections.singletonList(buildDir));
+
+            for (final Map.Entry<String, List<Path>> entry : srcFiles.entrySet()) {
+                fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
+                    entry.getKey(),
+                    Collections.singletonList(Paths.get("modules", entry.getKey(), "src", subdirName, "java")));
+            }
+
+            final List<File> files = srcFiles.values().stream()
+                .flatMap(Collection::stream)
+                .map(Path::toFile)
+                .collect(Collectors.toList());
 
             final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(srcFiles);
+                fileManager.getJavaFileObjectsFromFiles(files);
 
             final List<String> options = buildOptions();
 

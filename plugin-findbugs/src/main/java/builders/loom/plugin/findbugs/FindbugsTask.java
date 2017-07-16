@@ -117,9 +117,9 @@ public class FindbugsTask extends AbstractTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
-            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
-            .executeFindbugs();
+//        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
+//            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
+//            .executeFindbugs();
 
         return completeOk(product());
     }

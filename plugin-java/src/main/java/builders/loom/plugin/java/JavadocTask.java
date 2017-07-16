@@ -16,7 +16,6 @@
 
 package builders.loom.plugin.java;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,21 +83,21 @@ public class JavadocTask extends AbstractTask {
             fileManager.setLocation(StandardLocation.CLASS_PATH,
                 classpath.stream().map(Path::toFile).collect(Collectors.toList()));
 
-            final List<File> srcFiles = source.get().getSourceFiles().stream()
-                .map(Path::toFile)
-                .collect(Collectors.toList());
-
-            final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(srcFiles);
-
-            LOG.info("Create Javadoc for {} files", srcFiles.size());
-
-            final DocumentationTool.DocumentationTask javaDocTask =
-                docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
-
-            if (!javaDocTask.call()) {
-                throw new IllegalStateException("JavaDoc compile failed");
-            }
+//            final List<File> srcFiles = source.get().getSourceFiles().stream()
+//                .map(Path::toFile)
+//                .collect(Collectors.toList());
+//
+//            final Iterable<? extends JavaFileObject> compUnits =
+//                fileManager.getJavaFileObjectsFromFiles(srcFiles);
+//
+//            LOG.info("Create Javadoc for {} files", srcFiles.size());
+//
+//            final DocumentationTool.DocumentationTask javaDocTask =
+//                docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
+//
+//            if (!javaDocTask.call()) {
+//                throw new IllegalStateException("JavaDoc compile failed");
+//            }
         }
 
         return completeOk(new ResourcesTreeProduct(dstDir));

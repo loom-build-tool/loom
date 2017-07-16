@@ -186,32 +186,12 @@ public class MavenResolver implements DependencyResolver {
 
             if (classifier == null) {
                 for (final ArtifactResult artifactResult : artifactResults) {
-                    final Path mainArtifact = artifactResult.getArtifact().getFile().toPath();
-                    ret.add(new ArtifactProduct(mainArtifact, null));
+                    ret.add(resolveArtifact(artifactResult));
                 }
             } else {
                 for (final ArtifactResult artifactResult : artifactResults) {
-                    final Path mainArtifactFile = artifactResult.getArtifact().getFile().toPath();
-
-                    final Artifact sourceArtifact =
-                        new SubArtifact(artifactResult.getArtifact(), "sources", "jar");
-                    final ArtifactRequest sourceArtifactReq =
-                        new ArtifactRequest(sourceArtifact, repositories, mavenScope(scope));
-
-                    Path sourceArtifactFile = null;
-
-                    try {
-                        final ArtifactResult sourceArtifactRes =
-                            system.resolveArtifact(session, sourceArtifactReq);
-
-                        sourceArtifactFile = sourceArtifactRes.getArtifact().getFile().toPath();
-
-                    } catch (final ArtifactResolutionException e) {
-                        // not all artifacts have sources attached to
-                        LOG.debug("Couldn't fetch source artifact for {}", sourceArtifact, e);
-                    }
-
-                    ret.add(new ArtifactProduct(mainArtifactFile, sourceArtifactFile));
+                    ret.add(resolveArtifactWithSource(scope, session, repositories,
+                        artifactResult));
                 }
             }
 
@@ -221,6 +201,38 @@ public class MavenResolver implements DependencyResolver {
                 String.format("Unresolvable dependencies for scope <%s>: %s",
                     scope, e.getMessage()));
         }
+    }
+
+    private ArtifactProduct resolveArtifact(final ArtifactResult artifactResult) {
+        final Path mainArtifact = artifactResult.getArtifact().getFile().toPath();
+        return new ArtifactProduct(mainArtifact, null);
+    }
+
+    private ArtifactProduct resolveArtifactWithSource(final DependencyScope scope,
+                                                      final MavenRepositorySystemSession session,
+                                                      final List<RemoteRepository> repositories,
+                                                      final ArtifactResult artifactResult) {
+
+        final Path mainArtifactFile = artifactResult.getArtifact().getFile().toPath();
+
+        final Artifact sourceArtifact =
+            new SubArtifact(artifactResult.getArtifact(), "sources", "jar");
+        final ArtifactRequest sourceArtifactReq =
+            new ArtifactRequest(sourceArtifact, repositories, mavenScope(scope));
+
+        Path sourceArtifactFile = null;
+
+        try {
+            final ArtifactResult sourceArtifactRes =
+                system.resolveArtifact(session, sourceArtifactReq);
+
+            sourceArtifactFile = sourceArtifactRes.getArtifact().getFile().toPath();
+        } catch (final ArtifactResolutionException e) {
+            // not all artifacts have sources attached to
+            LOG.debug("Couldn't fetch source artifact for {}", sourceArtifact, e);
+        }
+
+        return new ArtifactProduct(mainArtifactFile, sourceArtifactFile);
     }
 
     private static String mavenScope(final DependencyScope scope) {

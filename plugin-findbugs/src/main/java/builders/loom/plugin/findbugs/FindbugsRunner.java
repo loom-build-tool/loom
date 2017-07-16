@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -36,15 +35,12 @@ import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.HTMLBugReporter;
-import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class FindbugsRunner {
-
-    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
 
@@ -54,11 +50,11 @@ public class FindbugsRunner {
     private final Path classesDir;
     private final List<Path> classpath;
 
-    private final Optional<Integer> priorityThreshold;
+    private final int priorityThreshold;
     private final Path reportPath;
 
     FindbugsRunner(final Path reportPath, final List<Path> sourceFiles, final Path classesDir,
-                   final List<Path> classpath, final Optional<Integer> priorityThreshold) {
+                   final List<Path> classpath, final int priorityThreshold) {
         this.reportPath = reportPath;
         this.sourceFiles = sourceFiles;
         this.classesDir = classesDir;
@@ -81,19 +77,17 @@ public class FindbugsRunner {
             return;
         }
 
-        final Integer threshold = priorityThreshold.orElse(DEFAULT_PRIORITY_THRESHOLD);
-
         final LoggingBugReporter loggingBugReporter = new LoggingBugReporter();
-        loggingBugReporter.setPriorityThreshold(threshold);
+        loggingBugReporter.setPriorityThreshold(priorityThreshold);
 
         final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
-        xmlBugReporter.setPriorityThreshold(threshold);
+        xmlBugReporter.setPriorityThreshold(priorityThreshold);
         xmlBugReporter.setAddMessages(true);
         xmlBugReporter.setOutputStream(new PrintStream(
             reportPath.resolve("findbugs-result.xml").toFile(), "UTF-8"));
 
         final HTMLBugReporter htmlBugReporter = new HTMLBugReporter(project, "default.xsl");
-        htmlBugReporter.setPriorityThreshold(threshold);
+        htmlBugReporter.setPriorityThreshold(priorityThreshold);
         htmlBugReporter.setOutputStream(new PrintStream(
             reportPath.resolve("findbugs-result.html").toFile(), "UTF-8"));
 
@@ -178,14 +172,6 @@ public class FindbugsRunner {
 
     private static String pathToString(final Path file) {
         return file.toAbsolutePath().normalize().toString();
-    }
-
-    private static List<String> getSourceFiles(final Path sourcesDir) throws IOException {
-        return Files.walk(sourcesDir)
-            .filter(Files::isRegularFile)
-            .filter(filterByExtension("java"))
-            .map(FindbugsRunner::pathToString)
-            .collect(Collectors.toList());
     }
 
 }

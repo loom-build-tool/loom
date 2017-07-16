@@ -35,19 +35,18 @@ public final class IOUtil {
         return out.toByteArray();
     }
 
-    private static long copy(final InputStream from, final OutputStream to)
+    public static long copy(final InputStream from, final OutputStream to)
         throws IOException {
+
         Objects.requireNonNull(from);
         Objects.requireNonNull(to);
+
         final byte[] buf = new byte[BUF_SIZE];
         long total = 0;
-        while (true) {
-            final int r = from.read(buf);
-            if (r == -1) {
-                break;
-            }
-            to.write(buf, 0, r);
-            total += r;
+        int cnt;
+        while ((cnt = from.read(buf)) != -1) {
+            to.write(buf, 0, cnt);
+            total += cnt;
         }
         return total;
     }

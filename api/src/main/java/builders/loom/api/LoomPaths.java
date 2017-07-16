@@ -22,17 +22,13 @@ import java.nio.file.Paths;
 
 public final class LoomPaths {
 
-    public static final Path PROJECT_DIR;
-    public static final Path BUILD_DIR;
-    public static final Path REPORT_PATH;
+    public static final Path PROJECT_DIR = Paths.get("").toAbsolutePath().normalize();
+    public static final Path PROJECT_LOOM_PATH = PROJECT_DIR.resolve(".loom");
+    public static final Path BUILD_DIR = PROJECT_DIR.resolve("loombuild");
+    public static final Path REPORT_PATH = BUILD_DIR.resolve("reports");
 
     static {
-        final Path currentDir = Paths.get("").toAbsolutePath().normalize();
-        PROJECT_DIR = currentDir;
-        BUILD_DIR = PROJECT_DIR.resolve("loombuild");
-        REPORT_PATH = BUILD_DIR.resolve("reports");
-
-        checkState(Files.exists(currentDir), "Invalid current directory");
+        checkState(Files.exists(PROJECT_DIR), "Invalid current directory");
     }
 
     private LoomPaths() {

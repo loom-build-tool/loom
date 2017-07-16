@@ -16,13 +16,6 @@
 
 package builders.loom;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +31,7 @@ import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.LoomPaths;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.product.Product;
 import builders.loom.config.BuildConfigWithSettings;
@@ -47,6 +41,7 @@ import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
 import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.plugin.TaskRegistryLookup;
+import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -75,34 +70,8 @@ public class LoomProcessor {
     }
 
     public void clean() {
-        cleanDir(Constants.BUILD_PATH);
-        cleanDir(Constants.PROJECT_LOOM_PATH);
-    }
-
-    private static void cleanDir(final Path rootPath) {
-        if (!Files.isDirectory(rootPath)) {
-            return;
-        }
-
-        try {
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
-                    throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
-                    throws IOException {
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        FileUtils.cleanDir(LoomPaths.BUILD_DIR);
+        FileUtils.cleanDir(LoomPaths.PROJECT_LOOM_PATH);
     }
 
     public void logSystemEnvironment() {

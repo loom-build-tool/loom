@@ -61,6 +61,7 @@ public class Cacher<T extends Serializable> {
         return dir.resolve(cacheName + ".cache");
     }
 
+    @SuppressWarnings("unchecked")
     public T readCache() {
         final Path cacheFile = resolveCacheFile(this.cacheDir);
 
@@ -69,7 +70,7 @@ public class Cacher<T extends Serializable> {
         }
 
         try (ObjectInputStream in = newIn(cacheFile)) {
-            final CacheWrapper<T> cw = (CacheWrapper) in.readObject();
+            final CacheWrapper<T> cw = (CacheWrapper<T>) in.readObject();
 
             if (cw.getSignature().equals(cacheSignature)) {
                 return cw.getData();

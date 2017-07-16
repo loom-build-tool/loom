@@ -69,6 +69,7 @@ public class IdeaTask extends AbstractTask {
 
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         } catch (final ParserConfigurationException | TransformerConfigurationException e) {

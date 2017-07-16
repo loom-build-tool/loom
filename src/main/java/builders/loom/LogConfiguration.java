@@ -18,6 +18,7 @@ package builders.loom;
 
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.LoomPaths;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -30,7 +31,7 @@ import ch.qos.logback.core.FileAppender;
 public final class LogConfiguration {
 
     public static final String LOOM_BUILD_LOG =
-        Constants.PROJECT_LOOM_PATH.resolve("build.log").toAbsolutePath().toString();
+        LoomPaths.PROJECT_LOOM_PATH.resolve("build.log").toAbsolutePath().toString();
 
     private LogConfiguration() {
     }

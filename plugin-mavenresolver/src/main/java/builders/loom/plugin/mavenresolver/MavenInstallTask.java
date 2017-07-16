@@ -50,6 +50,7 @@ import builders.loom.api.Project;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.DirectoryProduct;
+import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenInstallTask extends AbstractTask {
@@ -89,23 +90,19 @@ public class MavenInstallTask extends AbstractTask {
             }
         });
 
-        final Path tmpPomFile = Files.createTempFile("pom", null);
-
-        try {
+        try (final TempFile tmpPomFile = new TempFile("pom", null)) {
             final Project project = buildConfig.getProject();
-            writePom(tmpPomFile, project);
+            writePom(tmpPomFile.getFile(), project);
 
             final InstallRequest request = new InstallRequest();
             final DefaultArtifact jarArtifact = buildArtifact(project, "jar", jarFile);
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
-                tmpPomFile.toFile());
+                tmpPomFile.getFile().toFile());
             request
                 .addArtifact(jarArtifact)
                 .addArtifact(pomArtifact);
 
             system.install(session, request);
-        } finally {
-            Files.delete(tmpPomFile);
         }
 
         return completeOk(new DirectoryProduct(installPath.get(),

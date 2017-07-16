@@ -38,6 +38,7 @@ import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.LoomPaths;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.product.Product;
 import builders.loom.config.BuildConfigWithSettings;
@@ -75,8 +76,8 @@ public class LoomProcessor {
     }
 
     public void clean() {
-        cleanDir(Constants.BUILD_PATH);
-        cleanDir(Constants.PROJECT_LOOM_PATH);
+        cleanDir(LoomPaths.BUILD_DIR);
+        cleanDir(LoomPaths.PROJECT_LOOM_PATH);
     }
 
     private static void cleanDir(final Path rootPath) {

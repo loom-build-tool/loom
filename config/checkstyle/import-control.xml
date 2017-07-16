@@ -14,9 +14,12 @@
     <allow pkg="java.util"/>
 
     <allow pkg="javax.tools"/>
+    <allow pkg="javax.xml"/>
 
     <allow pkg="ch.qos.logback"/>
 
+    <allow pkg="org.w3c"/>
+    <allow pkg="org.xml"/>
     <allow pkg="org.fusesource.jansi"/>
     <allow pkg="org.yaml.snakeyaml"/>
     <allow pkg="org.apache.commons.cli"/>

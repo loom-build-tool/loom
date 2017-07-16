@@ -32,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import builders.loom.Constants;
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
+import builders.loom.api.LoomPaths;
 import builders.loom.util.Hasher;
 
 public final class ConfigReader {
@@ -70,7 +70,7 @@ public final class ConfigReader {
         final byte[] configHash = Hasher.hash(configData);
 
         final Path cachePath =
-            Constants.PROJECT_LOOM_PATH.resolve(Paths.get(Version.getVersion(), "base"));
+            LoomPaths.PROJECT_LOOM_PATH.resolve(Paths.get(Version.getVersion(), "base"));
 
         Files.createDirectories(cachePath);
 

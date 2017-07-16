@@ -31,7 +31,7 @@ public class DiagnosticLogListener implements DiagnosticListener<JavaFileObject>
     }
 
     @Override
-    public void report(final Diagnostic diagnostic) {
+    public void report(final Diagnostic<? extends JavaFileObject> diagnostic) {
         switch (diagnostic.getKind()) {
             case ERROR:
                 log.error(diagnostic.toString());

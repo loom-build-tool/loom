@@ -17,6 +17,7 @@
 package builders.loom.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -42,8 +44,11 @@ public class ProductsTest {
 
         providedProduct.complete("a", new StringProduct("foo"));
 
-        assertEquals("foo", usedProducts.readProduct("a", StringProduct.class)
-            .get().toString());
+        final Optional<StringProduct> readProduct =
+            usedProducts.readProduct("a", StringProduct.class);
+
+        assertTrue(readProduct.isPresent());
+        assertEquals("foo", readProduct.get().toString());
 
     }
 

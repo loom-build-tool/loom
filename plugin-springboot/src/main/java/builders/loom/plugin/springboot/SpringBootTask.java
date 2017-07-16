@@ -36,6 +36,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
 
@@ -60,9 +61,8 @@ public class SpringBootTask extends AbstractTask {
         // copy resources
         final Optional<ProcessedResourceProduct> resourcesTreeProduct =
             useProduct("processedResources", ProcessedResourceProduct.class);
-        if (resourcesTreeProduct.isPresent()) {
-            FileUtils.copyFiles(resourcesTreeProduct.get().getSrcDir(), classesDir);
-        }
+        resourcesTreeProduct.ifPresent(processedResourceProduct ->
+            FileUtils.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
 
         // copy classes
         final CompilationProduct compilationProduct =

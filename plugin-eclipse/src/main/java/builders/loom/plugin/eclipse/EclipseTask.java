@@ -106,7 +106,7 @@ public class EclipseTask extends AbstractTask {
             if (javaPlatformVersion < 9) {
                 projectJdkName = "1." + javaPlatformVersion;
             } else {
-                projectJdkName = "" + javaPlatformVersion;
+                projectJdkName = String.valueOf(javaPlatformVersion);
             }
 
             final Element jdkEntry = new Element("classpathentry");

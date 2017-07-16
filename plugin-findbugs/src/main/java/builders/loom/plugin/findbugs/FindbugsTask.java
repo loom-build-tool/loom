@@ -16,14 +16,12 @@
 
 package builders.loom.plugin.findbugs;
 
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,11 +40,12 @@ import edu.umd.cs.findbugs.Priorities;
 public class FindbugsTask extends AbstractTask {
 
     public static final Path BUILD_MAIN_PATH = Paths.get("loombuild", "classes", "main");
-    private static final Map<String, Integer> PRIORITIES_MAP = buildPrioritiesMap();
+
+    private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private final CompileTarget compileTarget;
     private final Path reportPath;
-    private Optional<Integer> priorityThreshold;
+    private int priorityThreshold;
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
@@ -63,10 +62,9 @@ public class FindbugsTask extends AbstractTask {
 
     private void readBuildConfig(final FindbugsPluginSettings pluginSettings) {
 
-        priorityThreshold =
-            pluginSettings.getPriorityThreshold()
-            .map(PRIORITIES_MAP::get)
-            .map(prio -> Objects.requireNonNull(prio, "Invalid priority threshold " + prio));
+        priorityThreshold = pluginSettings.getPriorityThreshold()
+            .map(prio -> resolvePriority(prio.toUpperCase()))
+            .orElse(DEFAULT_PRIORITY_THRESHOLD);
 
         final List<String> customPlugins =
             parsePropValue(pluginSettings.getCustomPlugins());
@@ -82,6 +80,21 @@ public class FindbugsTask extends AbstractTask {
             customPlugins.isEmpty(),
             "Unknown findbugs custom plugin(s): " + customPlugins);
 
+    }
+
+    private int resolvePriority(final String prio) {
+        return Stream.of(Priorities.class.getDeclaredFields())
+            .filter(f -> f.getType().equals(int.class))
+            .filter(f -> f.getName().equals(prio + "_PRIORITY"))
+            .findFirst()
+            .map(f -> {
+                try {
+                    return f.getInt(null);
+                } catch (final IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                }
+            })
+            .orElseThrow(() -> new IllegalStateException("Unknown FindBugs priority: " + prio));
     }
 
     private List<String> parsePropValue(final String input) {
@@ -166,23 +179,6 @@ public class FindbugsTask extends AbstractTask {
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
         }
         return classpath;
-    }
-
-    private static Map<String, Integer> buildPrioritiesMap() {
-        final Field[] fields = Priorities.class.getDeclaredFields();
-
-        return
-            Stream.of(fields)
-            .filter(f -> f.getType().equals(int.class))
-            .collect(Collectors.toMap(
-                f -> f.getName().replaceAll("_PRIORITY", ""),
-                f -> {
-                    try {
-                        return f.getInt(null);
-                    } catch (final IllegalAccessException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }));
     }
 
 }

@@ -59,13 +59,7 @@ public final class ClassLoaderUtil {
 
     public static <CT extends ClassLoader> CT privileged(
         final Supplier<CT> classLoaderSupplier) {
-        return
-            AccessController.doPrivileged(new PrivilegedAction<CT>() {
-                @Override
-                public CT run() {
-                    return classLoaderSupplier.get();
-                }
-            });
+        return AccessController.doPrivileged((PrivilegedAction<CT>) classLoaderSupplier::get);
     }
 
 }

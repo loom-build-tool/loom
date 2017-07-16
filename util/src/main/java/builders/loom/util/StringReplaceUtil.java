@@ -33,10 +33,8 @@ public final class StringReplaceUtil {
                                        final Function<String, Optional<String>> replaceFunction) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        final ResourceFilteringOutputStream filterOut =
-            new ResourceFilteringOutputStream(baos, replaceFunction);
-
-        try {
+        try (final ResourceFilteringOutputStream filterOut =
+                 new ResourceFilteringOutputStream(baos, replaceFunction)) {
             filterOut.write(str.getBytes(StandardCharsets.UTF_8));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

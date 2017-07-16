@@ -96,7 +96,7 @@ public class IdeaTask extends AbstractTask {
             if (javaPlatformVersion < 9) {
                 projectJdkName = "1." + javaPlatformVersion;
             } else {
-                projectJdkName = "" + javaPlatformVersion;
+                projectJdkName = String.valueOf(javaPlatformVersion);
             }
 
             component.addAttribute(new Attribute("languageLevel", languageLevel));

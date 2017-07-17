@@ -16,6 +16,10 @@
 
 package builders.loom;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -35,6 +40,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.product.Product;
 import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginRegistry;
 import builders.loom.plugin.ProductRepositoryImpl;
@@ -50,6 +56,7 @@ public class LoomProcessor {
     private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
     private final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
     private final ProductRepository productRepository = new ProductRepositoryImpl();
+    private final ModuleRegistry moduleRegistry = new ModuleRegistry();
 
     static {
         System.setProperty("loom.version", Version.getVersion());
@@ -61,11 +68,38 @@ public class LoomProcessor {
         new PluginRegistry(buildConfig, runtimeConfiguration,
             taskRegistry, serviceLocator).initPlugins();
         Stopwatch.stopProcess();
+
+        Stopwatch.startProcess("Initialize module configurations");
+        scanForModules(runtimeConfiguration);
+        Stopwatch.stopProcess();
+    }
+
+    public void scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+        try {
+            final List<Path> modules = Files.walk(LoomPaths.PROJECT_DIR.resolve("modules"), 1)
+                .skip(1)
+                .collect(Collectors.toList());
+
+            for (final Path module : modules) {
+                final Path moduleBuildConfig = module.resolve("build.yml");
+                if (Files.notExists(moduleBuildConfig)) {
+                    throw new IllegalStateException("Missing build.yml in module " + module);
+                }
+
+                final String moduleName = module.getFileName().toString();
+                final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(
+                    runtimeConfiguration, moduleBuildConfig, moduleName);
+
+                moduleRegistry.register(new Module(moduleName, module, buildConfig));
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public Collection<ConfiguredTask> execute(final List<String> productIds) throws Exception {
         final TaskRunner taskRunner = new TaskRunner(
-            taskRegistry, productRepository, serviceLocator);
+            moduleRegistry, taskRegistry, productRepository, serviceLocator);
         return taskRunner.execute(new HashSet<>(productIds));
     }
 

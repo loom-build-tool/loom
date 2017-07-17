@@ -33,13 +33,15 @@ public class TaskRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
+    private final ModuleRegistry moduleRegistry;
     private final TaskRegistryLookup taskRegistry;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    public TaskRunner(final TaskRegistryLookup taskRegistry,
-        final ProductRepository productRepository,
-        final ServiceLocator serviceLocator) {
+    public TaskRunner(final ModuleRegistry moduleRegistry, final TaskRegistryLookup taskRegistry,
+                      final ProductRepository productRepository,
+                      final ServiceLocator serviceLocator) {
+        this.moduleRegistry = moduleRegistry;
         this.taskRegistry = taskRegistry;
         this.productRepository = productRepository;
         this.serviceLocator = serviceLocator;

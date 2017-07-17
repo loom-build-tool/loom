@@ -250,7 +250,7 @@ public class Loom {
     private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl
                                                           runtimeConfiguration) throws IOException {
         Stopwatch.startProcess("Read configuration");
-        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
+        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration, Paths.get("build.yml"), "base");
         Stopwatch.stopProcess();
         return buildConfig;
     }

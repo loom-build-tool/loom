@@ -44,9 +44,9 @@ public final class ConfigReader {
     private ConfigReader() {
     }
 
-    public static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl runtimeConfig)
+    public static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl runtimeConfig,
+                                                     final Path buildFile, final String cacheName)
         throws IOException {
-        final Path buildFile = Paths.get("build.yml");
 
         if (!Files.isRegularFile(buildFile)) {
             throw new IOException("No build.yml found");
@@ -59,18 +59,19 @@ public final class ConfigReader {
             buildConfig = parseConfig(configData);
             LOG.debug("Working with parsed config: {}", buildConfig);
         } else {
-            buildConfig = parseAndCacheConfig(configData);
+            buildConfig = parseAndCacheConfig(configData, cacheName);
             LOG.debug("Working with cached config: {}", buildConfig);
         }
 
         return buildConfig;
     }
 
-    private static BuildConfigImpl parseAndCacheConfig(final byte[] configData) throws IOException {
+    private static BuildConfigImpl parseAndCacheConfig(final byte[] configData,
+                                                       final String cacheName) throws IOException {
         final byte[] configHash = Hasher.hash(configData);
 
         final Path cachePath =
-            LoomPaths.PROJECT_LOOM_PATH.resolve(Paths.get(Version.getVersion(), "base"));
+            LoomPaths.PROJECT_LOOM_PATH.resolve(Paths.get(Version.getVersion(), cacheName));
 
         Files.createDirectories(cachePath);
 

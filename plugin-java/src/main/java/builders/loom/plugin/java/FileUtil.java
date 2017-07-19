@@ -64,6 +64,15 @@ public final class FileUtil {
 
     public static void copy(final Path srcDir, final JarOutputStream os) throws IOException {
         if (Files.isDirectory(srcDir)) {
+
+            // TODO cleanup
+            final Path modulesInfoClassFile = srcDir.resolve("module-info.class");
+            final JarEntry entry = new JarEntry(srcDir.relativize(modulesInfoClassFile).toString());
+            entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
+            os.putNextEntry(entry);
+            Files.copy(modulesInfoClassFile, os);
+            os.closeEntry();
+
             Files.walkFileTree(srcDir, new CreateJarFileVisitor(srcDir, os));
         }
     }
@@ -99,6 +108,10 @@ public final class FileUtil {
         public FileVisitResult visitFile(final Path file,
                                          final BasicFileAttributes attrs)
             throws IOException {
+
+            if (file.getFileName().toString().equals("module-info.class")) {
+                return FileVisitResult.CONTINUE;
+            }
 
             final JarEntry entry = new JarEntry(sourceDir.relativize(file).toString());
             entry.setTime(attrs.lastModifiedTime().toMillis());

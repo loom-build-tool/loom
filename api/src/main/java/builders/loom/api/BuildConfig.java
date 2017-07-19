@@ -26,6 +26,8 @@ public interface BuildConfig {
 
     BuildSettings getBuildSettings();
 
+    Set<String> getModuleDependencies();
+
     Set<String> getDependencies();
 
     Set<String> getTestDependencies();

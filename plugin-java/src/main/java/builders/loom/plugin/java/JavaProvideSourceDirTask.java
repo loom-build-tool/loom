@@ -19,10 +19,7 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractTask;
@@ -45,31 +42,15 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     public TaskResult run() throws Exception {
         final Path path = srcPath();
 
-//        if (!Files.isDirectory(path)) {
-//            return completeSkip();
-//        }
-
-        final Map<String, List<Path>> modulesPaths = new HashMap<>();
-
-        final List<Path> modules = Files.walk(Paths.get("modules"), 1)
-            .skip(1)
-            .filter(modulePath -> Files.exists(modulePath.resolve(srcPath())))
-            .collect(Collectors.toList());
-
-        // TODO check dirs
-
-        for (final Path module : modules) {
-            final String moduleName = module.getFileName().toString();
-
-            final List<Path> sourceFiles = Files.walk(module.resolve(srcPath()))
-                .filter(f -> Files.isRegularFile(f))
-                .collect(Collectors.toList());
-            
-            modulesPaths.put(moduleName, sourceFiles);
+        if (!Files.isDirectory(path)) {
+            return completeSkip();
         }
 
-        final List<Path> illegalFiles = modulesPaths.values().stream()
-            .flatMap(Collection::stream)
+        final List<Path> sourceFiles = Files.walk(srcPath())
+            .filter(f -> Files.isRegularFile(f))
+            .collect(Collectors.toList());
+
+        final List<Path> illegalFiles = sourceFiles.stream()
             .filter(f -> !f.toString().endsWith(".java"))
             .collect(Collectors.toList());
 
@@ -78,15 +59,15 @@ public class JavaProvideSourceDirTask extends AbstractTask {
                 + illegalFiles);
         }
 
-        return completeOk(new SourceTreeProduct(path, modulesPaths));
+        return completeOk(new SourceTreeProduct(path, sourceFiles));
     }
 
     private Path srcPath() {
         switch (compileTarget) {
             case MAIN:
-                return SRC_MAIN_PATH;
+                return getModule().getPath().resolve(SRC_MAIN_PATH);
             case TEST:
-                return SRC_TEST_PATH;
+                return getModule().getPath().resolve(SRC_TEST_PATH);
             default:
                 throw new IllegalStateException();
         }

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.BuildSettings;
 import builders.loom.api.Project;
 
@@ -33,17 +34,20 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
     private final Set<String> plugins;
     private final BuildSettings buildSettings;
     private final Map<String, String> settings;
+    private final Set<String> moduleDependencies;
     private final Set<String> dependencies;
     private final Set<String> testDependencies;
 
     BuildConfigImpl(final ProjectImpl project, final Set<String> plugins,
                     final BuildSettings buildSettings,
                     final Map<String, String> settings,
-                    final Set<String> dependencies, final Set<String> testDependencies) {
+                    final Set<String> moduleDependencies, final Set<String> dependencies,
+                    final Set<String> testDependencies) {
         this.project = Objects.requireNonNull(project);
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
+        this.moduleDependencies = Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
         this.dependencies = Collections.unmodifiableSet(Objects.requireNonNull(dependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));
@@ -70,6 +74,11 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
     }
 
     @Override
+    public Set<String> getModuleDependencies() {
+        return moduleDependencies;
+    }
+
+    @Override
     public Set<String> getDependencies() {
         return dependencies;
     }
@@ -85,6 +94,7 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
             + "project=" + project
             + ", plugins=" + plugins
             + ", buildSettings=" + buildSettings
+            + ", moduleDependencies=" + moduleDependencies
             + ", dependencies=" + dependencies
             + ", testDependencies=" + testDependencies
             + '}';

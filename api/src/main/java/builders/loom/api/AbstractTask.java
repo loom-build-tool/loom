@@ -25,9 +25,19 @@ import builders.loom.api.service.ServiceLocator;
 public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
 
+    private Module module;
     private ProvidedProduct providedProduct;
     private UsedProducts usedProducts;
     private ServiceLocator serviceLocator;
+
+    @Override
+    public void setModule(final Module module) {
+        this.module = module;
+    }
+
+    public Module getModule() {
+        return module;
+    }
 
     @Override
     public void setProvidedProduct(final ProvidedProduct providedProduct) {

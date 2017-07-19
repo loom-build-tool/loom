@@ -18,17 +18,19 @@ package builders.loom;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.fusesource.jansi.Ansi;
@@ -37,26 +39,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.LoomPaths;
-import builders.loom.api.ProductRepository;
-import builders.loom.api.product.Product;
-import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.Module;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.plugin.PluginRegistry;
-import builders.loom.plugin.ProductRepositoryImpl;
-import builders.loom.plugin.ServiceLocatorImpl;
-import builders.loom.plugin.TaskRegistryImpl;
-import builders.loom.plugin.TaskRegistryLookup;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class LoomProcessor {
 
-    private final TaskRegistryLookup taskRegistry = new TaskRegistryImpl();
-    private final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
-    private final ProductRepository productRepository = new ProductRepositoryImpl();
     private final ModuleRegistry moduleRegistry = new ModuleRegistry();
+    private ModuleRunner moduleRunner;
 
     static {
         System.setProperty("loom.version", Version.getVersion());
@@ -64,14 +58,16 @@ public class LoomProcessor {
 
     public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
-        Stopwatch.startProcess("Initialize plugins");
-        new PluginRegistry(buildConfig, runtimeConfiguration,
-            taskRegistry, serviceLocator).initPlugins();
-        Stopwatch.stopProcess();
 
         Stopwatch.startProcess("Initialize module configurations");
         scanForModules(runtimeConfiguration);
         Stopwatch.stopProcess();
+
+
+        moduleRunner = new ModuleRunner(moduleRegistry,
+            buildConfig, runtimeConfiguration);
+        moduleRunner.init();
+
     }
 
     public void scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
@@ -86,11 +82,30 @@ public class LoomProcessor {
                     throw new IllegalStateException("Missing build.yml in module " + module);
                 }
 
-                final String moduleName = module.getFileName().toString();
+                final String modulePathName = module.getFileName().toString();
                 final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(
-                    runtimeConfiguration, moduleBuildConfig, moduleName);
+                    runtimeConfiguration, moduleBuildConfig, modulePathName);
 
-                moduleRegistry.register(new Module(moduleName, module, buildConfig));
+                // TODO src/test/java ?
+
+                final Path moduleInfoFile = module.resolve(
+                    Paths.get("src", "main", "java", "module-info.java"));
+
+                if (Files.notExists(moduleInfoFile)) {
+                    throw new IllegalStateException("Missing module-info.java in module " + module);
+                }
+
+                final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
+                final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
+                final Matcher matcher = pattern.matcher(moduleInfoSource);
+
+                if (!matcher.find()) {
+                    throw new IllegalStateException("Can't parse module-info.java in module " + module);
+                }
+
+                final String moduleName = matcher.group(1);
+
+                moduleRegistry.register(new Module(modulePathName, moduleName, module, buildConfig));
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -98,9 +113,7 @@ public class LoomProcessor {
     }
 
     public Collection<ConfiguredTask> execute(final List<String> productIds) throws Exception {
-        final TaskRunner taskRunner = new TaskRunner(
-            moduleRegistry, taskRegistry, productRepository, serviceLocator);
-        return taskRunner.execute(new HashSet<>(productIds));
+        return moduleRunner.execute(new HashSet<>(productIds));
     }
 
     public void clean() {
@@ -133,44 +146,44 @@ public class LoomProcessor {
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 
-    public void generateTextProductOverview() {
-        TextOutput.generate(taskRegistry);
-    }
+//    public void generateTextProductOverview() {
+//        TextOutput.generate(taskRegistry);
+//    }
+//
+//    public void generateDotProductOverview() {
+//        GraphvizOutput.generateDot(taskRegistry);
+//    }
 
-    public void generateDotProductOverview() {
-        GraphvizOutput.generateDot(taskRegistry);
-    }
-
-    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
-        throws InterruptedException {
-
-        // aggregate plugin -> products
-        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
-
-        if (!aggProducts.isEmpty()) {
-            outputProductInfos(aggProducts);
-        }
-    }
-
-    private Map<String, List<ProductInfo>> aggregateProducts(
-        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
-
-        // plugin -> products
-        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
-
-        for (final ConfiguredTask configuredTask : resolvedTasks) {
-            final String productId = configuredTask.getProvidedProduct();
-            final Optional<Product> product = productRepository.lookup(productId)
-                .getAndWaitForProduct();
-            if (product.isPresent() && product.get().outputInfo().isPresent()) {
-                final String outputInfo = product.get().outputInfo().get();
-                final String pluginName = configuredTask.getPluginName();
-                aggProducts.putIfAbsent(pluginName, new ArrayList<>());
-                aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
-            }
-        }
-        return aggProducts;
-    }
+//    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
+//        throws InterruptedException {
+//
+//        // aggregate plugin -> products
+//        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
+//
+//        if (!aggProducts.isEmpty()) {
+//            outputProductInfos(aggProducts);
+//        }
+//    }
+//
+//    private Map<String, List<ProductInfo>> aggregateProducts(
+//        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
+//
+//        // plugin -> products
+//        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
+//
+//        for (final ConfiguredTask configuredTask : resolvedTasks) {
+//            final String productId = configuredTask.getProvidedProduct();
+//            final Optional<Product> product = productRepository.lookup(productId)
+//                .getAndWaitForProduct();
+//            if (product.isPresent() && product.get().outputInfo().isPresent()) {
+//                final String outputInfo = product.get().outputInfo().get();
+//                final String pluginName = configuredTask.getPluginName();
+//                aggProducts.putIfAbsent(pluginName, new ArrayList<>());
+//                aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
+//            }
+//        }
+//        return aggProducts;
+//    }
 
     private void outputProductInfos(final Map<String, List<ProductInfo>> aggProducts) {
         AnsiConsole.out().println();

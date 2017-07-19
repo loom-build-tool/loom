@@ -24,6 +24,11 @@ public class WaitForAllProductsTask implements Task, ProductDependenciesAware {
     private UsedProducts usedProducts;
 
     @Override
+    public void setModule(final Module module) {
+        // TODO
+    }
+
+    @Override
     public void setProvidedProduct(final ProvidedProduct providedProduct) {
         this.providedProduct = providedProduct;
     }

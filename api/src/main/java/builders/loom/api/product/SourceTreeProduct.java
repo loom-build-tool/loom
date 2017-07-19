@@ -18,29 +18,27 @@ package builders.loom.api.product;
 
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public final class SourceTreeProduct extends AbstractProduct {
 
     private final Path srcDir;
-    private final Map<String, List<Path>> sourceFiles;
+    private final List<Path> sourceFiles;
 
-    public SourceTreeProduct(final Path srcDir, final Map<String, List<Path>> sourceFiles) {
+    public SourceTreeProduct(final Path srcDir, final List<Path> sourceFiles) {
         this.srcDir = Objects.requireNonNull(srcDir, "srcDir must not be null");
         if (sourceFiles == null || sourceFiles.isEmpty()) {
             throw new IllegalArgumentException("sourceFiles must not be null or empty");
         }
-        this.sourceFiles = Collections.unmodifiableMap(new HashMap<>(sourceFiles));
+        this.sourceFiles = Collections.unmodifiableList(sourceFiles);
     }
 
     public Path getSrcDir() {
         return srcDir;
     }
 
-    public Map<String, List<Path>> getSourceFiles() {
+    public List<Path> getSourceFiles() {
         return sourceFiles;
     }
 

@@ -62,12 +62,13 @@ public class JavaAssembleTask extends AbstractTask {
             buildConfig.getProject().getVersion()));
 
         try (final JarOutputStream os = buildJarOutput(jarFile)) {
-            if (resourcesTreeProduct.isPresent()) {
-                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            // compilation & module-info.class first !
+            if (compilation.isPresent()) {
+                FileUtil.copy(compilation.get().getClassesDir().resolve(getModule().getPathName()), os);
             }
 
-            if (compilation.isPresent()) {
-                FileUtil.copy(compilation.get().getClassesDir(), os);
+            if (resourcesTreeProduct.isPresent()) {
+                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
             }
         }
 

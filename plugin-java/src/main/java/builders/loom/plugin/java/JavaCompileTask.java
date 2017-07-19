@@ -24,10 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -54,9 +52,6 @@ import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaCompileTask extends AbstractTask {
 
-    public static final Path BUILD_MAIN_PATH = Paths.get("loombuild", "classes", "main");
-    public static final Path BUILD_TEST_PATH = Paths.get("loombuild", "classes", "test");
-
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
 
     // The first Java version which supports the --release flag
@@ -65,7 +60,6 @@ public class JavaCompileTask extends AbstractTask {
     private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
     private final CompileTarget compileTarget;
-    private final Path buildDir;
     private final String subdirName;
     private final Path cacheDir;
 
@@ -80,13 +74,22 @@ public class JavaCompileTask extends AbstractTask {
 
         switch (compileTarget) {
             case MAIN:
-                buildDir = BUILD_MAIN_PATH;
                 subdirName = "main";
                 break;
             case TEST:
-                buildDir = BUILD_TEST_PATH;
                 subdirName = "test";
                 break;
+            default:
+                throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
+        }
+    }
+    
+    private Path getBuildDir() {
+        switch (compileTarget) {
+            case MAIN:
+                return Paths.get("loombuild", getModule().getPathName(), "classes", "main");
+            case TEST:
+                return Paths.get("loombuild", getModule().getPathName(), "classes", "test");
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
         }
@@ -144,8 +147,8 @@ public class JavaCompileTask extends AbstractTask {
         final Optional<SourceTreeProduct> sourceTreeProduct = getSourceTreeProduct();
 
         if (!sourceTreeProduct.isPresent()) {
-            if (Files.exists(buildDir)) {
-                FileUtil.deleteDirectoryRecursively(buildDir, false);
+            if (Files.exists(getBuildDir())) {
+                FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
             }
 
             return completeSkip();
@@ -176,7 +179,7 @@ public class JavaCompileTask extends AbstractTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final Map<String, List<Path>> srcPaths = sourceTreeProduct.get().getSourceFiles();
+        final List<Path> srcPaths = sourceTreeProduct.get().getSourceFiles();
 
 //        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
 //            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
@@ -185,10 +188,10 @@ public class JavaCompileTask extends AbstractTask {
 //            return completeUpToDate(product());
 //        }
 
-        if (Files.notExists(buildDir)) {
-            Files.createDirectories(buildDir);
+        if (Files.notExists(getBuildDir())) {
+            Files.createDirectories(getBuildDir());
         } else {
-            FileUtil.deleteDirectoryRecursively(buildDir, false);
+            FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
         }
 
 //        final List<File> srcFiles = srcPaths.stream()
@@ -216,15 +219,15 @@ public class JavaCompileTask extends AbstractTask {
     private CompilationProduct product() {
         switch (compileTarget) {
             case MAIN:
-                return new CompilationProduct(buildDir);
+                return new CompilationProduct(getBuildDir());
             case TEST:
-                return new CompilationProduct(buildDir);
+                return new CompilationProduct(getBuildDir());
             default:
                 throw new IllegalStateException();
         }
     }
 
-    private void compile(final List<Path> classpath, final Map<String, List<Path>> srcFiles) throws IOException {
+    private void compile(final List<Path> classpath, final List<Path> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
@@ -235,16 +238,21 @@ public class JavaCompileTask extends AbstractTask {
             fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
                 new ArrayList<>(classpath));
             fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-                Collections.singletonList(buildDir));
+                Collections.singletonList(getBuildDir()));
 
-            for (final Map.Entry<String, List<Path>> entry : srcFiles.entrySet()) {
-                fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
-                    entry.getKey(),
-                    Collections.singletonList(Paths.get("modules", entry.getKey(), "src", subdirName, "java")));
-            }
 
-            final List<File> files = srcFiles.values().stream()
-                .flatMap(Collection::stream)
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+
+            fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
+                getModule().getModuleName(),
+                Collections.singletonList(Paths.get("modules", getModule().getPathName(), "src", subdirName, "java")));
+
+            final List<File> files = srcFiles.stream()
                 .map(Path::toFile)
                 .collect(Collectors.toList());
 
@@ -267,7 +275,7 @@ public class JavaCompileTask extends AbstractTask {
     private List<String> buildOptions() {
         final List<String> options = new ArrayList<>();
         options.add("-d");
-        options.add(buildDir.toString());
+        options.add(getBuildDir().toString());
 
         options.add("-encoding");
         options.add("UTF-8");

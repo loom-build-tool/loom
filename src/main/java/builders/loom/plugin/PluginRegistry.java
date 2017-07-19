@@ -44,7 +44,7 @@ import builders.loom.Version;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
-import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.util.SystemUtil;
 import builders.loom.util.ThreadUtil;
 

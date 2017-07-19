@@ -30,6 +30,7 @@ public class BuildConfigDTO {
     private ProjectDTO project;
     private Set<String> plugins;
     private Map<String, String> settings;
+    private Set<String> moduleDependencies;
     private Set<String> dependencies;
     private Set<String> testDependencies;
 
@@ -55,6 +56,14 @@ public class BuildConfigDTO {
 
     public void setSettings(final Map<String, String> settings) {
         this.settings = settings;
+    }
+
+    public Set<String> getModuleDependencies() {
+        return moduleDependencies;
+    }
+
+    public void setModuleDependencies(final Set<String> moduleDependencies) {
+        this.moduleDependencies = moduleDependencies;
     }
 
     public Set<String> getDependencies() {
@@ -88,7 +97,7 @@ public class BuildConfigDTO {
             plugins != null ? plugins : Collections.emptySet(),
             buildSettings,
             cfg,
-            dependencies != null ? dependencies : Collections.emptySet(),
+            moduleDependencies, dependencies != null ? dependencies : Collections.emptySet(),
             testDependencies != null ? testDependencies : Collections.emptySet());
     }
 

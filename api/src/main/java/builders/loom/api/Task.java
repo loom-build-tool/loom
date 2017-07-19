@@ -21,6 +21,7 @@ package builders.loom.api;
  */
 public interface Task {
 
+    void setModule(Module module);
     TaskResult run() throws Exception;
 
 }

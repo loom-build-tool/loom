@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package builders.loom.config;
+package builders.loom.api;
 
 import java.util.Map;
-
-import builders.loom.api.BuildConfig;
 
 public interface BuildConfigWithSettings extends BuildConfig {
 

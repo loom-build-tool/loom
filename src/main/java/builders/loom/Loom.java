@@ -39,7 +39,7 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.config.BuildConfigWithSettings;
+import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.Stopwatch;
@@ -211,10 +211,10 @@ public class Loom {
 
         loomProcessor.init(buildConfig, runtimeConfiguration);
 
-        if (cmd.hasOption("products")) {
-            final String format = cmd.getOptionValue("products");
-            printProducts(loomProcessor, format);
-        }
+//        if (cmd.hasOption("products")) {
+//            final String format = cmd.getOptionValue("products");
+//            printProducts(loomProcessor, format);
+//        }
 
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
@@ -226,7 +226,7 @@ public class Loom {
                 ProgressMonitor.stop();
             }
 
-            loomProcessor.printProductInfos(resolvedTasks);
+//            loomProcessor.printProductInfos(resolvedTasks);
 
             printExecutionStatistics();
 
@@ -255,15 +255,15 @@ public class Loom {
         return buildConfig;
     }
 
-    private static void printProducts(final LoomProcessor loomProcessor, final String format) {
-        if (format == null || "text".equals(format)) {
-            loomProcessor.generateTextProductOverview();
-        } else if ("dot".equals(format)) {
-            loomProcessor.generateDotProductOverview();
-        } else {
-            throw new IllegalStateException("Unknown format: " + format);
-        }
-    }
+//    private static void printProducts(final LoomProcessor loomProcessor, final String format) {
+//        if (format == null || "text".equals(format)) {
+//            loomProcessor.generateTextProductOverview();
+//        } else if ("dot".equals(format)) {
+//            loomProcessor.generateDotProductOverview();
+//        } else {
+//            throw new IllegalStateException("Unknown format: " + format);
+//        }
+//    }
 
     private static void printExecutionStatistics() {
         System.out.println();

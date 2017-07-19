@@ -34,6 +34,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
+import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.util.Hasher;
 

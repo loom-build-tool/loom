@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.Module;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.ProvidedProduct;
@@ -40,15 +41,17 @@ public class Job implements Callable<TaskStatus> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
 
+    private final Module module;
     private final String name;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    Job(final String name, final ConfiguredTask configuredTask,
+    Job(final Module module, final String name, final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final ServiceLocator serviceLocator) {
+        this.module = module;
         this.name = Objects.requireNonNull(name, "name required");
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
@@ -74,7 +77,7 @@ public class Job implements Callable<TaskStatus> {
         LOG.info("Start task {}", name);
 
         final String taskType = configuredTask.isGoal() ? "Goal" : "Task";
-        Stopwatch.startProcess(taskType + " " + name);
+        Stopwatch.startProcess(module.getModuleName() + " > " + taskType + " " + name);
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
@@ -103,6 +106,7 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private void injectTaskProperties(final Task task) {
+        task.setModule(module);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             pdaTask.setProvidedProduct(

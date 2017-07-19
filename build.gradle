@@ -10,7 +10,7 @@ allprojects {
     group = 'builders.loom'
     version = '1.0.0'
 
-    sourceCompatibility = 1.8
+    sourceCompatibility = 1.9
 
     checkstyle {
         configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")

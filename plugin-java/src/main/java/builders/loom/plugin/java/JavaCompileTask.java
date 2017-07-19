@@ -48,7 +48,6 @@ import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ModulePathProduct;
 import builders.loom.api.product.ModulesPathProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
@@ -85,13 +84,13 @@ public class JavaCompileTask extends AbstractTask {
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
         }
     }
-    
+
     private Path getBuildDir() {
         switch (compileTarget) {
             case MAIN:
-                return Paths.get("loombuild", getModule().getPathName(), "classes", "main");
+                return Paths.get("loombuild", "compilation", "main", getModule().getPathName());
             case TEST:
-                return Paths.get("loombuild", getModule().getPathName(), "classes", "test");
+                return Paths.get("loombuild", "compilation", "test", getModule().getPathName());
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
         }
@@ -244,40 +243,11 @@ public class JavaCompileTask extends AbstractTask {
 //            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
 //                new ArrayList<>(classpath));
 
-
-            // TODO set via     setLocationForModule ?
-//            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-//                Collections.singletonList(getBuildDir()));
-
-            fileManager.setLocationForModule(StandardLocation.CLASS_OUTPUT,
-                getModule().getModuleName(),
+            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
                 Collections.singletonList(getBuildDir()));
 
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-            System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-
-//            LOG.warn("srcpath {}", Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
-
-//            fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
-//                getModule().getModuleName(),
-//                Collections.singletonList(Paths.get("modules", getModule().getPathName(), "src", subdirName, "java")));
-
-            if (moduleDependencies.isPresent()) {
-                for (final ModulePathProduct modulePathProduct : moduleDependencies.get().getModulesPathProducts()) {
-
-                    LOG.warn("For module {} set path to {}", modulePathProduct.getModuleName(), modulePathProduct.getModulePath());
-                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
-                        modulePathProduct.getModuleName(),
-                        Collections.singletonList(modulePathProduct.getModulePath().toAbsolutePath()));     // TODO remove absolute
-                }
-            }
-
-
-
+            fileManager.setLocation(StandardLocation.MODULE_PATH,
+                List.of(getBuildDir().getParent().toFile()));
 
             final List<File> files = srcFiles.stream()
                 .map(Path::toFile)
@@ -303,8 +273,6 @@ public class JavaCompileTask extends AbstractTask {
 
     private List<String> buildOptions() {
         final List<String> options = new ArrayList<>();
-        options.add("-d");
-        options.add(getBuildDir().toString());
 
         options.add("-encoding");
         options.add("UTF-8");
@@ -315,9 +283,6 @@ public class JavaCompileTask extends AbstractTask {
 
 //        options.add("-sourcepath");
 //        options.add("");
-
-//        options.add("--module-source-path");
-//        options.add("src/main/java");
 
         options.add("-Xpkginfo:always");
 

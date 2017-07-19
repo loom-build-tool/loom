@@ -2,6 +2,8 @@ package builders.loom;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,21 +27,32 @@ public class Main {
 
 
                     // TODO set via     setLocationForModule ?
+                    final Path o = Paths.get("/tmp/mainout");
+                    Files.createDirectories(o);
+
+
+                    fileManager.setLocation(StandardLocation.MODULE_PATH,
+                        List.of(new File("/Users/oliver/workspace/loom-example/java9/loombuild/compilation/main")));
+
                     fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-                        Collections.singletonList(Paths.get("/tmp/mainout")));
+                        Collections.singletonList(o));
 
         //            LOG.warn("srcpath {}", Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
 
-        //            fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
-        //                getModule().getModuleName(),
-        //                Collections.singletonList(Paths.get("modules", getModule().getPathName(), "src", subdirName, "java")));
+//                    fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
+//                        "builders.loom.example.app",
+//                        Collections.singletonList(Paths.get("/Users/oliver/workspace/loom-example/java9/modules/builders.loom.example.app/src/main/java")));
+//
+//                    fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
+//                        "builders.loom.example.api",
+//                        Collections.singletonList(Paths.get("/Users/oliver/workspace/loom-example/java9/modules/builders.loom.example.api/src/main/java")));
 
-                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
-                        "builders.loom.example.api",
-                        Collections.singletonList(Paths.get("/Users/osiegmar/IdeaProjects/loom-example/java9/loombuild/builders.loom.example.api/classes/main")));
+//                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
+//                        "builders.loom.example.api",
+//                        Collections.singletonList(Paths.get("/Users/oliver/workspace/loom-example/java9/loombuild/compilation/main/builders.loom.example.api")));
 
-                    final List<File> files = List.of(new File("/Users/osiegmar/IdeaProjects/loom-example/java9/modules/builders.loom.example.app/src/main/java/builders/loom/example/app/Main.java"),
-                        new File("/Users/osiegmar/IdeaProjects/loom-example/java9/modules/builders.loom.example.app/src/main/java/module-info.java"));
+                    final List<File> files = List.of(new File("/Users/oliver/workspace/loom-example/java9/modules/builders.loom.example.app/src/main/java/builders/loom/example/app/Main.java"),
+                        new File("/Users/oliver/workspace/loom-example/java9/modules/builders.loom.example.app/src/main/java/module-info.java"));
 
                     final Iterable<? extends JavaFileObject> compUnits =
                         fileManager.getJavaFileObjectsFromFiles(files);
@@ -58,8 +71,8 @@ public class Main {
 
     private static List<String> buildOptions() {
         final List<String> options = new ArrayList<>();
-        options.add("-d");
-        options.add("/tmp/mainout");
+//        options.add("-d");
+//        options.add("/tmp/mainout");
 
         options.add("-encoding");
         options.add("UTF-8");

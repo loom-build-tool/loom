@@ -26,6 +26,7 @@ import builders.loom.api.ProductRepository;
 public class ProductRepositoryImpl implements ProductRepository {
 
     private final Map<String, ProductPromise> products = new ConcurrentHashMap<>();
+    public Object var;
 
     @Override
     public ProductPromise lookup(final String productId) {

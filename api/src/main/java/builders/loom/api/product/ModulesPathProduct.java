@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.api.product;
 
-public interface ProductDependenciesAware {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    void setGlobalProductRepository(GlobalProductRepository globalProductRepository);
+public final class ModulesPathProduct extends AbstractProduct {
 
-    void setProvidedProduct(ProvidedProduct providedProduct);
+    private final List<ModulePathProduct> modulesPathProducts;
 
-    void setUsedProducts(UsedProducts usedProducts);
+    public ModulesPathProduct(final List<ModulePathProduct> modulesPathProducts) {
+        this.modulesPathProducts = Collections.unmodifiableList(new ArrayList<>(modulesPathProducts));
+    }
+
+    public List<ModulePathProduct> getModulesPathProducts() {
+        return modulesPathProducts;
+    }
 
 }

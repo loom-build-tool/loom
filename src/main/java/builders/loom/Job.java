@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductRepository;
@@ -42,16 +43,18 @@ public class Job implements Callable<TaskStatus> {
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
 
     private final Module module;
+    private final GlobalProductRepository globalProductRepository;
     private final String name;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    Job(final Module module, final String name, final ConfiguredTask configuredTask,
+    Job(final Module module, final GlobalProductRepository globalProductRepository, final String name, final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final ServiceLocator serviceLocator) {
         this.module = module;
+        this.globalProductRepository = globalProductRepository;
         this.name = Objects.requireNonNull(name, "name required");
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
@@ -109,6 +112,7 @@ public class Job implements Callable<TaskStatus> {
         task.setModule(module);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
+            pdaTask.setGlobalProductRepository(globalProductRepository);
             pdaTask.setProvidedProduct(
                 new ProvidedProduct(
                     configuredTask.getProvidedProduct(), productRepository, name));

@@ -97,7 +97,8 @@ public class BuildConfigDTO {
             plugins != null ? plugins : Collections.emptySet(),
             buildSettings,
             cfg,
-            moduleDependencies, dependencies != null ? dependencies : Collections.emptySet(),
+            moduleDependencies != null ? moduleDependencies : Collections.emptySet(),
+            dependencies != null ? dependencies : Collections.emptySet(),
             testDependencies != null ? testDependencies : Collections.emptySet());
     }
 

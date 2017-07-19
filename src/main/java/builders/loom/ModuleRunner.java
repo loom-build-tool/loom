@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
+import builders.loom.api.ProductRepository;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginRegistry;
 import builders.loom.plugin.ProductRepositoryImpl;
@@ -22,7 +24,8 @@ public class ModuleRunner {
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final Map<Module, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<Module, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
-    private final Map<Module, ProductRepositoryImpl> moduleProductRepositories = new HashMap<>();
+    private final Map<Module, ProductRepository> moduleProductRepositories = new HashMap<>();
+    private GlobalProductRepository globalProductRepository;
 
     public ModuleRunner(final ModuleRegistry moduleRegistry, final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
 
@@ -46,6 +49,8 @@ public class ModuleRunner {
             Stopwatch.stopProcess();
         }
 
+        globalProductRepository = new GlobalProductRepository(moduleProductRepositories);
+
     }
 
     public Collection<ConfiguredTask> execute(final Set<String> productIds) throws BuildException, InterruptedException {
@@ -53,7 +58,7 @@ public class ModuleRunner {
         Collection<ConfiguredTask> ret = new ArrayList<>();
         for (final Module module : moduleRegistry.getModules()) {
             final TaskRunner taskRunner = new TaskRunner(
-                module, moduleTaskRegistries.get(module), moduleProductRepositories.get(module), moduleServiceLocators.get(module));
+                module, globalProductRepository, moduleTaskRegistries.get(module), moduleProductRepositories.get(module), moduleServiceLocators.get(module));
 
             ret.addAll(taskRunner.execute(productIds));
         }

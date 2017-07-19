@@ -48,6 +48,8 @@ import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.ModulePathProduct;
+import builders.loom.api.product.ModulesPathProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaCompileTask extends AbstractTask {
@@ -198,7 +200,11 @@ public class JavaCompileTask extends AbstractTask {
 //            .map(Path::toFile)
 //            .collect(Collectors.toList());
 
-        compile(classpath, srcPaths);
+
+        final Optional<ModulesPathProduct> moduleDependencies = useProduct("moduleDependencies", ModulesPathProduct.class);
+
+
+        compile(moduleDependencies, classpath, srcPaths);
 
 //        fileCacher.cacheFiles(srcPaths);
 
@@ -227,7 +233,7 @@ public class JavaCompileTask extends AbstractTask {
         }
     }
 
-    private void compile(final List<Path> classpath, final List<Path> srcFiles) throws IOException {
+    private void compile(final Optional<ModulesPathProduct> moduleDependencies, final List<Path> classpath, final List<Path> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
@@ -235,12 +241,18 @@ public class JavaCompileTask extends AbstractTask {
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 
-            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
-                new ArrayList<>(classpath));
-            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
+//            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
+//                new ArrayList<>(classpath));
+
+
+            // TODO set via     setLocationForModule ?
+//            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
+//                Collections.singletonList(getBuildDir()));
+
+            fileManager.setLocationForModule(StandardLocation.CLASS_OUTPUT,
+                getModule().getModuleName(),
                 Collections.singletonList(getBuildDir()));
 
-
             System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
             System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
             System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
@@ -248,13 +260,30 @@ public class JavaCompileTask extends AbstractTask {
             System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
             System.out.println("module path: '" + getModule().getModuleName() + "', path=" + Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
 
-            fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
-                getModule().getModuleName(),
-                Collections.singletonList(Paths.get("modules", getModule().getPathName(), "src", subdirName, "java")));
+//            LOG.warn("srcpath {}", Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+
+//            fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
+//                getModule().getModuleName(),
+//                Collections.singletonList(Paths.get("modules", getModule().getPathName(), "src", subdirName, "java")));
+
+            if (moduleDependencies.isPresent()) {
+                for (final ModulePathProduct modulePathProduct : moduleDependencies.get().getModulesPathProducts()) {
+
+                    LOG.warn("For module {} set path to {}", modulePathProduct.getModuleName(), modulePathProduct.getModulePath());
+                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
+                        modulePathProduct.getModuleName(),
+                        Collections.singletonList(modulePathProduct.getModulePath().toAbsolutePath()));     // TODO remove absolute
+                }
+            }
+
+
+
 
             final List<File> files = srcFiles.stream()
                 .map(Path::toFile)
                 .collect(Collectors.toList());
+
+            LOG.warn("Files to compile: {}", files);
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromFiles(files);

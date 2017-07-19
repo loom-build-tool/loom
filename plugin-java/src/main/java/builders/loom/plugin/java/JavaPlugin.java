@@ -45,11 +45,17 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .desc("Provides test sources for other products.")
             .register();
 
+        task("provideModuleDependencies")
+            .impl(() -> new JavaModuleDependencyTask(buildConfig))
+            .provides("moduleDependencies", true)
+            .desc("") // TODO
+            .register();
+
         task("compileJava")
             .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN,
                 getRepositoryPath()))
             .provides("compilation")
-            .uses("source", "compileDependencies")
+            .uses("source", "moduleDependencies", "compileDependencies")
             .desc("Compiles main sources.")
             .register();
 

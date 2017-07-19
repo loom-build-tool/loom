@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.service.ServiceLocator;
@@ -35,14 +36,16 @@ public class TaskRunner {
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
     private final Module module;
+    private final GlobalProductRepository globalProductRepository;
     private final TaskRegistryLookup taskRegistry;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    public TaskRunner(final Module module, final TaskRegistryLookup taskRegistry,
+    public TaskRunner(final Module module, final GlobalProductRepository globalProductRepository, final TaskRegistryLookup taskRegistry,
                       final ProductRepository productRepository,
                       final ServiceLocator serviceLocator) {
         this.module = module;
+        this.globalProductRepository = globalProductRepository;
         this.taskRegistry = taskRegistry;
         this.productRepository = productRepository;
         this.serviceLocator = serviceLocator;
@@ -81,7 +84,7 @@ public class TaskRunner {
 
     private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
         return resolvedTasks.stream()
-            .map(ct -> new Job(module, ct.getName(), ct, productRepository, serviceLocator))
+            .map(ct -> new Job(module, globalProductRepository, ct.getName(), ct, productRepository, serviceLocator))
             .collect(Collectors.toList());
     }
 

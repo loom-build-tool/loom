@@ -40,6 +40,10 @@ public abstract class AbstractTask implements Task,
     }
 
     @Override
+    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
+    }
+
+    @Override
     public void setProvidedProduct(final ProvidedProduct providedProduct) {
         this.providedProduct = providedProduct;
     }

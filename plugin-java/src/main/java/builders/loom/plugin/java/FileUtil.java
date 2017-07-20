@@ -64,15 +64,6 @@ public final class FileUtil {
 
     public static void copy(final Path srcDir, final JarOutputStream os) throws IOException {
         if (Files.isDirectory(srcDir)) {
-
-            // TODO cleanup
-            final Path modulesInfoClassFile = srcDir.resolve("module-info.class");
-            final JarEntry entry = new JarEntry(srcDir.relativize(modulesInfoClassFile).toString());
-            entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
-            os.putNextEntry(entry);
-            Files.copy(modulesInfoClassFile, os);
-            os.closeEntry();
-
             Files.walkFileTree(srcDir, new CreateJarFileVisitor(srcDir, os));
         }
     }

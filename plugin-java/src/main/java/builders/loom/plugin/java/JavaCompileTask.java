@@ -88,9 +88,9 @@ public class JavaCompileTask extends AbstractTask {
     private Path getBuildDir() {
         switch (compileTarget) {
             case MAIN:
-                return Paths.get("loombuild", "compilation", "main", getModule().getPathName());
+                return Paths.get("loombuild", "compilation", "main", getModule().getModuleName());
             case TEST:
-                return Paths.get("loombuild", "compilation", "test", getModule().getPathName());
+                return Paths.get("loombuild", "compilation", "test", getModule().getModuleName());
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
         }

@@ -17,11 +17,14 @@
 package builders.loom.plugin.java;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -31,6 +34,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
+//import jdk.internal.module.ModuleInfoExtender;
 
 public class JavaAssembleTask extends AbstractTask {
 
@@ -62,10 +66,22 @@ public class JavaAssembleTask extends AbstractTask {
             buildConfig.getProject().getVersion()));
 
         try (final JarOutputStream os = buildJarOutput(jarFile)) {
+            
+            
             // compilation & module-info.class first !
             if (compilation.isPresent()) {
                 final Path resolve = compilation.get().getClassesDir();
+                
+                // TODO cleanup
+                final Path modulesInfoClassFile = resolve.resolve("module-info.class");
+                final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
+                entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
+                os.putNextEntry(entry);
+                    os.write(extendedModuleInfoClass(modulesInfoClassFile));
+                os.closeEntry();
+                
                 FileUtil.copy(resolve, os);
+                
             }
 
             if (resourcesTreeProduct.isPresent()) {
@@ -76,7 +92,32 @@ public class JavaAssembleTask extends AbstractTask {
         return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
-    private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
+    private byte[] extendedModuleInfoClass(Path modulesInfoClassFile) {
+
+            try {
+                return Files.readAllBytes(modulesInfoClassFile);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        
+//            try(InputStream classIs = Files.newInputStream(modulesInfoClassFile)) {
+//    
+//                ModuleInfoExtender extender = ModuleInfoExtender.newExtender(classIs);
+//    
+//                pluginSettings.getMainClassName().ifPresent(mainName -> {
+//    
+//                    extender.mainClass(mainName);
+//    
+//                });
+//    
+//                return extender.toByteArray();
+//    
+//            } catch (IOException e) {
+//                throw new UncheckedIOException(e);
+//            }
+    }
+
+	private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
         return new JarOutputStream(Files.newOutputStream(jarFile), prepareManifest());
     }
 
@@ -96,5 +137,5 @@ public class JavaAssembleTask extends AbstractTask {
 
         return newManifest;
     }
-
+    
 }

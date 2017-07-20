@@ -16,6 +16,9 @@ public class Module {
         this.config = config;
     }
 
+    /**
+     * Typically same as module name, but may differ (e.g. modulename=com.example.api; path=api).
+     */
     public String getPathName() {
         return pathName;
     }

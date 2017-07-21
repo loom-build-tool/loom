@@ -21,6 +21,7 @@ import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginRegistry;
 import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
+import builders.loom.plugin.TaskInfo;
 import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.DirectedGraph;
 import builders.loom.util.Stopwatch;
@@ -201,6 +202,29 @@ public class ModuleRunner {
 
 	public ProductPromise lookupProduct(final Module module, final String productId) {
 		return moduleProductRepositories.get(module).lookup(productId);
+	}
+	
+	public Set<String> getPluginNames() {
+		return moduleTaskRegistries.values().stream()
+			.flatMap(reg -> reg.configuredTasks().stream())
+			.flatMap(ct -> ct.getPluginNames().stream())
+			.collect(Collectors.toSet());
+	}
+
+	public Set<TaskInfo> configuredTasksByPluginName(final String pluginName) {
+		return moduleTaskRegistries.values().stream()
+			.flatMap(reg -> reg.configuredTasks().stream())
+			.filter(ct -> !ct.isGoal())
+			.filter(ct -> ct.getPluginName().equals(pluginName))
+			.map(TaskInfo::new)
+			.collect(Collectors.toSet());
+	}
+
+	public Set<TaskInfo> configuredTasks() {
+		return moduleTaskRegistries.values().stream()
+			.flatMap(reg -> reg.configuredTasks().stream())
+			.map(TaskInfo::new)
+			.collect(Collectors.toSet());
 	}
 
 }

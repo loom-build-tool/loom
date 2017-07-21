@@ -25,15 +25,14 @@ import java.util.stream.Collectors;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.plugin.ConfiguredTask;
-import builders.loom.plugin.TaskRegistryLookup;
+import builders.loom.plugin.TaskInfo;
 
 public final class TextOutput {
 
     private TextOutput() {
     }
 
-    public static void generate(final TaskRegistryLookup taskRegistry) {
+    public static void generate(final ModuleRunner moduleRunner) {
         AnsiConsole.out().println(
             Ansi.ansi()
                 .newline()
@@ -42,17 +41,12 @@ public final class TextOutput {
                 .reset()
                 .newline());
 
-        final Collection<ConfiguredTask> configuredTasks = taskRegistry.configuredTasks();
 
-        final List<String> pluginNames = configuredTasks.stream()
-            .filter(ct -> !ct.isGoal())
-            .map(ConfiguredTask::getPluginName)
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+        final List<String> pluginNames = moduleRunner.getPluginNames().stream().sorted().collect(Collectors.toList());
 
         for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
+            final Collection<TaskInfo> configuredTasks = moduleRunner.configuredTasksByPluginName(pluginName);
 
             AnsiConsole.out().println(
                 Ansi.ansi()
@@ -63,13 +57,13 @@ public final class TextOutput {
                     .a(":")
             );
 
-            final List<ConfiguredTask> productTasks = configuredTasks.stream()
+            final List<TaskInfo> productTasks = configuredTasks.stream()
                 .filter(ct -> !ct.isGoal())
                 .filter(ct -> ct.getPluginName().equals(pluginName))
-                .sorted(Comparator.comparing(ConfiguredTask::getProvidedProduct))
+                .sorted(Comparator.comparing(TaskInfo::getName))
                 .collect(Collectors.toList());
 
-            for (final ConfiguredTask task : productTasks) {
+            for (final TaskInfo task : productTasks) {
                 final Ansi ansi = Ansi.ansi();
 
                 if (task.isIntermediateProduct()) {
@@ -78,7 +72,7 @@ public final class TextOutput {
                     ansi.fgYellow();
                 }
 
-                ansi.a(task.getProvidedProduct())
+                ansi.a(task.getName())
                     .reset()
                     .a(" - ")
                     .fgCyan()
@@ -93,10 +87,8 @@ public final class TextOutput {
             }
         }
 
-        final List<ConfiguredTask> goals = configuredTasks.stream()
-            .filter(ConfiguredTask::isGoal)
-            .distinct()
-            .sorted(Comparator.comparing(ConfiguredTask::getProvidedProduct))
+        final List<TaskInfo> goals = moduleRunner.configuredTasks().stream()
+            .sorted(Comparator.comparing(TaskInfo::getName))
             .collect(Collectors.toList());
 
         if (!goals.isEmpty()) {
@@ -109,22 +101,22 @@ public final class TextOutput {
                     .reset()
                     .newline());
 
-            for (final ConfiguredTask goal : goals) {
-                AnsiConsole.out().println(
-                    Ansi.ansi()
-                        .fgYellow()
-                        .a(goal.getProvidedProduct())
-                        .reset()
-                        .a(" - ")
-                        .fgCyan()
-                        .a("Depends on: ")
-                        .fgYellow()
-                        .a(goal.getUsedProducts().stream()
-                            .sorted()
-                            .collect(Collectors.joining(", ")))
-                        .reset()
-                );
-            }
+//            for (final TaskInfo goal : goals) {
+//                AnsiConsole.out().println(
+//                    Ansi.ansi()
+//                        .fgYellow()
+//                        .a(goal.getName())
+//                        .reset()
+//                        .a(" - ")
+//                        .fgCyan()
+//                        .a("Depends on: ")
+//                        .fgYellow()
+//                        .a(goal.getUsedProducts().stream()
+//                            .sorted()
+//                            .collect(Collectors.joining(", ")))
+//                        .reset()
+//                );
+//            }
         }
 
         AnsiConsole.out().println();

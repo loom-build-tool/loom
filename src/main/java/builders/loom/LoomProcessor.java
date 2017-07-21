@@ -202,13 +202,13 @@ public class LoomProcessor {
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 
-//    public void generateTextProductOverview() {
-//        TextOutput.generate(taskRegistry);
-//    }
-//
-//    public void generateDotProductOverview() {
-//        GraphvizOutput.generateDot(taskRegistry);
-//    }
+    public void generateTextProductOverview() {
+        TextOutput.generate(moduleRunner);
+    }
+
+    public void generateDotProductOverview() {
+        GraphvizOutput.generateDot(moduleRunner);
+    }
 
     public void printProductInfos(final Collection<ConfiguredModuleTask> resolvedTasks)
         throws InterruptedException {

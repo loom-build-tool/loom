@@ -58,16 +58,19 @@ public class PluginLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginLoader.class);
 
-    private static final Map<String, String> INTERNAL_PLUGINS = Map.ofEntries(
+    private static final Map<String, String> INTERNAL_GLOBAL_PLUGINS = Map.ofEntries(
+        entry("idea", "builders.loom.plugin.idea.IdeaPlugin"),
+        entry("eclipse", "builders.loom.plugin.eclipse.EclipsePlugin")
+    );
+
+    private static final Map<String, String> INTERNAL_MODULE_PLUGINS = Map.ofEntries(
         entry("java", "builders.loom.plugin.java.JavaPlugin"),
         entry("junit4", "builders.loom.plugin.junit4.JUnit4Plugin"),
         entry("mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin"),
         entry("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin"),
         entry("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin"),
         entry("pmd", "builders.loom.plugin.pmd.PmdPlugin"),
-        entry("springboot", "builders.loom.plugin.springboot.SpringBootPlugin"),
-        entry("idea", "builders.loom.plugin.idea.IdeaPlugin"),
-        entry("eclipse", "builders.loom.plugin.eclipse.EclipsePlugin")
+        entry("springboot", "builders.loom.plugin.springboot.SpringBootPlugin")
     );
 
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
@@ -131,7 +134,7 @@ public class PluginLoader {
     private Class<?> loadPlugin(final String pluginName) {
         LOG.info("Load plugin {}", pluginName);
 
-        final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
+        final String pluginClassname = INTERNAL_MODULE_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
             throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         }

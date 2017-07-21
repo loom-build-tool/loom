@@ -30,6 +30,7 @@ public class ModuleRunner {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ModuleRunner.class);
 
+    private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
     private final BuildConfigWithSettings buildConfig;
     private final RuntimeConfigurationImpl runtimeConfiguration;
@@ -38,8 +39,8 @@ public class ModuleRunner {
     private final Map<Module, ProductRepository> moduleProductRepositories = new HashMap<>();
     private GlobalProductRepository globalProductRepository;
 
-    public ModuleRunner(final ModuleRegistry moduleRegistry, final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
-
+    public ModuleRunner(final PluginLoader pluginLoader, final ModuleRegistry moduleRegistry, final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
+        this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
         this.buildConfig = buildConfig;
         this.runtimeConfiguration = runtimeConfiguration;
@@ -47,11 +48,10 @@ public class ModuleRunner {
 
     public void init() {
         final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
-		final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
 
         for (final Module module : moduleRegistry.getModules()) {
-            final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
             final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+            final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
 
             final Set<String> pluginsToInitialize = new HashSet<>(defaultPlugins);
             pluginsToInitialize.addAll(module.getConfig().getPlugins());

@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import builders.loom.api.product.Product;
 
@@ -41,6 +43,10 @@ public class GlobalProductRepository {
             .orElseThrow(() -> new IllegalStateException("Module <" + moduleName + "> not found"));
 
         return new UsedProducts(Collections.singleton(productId), productRepository).readProduct(productId, productClass);
+    }
+
+    public Set<String> getAllModuleNames() {
+        return Collections.unmodifiableSet(moduleProductRepositories.keySet().stream().map(Module::getModuleName).collect(Collectors.toSet()));
     }
 
 }

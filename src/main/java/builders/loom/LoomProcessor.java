@@ -47,6 +47,9 @@ import builders.loom.api.Module;
 import builders.loom.api.product.Product;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
+import builders.loom.plugin.PluginLoader;
+import builders.loom.plugin.ServiceLocatorImpl;
+import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.FileUtils;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -61,10 +64,18 @@ public class LoomProcessor {
     public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
 
+        // Init Global Plugins
+        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
+        final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+
+        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
+        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry, serviceLocator);
+
+        // Init Modules / Plugins for Modules
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
         listModules(buildConfig, runtimeConfiguration).forEach(moduleRegistry::register);
 
-        moduleRunner = new ModuleRunner(moduleRegistry, buildConfig, runtimeConfiguration);
+        moduleRunner = new ModuleRunner(pluginLoader, moduleRegistry, buildConfig, runtimeConfiguration);
         moduleRunner.init();
     }
 

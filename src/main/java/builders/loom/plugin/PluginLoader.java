@@ -118,13 +118,7 @@ public class PluginLoader {
     }
 
     private Plugin getPlugin(final String pluginName) {
-        final Class<?> pluginClass = pluginClasses.computeIfAbsent(pluginName, (p) -> {
-            try {
-                return loadPlugin(p);
-            } catch (final Exception e) {
-                throw new IllegalStateException(e);
-            }
-        });
+        final Class<?> pluginClass = pluginClasses.computeIfAbsent(pluginName, this::loadPlugin);
 
         try {
             return (Plugin) pluginClass.getDeclaredConstructor().newInstance();
@@ -134,7 +128,7 @@ public class PluginLoader {
         }
     }
 
-    private Class<?> loadPlugin(final String pluginName) throws ClassNotFoundException {
+    private Class<?> loadPlugin(final String pluginName) {
         LOG.info("Load plugin {}", pluginName);
 
         final String pluginClassname = INTERNAL_PLUGINS.get(pluginName);
@@ -156,7 +150,12 @@ public class PluginLoader {
                 Thread.currentThread().getContextClassLoader()
             ));
 
-        final Class<?> pluginClass = classLoader.loadClass(pluginClassname);
+        final Class<?> pluginClass;
+        try {
+            pluginClass = classLoader.loadClass(pluginClassname);
+        } catch (final ClassNotFoundException e) {
+            throw new IllegalStateException("Couldn't load plugin " + pluginName, e);
+        }
 
         LOG.info("Plugin {} loaded", pluginName);
 

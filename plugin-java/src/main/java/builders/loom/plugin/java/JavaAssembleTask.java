@@ -73,12 +73,15 @@ public class JavaAssembleTask extends AbstractTask {
                 final Path resolve = compilation.get().getClassesDir();
                 
                 // TODO cleanup
+                // TODO move module-info.class related stuff to LoomPaths
                 final Path modulesInfoClassFile = resolve.resolve("module-info.class");
-                final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
-                entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
-                os.putNextEntry(entry);
-                    os.write(extendedModuleInfoClass(modulesInfoClassFile));
-                os.closeEntry();
+                if (Files.exists(modulesInfoClassFile)) {
+	                	final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
+	                	entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
+	                	os.putNextEntry(entry);
+	                	os.write(extendedModuleInfoClass(modulesInfoClassFile));
+	                	os.closeEntry();
+                }
                 
                 FileUtil.copy(resolve, os);
                 

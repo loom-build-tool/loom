@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,8 +39,8 @@ import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.LoomPaths;
 import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
@@ -60,7 +61,8 @@ public class LoomProcessor {
                      final RuntimeConfigurationImpl runtimeConfiguration) {
 
         Stopwatch.startProcess("Initialize module configurations");
-        scanForModules(runtimeConfiguration);
+        listModules(buildConfig, runtimeConfiguration)
+        		.forEach(moduleRegistry::register);
         Stopwatch.stopProcess();
 
 
@@ -70,13 +72,42 @@ public class LoomProcessor {
 
     }
 
-    public void scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+    public List<Module> listModules(BuildConfigWithSettings buildConfig, RuntimeConfigurationImpl runtimeConfiguration) {
+    	
+    		checkForInconsistentSrcModuleStruct();
+    		
+    		Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
+    		
+    		if (Files.isDirectory(modulesPath)) {
+    			return scanForModules(runtimeConfiguration);
+    		}
+
+    		return singleModule(buildConfig, runtimeConfiguration);
+    }
+    
+    private List<Module> singleModule(BuildConfigWithSettings buildConfig, RuntimeConfigurationImpl runtimeConfiguration) {
+    	
+	    	final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
+        if (Files.notExists(moduleBuildConfig)) {
+            throw new IllegalStateException("Missing build.yml in project root");
+        }
+        
+        final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
+        		.orElse("unnamed");
+
+        return List.of(new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, buildConfig));
+	}
+
+	public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+		
+    		List<Module> modules = new ArrayList<>();
+    	
+    		Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
         try {
-            final List<Path> modules = Files.walk(LoomPaths.PROJECT_DIR.resolve("modules"), 1)
-                .skip(1)
+			final List<Path> modulePaths = Files.list(modulesPath)
                 .collect(Collectors.toList());
 
-            for (final Path module : modules) {
+            for (final Path module : modulePaths) {
                 final Path moduleBuildConfig = module.resolve("build.yml");
                 if (Files.notExists(moduleBuildConfig)) {
                     throw new IllegalStateException("Missing build.yml in module " + module);
@@ -88,29 +119,51 @@ public class LoomProcessor {
 
                 // TODO src/test/java ?
 
-                final Path moduleInfoFile = module.resolve(
-                    Paths.get("src", "main", "java", "module-info.java"));
+                final String moduleName = readModuleNameFromModuleInfo(module)
+                		.orElseThrow(() -> new IllegalStateException(
+                				"Missing module-info.java in module " + module));
 
-                if (Files.notExists(moduleInfoFile)) {
-                    throw new IllegalStateException("Missing module-info.java in module " + module);
-                }
-
-                final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
-                final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
-                final Matcher matcher = pattern.matcher(moduleInfoSource);
-
-                if (!matcher.find()) {
-                    throw new IllegalStateException("Can't parse module-info.java in module " + module);
-                }
-
-                final String moduleName = matcher.group(1);
-
-                moduleRegistry.register(new Module(modulePathName, moduleName, module, buildConfig));
+                modules.add(new Module(modulePathName, moduleName, module, buildConfig));
             }
+            return modules;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+	private void checkForInconsistentSrcModuleStruct() {
+		boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
+		boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
+		
+		if (hasSrc && hasModules) {
+			throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
+		}
+	}
+
+	private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
+
+		final Path moduleInfoFile = baseDir.resolve(
+				Paths.get("src", "main", "java", "module-info.java"));
+
+		if (Files.notExists(moduleInfoFile)) {
+			return Optional.empty();
+		}
+
+		try {
+			String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
+			final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
+			final Matcher matcher = pattern.matcher(moduleInfoSource);
+
+			if (!matcher.find()) {
+				throw new IllegalStateException("Can't parse " + moduleInfoFile);
+			}
+
+			final String moduleName = matcher.group(1);
+			return Optional.of(moduleName);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
 
     public Collection<ConfiguredTask> execute(final List<String> productIds) throws Exception {
         return moduleRunner.execute(new HashSet<>(productIds));

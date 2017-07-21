@@ -40,6 +40,7 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.LoomPaths;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.Stopwatch;
@@ -49,7 +50,6 @@ import builders.loom.util.Watch;
     "checkstyle:regexpmultiline", "checkstyle:illegalcatch"})
 public class Loom {
 
-    private static final Path BUILD_FILE = Paths.get("build.yml");
     private static final Path LOCK_FILE = Paths.get(".loom.lock");
 
     public static void main(final String[] args) {
@@ -97,7 +97,7 @@ public class Loom {
             throw new IllegalStateException("JDK required (running inside of JRE)");
         }
 
-        if (Files.notExists(BUILD_FILE)) {
+        if (Files.notExists(LoomPaths.BUILD_FILE)) {
             throw new IllegalStateException("No build.yml found");
         }
     }

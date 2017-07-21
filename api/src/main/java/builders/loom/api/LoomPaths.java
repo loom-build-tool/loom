@@ -26,6 +26,7 @@ public final class LoomPaths {
     public static final Path PROJECT_LOOM_PATH = PROJECT_DIR.resolve(".loom");
     public static final Path BUILD_DIR = PROJECT_DIR.resolve("loombuild");
     public static final Path REPORT_PATH = BUILD_DIR.resolve("reports");
+    public static final Path BUILD_FILE = PROJECT_DIR.resolve("build.yml");
 
     static {
         checkState(Files.exists(PROJECT_DIR), "Invalid current directory");

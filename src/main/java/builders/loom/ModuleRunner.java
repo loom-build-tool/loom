@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
+import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginRegistry;
@@ -197,6 +198,10 @@ public class ModuleRunner {
             		cmt.getModule().getModuleName()+"::"+cmt.getConfiguredTask().getName(), cmt.getConfiguredTask(), moduleProductRepositories.get(cmt.getModule()), moduleServiceLocators.get(cmt.getModule())))
             .collect(Collectors.toList());
     }
+
+	public ProductPromise lookupProduct(final Module module, final String productId) {
+		return moduleProductRepositories.get(module).lookup(productId);
+	}
 
 }
 

@@ -226,7 +226,7 @@ public class Loom {
                 ProgressMonitor.stop();
             }
 
-//            loomProcessor.printProductInfos(resolvedTasks);
+            loomProcessor.printProductInfos(resolvedTasks);
 
             printExecutionStatistics();
 

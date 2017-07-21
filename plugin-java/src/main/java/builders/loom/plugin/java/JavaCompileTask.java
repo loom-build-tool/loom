@@ -245,21 +245,6 @@ public class JavaCompileTask extends AbstractTask {
 
             final List<Path> modulePath = new ArrayList<>();
             modulePath.add(getBuildDir().getParent());
-//            if (moduleDependencies.isPresent()) {
-//	            	System.out.println("FOOOOOOOOO");
-//	            	System.out.println("FOOOOOOOOO");
-//	            	System.out.println("FOOOOOOOOO");
-//	            	System.out.println("FOOOOOOOOO");
-//	            	for (final ModulePathProduct path : moduleDependencies.get().getModulesPathProducts()) {
-//	            		System.out.println(path.getModulePath());
-//	            		System.out.println(path.getModulePath());
-//	            		System.out.println(path.getModulePath());
-//	            		System.out.println(path.getModulePath());
-//	            		System.out.println(path.getModulePath());
-//	            		System.out.println(path.getModulePath());
-//	            		modulePath.add(path.getModulePath().getParent());
-//	            	}
-//            }
             modulePath.addAll(classpath);
             
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,

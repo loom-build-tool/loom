@@ -23,7 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -42,7 +44,9 @@ import builders.loom.ModuleRunner.ConfiguredModuleTask;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
+import builders.loom.api.product.Product;
 import builders.loom.config.ConfigReader;
+import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
@@ -206,36 +210,38 @@ public class LoomProcessor {
 //        GraphvizOutput.generateDot(taskRegistry);
 //    }
 
-//    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
-//        throws InterruptedException {
-//
-//        // aggregate plugin -> products
-//        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
-//
-//        if (!aggProducts.isEmpty()) {
-//            outputProductInfos(aggProducts);
-//        }
-//    }
-//
-//    private Map<String, List<ProductInfo>> aggregateProducts(
-//        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
-//
-//        // plugin -> products
-//        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
-//
-//        for (final ConfiguredTask configuredTask : resolvedTasks) {
-//            final String productId = configuredTask.getProvidedProduct();
-//            final Optional<Product> product = productRepository.lookup(productId)
-//                .getAndWaitForProduct();
-//            if (product.isPresent() && product.get().outputInfo().isPresent()) {
-//                final String outputInfo = product.get().outputInfo().get();
-//                final String pluginName = configuredTask.getPluginName();
-//                aggProducts.putIfAbsent(pluginName, new ArrayList<>());
-//                aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
-//            }
-//        }
-//        return aggProducts;
-//    }
+    public void printProductInfos(final Collection<ConfiguredModuleTask> resolvedTasks)
+        throws InterruptedException {
+
+        // aggregate plugin -> products
+        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
+
+        if (!aggProducts.isEmpty()) {
+            outputProductInfos(aggProducts);
+        }
+    }
+
+    private Map<String, List<ProductInfo>> aggregateProducts(
+        final Collection<ConfiguredModuleTask> resolvedTasks) throws InterruptedException {
+    	
+        // plugin -> products
+        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
+
+        for (final ConfiguredModuleTask configuredModuleTask : resolvedTasks) {
+        	final ConfiguredTask configuredTask = configuredModuleTask.getConfiguredTask();
+        		final String productId = configuredTask.getProvidedProduct();
+        		
+            final Optional<Product> product = moduleRunner.lookupProduct(configuredModuleTask.getModule(), productId)
+                .getAndWaitForProduct();
+            if (product.isPresent() && product.get().outputInfo().isPresent()) {
+                final String outputInfo = product.get().outputInfo().get();
+                final String pluginName = configuredTask.getPluginName();
+                aggProducts.putIfAbsent(pluginName, new ArrayList<>());
+                aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
+            }
+        }
+        return aggProducts;
+    }
 
     private void outputProductInfos(final Map<String, List<ProductInfo>> aggProducts) {
         AnsiConsole.out().println();

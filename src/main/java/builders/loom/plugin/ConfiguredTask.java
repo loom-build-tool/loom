@@ -30,13 +30,15 @@ public class ConfiguredTask {
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
     private final Set<String> usedProducts;
+    private final Set<String> importedProducts;
     private final String description;
     private final TaskType type;
 
     ConfiguredTask(final String name, final String pluginName, final Supplier<Task> taskSupplier,
                    final String providedProduct, final Set<String> usedProducts,
-                   final String description, final TaskType type) {
+                   final Set<String> importedProducts, final String description, final TaskType type) {
         this.name = name;
+		this.importedProducts = importedProducts;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
@@ -71,6 +73,10 @@ public class ConfiguredTask {
     public Set<String> getUsedProducts() {
         return Collections.unmodifiableSet(usedProducts);
     }
+    
+    public Set<String> getImportedProducts() {
+		return Collections.unmodifiableSet(importedProducts);
+	}
 
     ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
         pluginNames.add(pluginName);

@@ -24,6 +24,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.ModulePathProduct;
 import builders.loom.api.service.ServiceLocatorRegistration;
 
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
@@ -111,6 +113,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private String providedProduct;
         private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
+        private Set<String> importedProducts = Collections.emptySet();
         private String description;
 
         public TaskBuilder(final String taskName) {
@@ -137,6 +140,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
+        public TaskBuilder importFromModules(String... products) {
+        		importedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+        		return this;
+        }
+
         public TaskBuilder desc(final String taskDescription) {
             this.description = taskDescription;
             return this;
@@ -144,8 +152,9 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, description);
+                intermediateProduct, usedProducts, importedProducts, description);
         }
+
 
     }
 

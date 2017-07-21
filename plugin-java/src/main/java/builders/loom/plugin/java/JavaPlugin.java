@@ -48,7 +48,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
         task("provideModuleDependencies")
             .impl(() -> new JavaModuleDependencyTask(buildConfig))
             .provides("moduleDependencies", true)
-            .desc("") // TODO
+            .importFromModules("compilation")
+            .desc("Collects classes from dependent modules.")
             .register();
 
         task("compileJava")

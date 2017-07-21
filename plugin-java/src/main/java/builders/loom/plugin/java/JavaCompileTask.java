@@ -159,13 +159,13 @@ public class JavaCompileTask extends AbstractTask {
 
         switch (compileTarget) {
             case MAIN:
-                classpath.add(srcDir);
+                //classpath.add(srcDir);
                 useProduct("compileDependencies", ClasspathProduct.class)
                     .map(ClasspathProduct::getEntries)
                     .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                classpath.add(srcDir);
+                //classpath.add(srcDir);
 
                 useProduct("compilation", CompilationProduct.class)
                     .map(CompilationProduct::getClassesDir)
@@ -240,20 +240,21 @@ public class JavaCompileTask extends AbstractTask {
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 
-//            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
-//                new ArrayList<>(classpath));
-
             fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
                 Collections.singletonList(getBuildDir()));
 
-            fileManager.setLocation(StandardLocation.MODULE_PATH,
-                List.of(getBuildDir().getParent().toFile()));
-
+            final List<Path> modulePath = new ArrayList<>();
+            modulePath.add(getBuildDir().getParent());
+            modulePath.addAll(classpath);
+            
+            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
+            		modulePath);
+            
             final List<File> files = srcFiles.stream()
                 .map(Path::toFile)
                 .collect(Collectors.toList());
 
-            LOG.warn("Files to compile: {}", files);
+            LOG.debug("Files to compile: {}", files);
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromFiles(files);

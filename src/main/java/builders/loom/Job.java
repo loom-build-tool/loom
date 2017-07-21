@@ -80,7 +80,7 @@ public class Job implements Callable<TaskStatus> {
         LOG.info("Start task {}", name);
 
         final String taskType = configuredTask.isGoal() ? "Goal" : "Task";
-        Stopwatch.startProcess(module.getModuleName() + " > " + taskType + " " + name);
+        Stopwatch.startProcess(taskType + " " + name);
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();

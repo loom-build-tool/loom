@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,11 +38,11 @@ import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.ModuleRunner.ConfiguredModuleTask;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.config.ConfigReader;
-import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
@@ -72,11 +71,11 @@ public class LoomProcessor {
 
     }
 
-    public List<Module> listModules(BuildConfigWithSettings buildConfig, RuntimeConfigurationImpl runtimeConfiguration) {
+    public List<Module> listModules(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
     	
     		checkForInconsistentSrcModuleStruct();
     		
-    		Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
+    		final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
     		
     		if (Files.isDirectory(modulesPath)) {
     			return scanForModules(runtimeConfiguration);
@@ -85,7 +84,7 @@ public class LoomProcessor {
     		return singleModule(buildConfig, runtimeConfiguration);
     }
     
-    private List<Module> singleModule(BuildConfigWithSettings buildConfig, RuntimeConfigurationImpl runtimeConfiguration) {
+    private List<Module> singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
     	
 	    	final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
@@ -100,9 +99,9 @@ public class LoomProcessor {
 
 	public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
 		
-    		List<Module> modules = new ArrayList<>();
+    		final List<Module> modules = new ArrayList<>();
     	
-    		Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
+    		final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
         try {
 			final List<Path> modulePaths = Files.list(modulesPath)
                 .collect(Collectors.toList());
@@ -132,8 +131,8 @@ public class LoomProcessor {
     }
 
 	private void checkForInconsistentSrcModuleStruct() {
-		boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
-		boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
+		final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
+		final boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
 		
 		if (hasSrc && hasModules) {
 			throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
@@ -150,7 +149,7 @@ public class LoomProcessor {
 		}
 
 		try {
-			String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
+			final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
 			final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
 			final Matcher matcher = pattern.matcher(moduleInfoSource);
 
@@ -160,12 +159,12 @@ public class LoomProcessor {
 
 			final String moduleName = matcher.group(1);
 			return Optional.of(moduleName);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-    public Collection<ConfiguredTask> execute(final List<String> productIds) throws Exception {
+    public List<ConfiguredModuleTask> execute(final List<String> productIds) throws Exception {
         return moduleRunner.execute(new HashSet<>(productIds));
     }
 

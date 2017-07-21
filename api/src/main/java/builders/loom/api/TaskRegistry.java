@@ -23,7 +23,7 @@ public interface TaskRegistry {
 
     void registerTask(String pluginName, String taskName, Supplier<Task> taskSupplier,
                       String providedProduct, boolean intermediateProduct,
-                      Set<String> usedProducts, String description);
+                      Set<String> usedProducts, Set<String> importedProducts, String description);
 
     void registerGoal(String pluginName, String goalName, Set<String> usedProducts);
 

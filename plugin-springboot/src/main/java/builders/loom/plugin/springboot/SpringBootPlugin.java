@@ -17,6 +17,7 @@
 package builders.loom.plugin.springboot;
 
 import builders.loom.api.AbstractPlugin;
+import builders.loom.plugin.java.JavaModuleDependencyTask;
 
 public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
 
@@ -31,6 +32,13 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
         if (pluginSettings.getVersion() == null) {
             throw new IllegalStateException("Missing required setting: springboot.version");
         }
+        
+        task("provideModuleDependencies")
+	        .impl(() -> new JavaModuleDependencyTask(buildConfig))
+	        .provides("moduleDependencies", true)
+	        .importFromModules("jar")
+	        .desc("") // TODO
+	        .register();
 
         task("springBootApplication")
             .impl(() -> new SpringBootTask(pluginSettings))

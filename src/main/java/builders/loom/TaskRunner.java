@@ -16,11 +16,6 @@
 
 package builders.loom;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +23,6 @@ import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.service.ServiceLocator;
-import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.TaskRegistryLookup;
 
 public class TaskRunner {
@@ -50,42 +44,42 @@ public class TaskRunner {
         this.productRepository = productRepository;
         this.serviceLocator = serviceLocator;
     }
-
-    @SuppressWarnings("checkstyle:regexpmultiline")
-    public Collection<ConfiguredTask> execute(final Set<String> productIds)
-        throws InterruptedException, BuildException {
-
-        final Collection<ConfiguredTask> resolvedTasks = taskRegistry.resolve(productIds);
-
-        if (resolvedTasks.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        LOG.info("Execute {}", resolvedTasks.stream()
-            .map(ConfiguredTask::getName)
-            .collect(Collectors.joining(", ")));
-
-        registerProducts(resolvedTasks);
-
-        ProgressMonitor.setTasks(resolvedTasks.size());
-
-        final JobPool jobPool = new JobPool();
-        jobPool.submitAll(buildJobs(resolvedTasks));
-        jobPool.shutdown();
-
-        return resolvedTasks;
-    }
-
-    private void registerProducts(final Collection<ConfiguredTask> resolvedTasks) {
-        resolvedTasks.stream()
-            .map(ConfiguredTask::getProvidedProduct)
-            .forEach(productRepository::createProduct);
-    }
-
-    private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
-        return resolvedTasks.stream()
-            .map(ct -> new Job(module, globalProductRepository, ct.getName(), ct, productRepository, serviceLocator))
-            .collect(Collectors.toList());
-    }
+//
+//    @SuppressWarnings("checkstyle:regexpmultiline")
+//    public Collection<ConfiguredTask> execute(final Set<String> productIds)
+//        throws InterruptedException, BuildException {
+//
+//        final Collection<ConfiguredTask> resolvedTasks = taskRegistry.resolve(productIds);
+//
+//        if (resolvedTasks.isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        LOG.info("Execute {}", resolvedTasks.stream()
+//            .map(ConfiguredTask::getName)
+//            .collect(Collectors.joining(", ")));
+//
+//        registerProducts(resolvedTasks);
+//
+//        ProgressMonitor.setTasks(resolvedTasks.size());
+//
+//        final JobPool jobPool = new JobPool();
+//        jobPool.submitAll(buildJobs(resolvedTasks));
+//        jobPool.shutdown();
+//
+//        return resolvedTasks;
+//    }
+//
+//    private void registerProducts(final Collection<ConfiguredTask> resolvedTasks) {
+//        resolvedTasks.stream()
+//            .map(ConfiguredTask::getProvidedProduct)
+//            .forEach(productRepository::createProduct);
+//    }
+//
+//    private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
+//        return resolvedTasks.stream()
+//            .map(ct -> new Job(module, globalProductRepository, ct.getName(), ct, productRepository, serviceLocator))
+//            .collect(Collectors.toList());
+//    }
 
 }

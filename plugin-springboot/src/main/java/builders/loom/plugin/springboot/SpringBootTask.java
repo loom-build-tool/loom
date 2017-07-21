@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.DependencyResolverService;
@@ -35,6 +36,8 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.ModuleJarProduct;
+import builders.loom.api.product.ModulesJarProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
@@ -58,6 +61,9 @@ public class SpringBootTask extends AbstractTask {
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
 
+        final Path libDir = Files.createDirectories(
+        		buildDir.resolve(Paths.get("BOOT-INF", "lib")));
+
         // copy resources
         final Optional<ProcessedResourceProduct> resourcesTreeProduct =
             useProduct("processedResources", ProcessedResourceProduct.class);
@@ -72,10 +78,13 @@ public class SpringBootTask extends AbstractTask {
         // copy libs
         final ClasspathProduct compileDependenciesProduct =
             requireProduct("compileDependencies", ClasspathProduct.class);
-        final Path libDir = Files.createDirectories(
-            buildDir.resolve(Paths.get("BOOT-INF", "lib")));
         FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
 
+        // copy dep modules
+        final ModulesJarProduct moduleJarDependenciesProduct =
+            requireProduct("moduleJarDependencies", ModulesJarProduct.class);
+        FileUtils.copyFiles(moduleJarDependenciesProduct.getModulesJarProducts().stream().map(ModuleJarProduct::getJarPath).collect(Collectors.toList()), libDir);
+        
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
 

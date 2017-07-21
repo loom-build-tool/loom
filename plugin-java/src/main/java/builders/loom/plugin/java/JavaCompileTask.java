@@ -245,6 +245,21 @@ public class JavaCompileTask extends AbstractTask {
 
             final List<Path> modulePath = new ArrayList<>();
             modulePath.add(getBuildDir().getParent());
+//            if (moduleDependencies.isPresent()) {
+//	            	System.out.println("FOOOOOOOOO");
+//	            	System.out.println("FOOOOOOOOO");
+//	            	System.out.println("FOOOOOOOOO");
+//	            	System.out.println("FOOOOOOOOO");
+//	            	for (final ModulePathProduct path : moduleDependencies.get().getModulesPathProducts()) {
+//	            		System.out.println(path.getModulePath());
+//	            		System.out.println(path.getModulePath());
+//	            		System.out.println(path.getModulePath());
+//	            		System.out.println(path.getModulePath());
+//	            		System.out.println(path.getModulePath());
+//	            		System.out.println(path.getModulePath());
+//	            		modulePath.add(path.getModulePath().getParent());
+//	            	}
+//            }
             modulePath.addAll(classpath);
             
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
@@ -254,6 +269,7 @@ public class JavaCompileTask extends AbstractTask {
                 .map(Path::toFile)
                 .collect(Collectors.toList());
 
+            LOG.debug("Modulepath: {}", modulePath);
             LOG.debug("Files to compile: {}", files);
 
             final Iterable<? extends JavaFileObject> compUnits =
@@ -269,7 +285,7 @@ public class JavaCompileTask extends AbstractTask {
             if (!compilerTask.call()) {
                 throw new IllegalStateException("Java compile failed");
             }
-        }
+    }
     }
 
     private List<String> buildOptions() {

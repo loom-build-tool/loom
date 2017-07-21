@@ -24,7 +24,7 @@ public class IdeaPlugin extends AbstractPlugin<PluginSettings> {
     @Override
     public void configure() {
         task("configureIdea")
-            .impl(() -> new IdeaTask(getBuildConfig()))
+            .impl(() -> new IdeaTask(getModuleConfig()))
             .provides("idea")
             .uses("compileArtifacts", "testArtifacts")
             .desc("Creates .iml file and .idea directory for IntelliJ IDEA.")

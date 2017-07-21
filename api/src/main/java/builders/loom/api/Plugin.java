@@ -37,7 +37,7 @@ public interface Plugin {
 
     void setServiceLocator(ServiceLocatorRegistration serviceLocator);
 
-    void setBuildConfig(BuildConfig buildConfig);
+    void setModuleConfig(BuildConfig moduleConfig);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 

@@ -241,18 +241,13 @@ public class Loom {
     }
 
     private static void configureLogging() {
-        Stopwatch.startProcess("Configure logging");
         LogConfiguration.configureLogger();
         Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
-        Stopwatch.stopProcess();
     }
 
-    private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl
-                                                          runtimeConfiguration) throws IOException {
-        Stopwatch.startProcess("Read configuration");
-        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration, Paths.get("build.yml"), "base");
-        Stopwatch.stopProcess();
-        return buildConfig;
+    private static BuildConfigWithSettings readConfig(
+        final RuntimeConfigurationImpl runtimeConfiguration) throws IOException {
+        return ConfigReader.readConfig(runtimeConfiguration, Paths.get("build.yml"), "base");
     }
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {

@@ -33,7 +33,7 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
 
     @Override
     public void configure() {
-        final BuildConfig cfg = getBuildConfig();
+        final BuildConfig cfg = getModuleConfig();
         final MavenResolverPluginSettings pluginSettings = getPluginSettings();
         final Path repositoryPath = getRepositoryPath();
 
@@ -66,7 +66,7 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
             .register();
 
         task("install")
-            .impl(() -> new MavenInstallTask(getBuildConfig()))
+            .impl(() -> new MavenInstallTask(getModuleConfig()))
             .provides("mavenArtifact")
             .uses("jar")
             .desc("Installs the jar file to the local Maven repository.")

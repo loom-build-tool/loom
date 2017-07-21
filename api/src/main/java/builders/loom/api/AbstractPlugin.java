@@ -24,8 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ModulePathProduct;
 import builders.loom.api.service.ServiceLocatorRegistration;
 
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
@@ -35,7 +33,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private String pluginName;
     private TaskRegistry taskRegistry;
     private ServiceLocatorRegistration serviceLocator;
-    private BuildConfig buildConfig;
+    private BuildConfig moduleConfig;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
 
@@ -68,12 +66,12 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     }
 
     @Override
-    public void setBuildConfig(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
+    public void setModuleConfig(final BuildConfig moduleConfig) {
+        this.moduleConfig = moduleConfig;
     }
 
-    public BuildConfig getBuildConfig() {
-        return buildConfig;
+    public BuildConfig getModuleConfig() {
+        return moduleConfig;
     }
 
     @Override

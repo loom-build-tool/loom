@@ -48,12 +48,10 @@ import builders.loom.api.product.Product;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.FileUtils;
-import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class LoomProcessor {
 
-    private final ModuleRegistry moduleRegistry = new ModuleRegistry();
     private ModuleRunner moduleRunner;
 
     static {
@@ -63,38 +61,33 @@ public class LoomProcessor {
     public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
 
-        Stopwatch.startProcess("Initialize module configurations");
-        listModules(buildConfig, runtimeConfiguration)
-        		.forEach(moduleRegistry::register);
-        Stopwatch.stopProcess();
+        final ModuleRegistry moduleRegistry = new ModuleRegistry();
+        listModules(buildConfig, runtimeConfiguration).forEach(moduleRegistry::register);
 
-
-        moduleRunner = new ModuleRunner(moduleRegistry,
-            buildConfig, runtimeConfiguration);
+        moduleRunner = new ModuleRunner(moduleRegistry, buildConfig, runtimeConfiguration);
         moduleRunner.init();
-
     }
 
     public List<Module> listModules(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
-    	
-    		checkForInconsistentSrcModuleStruct();
-    		
-    		final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
-    		
-    		if (Files.isDirectory(modulesPath)) {
-    			return scanForModules(runtimeConfiguration);
-    		}
 
-    		return singleModule(buildConfig, runtimeConfiguration);
+        checkForInconsistentSrcModuleStruct();
+
+        final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
+
+        if (Files.isDirectory(modulesPath)) {
+            return scanForModules(runtimeConfiguration);
+        }
+
+        return singleModule(buildConfig, runtimeConfiguration);
     }
-    
+
     private List<Module> singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
-    	
+
 	    	final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
             throw new IllegalStateException("Missing build.yml in project root");
         }
-        
+
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
         		.orElse("unnamed");
 
@@ -102,9 +95,9 @@ public class LoomProcessor {
 	}
 
 	public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
-		
+
     		final List<Module> modules = new ArrayList<>();
-    	
+
     		final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
         try {
 			final List<Path> modulePaths = Files.list(modulesPath)
@@ -137,7 +130,7 @@ public class LoomProcessor {
 	private void checkForInconsistentSrcModuleStruct() {
 		final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
 		final boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
-		
+
 		if (hasSrc && hasModules) {
 			throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
 		}
@@ -223,14 +216,14 @@ public class LoomProcessor {
 
     private Map<String, List<ProductInfo>> aggregateProducts(
         final Collection<ConfiguredModuleTask> resolvedTasks) throws InterruptedException {
-    	
+
         // plugin -> products
         final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
 
         for (final ConfiguredModuleTask configuredModuleTask : resolvedTasks) {
         	final ConfiguredTask configuredTask = configuredModuleTask.getConfiguredTask();
         		final String productId = configuredTask.getProvidedProduct();
-        		
+
             final Optional<Product> product = moduleRunner.lookupProduct(configuredModuleTask.getModule(), productId)
                 .getAndWaitForProduct();
             if (product.isPresent() && product.get().outputInfo().isPresent()) {

@@ -31,9 +31,9 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
         if (pluginSettings.getVersion() == null) {
             throw new IllegalStateException("Missing required setting: springboot.version");
         }
-        
+
         task("provideModuleJarDependencies")
-	        .impl(() -> new ModuleJarDependencyTask(getBuildConfig()))
+	        .impl(() -> new ModuleJarDependencyTask(getModuleConfig()))
 	        .provides("moduleJarDependencies", true)
 	        .importFromModules("jar")
 	        .desc("") // TODO
@@ -47,7 +47,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .register();
 
         task("springBootFatJarApplication")
-            .impl(() -> new SpringBootFatJarTask(getBuildConfig(), pluginSettings))
+            .impl(() -> new SpringBootFatJarTask(getModuleConfig(), pluginSettings))
             .provides("springBootFatJarApplication")
             .uses("springBootApplication", "compilation")
             .desc("Builds Spring Boot Fat Jar application.")

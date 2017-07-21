@@ -50,8 +50,7 @@ public class Job implements Callable<TaskStatus> {
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    Job(final Module module, final GlobalProductRepository globalProductRepository, final String name, final ConfiguredTask configuredTask,
-        final ProductRepository productRepository,
+    Job(final String name, final Module module, final ConfiguredTask configuredTask, final ProductRepository productRepository, final GlobalProductRepository globalProductRepository,
         final ServiceLocator serviceLocator) {
         this.module = module;
         this.globalProductRepository = globalProductRepository;
@@ -79,14 +78,19 @@ public class Job implements Callable<TaskStatus> {
     public TaskStatus runTask() throws Exception {
         LOG.info("Start task {}", name);
 
-        final String taskType = configuredTask.isGoal() ? "Goal" : "Task";
-        Stopwatch.startProcess(taskType + " " + name);
+        if (!configuredTask.isGoal()) {
+            Stopwatch.startProcess("Task " + name);
+        }
+
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
         final TaskResult taskResult = task.run();
-        Stopwatch.stopProcess();
+
+        if (!configuredTask.isGoal()) {
+            Stopwatch.stopProcess();
+        }
 
         LOG.info("Task {} resulted with {}", name, taskResult);
 

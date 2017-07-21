@@ -30,7 +30,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
     @Override
     public void configure() {
-        final BuildConfig buildConfig = getBuildConfig();
+        final BuildConfig buildConfig = getModuleConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         task("provideSource")

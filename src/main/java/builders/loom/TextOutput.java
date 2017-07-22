@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.TaskInfo;
 
 public final class TextOutput {
@@ -58,7 +59,6 @@ public final class TextOutput {
             );
 
             final List<TaskInfo> productTasks = configuredTasks.stream()
-                .filter(ct -> !ct.isGoal())
                 .filter(ct -> ct.getPluginName().equals(pluginName))
                 .sorted(Comparator.comparing(TaskInfo::getName))
                 .collect(Collectors.toList());
@@ -87,8 +87,8 @@ public final class TextOutput {
             }
         }
 
-        final List<TaskInfo> goals = moduleRunner.configuredTasks().stream()
-            .sorted(Comparator.comparing(TaskInfo::getName))
+        final List<GoalInfo> goals = moduleRunner.configuredGoals().stream()
+            .sorted(Comparator.comparing(GoalInfo::getName))
             .collect(Collectors.toList());
 
         if (!goals.isEmpty()) {
@@ -101,22 +101,22 @@ public final class TextOutput {
                     .reset()
                     .newline());
 
-//            for (final TaskInfo goal : goals) {
-//                AnsiConsole.out().println(
-//                    Ansi.ansi()
-//                        .fgYellow()
-//                        .a(goal.getName())
-//                        .reset()
-//                        .a(" - ")
-//                        .fgCyan()
-//                        .a("Depends on: ")
-//                        .fgYellow()
-//                        .a(goal.getUsedProducts().stream()
-//                            .sorted()
-//                            .collect(Collectors.joining(", ")))
-//                        .reset()
-//                );
-//            }
+            for (final GoalInfo goal : goals) {
+                AnsiConsole.out().println(
+                    Ansi.ansi()
+                        .fgYellow()
+                        .a(goal.getName())
+                        .reset()
+                        .a(" - ")
+                        .fgCyan()
+                        .a("Depends on: ")
+                        .fgYellow()
+                        .a(goal.getUsedProducts().stream()
+                            .sorted()
+                            .collect(Collectors.joining(", ")))
+                        .reset()
+                );
+            }
         }
 
         AnsiConsole.out().println();

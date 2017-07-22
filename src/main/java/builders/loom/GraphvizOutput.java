@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import builders.loom.plugin.ConfiguredTask;
+import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.TaskInfo;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
@@ -63,43 +63,51 @@ public final class GraphvizOutput {
             writeLabel(pw, task);
         }
 
+        for (final GoalInfo task : moduleRunner.configuredGoals()) {
+            writeLabel(pw, task);
+        }
+
         for (final TaskInfo task : moduleRunner.configuredTasks()) {
-//            if (!task.getUsedProducts().isEmpty()) {
-//                writeEdge(pw, task);
-//            }
+            if (!task.getUsedProducts().isEmpty()) {
+                writeEdge(pw, task);
+            }
+        }
+
+        for (final GoalInfo task : moduleRunner.configuredGoals()) {
+            if (!task.getUsedProducts().isEmpty()) {
+                writeEdge(pw, task);
+            }
         }
 
         pw.println("}");
     }
 
-    private static void writeLabel(final PrintWriter pw, final TaskInfo task) {
-        pw.print("    ");
-        pw.print(task.getName());
-        final String label;
-        if (task.isGoal()) {
-            label = task.getName();
-        } else {
-            label = task.getName() + "\\n[" + task.getPluginName() + " Plugin]";
-        }
-        pw.print(" [label=\"" + label + "\"");
+    private static void writeLabel(final PrintWriter pw, final GoalInfo task) {
+        final String label = task.getName();
+        pw.printf("    %s [label=\"%s\", color=gold2, shape=tripleoctagon];%n", task.getName(), label);
+    }
 
-        if (task.isGoal()) {
-            pw.print(", color=gold2, shape=tripleoctagon");
-        } else if (task.isIntermediateProduct()) {
+    private static void writeLabel(final PrintWriter pw, final TaskInfo task) {
+        pw.printf("    %s [label=\"%s\\n[%s Plugin]\"",
+            task.getName(), task.getName(), task.getPluginName());
+
+        if (task.isIntermediateProduct()) {
             pw.print(", color=grey, fontcolor=grey");
         }
 
-        pw.print("]");
-
-        pw.println(";");
+        pw.println("];");
     }
 
-    private static void writeEdge(final PrintWriter pw, final ConfiguredTask task) {
-        pw.print("    ");
-        pw.print(task.getProvidedProduct());
-        pw.print(" -> ");
-        pw.print(constructValue(task.getUsedProducts()));
-        pw.println(";");
+    private static void writeEdge(final PrintWriter pw, final TaskInfo task) {
+        writeEdge(pw, task.getProvidedProduct(), constructValue(task.getUsedProducts()));
+    }
+
+    private static void writeEdge(final PrintWriter pw, final String providedProduct, final String usedProducts) {
+        pw.printf("    %s -> %s;%n", providedProduct, usedProducts);
+    }
+
+    private static void writeEdge(final PrintWriter pw, final GoalInfo task) {
+        writeEdge(pw, task.getName(), constructValue(task.getUsedProducts()));
     }
 
     private static String constructValue(final Collection<String> dependentNodes) {

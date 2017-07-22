@@ -16,24 +16,32 @@
 
 package builders.loom.plugin;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class TaskInfo {
 
     private final String name;
     private final String pluginName;
     private final String description;
     private final TaskType type;
+    private final String providedProduct;
+    private final Set<String> usedProducts;
 
     public TaskInfo(final ConfiguredTask configuredTask) {
-        this(configuredTask.getProvidedProduct(), configuredTask.getPluginName(), configuredTask.getDescription(), configuredTask.getType());
+        this(configuredTask.getProvidedProduct(), configuredTask.getPluginName(),
+            configuredTask.getDescription(), configuredTask.getType(),
+            configuredTask.getProvidedProduct(), configuredTask.getUsedProducts());
     }
 
-
-    TaskInfo(final String name, final String pluginName,
-             final String description, final TaskType type) {
+    TaskInfo(final String name, final String pluginName, final String description,
+             final TaskType type, final String providedProduct, final Set<String> usedProducts) {
         this.name = name;
         this.pluginName = pluginName;
         this.description = description;
         this.type = type;
+        this.providedProduct = providedProduct;
+        this.usedProducts = Collections.unmodifiableSet(usedProducts);
     }
 
     // FIXME provided productID
@@ -49,16 +57,16 @@ public class TaskInfo {
         return description;
     }
 
-    public TaskType getType() {
-        return type;
-    }
-
     public boolean isIntermediateProduct() {
         return type == TaskType.INTERMEDIATE;
     }
 
-    public boolean isGoal() {
-        return type == TaskType.GOAL;
+    public String getProvidedProduct() {
+        return providedProduct;
+    }
+
+    public Set<String> getUsedProducts() {
+        return usedProducts;
     }
 
     @Override

@@ -18,6 +18,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.plugin.ConfiguredTask;
+import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.PluginLoader;
 import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
@@ -132,9 +133,9 @@ public class ModuleRunner {
 //    		System.out.println("calc tasks for module " + module.getModuleName());
 //
 //
-//    		final Collection<ConfiguredTask> configuredTasks = moduleTaskRegistries.get(module).configuredTasks();
+//    		final Collection<ConfiguredTask> configuredGoals = moduleTaskRegistries.get(module).configuredGoals();
 //
-//    		final List<ConfiguredTask> tasks = configuredTasks.stream().filter(ct -> productIds.contains(ct.getProvidedProduct())).collect(Collectors.toList());
+//    		final List<ConfiguredTask> tasks = configuredGoals.stream().filter(ct -> productIds.contains(ct.getProvidedProduct())).collect(Collectors.toList());
 //    		tasks.stream().map(t -> t.getPluginName() + " " + t.getName()).forEach(str -> System.out.println(" - " + str));
 //
 //    		tasks.stream().flatMap(t -> t.getImportedProducts().stream())
@@ -221,9 +222,22 @@ public class ModuleRunner {
             .collect(Collectors.toSet());
     }
 
+    public Set<GoalInfo> configuredGoals() {
+        final Set<GoalInfo> goalInfos = new HashSet<>();
+
+        moduleTaskRegistries.values().stream()
+            .flatMap(reg -> reg.configuredTasks().stream())
+            .filter(ConfiguredTask::isGoal)
+            .collect(Collectors.groupingBy(ConfiguredTask::getName, Collectors.flatMapping((ct) -> ct.getUsedProducts().stream(), Collectors.toSet())))
+            .forEach((name, usedProducts) -> goalInfos.add(new GoalInfo(name, usedProducts)));
+
+        return goalInfos;
+    }
+
     public Set<TaskInfo> configuredTasks() {
         return moduleTaskRegistries.values().stream()
             .flatMap(reg -> reg.configuredTasks().stream())
+            .filter(ct -> !ct.isGoal())
             .map(TaskInfo::new)
             .collect(Collectors.toSet());
     }

@@ -43,7 +43,7 @@ import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Stopwatch;
+import builders.loom.util.Stopwatches;
 import builders.loom.util.Watch;
 
 @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:hideutilityclassconstructor",
@@ -265,16 +265,16 @@ public class Loom {
         System.out.println("Execution statistics (ordered by time consumption):");
         System.out.println();
 
-        final int longestKey = Stopwatch.getWatches().keySet().stream()
+        final int longestKey = Stopwatches.getWatches().keySet().stream()
             .mapToInt(String::length)
             .max()
             .orElse(10);
 
-        final Stream<Map.Entry<String, Watch>> sorted = Stopwatch.getWatches().entrySet().stream()
+        final Stream<Map.Entry<String, Watch>> sorted = Stopwatches.getWatches().entrySet().stream()
             .sorted((o1, o2) ->
                 Long.compare(o2.getValue().getDuration(), o1.getValue().getDuration()));
 
-        final long totalDuration = Stopwatch.getTotalDuration();
+        final long totalDuration = Stopwatches.getTotalDuration();
 
         sorted.forEach(stringWatchEntry -> {
             final String name = stringWatchEntry.getKey();

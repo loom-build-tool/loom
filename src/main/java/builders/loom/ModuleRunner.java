@@ -25,6 +25,7 @@ import builders.loom.plugin.ServiceLocatorImpl;
 import builders.loom.plugin.TaskInfo;
 import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.DirectedGraph;
+import builders.loom.util.Stopwatch;
 
 public class ModuleRunner {
 
@@ -47,16 +48,7 @@ public class ModuleRunner {
     }
 
     public void init() {
-//
-//        final Module baseModule = new Module("", "base", LoomPaths.PROJECT_DIR, buildConfig);
-//
-//        final TaskRegistryImpl taskRegistry1 = new TaskRegistryImpl();
-//        final ServiceLocatorImpl serviceLocator1 = new ServiceLocatorImpl();
-//        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry1, serviceLocator1);
-//        moduleTaskRegistries.put(baseModule, taskRegistry1);
-//        moduleServiceLocators.put(baseModule, serviceLocator1);
-//        moduleProductRepositories.put(baseModule, new ProductRepositoryImpl());
-//
+        final Stopwatch sw = new Stopwatch();
 
         final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
 
@@ -75,14 +67,27 @@ public class ModuleRunner {
         }
 
         globalProductRepository = new GlobalProductRepository(moduleProductRepositories);
+
+        LOG.debug("Initialized all plugins in {} ms", sw.duration());
     }
 
     public List<ConfiguredTask> execute(final Set<String> productIds) throws BuildException, InterruptedException {
+        final Stopwatch sw = new Stopwatch();
 
-        final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>();
+        final Set<ConfiguredTask> allConfiguredTasks = moduleTaskRegistries.values().stream()
+            .flatMap(task -> task.configuredTasks().stream())
+            .collect(Collectors.toSet());
 
-        moduleRegistry.getModules().forEach(module ->
-            moduleTaskRegistries.get(module).configuredTasks().forEach(diGraph::addNode));
+        // Validate requested products
+        for (final String productId : productIds) {
+            if (allConfiguredTasks.stream().noneMatch(ct ->
+                ct.getProvidedProduct().equals(productId))) {
+                throw new IllegalStateException("Unknown product: " + productId);
+            }
+        }
+
+        // Initialize directed graph with all available ConfiguredTask instances
+        final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>(allConfiguredTasks);
 
         for (final Module module : moduleRegistry.getModules()) {
             final Collection<ConfiguredTask> configuredTasks = moduleTaskRegistries.get(module).configuredTasks();
@@ -129,26 +134,13 @@ public class ModuleRunner {
 
         final List<ConfiguredTask> resolvedTasks = diGraph.resolve(explicitlyRequestedTasks);
 
-//    	for (final Module module : moduleRegistry.getModules()) {
-//    		System.out.println("calc tasks for module " + module.getModuleName());
-//
-//
-//    		final Collection<ConfiguredTask> configuredGoals = moduleTaskRegistries.get(module).configuredGoals();
-//
-//    		final List<ConfiguredTask> tasks = configuredGoals.stream().filter(ct -> productIds.contains(ct.getProvidedProduct())).collect(Collectors.toList());
-//    		tasks.stream().map(t -> t.getPluginName() + " " + t.getName()).forEach(str -> System.out.println(" - " + str));
-//
-//    		tasks.stream().flatMap(t -> t.getImportedProducts().stream())
-//    		.map(p -> module.getModuleName() + "::" + p);
-//
-//    	}
-//
-//
-
+        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
 
         if (resolvedTasks.isEmpty()) {
             return Collections.emptyList();
         }
+
+        final Stopwatch sw2 = new Stopwatch();
 
         LOG.info("Execute {}", resolvedTasks.stream()
             .map(ConfiguredTask::toString)
@@ -162,33 +154,18 @@ public class ModuleRunner {
         ProgressMonitor.setTasks(resolvedTasks.size());
 
         final JobPool jobPool = new JobPool();
-        jobPool.submitAll(buildJobs(resolvedTasks));
+        jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
         jobPool.shutdown();
 
-
-        //        for (final Module module : moduleRegistry.getModules()) {
-//            final TaskRunner taskRunner = new TaskRunner(
-//                module, globalProductRepository, moduleTaskRegistries.get(module), moduleProductRepositories.get(module), moduleServiceLocators.get(module));
-//
-//            ret.addAll(taskRunner.execute(productIds));
-//        }
-
+        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
 
         return resolvedTasks;
-
     }
-
 
     private void registerProducts(final ProductRepository productRepository, final Collection<ConfiguredTask> resolvedTasks) {
         resolvedTasks.stream()
             .map(ConfiguredTask::getProvidedProduct)
             .forEach(productRepository::createProduct);
-    }
-
-    private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
-        return resolvedTasks.stream()
-            .map(this::buildJob)
-            .collect(Collectors.toList());
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {

@@ -30,6 +30,13 @@ public class DirectedGraph<T> {
 
     private final Map<T, Vertex<T>> vertices = new HashMap<>();
 
+    public DirectedGraph() {
+    }
+
+    public DirectedGraph(final Set<T> nodes) {
+        nodes.forEach(this::addNode);
+    }
+
     public Set<T> nodes() {
         return Collections.unmodifiableSet(vertices.keySet());
     }

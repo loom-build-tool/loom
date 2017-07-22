@@ -36,7 +36,7 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Stopwatch;
+import builders.loom.util.Stopwatches;
 
 public class Job implements Callable<TaskStatus> {
 
@@ -79,7 +79,7 @@ public class Job implements Callable<TaskStatus> {
         LOG.info("Start task {}", name);
 
         if (!configuredTask.isGoal()) {
-            Stopwatch.startProcess("Task " + name);
+            Stopwatches.startProcess("Task " + name);
         }
 
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
@@ -89,7 +89,7 @@ public class Job implements Callable<TaskStatus> {
         final TaskResult taskResult = task.run();
 
         if (!configuredTask.isGoal()) {
-            Stopwatch.stopProcess();
+            Stopwatches.stopProcess();
         }
 
         LOG.info("Task {} resulted with {}", name, taskResult);

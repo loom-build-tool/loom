@@ -16,7 +16,6 @@
 
 package builders.loom;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,13 +100,14 @@ public class JobPool {
         }
     }
 
-    public void submitAll(final Collection<Job> jobs) {
+    public void submitAll(final Stream<Job> jobs) {
         Objects.requireNonNull(jobs, "jobs must not be null");
-        for (final Job job : jobs) {
+
+        jobs.forEach(job -> {
             if (!executor.isShutdown()) {
                 submitJob(job);
             }
-        }
+        });
     }
 
     private final class MonitorTask extends TimerTask {

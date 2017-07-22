@@ -48,6 +48,7 @@ import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginLoader;
 import builders.loom.util.FileUtils;
+import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class LoomProcessor {
@@ -61,17 +62,17 @@ public class LoomProcessor {
     public void init(final BuildConfigWithSettings buildConfig,
                      final RuntimeConfigurationImpl runtimeConfiguration) {
 
-        // Init Global Plugins
-//        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
-//        final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+        final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
 
-        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
-//        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry, serviceLocator);
+        final Stopwatch sw = new Stopwatch();
 
         // Init Modules / Plugins for Modules
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
         listModules(buildConfig, runtimeConfiguration).forEach(moduleRegistry::register);
 
+        log.debug("Initialized modules in {} ms", sw.duration());
+
+        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
         moduleRunner = new ModuleRunner(pluginLoader, moduleRegistry, buildConfig, runtimeConfiguration);
         moduleRunner.init();
     }

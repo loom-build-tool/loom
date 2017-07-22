@@ -40,7 +40,6 @@ import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.ModuleRunner.ConfiguredModuleTask;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
@@ -171,7 +170,7 @@ public class LoomProcessor {
         }
     }
 
-    public List<ConfiguredModuleTask> execute(final List<String> productIds) throws Exception {
+    public List<ConfiguredTask> execute(final List<String> productIds) throws Exception {
         return moduleRunner.execute(new HashSet<>(productIds));
     }
 
@@ -213,7 +212,7 @@ public class LoomProcessor {
         GraphvizOutput.generateDot(moduleRunner);
     }
 
-    public void printProductInfos(final Collection<ConfiguredModuleTask> resolvedTasks)
+    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
         throws InterruptedException {
 
         // aggregate plugin -> products
@@ -225,16 +224,15 @@ public class LoomProcessor {
     }
 
     private Map<String, List<ProductInfo>> aggregateProducts(
-        final Collection<ConfiguredModuleTask> resolvedTasks) throws InterruptedException {
+        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
 
         // plugin -> products
         final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
 
-        for (final ConfiguredModuleTask configuredModuleTask : resolvedTasks) {
-            final ConfiguredTask configuredTask = configuredModuleTask.getConfiguredTask();
+        for (final ConfiguredTask configuredTask : resolvedTasks) {
             final String productId = configuredTask.getProvidedProduct();
 
-            final Optional<Product> product = moduleRunner.lookupProduct(configuredModuleTask.getModule(), productId)
+            final Optional<Product> product = moduleRunner.lookupProduct(configuredTask.getModule(), productId)
                 .getAndWaitForProduct();
             if (product.isPresent() && product.get().outputInfo().isPresent()) {
                 final String outputInfo = product.get().outputInfo().get();

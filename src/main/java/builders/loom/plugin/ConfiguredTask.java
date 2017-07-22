@@ -21,10 +21,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import builders.loom.api.Module;
 import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
+    private final Module module;
     private final String name;
     private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
@@ -35,9 +37,10 @@ public class ConfiguredTask {
     private final String description;
     private final TaskType type;
 
-    ConfiguredTask(final String name, final String pluginName, final Supplier<Task> taskSupplier,
+    ConfiguredTask(final Module module, final String name, final String pluginName, final Supplier<Task> taskSupplier,
                    final String providedProduct, final Set<String> usedProducts,
                    final Set<String> importedProducts, final Set<String> importedAllProducts, final String description, final TaskType type) {
+        this.module = module;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
@@ -47,6 +50,10 @@ public class ConfiguredTask {
         this.importedAllProducts = importedAllProducts;
         this.description = description;
         this.type = type;
+    }
+
+    public Module getModule() {
+        return module;
     }
 
     public String getName() {

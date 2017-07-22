@@ -1,6 +1,5 @@
 package builders.loom;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,7 +60,7 @@ public class ModuleRunner {
         final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
 
         for (final Module module : moduleRegistry.getModules()) {
-            final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+            final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(module);
             final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
 
             final Set<String> pluginsToInitialize = new HashSet<>(defaultPlugins);
@@ -77,41 +76,12 @@ public class ModuleRunner {
         globalProductRepository = new GlobalProductRepository(moduleProductRepositories);
     }
 
-    static class ConfiguredModuleTask {
-        private final Module module;
-        private final ConfiguredTask configuredTask;
+    public List<ConfiguredTask> execute(final Set<String> productIds) throws BuildException, InterruptedException {
 
-        public ConfiguredModuleTask(
-            final Module module, final ConfiguredTask configuredTask) {
-            this.module = module;
-            this.configuredTask = configuredTask;
-        }
+        final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>();
 
-        public Module getModule() {
-            return module;
-        }
-
-        public ConfiguredTask getConfiguredTask() {
-            return configuredTask;
-        }
-
-        @Override
-        public String toString() {
-            return module.getModuleName() + "::" + configuredTask.getName();
-        }
-    }
-
-    public List<ConfiguredModuleTask> execute(final Set<String> productIds) throws BuildException, InterruptedException {
-
-        final DirectedGraph<ConfiguredModuleTask> diGraph = new DirectedGraph<>();
-
-        for (final Module module : moduleRegistry.getModules()) {
-            final Collection<ConfiguredTask> configuredTasks = moduleTaskRegistries.get(module).configuredTasks();
-
-            configuredTasks.stream().map(ct -> new ConfiguredModuleTask(module, ct))
-                .forEach(cmt -> diGraph.addNode(cmt));
-
-        }
+        moduleRegistry.getModules().forEach(module ->
+            moduleTaskRegistries.get(module).configuredTasks().forEach(diGraph::addNode));
 
         for (final Module module : moduleRegistry.getModules()) {
             final Collection<ConfiguredTask> configuredTasks = moduleTaskRegistries.get(module).configuredTasks();
@@ -119,8 +89,8 @@ public class ModuleRunner {
             for (final ConfiguredTask configuredTask : configuredTasks) {
                 for (final String productId : configuredTask.getUsedProducts()) {
                     diGraph.addEdge(
-                        diGraph.nodes().stream().filter(cmt -> cmt.getConfiguredTask() == configuredTask).findFirst().get(),
-                        diGraph.nodes().stream().filter(cmt -> cmt.getModule() == module && cmt.getConfiguredTask().getProvidedProduct().equals(productId)).findFirst().get()
+                        diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
+                        diGraph.nodes().stream().filter(cmt -> cmt.getModule() == module && cmt.getProvidedProduct().equals(productId)).findFirst().get()
                     );
                 }
 
@@ -132,8 +102,8 @@ public class ModuleRunner {
                             .orElseThrow(() -> new IllegalStateException("Dependent module " + depModuleName + " not found"));
 
                         diGraph.addEdge(
-                            diGraph.nodes().stream().filter(cmt -> cmt.getConfiguredTask() == configuredTask).findFirst().get(),
-                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getConfiguredTask().getProvidedProduct().equals(productId)).findFirst().get()
+                            diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
+                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getProvidedProduct().equals(productId)).findFirst().get()
                         );
                     }
                 }
@@ -142,8 +112,8 @@ public class ModuleRunner {
                 for (final String productId : configuredTask.getImportedAllProducts()) {
                     for (final Module depModule : moduleTaskRegistries.keySet()) {
                         diGraph.addEdge(
-                            diGraph.nodes().stream().filter(cmt -> cmt.getConfiguredTask() == configuredTask).findFirst().get(),
-                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getConfiguredTask().getProvidedProduct().equals(productId)).findFirst().get()
+                            diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
+                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getProvidedProduct().equals(productId)).findFirst().get()
                         );
                     }
                 }
@@ -152,11 +122,11 @@ public class ModuleRunner {
 
         }
 
-        final List<ConfiguredModuleTask> explicitlyRequestedTasks = productIds.stream()
-            .flatMap(p -> diGraph.nodes().stream().filter(cmt -> cmt.getConfiguredTask().getProvidedProduct().equals(p)))
+        final List<ConfiguredTask> explicitlyRequestedTasks = productIds.stream()
+            .flatMap(p -> diGraph.nodes().stream().filter(cmt -> cmt.getProvidedProduct().equals(p)))
             .collect(Collectors.toList());
 
-        final List<ConfiguredModuleTask> resolvedTasks = diGraph.resolve(explicitlyRequestedTasks);
+        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(explicitlyRequestedTasks);
 
 //    	for (final Module module : moduleRegistry.getModules()) {
 //    		System.out.println("calc tasks for module " + module.getModuleName());
@@ -180,12 +150,12 @@ public class ModuleRunner {
         }
 
         LOG.info("Execute {}", resolvedTasks.stream()
-            .map(ConfiguredModuleTask::toString)
+            .map(ConfiguredTask::toString)
             .collect(Collectors.joining(", ")));
 
         for (final Module module : moduleRegistry.getModules()) {
             registerProducts(moduleProductRepositories.get(module),
-                resolvedTasks.stream().filter(cmt -> cmt.getModule() == module).map(m -> m.getConfiguredTask()).collect(Collectors.toList()));
+                resolvedTasks.stream().filter(cmt -> cmt.getModule() == module).collect(Collectors.toList()));
         }
 
         ProgressMonitor.setTasks(resolvedTasks.size());
@@ -195,8 +165,7 @@ public class ModuleRunner {
         jobPool.shutdown();
 
 
-        final Collection<ConfiguredTask> ret = new ArrayList<>();
-//        for (final Module module : moduleRegistry.getModules()) {
+        //        for (final Module module : moduleRegistry.getModules()) {
 //            final TaskRunner taskRunner = new TaskRunner(
 //                module, globalProductRepository, moduleTaskRegistries.get(module), moduleProductRepositories.get(module), moduleServiceLocators.get(module));
 //
@@ -215,20 +184,20 @@ public class ModuleRunner {
             .forEach(productRepository::createProduct);
     }
 
-    private Collection<Job> buildJobs(final Collection<ConfiguredModuleTask> resolvedTasks) {
+    private Collection<Job> buildJobs(final Collection<ConfiguredTask> resolvedTasks) {
         return resolvedTasks.stream()
             .map(this::buildJob)
             .collect(Collectors.toList());
     }
 
-    private Job buildJob(final ConfiguredModuleTask cmt) {
-        final ConfiguredTask configuredTask = cmt.getConfiguredTask();
-        final ProductRepository productRepository = moduleProductRepositories.get(cmt.getModule());
-        final ServiceLocatorImpl serviceLocator = moduleServiceLocators.get(cmt.getModule());
+    private Job buildJob(final ConfiguredTask configuredTask) {
+        final Module module = configuredTask.getModule();
+        final ProductRepository productRepository = moduleProductRepositories.get(module);
+        final ServiceLocatorImpl serviceLocator = moduleServiceLocators.get(module);
 
-        final String jobName = cmt.getModule().getModuleName() + " > " + configuredTask.getName();
+        final String jobName = module.getModuleName() + " > " + configuredTask.getName();
 
-        return new Job(jobName, cmt.getModule(), configuredTask, productRepository,
+        return new Job(jobName, module, configuredTask, productRepository,
             globalProductRepository, serviceLocator);
     }
 

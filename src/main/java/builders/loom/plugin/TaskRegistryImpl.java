@@ -28,13 +28,19 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import builders.loom.api.Module;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
 import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 
+    private final Module module;
     private final Map<String, ConfiguredTask> taskMap = new ConcurrentHashMap<>();
+
+    public TaskRegistryImpl(final Module module) {
+        this.module = module;
+    }
 
     @Override
     public void registerTask(final String pluginName, final String taskName,
@@ -68,7 +74,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         }
 
         final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
-        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(taskName, pluginName, taskSupplier,
+        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(module, taskName, pluginName, taskSupplier,
             providedProduct, usedProducts, importedProducts, importedAllProducts, description, type)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
@@ -91,7 +97,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
             configuredTask != null
                 ? configuredTask.addUsedProducts(pluginName, usedProducts)
-                : new ConfiguredTask(name, pluginName, WaitForAllProductsTask::new, goalName,
+                : new ConfiguredTask(module, name, pluginName, WaitForAllProductsTask::new, goalName,
                 usedProducts, Collections.emptySet(), Collections.emptySet(), null, TaskType.GOAL);
 
         taskMap.compute(goalName, fn);

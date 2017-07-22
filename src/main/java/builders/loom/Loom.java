@@ -39,10 +39,10 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.ModuleRunner.ConfiguredModuleTask;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.config.ConfigReader;
+import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.Stopwatch;
 import builders.loom.util.Watch;
 
@@ -219,7 +219,7 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
 
-            final Collection<ConfiguredModuleTask> resolvedTasks;
+            final Collection<ConfiguredTask> resolvedTasks;
             try {
                 resolvedTasks = loomProcessor.execute(cmd.getArgList());
             } finally {

@@ -34,7 +34,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-//import jdk.internal.module.ModuleInfoExtender;
+import jdk.internal.module.ModuleInfoExtender;
 
 public class JavaAssembleTask extends AbstractTask {
 
@@ -66,25 +66,22 @@ public class JavaAssembleTask extends AbstractTask {
             buildConfig.getProject().getVersion()));
 
         try (final JarOutputStream os = buildJarOutput(jarFile)) {
-            
-            
             // compilation & module-info.class first !
             if (compilation.isPresent()) {
                 final Path resolve = compilation.get().getClassesDir();
-                
+
                 // TODO cleanup
                 // TODO move module-info.class related stuff to LoomPaths
                 final Path modulesInfoClassFile = resolve.resolve("module-info.class");
                 if (Files.exists(modulesInfoClassFile)) {
-	                	final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
-	                	entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
-	                	os.putNextEntry(entry);
-	                	os.write(extendedModuleInfoClass(modulesInfoClassFile));
-	                	os.closeEntry();
+                    final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
+                    entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
+                    os.putNextEntry(entry);
+                    os.write(extendedModuleInfoClass(modulesInfoClassFile));
+                    os.closeEntry();
                 }
-                
+
                 FileUtil.copy(resolve, os);
-                
             }
 
             if (resourcesTreeProduct.isPresent()) {
@@ -95,32 +92,24 @@ public class JavaAssembleTask extends AbstractTask {
         return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
-    private byte[] extendedModuleInfoClass(Path modulesInfoClassFile) {
+    private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) {
 
-            try {
-                return Files.readAllBytes(modulesInfoClassFile);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        
-//            try(InputStream classIs = Files.newInputStream(modulesInfoClassFile)) {
-//    
-//                ModuleInfoExtender extender = ModuleInfoExtender.newExtender(classIs);
-//    
-//                pluginSettings.getMainClassName().ifPresent(mainName -> {
-//    
-//                    extender.mainClass(mainName);
-//    
-//                });
-//    
-//                return extender.toByteArray();
-//    
-//            } catch (IOException e) {
-//                throw new UncheckedIOException(e);
-//            }
+        // TODO replace JDK ModuleInfoExtender by something similar, then remove
+        // --add-exports=java.base/jdk.internal.module=ALL-UNNAMED from build and loom scripts
+
+        try (InputStream classIs = Files.newInputStream(modulesInfoClassFile)) {
+            final ModuleInfoExtender extender = ModuleInfoExtender.newExtender(classIs);
+
+            Optional.ofNullable(pluginSettings.getMainClassName())
+                .ifPresent(extender::mainClass);
+
+            return extender.toByteArray();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-	private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
+    private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
         return new JarOutputStream(Files.newOutputStream(jarFile), prepareManifest());
     }
 
@@ -135,10 +124,10 @@ public class JavaAssembleTask extends AbstractTask {
             .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
                 System.getProperty("java.vendor")));
 
-        pluginSettings.getMainClassName()
+        Optional.ofNullable(pluginSettings.getMainClassName())
             .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
 
         return newManifest;
     }
-    
+
 }

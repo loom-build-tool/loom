@@ -16,8 +16,6 @@
 
 package builders.loom.plugin.java;
 
-import java.util.Optional;
-
 import builders.loom.api.PluginSettings;
 
 public class JavaPluginSettings implements PluginSettings {
@@ -25,8 +23,8 @@ public class JavaPluginSettings implements PluginSettings {
     private String mainClassName;
     private String resourceFilterGlob;
 
-    public Optional<String> getMainClassName() {
-        return Optional.ofNullable(mainClassName);
+    public String getMainClassName() {
+        return mainClassName;
     }
 
     public void setMainClassName(final String mainClassName) {

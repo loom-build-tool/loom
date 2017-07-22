@@ -49,4 +49,4 @@ loom_lib="$LOOM_USER_HOME/library/loom-$loom_version/lib/loom-$loom_version.jar"
 
 test -e "$loom_lib" || "$javacmd" -jar loom-installer/loom-installer.jar
 
-exec "$javacmd" $LOOM_OPTS -jar "$loom_lib" "$@"
+exec "$javacmd" $LOOM_OPTS --add-exports=java.base/jdk.internal.module=ALL-UNNAMED -jar "$loom_lib" "$@"

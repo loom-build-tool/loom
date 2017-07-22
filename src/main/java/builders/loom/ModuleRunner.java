@@ -53,13 +53,14 @@ public class ModuleRunner {
         final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
 
         for (final Module module : moduleRegistry.getModules()) {
+            LOG.info("Initialize Plugins for module {}", module.getModuleName());
+
             final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(module);
             final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
 
             final Set<String> pluginsToInitialize = new HashSet<>(defaultPlugins);
             pluginsToInitialize.addAll(module.getConfig().getPlugins());
-            pluginLoader.initPlugins(pluginsToInitialize, module.getConfig(),
-                taskRegistry, serviceLocator);
+            pluginLoader.initPlugins(pluginsToInitialize, module.getConfig(), taskRegistry, serviceLocator);
 
             moduleTaskRegistries.put(module, taskRegistry);
             moduleServiceLocators.put(module, serviceLocator);

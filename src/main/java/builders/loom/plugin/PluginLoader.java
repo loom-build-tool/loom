@@ -83,13 +83,13 @@ public class PluginLoader {
         this.runtimeConfiguration = runtimeConfiguration;
     }
 
-    public void initPlugins(final Set<String> pluginNames,
+    public void initPlugins(final Set<String> pluginsToInitialize,
                             final BuildConfigWithSettings moduleConfig,
                             final TaskRegistryImpl taskRegistry,
                             final ServiceLocatorImpl serviceLocator) {
 
         final Set<String> acceptedSettings = new HashSet<>();
-        for (final String plugin : pluginNames) {
+        for (final String plugin : pluginsToInitialize) {
             acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry, serviceLocator));
         }
 
@@ -100,8 +100,6 @@ public class PluginLoader {
     private Set<String> initPlugin(final String pluginName, final BuildConfigWithSettings config,
                                    final TaskRegistryImpl taskRegistry,
                                    final ServiceLocatorImpl serviceLocator) {
-
-        LOG.info("Initialize plugin {}", pluginName);
 
         final Plugin plugin = getPlugin(pluginName);
 
@@ -134,16 +132,12 @@ public class PluginLoader {
     }
 
     private Class<?> loadPlugin(final String pluginName) {
-        LOG.info("Load plugin {}", pluginName);
-
         final String pluginClassname = INTERNAL_MODULE_PLUGINS.get(pluginName);
         if (pluginClassname == null) {
             throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         }
 
         final URL pluginJarUrl = findPluginUrl(pluginName);
-
-        LOG.info("Load plugin {} using jar file from {}", pluginName, pluginJarUrl);
 
         // Note that plugin dependencies are specified in MANIFEST.MF
         // @link https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html
@@ -159,10 +153,11 @@ public class PluginLoader {
         try {
             pluginClass = classLoader.loadClass(pluginClassname);
         } catch (final ClassNotFoundException e) {
-            throw new IllegalStateException("Couldn't load plugin " + pluginName, e);
+            throw new IllegalStateException(String
+                .format("Couldn't load plugin %s from jar file %s", pluginName, pluginJarUrl), e);
         }
 
-        LOG.info("Plugin {} loaded", pluginName);
+        LOG.debug("Loaded plugin {} from {}", pluginName, pluginJarUrl);
 
         return pluginClass;
     }

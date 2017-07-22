@@ -56,7 +56,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN,
                 getRepositoryPath()))
             .provides("compilation")
-            .uses("source", "moduleDependencies", "compileDependencies")
+            .uses("source", "compileDependencies", "moduleDependencies")
             .desc("Compiles main sources.")
             .register();
 
@@ -64,7 +64,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST,
                 getRepositoryPath()))
             .provides("testCompilation")
-            .uses("compilation", "testSource", "testDependencies")
+            .uses("compilation", "testSource", "testDependencies", "moduleDependencies")
             .desc("Compiles test sources.")
             .register();
 

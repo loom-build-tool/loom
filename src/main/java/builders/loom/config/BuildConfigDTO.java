@@ -25,7 +25,7 @@ import builders.loom.api.JavaVersion;
 
 public class BuildConfigDTO {
 
-    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_1_8;
+    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
 
     private ProjectDTO project;
     private Set<String> plugins;

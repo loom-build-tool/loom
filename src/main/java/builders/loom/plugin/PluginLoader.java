@@ -19,6 +19,7 @@ package builders.loom.plugin;
 import static java.util.Map.entry;
 
 import java.beans.BeanInfo;
+import java.beans.FeatureDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -190,7 +191,7 @@ public class PluginLoader {
             return Collections.emptySet();
         }
 
-        final PropertyDescriptor[] propertyDescriptors =
+        final List<PropertyDescriptor> propertyDescriptors =
             getPropertyDescriptors(plugin, pluginSettings);
 
         final Set<String> configuredPluginSettings = new HashSet<>();
@@ -206,7 +207,9 @@ public class PluginLoader {
 
             final Method setter = findSetter(propertyDescriptors, propertyName)
                 .orElseThrow(() -> new IllegalStateException(
-                    String.format("No property %s found in plugin %s", propertyName, plugin)));
+                    String.format("No property %s found in plugin %s. Available properties are: %s",
+                        propertyName, plugin, propertyDescriptors.stream()
+                            .map(FeatureDescriptor::getName).collect(Collectors.toList()))));
 
             try {
                 setter.invoke(pluginSettings, propertyValue);
@@ -222,7 +225,7 @@ public class PluginLoader {
         return configuredPluginSettings;
     }
 
-    private static PropertyDescriptor[] getPropertyDescriptors(
+    private static List<PropertyDescriptor> getPropertyDescriptors(
         final String plugin, final PluginSettings pluginSettings) {
 
         final BeanInfo beanInfo;
@@ -231,12 +234,15 @@ public class PluginLoader {
         } catch (final IntrospectionException e) {
             throw new IllegalStateException("Can't inspect plugin " + plugin, e);
         }
-        return beanInfo.getPropertyDescriptors();
+
+        return Arrays.stream(beanInfo.getPropertyDescriptors())
+            .filter(pd -> !pd.getName().equals("class"))
+            .collect(Collectors.toList());
     }
 
-    private static Optional<Method> findSetter(final PropertyDescriptor[] propertyDescriptors,
+    private static Optional<Method> findSetter(final List<PropertyDescriptor> propertyDescriptors,
                                                final String propertyName) {
-        return Arrays.stream(propertyDescriptors)
+        return propertyDescriptors.stream()
             .filter(pd -> pd.getName().equals(propertyName))
             .findFirst()
             .map(PropertyDescriptor::getWriteMethod);

@@ -39,8 +39,6 @@ import edu.umd.cs.findbugs.Priorities;
 
 public class FindbugsTask extends AbstractTask {
 
-    public static final Path BUILD_MAIN_PATH = Paths.get("loombuild", "classes", "main");
-
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private final CompileTarget compileTarget;
@@ -168,7 +166,9 @@ public class FindbugsTask extends AbstractTask {
                     .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                classpath.add(BUILD_MAIN_PATH);
+                final Path buildPath = LoomPaths.BUILD_DIR.resolve(
+                    Paths.get("compilation", "main", getModule().getModuleName()));
+                classpath.add(buildPath);
 
                 useProduct("testDependencies",
                     ClasspathProduct.class)

@@ -59,6 +59,11 @@ public class JavaProvideSourceDirTask extends AbstractTask {
                 + illegalFiles);
         }
 
+        if (sourceFiles.stream().noneMatch(f ->
+            f.getFileName().toString().equals("module-info.java"))) {
+            throw new IllegalStateException("No module-info.java found in " + srcPath());
+        }
+
         return completeOk(new SourceTreeProduct(path, sourceFiles));
     }
 

@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -87,17 +86,17 @@ public class JavaCompileTask extends AbstractTask {
             compileTarget.name().toLowerCase(), getModule().getModuleName()));
     }
 
-    private static List<String> configuredPlatformVersion(final JavaVersion version) {
+    private static Optional<String> configuredPlatformVersion(final JavaVersion version) {
         Objects.requireNonNull(version, "versionString required");
 
         final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
         final int platformVersion = version.getNumericVersion();
 
         if (platformVersion == parsedJavaSpecVersion) {
-            return Collections.emptyList();
+            return Optional.empty();
         }
 
-        return Arrays.asList("--release", String.valueOf(platformVersion));
+        return Optional.of(String.valueOf(platformVersion));
     }
 
     @Override
@@ -133,12 +132,12 @@ public class JavaCompileTask extends AbstractTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcPaths = sourceTreeProduct.get().getSourceFiles();
+        final List<Path> srcFiles = sourceTreeProduct.get().getSourceFiles();
 
 //        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
 //            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
 //
-//        if (fileCacher.filesCached(srcPaths)) {
+//        if (fileCacher.filesCached(srcFiles)) {
 //            return completeUpToDate(product());
 //        }
 
@@ -148,7 +147,7 @@ public class JavaCompileTask extends AbstractTask {
             FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
         }
 
-//        final List<File> srcFiles = srcPaths.stream()
+//        final List<File> srcFiles = srcFiles.stream()
 //            .map(Path::toFile)
 //            .collect(Collectors.toList());
 
@@ -156,10 +155,24 @@ public class JavaCompileTask extends AbstractTask {
         // Wait until other modules have delivered their compilations to module path
         getUsedProducts().waitForProduct("moduleDependencies");
 
+        final Optional<String> javaVersion =
+            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion());
 
-        compile(classpath, srcPaths);
+        if (javaVersion.isPresent()) {
+            // Unfortunately JDK doesn't support cross-compile for module-info.java
 
-//        fileCacher.cacheFiles(srcPaths);
+            final Path moduleInfo = srcFiles.stream().filter(f -> f.getFileName().toString().equals("module-info.java")).findFirst().orElseThrow(() -> new IllegalStateException("No module-info.java found"));
+            compile(classpath, List.of(moduleInfo), buildOptions(null));
+
+            final List<Path> otherFiles = srcFiles.stream()
+                .filter(f -> f != moduleInfo)
+                .collect(Collectors.toList());
+            compile(classpath, otherFiles, buildOptions(javaVersion.get()));
+        } else {
+            compile(classpath, srcFiles, buildOptions(null));
+        }
+
+//        fileCacher.cacheFiles(srcFiles);
 
         return completeOk(product());
     }
@@ -187,7 +200,7 @@ public class JavaCompileTask extends AbstractTask {
     }
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
-    private void compile(final List<Path> classpath, final List<Path> srcFiles) throws IOException {
+    private void compile(final List<Path> classpath, final List<Path> srcFiles, final List<String> options) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
@@ -207,8 +220,6 @@ public class JavaCompileTask extends AbstractTask {
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromFiles(files);
-
-            final List<String> options = buildOptions();
 
             LOG.info("Compile {} sources with options {}", srcFiles.size(), options);
 
@@ -231,7 +242,7 @@ public class JavaCompileTask extends AbstractTask {
         return modulePath;
     }
 
-    private List<String> buildOptions() {
+    private static List<String> buildOptions(final String release) {
         final List<String> options = new ArrayList<>();
 
         options.add("-encoding");
@@ -241,8 +252,10 @@ public class JavaCompileTask extends AbstractTask {
 
         options.add("-Xpkginfo:always");
 
-        options.addAll(
-            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion()));
+        if (release != null) {
+            options.add("--release");
+            options.add(release);
+        }
 
         return options;
     }

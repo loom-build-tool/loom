@@ -32,7 +32,6 @@ public class GlobalProductRepository {
         Objects.requireNonNull(productId, "productId required");
         Objects.requireNonNull(productClass, "productClass required");
 
-
         final ProductRepository productRepository = moduleProductRepositories.entrySet().stream()
             .filter(e -> e.getKey().getModuleName().equals(moduleName))
             .map(Map.Entry::getValue)

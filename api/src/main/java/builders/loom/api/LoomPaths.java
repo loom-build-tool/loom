@@ -45,4 +45,12 @@ public final class LoomPaths {
         return PROJECT_DIR.relativize(path.toAbsolutePath().normalize());
     }
 
+    public static Path buildDir(final String moduleName, final String productId) {
+        return BUILD_DIR.resolve(Paths.get(moduleName, productId));
+    }
+
+    public static Path reportDir(final String moduleName, final String productId) {
+        return REPORT_PATH.resolve(Paths.get(moduleName, productId));
+    }
+
 }

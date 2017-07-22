@@ -16,17 +16,23 @@
 
 package builders.loom.plugin.checkstyle;
 
+import java.io.File;
+import java.io.PrintStream;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
+import com.puppycrawl.tools.checkstyle.XMLLogger;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
@@ -46,7 +52,6 @@ public class CheckstyleTask extends AbstractTask {
 
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
-    private final Path reportPath;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final CheckstylePluginSettings pluginSettings,
@@ -54,9 +59,6 @@ public class CheckstyleTask extends AbstractTask {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
-
-        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle",
-            compileTarget.name().toLowerCase()));
 
         if (pluginSettings.getConfigLocation() == null) {
             throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
@@ -71,35 +73,39 @@ public class CheckstyleTask extends AbstractTask {
             return completeSkip();
         }
 
-//        final List<File> files = sourceTree.get().getSourceFiles().stream()
-//            .map(Path::toFile)
-//            .filter(f -> !f.getName().equals("module-info.java"))
-//            .collect(Collectors.toList());
-//
-//        final RootModule checker = createRootModule();
-//
-//        try {
-//            final LoggingAuditListener listener = new LoggingAuditListener();
-//            checker.addListener(listener);
-//
-//            Files.createDirectories(reportPath);
-//            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
-//                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
-//            checker.addListener(xmlLogger);
-//
-//            final int errors = checker.process(files);
-//
-//            if (errors == 0) {
-//                return completeOk(product());
-//            }
-//        } finally {
-//            checker.destroy();
-//        }
+        final List<File> files = sourceTree.get().getSourceFiles().stream()
+            .map(Path::toFile)
+            .filter(f -> !f.getName().equals("module-info.java"))
+            .collect(Collectors.toList());
+
+
+        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "checkstyle")
+            .resolve(compileTarget.name().toLowerCase());
+
+        final RootModule checker = createRootModule();
+
+        try {
+            final LoggingAuditListener listener = new LoggingAuditListener();
+            checker.addListener(listener);
+
+            Files.createDirectories(reportPath);
+            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
+                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
+            checker.addListener(xmlLogger);
+
+            final int errors = checker.process(files);
+
+            if (errors == 0) {
+                return completeOk(product(reportPath));
+            }
+        } finally {
+            checker.destroy();
+        }
 
         throw new IllegalStateException("Checkstyle reported errors!");
     }
 
-    private ReportProduct product() {
+    private ReportProduct product(final Path reportPath) {
         switch (compileTarget) {
             case MAIN:
                 return new ReportProduct(reportPath, "Checkstyle main report");

@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -30,6 +29,7 @@ import java.util.jar.Manifest;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -59,7 +59,8 @@ public class JavaAssembleTask extends AbstractTask {
             return completeSkip();
         }
 
-        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
+        final Path buildDir = Files.createDirectories(
+            LoomPaths.buildDir(getModule().getModuleName(), "jar"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
             buildConfig.getProject().getArtifactId(),

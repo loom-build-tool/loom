@@ -19,7 +19,6 @@ package builders.loom.plugin.java;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,7 +66,7 @@ public class JavadocTask extends AbstractTask {
             .ifPresent(classpath::addAll);
 
         final Path dstDir =
-            Files.createDirectories(LoomPaths.BUILD_DIR.resolve(Paths.get("javadoc")));
+            Files.createDirectories(LoomPaths.buildDir(getModule().getModuleName(), "javadoc"));
 
         final DocumentationTool docTool = ToolProvider.getSystemDocumentationTool();
 

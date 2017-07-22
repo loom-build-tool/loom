@@ -51,8 +51,6 @@ public class JUnit4TestTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JUnit4TestTask.class);
 
-    private static final Path REPORT_PATH = LoomPaths.REPORT_PATH.resolve("tests").resolve("test");
-
     @Override
     public TaskResult run() throws Exception {
 
@@ -94,9 +92,10 @@ public class JUnit4TestTask extends AbstractTask {
         }
 
         // note: junit reports are not yet supported, but product expects the folder
-        Files.createDirectories(REPORT_PATH);
+        final Path reportPath = Files.createDirectories(
+            LoomPaths.reportDir(getModule().getModuleName(), "test"));
 
-        return completeOk(new ReportProduct(REPORT_PATH, "Junit4 report"));
+        return completeOk(new ReportProduct(reportPath, "Junit4 report"));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {

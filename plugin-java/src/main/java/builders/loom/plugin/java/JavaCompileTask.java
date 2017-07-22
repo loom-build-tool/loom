@@ -55,9 +55,6 @@ public class JavaCompileTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
 
-    // The first Java version which supports the --release flag
-    private static final int JAVA_VERSION_WITH_RELEASE_FLAG = 9;
-
     private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
     private final CompileTarget compileTarget;
@@ -106,39 +103,7 @@ public class JavaCompileTask extends AbstractTask {
             return Collections.emptyList();
         }
 
-        return parsedJavaSpecVersion >= JAVA_VERSION_WITH_RELEASE_FLAG
-            ? crossCompileWithReleaseFlag(platformVersion)
-            : crossCompileWithSourceTargetFlags(platformVersion);
-    }
-
-    private static List<String> crossCompileWithReleaseFlag(final Integer platformVersion) {
-        return Arrays.asList("--release", platformVersion.toString());
-    }
-
-    private static List<String> crossCompileWithSourceTargetFlags(final Integer platformVersion) {
-        return Arrays.asList(
-            "-source", platformVersion.toString(),
-            "-target", platformVersion.toString(),
-            "-bootclasspath", getBootstrapClasspath(),
-            "-extdirs", getExtDirs()
-        );
-    }
-
-    public static String getBootstrapClasspath() {
-        return requireEnv("LOOM_JAVA_CROSS_COMPILE_BOOTSTRAPCLASSPATH");
-    }
-
-    public static String getExtDirs() {
-        return requireEnv("LOOM_JAVA_CROSS_COMPILE_EXTDIRS");
-    }
-
-    private static String requireEnv(final String envName) {
-        final String env = System.getenv(envName);
-        if (env == null) {
-            throw new IllegalStateException("System environment variable <"
-                + envName + "> not set");
-        }
-        return env;
+        return Arrays.asList("--release", String.valueOf(platformVersion));
     }
 
     @Override
@@ -246,10 +211,10 @@ public class JavaCompileTask extends AbstractTask {
             final List<Path> modulePath = new ArrayList<>();
             modulePath.add(getBuildDir().getParent());
             modulePath.addAll(classpath);
-            
+
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
             		modulePath);
-            
+
             final List<File> files = srcFiles.stream()
                 .map(Path::toFile)
                 .collect(Collectors.toList());

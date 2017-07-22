@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +38,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.Report;
 import net.sourceforge.pmd.Rule;
@@ -53,8 +55,10 @@ import net.sourceforge.pmd.lang.LanguageRegistry;
 import net.sourceforge.pmd.lang.LanguageVersion;
 import net.sourceforge.pmd.renderers.AbstractRenderer;
 import net.sourceforge.pmd.renderers.HTMLRenderer;
+import net.sourceforge.pmd.renderers.Renderer;
 import net.sourceforge.pmd.stat.Metric;
 import net.sourceforge.pmd.util.datasource.DataSource;
+import net.sourceforge.pmd.util.datasource.FileDataSource;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class PmdTask extends AbstractTask {
@@ -62,7 +66,6 @@ public class PmdTask extends AbstractTask {
     private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
 
     private final CompileTarget compileTarget;
-    private final Path reportPath;
     private final PMDConfiguration configuration = new PMDConfiguration();
     private final Path cacheDir;
 
@@ -74,8 +77,6 @@ public class PmdTask extends AbstractTask {
         SLF4JBridgeHandler.install();
 
         this.compileTarget = compileTarget;
-        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("pmd",
-            compileTarget.name().toLowerCase()));
         this.cacheDir = cacheDir;
 
         configuration.setReportShortNames(true);
@@ -127,41 +128,44 @@ public class PmdTask extends AbstractTask {
 
         final Path srcDir = sourceTreeProduct.get().getSrcDir();
 
-//        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
-//            .map(Path::toFile)
-//            .map(FileDataSource::new)
-//            .collect(Collectors.toList());
-//
-//        final String inputPaths = srcDir.toString();
-//        configuration.setInputPaths(inputPaths);
-//
-//        final HTMLRenderer htmlRenderer = buildHtmlRenderer();
-//        final List<Renderer> renderers = Arrays.asList(new LogRenderer(inputPaths), htmlRenderer);
-//
-//        for (final Renderer renderer : renderers) {
-//            renderer.start();
-//        }
-//
-//        PMD.processFiles(configuration, ruleSetFactory, files, ctx,
-//            renderers);
-//
-//        for (final Renderer renderer : renderers) {
-//            renderer.end();
-//        }
-//
-//        final int ruleViolationCnt = ruleViolations.get();
-//
-//        LOG.debug("{} problems found", ruleViolationCnt);
-//
-//        if (ruleViolationCnt > 0) {
-//            throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
-//                + " rule violations in the code");
-//        }
+        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
+            .map(Path::toFile)
+            .map(FileDataSource::new)
+            .collect(Collectors.toList());
 
-        return completeOk(product());
+        final String inputPaths = srcDir.toString();
+        configuration.setInputPaths(inputPaths);
+
+        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "pmd")
+            .resolve(compileTarget.name().toLowerCase());
+
+        final HTMLRenderer htmlRenderer = buildHtmlRenderer(reportPath);
+        final List<Renderer> renderers = Arrays.asList(new LogRenderer(inputPaths), htmlRenderer);
+
+        for (final Renderer renderer : renderers) {
+            renderer.start();
+        }
+
+        PMD.processFiles(configuration, ruleSetFactory, files, ctx,
+            renderers);
+
+        for (final Renderer renderer : renderers) {
+            renderer.end();
+        }
+
+        final int ruleViolationCnt = ruleViolations.get();
+
+        LOG.debug("{} problems found", ruleViolationCnt);
+
+        if (ruleViolationCnt > 0) {
+            throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
+                + " rule violations in the code");
+        }
+
+        return completeOk(product(reportPath));
     }
 
-    private HTMLRenderer buildHtmlRenderer() throws IOException {
+    private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {
         final Path reportDir = Files.createDirectories(reportPath);
 
         final HTMLRenderer htmlRenderer = new HTMLRenderer();
@@ -207,7 +211,7 @@ public class PmdTask extends AbstractTask {
         }
     }
 
-    private ReportProduct product() {
+    private ReportProduct product(final Path reportPath) {
         switch (compileTarget) {
             case MAIN:
                 return new ReportProduct(reportPath, "PMD main report");

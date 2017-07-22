@@ -16,8 +16,6 @@
 
 package builders.loom.plugin.findbugs;
 
-import java.util.Optional;
-
 import builders.loom.api.PluginSettings;
 
 public class FindbugsPluginSettings implements PluginSettings {
@@ -25,8 +23,8 @@ public class FindbugsPluginSettings implements PluginSettings {
     private String priorityThreshold;
     private String customPlugins;
 
-    public Optional<String> getPriorityThreshold() {
-        return Optional.ofNullable(priorityThreshold);
+    public String getPriorityThreshold() {
+        return priorityThreshold;
     }
 
     public void setPriorityThreshold(final String priorityThreshold) {

@@ -44,7 +44,6 @@ public class FindbugsTask extends AbstractTask {
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
     private final CompileTarget compileTarget;
-    private final Path reportPath;
     private int priorityThreshold;
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
@@ -54,15 +53,12 @@ public class FindbugsTask extends AbstractTask {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
-        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("findbugs",
-            compileTarget.name().toLowerCase()));
-
         readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
 
     private void readBuildConfig(final FindbugsPluginSettings pluginSettings) {
 
-        priorityThreshold = pluginSettings.getPriorityThreshold()
+        priorityThreshold = Optional.ofNullable(pluginSettings.getPriorityThreshold())
             .map(prio -> resolvePriority(prio.toUpperCase()))
             .orElse(DEFAULT_PRIORITY_THRESHOLD);
 
@@ -117,14 +113,17 @@ public class FindbugsTask extends AbstractTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-//        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
-//            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
-//            .executeFindbugs();
+        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "findbugs")
+            .resolve(compileTarget.name().toLowerCase());
 
-        return completeOk(product());
+        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
+            getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
+            .executeFindbugs();
+
+        return completeOk(product(reportPath));
     }
 
-    private ReportProduct product() {
+    private ReportProduct product(final Path reportPath) {
         switch (compileTarget) {
             case MAIN:
                 return new ReportProduct(reportPath, "Findbugs main report");
@@ -157,6 +156,7 @@ public class FindbugsTask extends AbstractTask {
         }
     }
 
+    // FIXME multi-module
     private List<Path> calcClasspath() throws InterruptedException {
         final List<Path> classpath = new ArrayList<>();
 

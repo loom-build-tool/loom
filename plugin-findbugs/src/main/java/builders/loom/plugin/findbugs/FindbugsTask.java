@@ -37,6 +37,9 @@ import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 import edu.umd.cs.findbugs.Priorities;
 
+// FIXME crashes with Caused by:
+// edu.umd.cs.findbugs.classfile.ResourceNotFoundException: Resource not found: java/lang/Object.class
+// should have been fixed (workaround) -- https://github.com/spotbugs/spotbugs/issues/148
 public class FindbugsTask extends AbstractTask {
 
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;

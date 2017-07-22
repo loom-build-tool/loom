@@ -16,7 +16,6 @@
 
 package builders.loom.plugin.java;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -155,22 +154,7 @@ public class JavaCompileTask extends AbstractTask {
         // Wait until other modules have delivered their compilations to module path
         getUsedProducts().waitForProduct("moduleDependencies");
 
-        final Optional<String> javaVersion =
-            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion());
-
-        if (javaVersion.isPresent()) {
-            // Unfortunately JDK doesn't support cross-compile for module-info.java
-
-            final Path moduleInfo = srcFiles.stream().filter(f -> f.getFileName().toString().equals("module-info.java")).findFirst().orElseThrow(() -> new IllegalStateException("No module-info.java found"));
-            compile(classpath, List.of(moduleInfo), buildOptions(null));
-
-            final List<Path> otherFiles = srcFiles.stream()
-                .filter(f -> f != moduleInfo)
-                .collect(Collectors.toList());
-            compile(classpath, otherFiles, buildOptions(javaVersion.get()));
-        } else {
-            compile(classpath, srcFiles, buildOptions(null));
-        }
+        compile(classpath, srcFiles);
 
 //        fileCacher.cacheFiles(srcFiles);
 
@@ -200,10 +184,13 @@ public class JavaCompileTask extends AbstractTask {
     }
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
-    private void compile(final List<Path> classpath, final List<Path> srcFiles, final List<String> options) throws IOException {
+    private void compile(final List<Path> classpath, final List<Path> srcFiles) throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
+
+        final Optional<String> javaVersion =
+            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion());
 
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
@@ -211,27 +198,53 @@ public class JavaCompileTask extends AbstractTask {
             fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
                 Collections.singletonList(getBuildDir()));
 
+            // TODO doesn't work
+//            fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
+//                xxx, xxx);
+
+            // workaround
             final List<Path> modulePath = buildModulePath(classpath);
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, modulePath);
-
-            final List<File> files = srcFiles.stream()
-                .map(Path::toFile)
-                .collect(Collectors.toList());
-
-            final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(files);
-
-            LOG.info("Compile {} sources with options {}", srcFiles.size(), options);
-
             LOG.debug("Modulepath: {}", modulePath);
-            LOG.debug("Files to compile: {}", files);
 
-            final JavaCompiler.CompilationTask compilerTask = compiler
-                .getTask(null, fileManager, diagnosticListener, options, null, compUnits);
+            if (javaVersion.isPresent()) {
+                // Unfortunately JDK doesn't support cross-compile for module-info.java
 
-            if (!compilerTask.call()) {
-                throw new IllegalStateException("Java compile failed");
+                // First, compile module-info.java with current JDK version
+                final Path moduleInfo = srcFiles.stream()
+                    .filter(f -> f.getFileName().toString().equals("module-info.java"))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("No module-info.java found"));
+                LOG.debug("Compile module-info.java");
+                compile(compiler, diagnosticListener, fileManager, buildOptions(null),
+                    fileManager.getJavaFileObjects(moduleInfo));
+
+                // Then, compile everything else with requested Version
+                final List<Path> otherFiles = srcFiles.stream()
+                    .filter(f -> f != moduleInfo)
+                    .collect(Collectors.toList());
+
+                LOG.debug("Compile {} java files", otherFiles.size());
+                compile(compiler, diagnosticListener, fileManager, buildOptions(javaVersion.get()),
+                    fileManager.getJavaFileObjectsFromPaths(otherFiles));
+            } else {
+                LOG.debug("Compile {} java files", srcFiles.size());
+                compile(compiler, diagnosticListener, fileManager, buildOptions(null),
+                    fileManager.getJavaFileObjectsFromPaths(srcFiles));
             }
+        }
+    }
+
+    private void compile(final JavaCompiler compiler,
+                         final DiagnosticListener<JavaFileObject> diagnosticListener,
+                         final StandardJavaFileManager fileManager, final List<String> options,
+                         final Iterable<? extends JavaFileObject> compUnits) {
+
+        final JavaCompiler.CompilationTask compilerTask = compiler
+            .getTask(null, fileManager, diagnosticListener, options, null, compUnits);
+
+        if (!compilerTask.call()) {
+            throw new IllegalStateException("Java compile failed");
         }
     }
 

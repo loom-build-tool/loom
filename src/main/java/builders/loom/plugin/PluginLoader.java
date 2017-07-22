@@ -236,7 +236,7 @@ public class PluginLoader {
         }
 
         return Arrays.stream(beanInfo.getPropertyDescriptors())
-            .filter(pd -> !pd.getName().equals("class"))
+            .filter(pd -> pd.getWriteMethod() != null)
             .collect(Collectors.toList());
     }
 

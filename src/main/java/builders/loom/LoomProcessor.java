@@ -93,25 +93,24 @@ public class LoomProcessor {
     }
 
     private Module singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
-
-	    	final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
+        final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
             throw new IllegalStateException("Missing build.yml in project root");
         }
 
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
-        		.orElse("unnamed");
+            .orElse("unnamed");
 
         return new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, buildConfig);
-	}
+    }
 
-	public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+    public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
 
-    		final List<Module> modules = new ArrayList<>();
+        final List<Module> modules = new ArrayList<>();
 
-    		final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
+        final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
         try {
-			final List<Path> modulePaths = Files.list(modulesPath)
+            final List<Path> modulePaths = Files.list(modulesPath)
                 .collect(Collectors.toList());
 
             for (final Path module : modulePaths) {
@@ -127,8 +126,8 @@ public class LoomProcessor {
                 // TODO src/test/java ?
 
                 final String moduleName = readModuleNameFromModuleInfo(module)
-                		.orElseThrow(() -> new IllegalStateException(
-                				"Missing module-info.java in module " + module));
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Missing module-info.java in module " + module));
 
                 modules.add(new Module(modulePathName, moduleName, module, buildConfig));
             }
@@ -138,39 +137,39 @@ public class LoomProcessor {
         }
     }
 
-	private void checkForInconsistentSrcModuleStruct() {
-		final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
-		final boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
+    private void checkForInconsistentSrcModuleStruct() {
+        final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
+        final boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
 
-		if (hasSrc && hasModules) {
-			throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
-		}
-	}
+        if (hasSrc && hasModules) {
+            throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
+        }
+    }
 
-	private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
+    private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
 
-		final Path moduleInfoFile = baseDir.resolve(
-				Paths.get("src", "main", "java", "module-info.java"));
+        final Path moduleInfoFile = baseDir.resolve(
+            Paths.get("src", "main", "java", "module-info.java"));
 
-		if (Files.notExists(moduleInfoFile)) {
-			return Optional.empty();
-		}
+        if (Files.notExists(moduleInfoFile)) {
+            return Optional.empty();
+        }
 
-		try {
-			final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
-			final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
-			final Matcher matcher = pattern.matcher(moduleInfoSource);
+        try {
+            final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
+            final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
+            final Matcher matcher = pattern.matcher(moduleInfoSource);
 
-			if (!matcher.find()) {
-				throw new IllegalStateException("Can't parse " + moduleInfoFile);
-			}
+            if (!matcher.find()) {
+                throw new IllegalStateException("Can't parse " + moduleInfoFile);
+            }
 
-			final String moduleName = matcher.group(1);
-			return Optional.of(moduleName);
-		} catch (final IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
+            final String moduleName = matcher.group(1);
+            return Optional.of(moduleName);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
     public List<ConfiguredModuleTask> execute(final List<String> productIds) throws Exception {
         return moduleRunner.execute(new HashSet<>(productIds));
@@ -232,8 +231,8 @@ public class LoomProcessor {
         final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
 
         for (final ConfiguredModuleTask configuredModuleTask : resolvedTasks) {
-        	final ConfiguredTask configuredTask = configuredModuleTask.getConfiguredTask();
-        		final String productId = configuredTask.getProvidedProduct();
+            final ConfiguredTask configuredTask = configuredModuleTask.getConfiguredTask();
+            final String productId = configuredTask.getProvidedProduct();
 
             final Optional<Product> product = moduleRunner.lookupProduct(configuredModuleTask.getModule(), productId)
                 .getAndWaitForProduct();
@@ -253,7 +252,7 @@ public class LoomProcessor {
         final List<String> pluginNames = new ArrayList<>(aggProducts.keySet());
         Collections.sort(pluginNames);
 
-        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
+        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext(); ) {
             final String pluginName = iterator.next();
 
             final List<ProductInfo> productInfos = aggProducts.get(pluginName);

@@ -16,29 +16,29 @@ import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
 public class Main {
-	
-	private static final Path EXAMPLES_PATH = Paths.get("/Users/sostermayr/workspace_java9/loom-example/java9");
+
+    private static final Path EXAMPLES_PATH = Paths.get("/Users/sostermayr/workspace_java9/loom-example/java9");
 
     public static void main(String[] args) throws Exception {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-                try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
-                    null, null, StandardCharsets.UTF_8)) {
+        try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+            null, null, StandardCharsets.UTF_8)) {
 
-        //            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
-        //                new ArrayList<>(classpath));
+            //            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
+            //                new ArrayList<>(classpath));
 
 
-                    // TODO set via     setLocationForModule ?
-                    final Path o = Paths.get("/tmp/mainout");
-                    Files.createDirectories(o);
-                    
-                    fileManager.setLocation(StandardLocation.MODULE_PATH,
-                        List.of(EXAMPLES_PATH.resolve("loombuild/compilation/main").toFile()));
+            // TODO set via     setLocationForModule ?
+            final Path o = Paths.get("/tmp/mainout");
+            Files.createDirectories(o);
 
-                    fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-                        Collections.singletonList(o));
+            fileManager.setLocation(StandardLocation.MODULE_PATH,
+                List.of(EXAMPLES_PATH.resolve("loombuild/compilation/main").toFile()));
 
-        //            LOG.warn("srcpath {}", Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
+            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
+                Collections.singletonList(o));
+
+            //            LOG.warn("srcpath {}", Paths.get("modules", getModule().getPathName(), "src", subdirName, "java"));
 
 //                    fileManager.setLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
 //                        "builders.loom.example.app",
@@ -51,21 +51,21 @@ public class Main {
 //                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
 //                        "builders.loom.example.api",
 //                        Collections.singletonList(Paths.get("/Users/oliver/workspace/loom-example/java9/loombuild/compilation/main/builders.loom.example.api")));
-                    
-                    final List<File> files = List.of(EXAMPLES_PATH.resolve("modules/builders.loom.example.app/src/main/java/builders/loom/example/app/Main.java").toFile());
 
-                    final Iterable<? extends JavaFileObject> compUnits =
-                        fileManager.getJavaFileObjectsFromFiles(files);
+            final List<File> files = List.of(EXAMPLES_PATH.resolve("modules/builders.loom.example.app/src/main/java/builders/loom/example/app/Main.java").toFile());
 
-                    final List<String> options = buildOptions();
+            final Iterable<? extends JavaFileObject> compUnits =
+                fileManager.getJavaFileObjectsFromFiles(files);
 
-                    final JavaCompiler.CompilationTask compilerTask = compiler
-                        .getTask(null, fileManager, null, options, null, compUnits);
+            final List<String> options = buildOptions();
 
-                    if (!compilerTask.call()) {
-                        throw new IllegalStateException("Java compile failed");
-                    }
-                }
+            final JavaCompiler.CompilationTask compilerTask = compiler
+                .getTask(null, fileManager, null, options, null, compUnits);
+
+            if (!compilerTask.call()) {
+                throw new IllegalStateException("Java compile failed");
+            }
+        }
     }
 
 

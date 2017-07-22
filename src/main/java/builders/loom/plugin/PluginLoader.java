@@ -149,7 +149,7 @@ public class PluginLoader {
         // @link https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html
 
         final URLClassLoader classLoader = new URLClassLoader(
-            new URL[] {pluginJarUrl},
+            new URL[]{pluginJarUrl},
             new BiSectFilteringClassLoader(
                 getPlatformClassLoader(),
                 Thread.currentThread().getContextClassLoader()

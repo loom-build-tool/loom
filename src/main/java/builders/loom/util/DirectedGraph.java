@@ -31,9 +31,9 @@ public class DirectedGraph<T> {
     private final Map<T, Vertex<T>> vertices = new HashMap<>();
 
     public Set<T> nodes() {
-    		return Collections.unmodifiableSet(vertices.keySet());
+        return Collections.unmodifiableSet(vertices.keySet());
     }
-    
+
     public void addNode(final T node) {
         if (vertices.putIfAbsent(node, new Vertex<>(node)) != null) {
             throw new IllegalArgumentException("Node <" + node + "> already added");

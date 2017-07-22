@@ -251,9 +251,9 @@ public class Loom {
     }
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {
-        if (format == null || "text".equals(format)) {
+        if (format == null || "text" .equals(format)) {
             loomProcessor.generateTextProductOverview();
-        } else if ("dot".equals(format)) {
+        } else if ("dot" .equals(format)) {
             loomProcessor.generateDotProductOverview();
         } else {
             throw new IllegalStateException("Unknown format: " + format);

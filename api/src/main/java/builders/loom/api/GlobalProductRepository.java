@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import builders.loom.api.product.Product;
 
@@ -16,8 +15,6 @@ public class GlobalProductRepository {
     public GlobalProductRepository(final Map<Module, ProductRepository> moduleProductRepositories) {
         this.moduleProductRepositories = moduleProductRepositories;
     }
-
-
 
     public <P extends Product> P requireProduct(final String moduleName, final String productId, final Class<P> productClass)
         throws InterruptedException {
@@ -45,14 +42,8 @@ public class GlobalProductRepository {
         return new UsedProducts(Collections.singleton(productId), productRepository).readProduct(productId, productClass);
     }
 
-    public Set<String> getAllModuleNames() {
-        return Collections.unmodifiableSet(moduleProductRepositories.keySet().stream().map(Module::getModuleName).collect(Collectors.toSet()));
-    }
-
-    public Optional<Module> getModule(final String moduleName) {
-        return moduleProductRepositories.keySet().stream()
-            .filter(module -> module.getModuleName().equals(moduleName))
-            .findFirst();
+    public Set<Module> getAllModules() {
+        return Collections.unmodifiableSet(moduleProductRepositories.keySet());
     }
 
 }

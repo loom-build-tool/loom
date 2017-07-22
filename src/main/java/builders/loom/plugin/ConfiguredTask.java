@@ -77,8 +77,8 @@ public class ConfiguredTask {
     }
 
     public Set<String> getImportedProducts() {
-		return Collections.unmodifiableSet(importedProducts);
-	}
+        return Collections.unmodifiableSet(importedProducts);
+    }
 
     ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
         pluginNames.add(pluginName);

@@ -28,17 +28,13 @@ public class JavaModuleDependencyTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
-
         final Set<String> moduleDependencies = buildConfig.getModuleDependencies();
-
-
         final List<ModulePathProduct> moduleProducts = new ArrayList<>();
 
         for (final String moduleName : moduleDependencies) {
             final CompilationProduct compilation = globalProductRepository.requireProduct(moduleName, "compilation", CompilationProduct.class);
             moduleProducts.add(new ModulePathProduct(moduleName, compilation.getClassesDir()));
         }
-
 
         return completeOk(new ModulesPathProduct(moduleProducts));
     }

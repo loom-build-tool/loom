@@ -94,6 +94,7 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
             + "project=" + project
             + ", plugins=" + plugins
             + ", buildSettings=" + buildSettings
+            + ", settings=" + settings
             + ", moduleDependencies=" + moduleDependencies
             + ", dependencies=" + dependencies
             + ", testDependencies=" + testDependencies

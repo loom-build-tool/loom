@@ -28,16 +28,15 @@ public class ModuleJarDependencyTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
-
         final Set<String> moduleDependencies = buildConfig.getModuleDependencies();
 
         final List<ModuleJarProduct> moduleProducts = new ArrayList<>();
 
         for (final String moduleName : moduleDependencies) {
-            final AssemblyProduct compilation = globalProductRepository.requireProduct(moduleName, "jar", AssemblyProduct.class);
+            final AssemblyProduct compilation =
+                globalProductRepository.requireProduct(moduleName, "jar", AssemblyProduct.class);
             moduleProducts.add(new ModuleJarProduct(moduleName, compilation.getAssemblyFile()));
         }
-
 
         return completeOk(new ModulesJarProduct(moduleProducts));
     }

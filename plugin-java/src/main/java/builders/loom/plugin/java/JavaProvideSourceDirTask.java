@@ -47,7 +47,7 @@ public class JavaProvideSourceDirTask extends AbstractTask {
         }
 
         final List<Path> sourceFiles = Files.walk(srcPath())
-            .filter(f -> Files.isRegularFile(f))
+            .filter(Files::isRegularFile)
             .collect(Collectors.toList());
 
         final List<Path> illegalFiles = sourceFiles.stream()

@@ -16,6 +16,7 @@
 
 package builders.loom.plugin.java;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
@@ -46,14 +46,9 @@ import builders.loom.api.product.SourceTreeProduct;
 public class JavadocTask extends AbstractTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavadocTask.class);
-    private static final int MINIMUM_JAVA_VERSION = 9;
 
     @Override
     public TaskResult run() throws Exception {
-        if (JavaVersion.current().getNumericVersion() < MINIMUM_JAVA_VERSION) {
-            throw new IllegalStateException("JavadocTask currently supports only Java >= 9");
-        }
-
         final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
 
         if (!source.isPresent()) {
@@ -82,21 +77,21 @@ public class JavadocTask extends AbstractTask {
             fileManager.setLocation(StandardLocation.CLASS_PATH,
                 classpath.stream().map(Path::toFile).collect(Collectors.toList()));
 
-//            final List<File> srcFiles = source.get().getSourceFiles().stream()
-//                .map(Path::toFile)
-//                .collect(Collectors.toList());
-//
-//            final Iterable<? extends JavaFileObject> compUnits =
-//                fileManager.getJavaFileObjectsFromFiles(srcFiles);
-//
-//            LOG.info("Create Javadoc for {} files", srcFiles.size());
-//
-//            final DocumentationTool.DocumentationTask javaDocTask =
-//                docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
-//
-//            if (!javaDocTask.call()) {
-//                throw new IllegalStateException("JavaDoc compile failed");
-//            }
+            final List<File> srcFiles = source.get().getSourceFiles().stream()
+                .map(Path::toFile)
+                .collect(Collectors.toList());
+
+            final Iterable<? extends JavaFileObject> compUnits =
+                fileManager.getJavaFileObjectsFromFiles(srcFiles);
+
+            LOG.info("Create Javadoc for {} files", srcFiles.size());
+
+            final DocumentationTool.DocumentationTask javaDocTask =
+                docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
+
+            if (!javaDocTask.call()) {
+                throw new IllegalStateException("JavaDoc compile failed");
+            }
         }
 
         return completeOk(new ResourcesTreeProduct(dstDir));

@@ -62,7 +62,7 @@ public class SpringBootTask extends AbstractTask {
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
 
         final Path libDir = Files.createDirectories(
-        		buildDir.resolve(Paths.get("BOOT-INF", "lib")));
+            buildDir.resolve(Paths.get("BOOT-INF", "lib")));
 
         // copy resources
         final Optional<ProcessedResourceProduct> resourcesTreeProduct =
@@ -83,8 +83,11 @@ public class SpringBootTask extends AbstractTask {
         // copy dep modules
         final ModulesJarProduct moduleJarDependenciesProduct =
             requireProduct("moduleJarDependencies", ModulesJarProduct.class);
-        FileUtils.copyFiles(moduleJarDependenciesProduct.getModulesJarProducts().stream().map(ModuleJarProduct::getJarPath).collect(Collectors.toList()), libDir);
-        
+        FileUtils.copyFiles(moduleJarDependenciesProduct.getModulesJarProducts().stream()
+                .map(ModuleJarProduct::getJarPath)
+                .collect(Collectors.toList()),
+            libDir);
+
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
 

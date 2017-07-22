@@ -3,7 +3,7 @@ apply plugin: 'java'
 dependencies {
     compileOnly project(':api')
     compileOnly project(':util')
-	testCompile('junit:junit:4.12')
+    testCompile('junit:junit:4.12')
 }
 
 jar {

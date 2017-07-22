@@ -17,6 +17,7 @@
 package builders.loom.plugin;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 public class TaskInfo {
@@ -75,41 +76,21 @@ public class TaskInfo {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((pluginName == null) ? 0 : pluginName.hashCode());
-        return result;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TaskInfo taskInfo = (TaskInfo) o;
+        return Objects.equals(name, taskInfo.name)
+            && Objects.equals(pluginName, taskInfo.pluginName);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final TaskInfo other = (TaskInfo) obj;
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (pluginName == null) {
-            if (other.pluginName != null) {
-                return false;
-            }
-        } else if (!pluginName.equals(other.pluginName)) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        return Objects.hash(name, pluginName);
     }
 
 }

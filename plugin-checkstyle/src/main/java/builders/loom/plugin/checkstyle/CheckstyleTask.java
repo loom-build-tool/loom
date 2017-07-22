@@ -73,11 +73,11 @@ public class CheckstyleTask extends AbstractTask {
             return completeSkip();
         }
 
+        // Checkstyle doesn't support module-info.java, so skip it
         final List<File> files = sourceTree.get().getSourceFiles().stream()
             .map(Path::toFile)
             .filter(f -> !f.getName().equals("module-info.java"))
             .collect(Collectors.toList());
-
 
         final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "checkstyle")
             .resolve(compileTarget.name().toLowerCase());

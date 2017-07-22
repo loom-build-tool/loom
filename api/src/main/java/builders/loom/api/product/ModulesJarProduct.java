@@ -29,6 +29,7 @@ public final class ModulesJarProduct extends AbstractProduct {
     }
 
     public List<ModuleJarProduct> getModulesJarProducts() {
-		return modulesJarProducts;
-	}
+        return modulesJarProducts;
+    }
+
 }

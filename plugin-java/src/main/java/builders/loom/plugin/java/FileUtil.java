@@ -100,6 +100,7 @@ public final class FileUtil {
                                          final BasicFileAttributes attrs)
             throws IOException {
 
+            // module-info.class was copied separately
             if (file.getFileName().toString().equals("module-info.class")) {
                 return FileVisitResult.CONTINUE;
             }

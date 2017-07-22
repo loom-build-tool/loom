@@ -49,4 +49,10 @@ public class GlobalProductRepository {
         return Collections.unmodifiableSet(moduleProductRepositories.keySet().stream().map(Module::getModuleName).collect(Collectors.toSet()));
     }
 
+    public Optional<Module> getModule(final String moduleName) {
+        return moduleProductRepositories.keySet().stream()
+            .filter(module -> module.getModuleName().equals(moduleName))
+            .findFirst();
+    }
+
 }

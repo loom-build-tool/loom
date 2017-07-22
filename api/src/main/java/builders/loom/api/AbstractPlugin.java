@@ -112,6 +112,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
         private Set<String> importedProducts = Collections.emptySet();
+        private Set<String> importedAllProducts = Collections.emptySet();
         private String description;
 
         public TaskBuilder(final String taskName) {
@@ -138,9 +139,14 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
-        public TaskBuilder importFromModules(String... products) {
-        		importedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
-        		return this;
+        public TaskBuilder importFromModules(final String... products) {
+            importedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return this;
+        }
+
+        public TaskBuilder importFromAllModules(final String... products) {
+            importedAllProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return this;
         }
 
         public TaskBuilder desc(final String taskDescription) {
@@ -150,9 +156,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, importedProducts, description);
+                intermediateProduct, usedProducts, importedProducts, importedAllProducts, description);
         }
-
 
     }
 

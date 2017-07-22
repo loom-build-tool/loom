@@ -16,193 +16,272 @@
 
 package builders.loom.plugin.idea;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.BuildConfig;
+import builders.loom.api.GlobalProductRepository;
+import builders.loom.api.JavaVersion;
+import builders.loom.api.LoomPaths;
+import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
+import builders.loom.util.xml.XmlBuilder;
+import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class IdeaTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
-    private final DocumentBuilder docBuilder;
-    private final Transformer transformer;
+    private final XmlWriter xmlWriter = new XmlWriter();
+    private GlobalProductRepository globalProductRepository;
 
     public IdeaTask(final BuildConfig buildConfig) {
         this.buildConfig = buildConfig;
-
-        try {
-            final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            docBuilder = dbFactory.newDocumentBuilder();
-
-            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "yes");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-        } catch (final ParserConfigurationException | TransformerConfigurationException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
-    private static InputStream readResource(final String resourceName) {
-        return new BufferedInputStream(IdeaTask.class.getResourceAsStream(resourceName));
+    @Override
+    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
+        this.globalProductRepository = globalProductRepository;
     }
 
     @Override
     public TaskResult run() throws Exception {
-        final Path currentDir = Paths.get("");
-
-        final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
+        final Path currentWorkDirName = LoomPaths.PROJECT_DIR.getFileName();
 
         if (currentWorkDirName == null) {
             throw new IllegalStateException("Can't get current working directory");
         }
 
-        final Path ideaDirectory = Files.createDirectories(currentDir.resolve(".idea"));
+        final Path ideaDirectory = Files.createDirectories(LoomPaths.PROJECT_DIR.resolve(".idea"));
 
-        createEncodingsFile(ideaDirectory.resolve("encodings.xml"));
-        writeDocumentToFile(ideaDirectory.resolve("misc.xml"), createMiscFile());
+        xmlWriter.write(createEncodingsFile(), ideaDirectory.resolve("encodings.xml"));
+        xmlWriter.write(createMiscFile(), ideaDirectory.resolve("misc.xml"));
 
-        final String imlFilename = currentWorkDirName.toString() + ".iml";
-        writeDocumentToFile(currentDir.resolve(imlFilename), createImlFile());
-        writeDocumentToFile(ideaDirectory.resolve("modules.xml"), createModulesFile(imlFilename));
+        final List<IdeaModule> ideaModules = buildIdeaModules(currentWorkDirName, ideaDirectory);
+        xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
         return completeOk(new DummyProduct("Idea project files"));
     }
 
-    private void createEncodingsFile(final Path encodingsFile) throws IOException {
-        try (final InputStream resourceAsStream = readResource("/encodings.xml")) {
-            Files.copy(resourceAsStream, encodingsFile, StandardCopyOption.REPLACE_EXISTING);
+    private List<IdeaModule> buildIdeaModules(final Path currentWorkDirName, final Path ideaDirectory) throws InterruptedException, IOException {
+        final List<IdeaModule> ideaModules = new ArrayList<>();
+        for (final String moduleName : globalProductRepository.getAllModuleNames()) {
+
+//            if (moduleName.equals("unnamed")) {
+//                continue;
+//            }
+
+            final Module module = globalProductRepository.getModule(moduleName).get();
+
+            if (moduleName.equals("unnamed")) {
+                final Path imlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
+                final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
+                xmlWriter.write(createImlFile(imlFile, module, ModuleGroup.BASE), imlFile);
+                ideaModules.add(new IdeaModule(module.getModuleName(), null, imlFileName));
+            } else {
+                for (final ModuleGroup group : ModuleGroup.values()) {
+
+                    final Path ideaModulesDir = Files.createDirectories(ideaDirectory.resolve(Paths.get("modules", moduleName)));
+
+                    final Path imlFile = ideaModulesDir.resolve(buildImlFilename(module, group));
+                    final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
+                    xmlWriter.write(createImlFile(imlFile, module, group), imlFile);
+                    ideaModules.add(new IdeaModule(module.getModuleName(), group, imlFileName));
+                }
+            }
+
         }
+        return ideaModules;
+    }
+
+    private String buildImlFilename(final Module module, final ModuleGroup group) {
+        final StringBuilder filenameSb = new StringBuilder(module.getModuleName());
+        if (group != ModuleGroup.BASE) {
+            filenameSb.append('_');
+            filenameSb.append(group.name().toLowerCase());
+        }
+        filenameSb.append(".iml");
+        return filenameSb.toString();
+    }
+
+    private Document createEncodingsFile() {
+        return XmlBuilder
+            .root("project").attr("version", "4")
+            .element("component").attr("name", "Encoding")
+            .element("file")
+                .attr("url", "PROJECT")
+                .attr("charset", "UTF-8")
+            .getDocument();
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createMiscFile() throws IOException, SAXException {
-        try (final InputStream resourceAsStream = readResource("/misc-template.xml")) {
-            final Document doc = docBuilder.parse(resourceAsStream);
-            final Element component = getOnlyElementByTagName(doc, "component");
+    private Document createMiscFile() {
+        final JavaVersion javaVersion = buildConfig.getBuildSettings().getJavaPlatformVersion();
 
-            final String languageLevel;
-            final String projectJdkName;
-            final int javaPlatformVersion = buildConfig.getBuildSettings().getJavaPlatformVersion()
-                .getNumericVersion();
+        return XmlBuilder
+            .root("project").attr("version", "4")
+            .element("component")
+                .attr("name", "ProjectRootManager")
+                .attr("version", "2")
+                .attr("languageLevel", buildLanguageLevel(javaVersion))
+                .attr("default", "false") // TODO gradle == false || intellij setup == true !?!?
+                .attr("project-jdk-name", buildProjectJdkName(javaVersion))
+                .attr("project-jdk-type", "JavaSDK")
+            .element("output").attr("url", "file://$PROJECT_DIR$/out")
+            .getDocument();
+    }
 
-            languageLevel = "JDK_1_" + javaPlatformVersion;
-            if (javaPlatformVersion < 9) {
-                projectJdkName = "1." + javaPlatformVersion;
-            } else {
-                projectJdkName = String.valueOf(javaPlatformVersion);
+    private static String buildLanguageLevel(final JavaVersion javaVersion) {
+        return "JDK_1_" + javaVersion.getNumericVersion();
+    }
+
+    private static String buildProjectJdkName(final JavaVersion javaVersion) {
+        final int numericVersion = javaVersion.getNumericVersion();
+        return (numericVersion < 9) ? "1." + numericVersion : String.valueOf(numericVersion);
+    }
+
+    private Document createModulesFile(final List<IdeaModule> ideaModules) {
+        final XmlBuilder.Element element = XmlBuilder
+            .root("project").attr("version", "4")
+            .element("component").attr("name", "ProjectModuleManager")
+            .element("modules");
+
+        for (final IdeaModule ideaModule : ideaModules) {
+            final XmlBuilder.Element module = element
+                .element("module")
+                .attr("fileurl", "file://$PROJECT_DIR$/" + ideaModule.getFilename())
+                .attr("filepath", "$PROJECT_DIR$/" + ideaModule.getFilename());
+
+            if (ideaModule.getGroup() != null) {
+                module.attr("group", ideaModule.getModuleName());
             }
+        }
 
-            component.setAttribute("languageLevel", languageLevel);
-            component.setAttribute("project-jdk-name", projectJdkName);
+        return element.getDocument();
+    }
 
-            return doc;
+    private Document createImlFile(final Path imlFile, final Module module, final ModuleGroup group) throws InterruptedException {
+        final XmlBuilder.Element moduleE = XmlBuilder.root("module")
+            .attr("type", "JAVA_MODULE")
+            .attr("version", "4");
+
+        final XmlBuilder.Element component = moduleE
+            .element("component").attr("name", "NewModuleRootManager");
+
+        component.element("exclude-output");
+
+        final Path relativeModulePath = imlFile.getParent().relativize(module.getPath());
+        String relativeModuleDir = "file://$MODULE_DIR$/" + relativeModulePath;
+        if (relativeModuleDir.endsWith("/")) {
+            relativeModuleDir = relativeModuleDir.substring(0, relativeModuleDir.length() - 1);
+        }
+
+        if (group == ModuleGroup.MAIN) {
+            buildMainComponent(module, component, relativeModuleDir);
+        } else if (group == ModuleGroup.TEST) {
+            buildTestComponent(module, component, relativeModuleDir);
+        } else {
+            buildRootComponent(component, relativeModuleDir);
+        }
+
+        component.element("orderEntry")
+            .attr("type", "inheritedJdk");
+
+        component.element("orderEntry")
+            .attr("type", "sourceFolder")
+            .attr("forTests", "false");
+
+        return moduleE.getDocument();
+    }
+
+    private void buildMainComponent(final Module module, final XmlBuilder.Element component, final String relativeModuleDir) throws InterruptedException {
+        component.attr("LANGUAGE_LEVEL", buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
+
+        component.element("output")
+            .attr("url", relativeModuleDir + "/out/production/classes");
+
+        // add compile artifacts
+        final Optional<ArtifactListProduct> compileArtifacts =
+            globalProductRepository.useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class);
+        compileArtifacts
+            .map(ArtifactListProduct::getArtifacts)
+            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
+
+        final String srcRoot = relativeModuleDir + "/src/main";
+        final XmlBuilder.Element content = component.element("content")
+            .attr("url", srcRoot);
+
+        content.element("sourceFolder")
+            .attr("url", srcRoot + "/java")
+            .attr("isTestSource", "false");
+
+        content.element("sourceFolder")
+            .attr("url", srcRoot + "/resources")
+            .attr("type", "java-resource");
+
+        for (final String depModule : module.getConfig().getModuleDependencies()) {
+            component.element("orderEntry")
+                .attr("type", "module")
+                .attr("module-name", depModule + "_main")
+                .attr("scope", depModule + "PROVIDED");
         }
     }
 
-    private Element getOnlyElementByTagName(final Document doc, final String tagName) {
-        final NodeList nodeList = doc.getElementsByTagName(tagName);
-        if (nodeList.getLength() != 1) {
-            throw new IllegalStateException("Expected NodeList length: 1, but was "
-                + nodeList.getLength());
-        }
-        final Node item = nodeList.item(0);
+    private void buildTestComponent(final Module module, final XmlBuilder.Element component, final String relativeModuleDir) throws InterruptedException {
+        component.attr("LANGUAGE_LEVEL", buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
 
-        if (!(item instanceof Element)) {
-            throw new IllegalStateException("Item is not of type Element: " + item);
-        }
+        component.element("output-test")
+            .attr("url", relativeModuleDir + "/out/test/classes");
 
-        return (Element) item;
+        // add test artifacts
+        final Optional<ArtifactListProduct> testArtifacts =
+            globalProductRepository.useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class);
+        testArtifacts
+            .map(ArtifactListProduct::getArtifacts)
+            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
+
+        final String srcRoot = relativeModuleDir + "/src/test";
+        final XmlBuilder.Element content = component.element("content")
+            .attr("url", srcRoot);
+
+        content.element("sourceFolder")
+            .attr("url", srcRoot + "/java")
+            .attr("isTestSource", "true");
+
+        content.element("sourceFolder")
+            .attr("url", srcRoot + "/resources")
+            .attr("type", "java-test-resource");
+
+        component.element("orderEntry")
+            .attr("type", "module")
+            .attr("module-name", module.getModuleName() + "_main");
+
+        // TODO in module: <component name="TestModuleProperties" production-module="plugin-springboot_main" />
     }
 
-    private void writeDocumentToFile(final Path file, final Document doc)
-        throws IOException, TransformerException {
+    private void buildRootComponent(final XmlBuilder.Element component, final String relativeModuleDir) {
+        component.attr("inherit-compiler-output", "true");
 
-        try (final OutputStream outputStream = newOut(file)) {
-            doc.setXmlStandalone(true);
+        final XmlBuilder.Element content = component.element("content")
+            .attr("url", relativeModuleDir);
 
-            transformer.transform(new DOMSource(doc), new StreamResult(outputStream));
-        }
+        content.element("excludeFolder").attr("url", relativeModuleDir + "/.loom");
+        content.element("excludeFolder").attr("url", relativeModuleDir + "/loombuild");
+        content.element("excludeFolder").attr("url", relativeModuleDir + "/out");
     }
 
-    private OutputStream newOut(final Path file) throws IOException {
-        return new BufferedOutputStream(Files.newOutputStream(file,
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-    }
-
-    private Document createModulesFile(final String imlFilename)
-        throws IOException, SAXException {
-        try (final InputStream resourceAsStream = readResource("/modules-template.xml")) {
-            final Document doc = docBuilder.parse(resourceAsStream);
-            final Element modules = getOnlyElementByTagName(doc, "modules");
-
-            final Element module = doc.createElement("module");
-            module.setAttribute("fileurl", "file://$PROJECT_DIR$/" + imlFilename);
-            module.setAttribute("filepath", "$PROJECT_DIR$/" + imlFilename);
-            modules.appendChild(module);
-
-            return doc;
-        }
-    }
-
-    private Document createImlFile() throws IOException, InterruptedException, SAXException {
-        try (final InputStream resourceAsStream = readResource("/iml-template.xml")) {
-            final Document doc = docBuilder.parse(resourceAsStream);
-            final Element component = getOnlyElementByTagName(doc, "component");
-
-            // add compile artifacts
-            final Optional<ArtifactListProduct> compileArtifacts =
-                useProduct("compileArtifacts", ArtifactListProduct.class);
-            compileArtifacts
-                .map(ArtifactListProduct::getArtifacts)
-                .ifPresent(artifacts -> buildOrderEntries(doc, component, artifacts, "COMPILE"));
-
-            // add test artifacts
-            final Optional<ArtifactListProduct> testArtifacts =
-                useProduct("testArtifacts", ArtifactListProduct.class);
-            testArtifacts
-                .map(ArtifactListProduct::getArtifacts)
-                .ifPresent(artifacts -> buildOrderEntries(doc, component, artifacts, "TEST"));
-
-            return doc;
-        }
-    }
-
-    private void buildOrderEntries(final Document doc, final Node component,
+    private void buildOrderEntries(final XmlBuilder.Element component,
                                    final List<ArtifactProduct> mainArtifacts, final String scope) {
         for (final ArtifactProduct artifact : mainArtifacts) {
             final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
@@ -210,35 +289,30 @@ public class IdeaTask extends AbstractTask {
             final String sourceJar = sourceArtifact != null
                 ? sourceArtifact.toAbsolutePath().toString() : null;
 
-            component.appendChild(buildOrderEntry(doc, scope, mainJar, sourceJar));
+            buildOrderEntry(component.element("orderEntry"), scope, mainJar, sourceJar);
         }
     }
 
-    private Element buildOrderEntry(final Document doc, final String scope,
-                                    final String jar, final String sourceJar) {
-        final Element orderEntry = doc.createElement("orderEntry");
-        orderEntry.setAttribute("type", "module-library");
+    private void buildOrderEntry(final XmlBuilder.Element orderEntry,
+                                 final String scope, final String jar, final String sourceJar) {
+
+        orderEntry.attr("type", "module-library");
         if (scope != null) {
-            orderEntry.setAttribute("scope", scope);
+            orderEntry.attr("scope", scope);
         }
 
-        final Element library = doc.createElement("library");
-        library.appendChild(buildJarElement(doc, "CLASSES", jar));
-        library.appendChild(buildJarElement(doc, "SOURCES", sourceJar));
-        library.appendChild(buildJarElement(doc, "JAVADOC", null));
-        orderEntry.appendChild(library);
-
-        return orderEntry;
+        final XmlBuilder.Element library = orderEntry.element("library");
+        appendJarElement(library, "CLASSES", jar);
+        appendJarElement(library, "SOURCES", sourceJar);
+        appendJarElement(library, "JAVADOC", null);
     }
 
-    private Element buildJarElement(final Document doc, final String name, final String jar) {
-        final Element classes = doc.createElement(name);
+    private void appendJarElement(final XmlBuilder.Element library, final String name, final String jar) {
+        final XmlBuilder.Element libHolder = library.element(name);
         if (jar != null) {
-            final Element root = doc.createElement("root");
-            root.setAttribute("url", String.format("jar://%s!/", jar));
-            classes.appendChild(root);
+            libHolder.element("root")
+                .attr("url", String.format("jar://%s!/", jar));
         }
-        return classes;
     }
 
 }

@@ -70,7 +70,9 @@ public class PluginLoader {
         entry("checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin"),
         entry("findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin"),
         entry("pmd", "builders.loom.plugin.pmd.PmdPlugin"),
-        entry("springboot", "builders.loom.plugin.springboot.SpringBootPlugin")
+        entry("springboot", "builders.loom.plugin.springboot.SpringBootPlugin"),
+        entry("idea", "builders.loom.plugin.idea.IdeaPlugin"),
+        entry("eclipse", "builders.loom.plugin.eclipse.EclipsePlugin")
     );
 
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();

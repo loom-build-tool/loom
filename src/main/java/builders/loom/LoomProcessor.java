@@ -48,8 +48,6 @@ import builders.loom.api.product.Product;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginLoader;
-import builders.loom.plugin.ServiceLocatorImpl;
-import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.FileUtils;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -65,11 +63,11 @@ public class LoomProcessor {
                      final RuntimeConfigurationImpl runtimeConfiguration) {
 
         // Init Global Plugins
-        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
-        final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
+//        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
+//        final TaskRegistryImpl taskRegistry = new TaskRegistryImpl();
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
-        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry, serviceLocator);
+//        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry, serviceLocator);
 
         // Init Modules / Plugins for Modules
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
@@ -80,19 +78,21 @@ public class LoomProcessor {
     }
 
     public List<Module> listModules(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
-
         checkForInconsistentSrcModuleStruct();
 
         final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
 
+        final List<Module> modules = new ArrayList<>();
+        modules.add(singleModule(buildConfig, runtimeConfiguration));
+
         if (Files.isDirectory(modulesPath)) {
-            return scanForModules(runtimeConfiguration);
+            modules.addAll(scanForModules(runtimeConfiguration));
         }
 
-        return singleModule(buildConfig, runtimeConfiguration);
+        return modules;
     }
 
-    private List<Module> singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
+    private Module singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
 
 	    	final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
@@ -102,7 +102,7 @@ public class LoomProcessor {
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
         		.orElse("unnamed");
 
-        return List.of(new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, buildConfig));
+        return new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, buildConfig);
 	}
 
 	public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {

@@ -47,6 +47,17 @@ public class ModuleRunner {
     }
 
     public void init() {
+//
+//        final Module baseModule = new Module("", "base", LoomPaths.PROJECT_DIR, buildConfig);
+//
+//        final TaskRegistryImpl taskRegistry1 = new TaskRegistryImpl();
+//        final ServiceLocatorImpl serviceLocator1 = new ServiceLocatorImpl();
+//        pluginLoader.initPlugins(buildConfig.getPlugins(), buildConfig, taskRegistry1, serviceLocator1);
+//        moduleTaskRegistries.put(baseModule, taskRegistry1);
+//        moduleServiceLocators.put(baseModule, serviceLocator1);
+//        moduleProductRepositories.put(baseModule, new ProductRepositoryImpl());
+//
+
         final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
 
         for (final Module module : moduleRegistry.getModules()) {
@@ -126,6 +137,16 @@ public class ModuleRunner {
     							);
     				}
     			}
+
+
+                for (final String productId : configuredTask.getImportedAllProducts()) {
+                    for(final Module depModule : moduleTaskRegistries.keySet()) {
+                        diGraph.addEdge(
+                            diGraph.nodes().stream().filter(cmt -> cmt.getConfiguredTask() == configuredTask).findFirst().get(),
+                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getConfiguredTask().getProvidedProduct().equals(productId)).findFirst().get()
+                        );
+                    }
+                }
 
     		}
 

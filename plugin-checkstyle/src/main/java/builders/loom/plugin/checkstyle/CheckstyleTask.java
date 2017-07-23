@@ -38,7 +38,6 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
@@ -48,21 +47,13 @@ import builders.loom.api.product.SourceTreeProduct;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractTask {
 
-    private final CompileTarget compileTarget;
-
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
-    private final Path reportPath;
 
-    public CheckstyleTask(final CompileTarget compileTarget,
-                          final CheckstylePluginSettings pluginSettings,
+    public CheckstyleTask(final CheckstylePluginSettings pluginSettings,
                           final Path cacheDir) {
-        this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
-
-        reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle",
-            compileTarget.name().toLowerCase()));
 
         if (pluginSettings.getConfigLocation() == null) {
             throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
@@ -71,7 +62,7 @@ public class CheckstyleTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> sourceTree = getSourceTree();
+        final Optional<SourceTreeProduct> sourceTree = getSourceTree(getSourceTreeProductName());
 
         if (!sourceTree.isPresent()) {
             return completeSkip();
@@ -87,7 +78,7 @@ public class CheckstyleTask extends AbstractTask {
             final LoggingAuditListener listener = new LoggingAuditListener();
             checker.addListener(listener);
 
-            Files.createDirectories(reportPath);
+            final Path reportPath = Files.createDirectories(reportPath());
             final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
                 .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
             checker.addListener(xmlLogger);
@@ -95,7 +86,7 @@ public class CheckstyleTask extends AbstractTask {
             final int errors = checker.process(files);
 
             if (errors == 0) {
-                return completeOk(product());
+                return completeOk(product(reportPath()));
             }
         } finally {
             checker.destroy();
@@ -104,26 +95,25 @@ public class CheckstyleTask extends AbstractTask {
         throw new IllegalStateException("Checkstyle reported errors!");
     }
 
-    private ReportProduct product() {
-        switch (compileTarget) {
-            case MAIN:
-                return new ReportProduct(reportPath, "Checkstyle main report");
-            case TEST:
-                return new ReportProduct(reportPath, "Checkstyle test report");
-            default:
-                throw new IllegalStateException();
-        }
+    protected String getSourceTreeProductName() {
+        return "source";
     }
 
-    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("source", SourceTreeProduct.class);
-            case TEST:
-                return useProduct("testSource", SourceTreeProduct.class);
-            default:
-                throw new IllegalStateException();
-        }
+    private Optional<SourceTreeProduct> getSourceTree(final String sourceTreeProductName)
+        throws InterruptedException {
+        return useProduct(sourceTreeProductName, SourceTreeProduct.class);
+    }
+
+    private Path reportPath() {
+        return LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle", targetName()));
+    }
+
+    protected String targetName() {
+        return "main";
+    }
+
+    protected ReportProduct product(final Path reportBaseDir) {
+        return new ReportProduct(reportBaseDir, "Checkstyle main report");
     }
 
     private RootModule createRootModule() throws InterruptedException {
@@ -142,7 +132,7 @@ public class CheckstyleTask extends AbstractTask {
             rootModule.setModuleClassLoader(moduleClassLoader);
 
             if (rootModule instanceof Checker) {
-                final Optional<ClasspathProduct> classpathProduct = buildClassLoader();
+                final Optional<ClasspathProduct> classpathProduct = dependencies();
                 classpathProduct
                     .map(ClasspathProduct::getEntriesAsUrlArray)
                     .map(URLClassLoader::new)
@@ -165,8 +155,7 @@ public class CheckstyleTask extends AbstractTask {
         final Path checkstyleConfigDir =
             baseDir.resolve(Paths.get("config", "checkstyle"));
 
-        properties.setProperty("cacheFile", cacheDir.resolve(compileTarget.name().toLowerCase()
-             + ".cache").toString());
+        properties.setProperty("cacheFile", cacheFile());
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties
@@ -178,15 +167,16 @@ public class CheckstyleTask extends AbstractTask {
         return properties;
     }
 
-    private Optional<ClasspathProduct> buildClassLoader() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("compileDependencies", ClasspathProduct.class);
-            case TEST:
-                return useProduct("testDependencies", ClasspathProduct.class);
-            default:
-                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
-        }
+    private String cacheFile() {
+        return cacheDir.resolve(targetName() + ".cache").toString();
+    }
+
+    private Optional<ClasspathProduct> dependencies() throws InterruptedException {
+        return useProduct(classPathProductName(), ClasspathProduct.class);
+    }
+
+    protected String classPathProductName() {
+        return "compileDependencies";
     }
 
 }

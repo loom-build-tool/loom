@@ -30,4 +30,11 @@ public final class ResourcesTreeProduct extends AbstractProduct {
         return srcDir;
     }
 
+    @Override
+    public String toString() {
+        return "ResourcesTreeProduct{"
+            + "srcDir=" + srcDir
+            + '}';
+    }
+
 }

@@ -44,4 +44,12 @@ public class ReportProduct extends AbstractProduct {
         return Optional.of(outputInfo + ": " + LoomPaths.relativize(reportBaseDir));
     }
 
+    @Override
+    public String toString() {
+        return "ReportProduct{"
+            + "reportBaseDir=" + reportBaseDir
+            + ", outputInfo='" + outputInfo + '\''
+            + '}';
+    }
+
 }

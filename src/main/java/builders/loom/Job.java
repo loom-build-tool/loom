@@ -95,7 +95,7 @@ public class Job implements Callable<TaskStatus> {
             Stopwatches.stopProcess();
         }
 
-        LOG.info("Task {} resulted with {}", name, taskResult);
+        LOG.info("Task resulted with {}", taskResult);
 
         if (taskResult == null) {
             throw new IllegalStateException("Task <" + name + "> must not return null");

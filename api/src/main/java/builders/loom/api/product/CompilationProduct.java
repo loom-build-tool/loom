@@ -30,4 +30,11 @@ public final class CompilationProduct extends AbstractProduct {
         return classesDir;
     }
 
+    @Override
+    public String toString() {
+        return "CompilationProduct{"
+            + "classesDir=" + classesDir
+            + '}';
+    }
+
 }

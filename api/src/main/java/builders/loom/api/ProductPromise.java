@@ -59,6 +59,10 @@ public final class ProductPromise {
         return waitAndGet(promise);
     }
 
+    public Optional<Product> getWithoutWait() {
+        return promise.getNow(Optional.empty());
+    }
+
     private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
         throws InterruptedException {
 
@@ -67,7 +71,7 @@ public final class ProductPromise {
         try {
             final Optional<Product> product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
 
-            LOG.debug("Return product <{}> with value: {}", productId, product);
+            LOG.debug("Return product <{}> with value: {}", productId, product.orElse(null));
 
             return product;
         } catch (final ExecutionException e) {

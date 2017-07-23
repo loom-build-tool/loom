@@ -35,4 +35,11 @@ public final class ArtifactListProduct extends AbstractProduct {
         return artifacts;
     }
 
+    @Override
+    public String toString() {
+        return "ArtifactListProduct{"
+            + "artifacts=" + artifacts +
+            '}';
+    }
+
 }

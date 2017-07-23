@@ -32,4 +32,11 @@ public final class ModulesPathProduct extends AbstractProduct {
         return modulesPathProducts;
     }
 
+    @Override
+    public String toString() {
+        return "ModulesPathProduct{"
+            + "modulesPathProducts=" + modulesPathProducts
+            + '}';
+    }
+
 }

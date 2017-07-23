@@ -36,7 +36,9 @@ public final class DummyProduct extends AbstractProduct {
 
     @Override
     public String toString() {
-        return text;
+        return "DummyProduct{"
+            + "text='" + text + '\''
+            + '}';
     }
 
 }

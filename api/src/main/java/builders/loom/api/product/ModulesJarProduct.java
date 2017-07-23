@@ -32,4 +32,11 @@ public final class ModulesJarProduct extends AbstractProduct {
         return modulesJarProducts;
     }
 
+    @Override
+    public String toString() {
+        return "ModulesJarProduct{"
+            + "modulesJarProducts=" + modulesJarProducts
+            + '}';
+    }
+
 }

@@ -66,7 +66,9 @@ public final class ClasspathProduct extends AbstractProduct {
 
     @Override
     public String toString() {
-        return entries.toString();
+        return "ClasspathProduct{"
+            + "entries=" + entries
+            + '}';
     }
 
 }

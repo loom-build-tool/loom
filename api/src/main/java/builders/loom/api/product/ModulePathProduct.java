@@ -20,4 +20,12 @@ public class ModulePathProduct {
         return modulePath;
     }
 
+    @Override
+    public String toString() {
+        return "ModulePathProduct{"
+            + "moduleName='" + moduleName + '\''
+            + ", modulePath=" + modulePath
+            + '}';
+    }
+
 }

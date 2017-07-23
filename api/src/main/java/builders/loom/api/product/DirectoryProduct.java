@@ -48,4 +48,12 @@ public final class DirectoryProduct extends AbstractProduct {
         return Optional.of(outputInfo + ": " + dir);
     }
 
+    @Override
+    public String toString() {
+        return "DirectoryProduct{"
+            + "dir=" + dir
+            + ", outputInfo='" + outputInfo + '\''
+            + '}';
+    }
+
 }

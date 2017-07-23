@@ -42,4 +42,12 @@ public final class SourceTreeProduct extends AbstractProduct {
         return sourceFiles;
     }
 
+    @Override
+    public String toString() {
+        return "SourceTreeProduct{"
+            + "srcDir=" + srcDir
+            + ", sourceFiles=" + sourceFiles
+            + '}';
+    }
+
 }

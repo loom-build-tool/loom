@@ -19,5 +19,13 @@ public class ModuleJarProduct {
     public Path getJarPath() {
 		return jarPath;
 	}
-    
+
+    @Override
+    public String toString() {
+        return "ModuleJarProduct{"
+            + "moduleName='" + moduleName + '\''
+            + ", jarPath=" + jarPath
+            + '}';
+    }
+
 }

@@ -237,7 +237,7 @@ public class LoomProcessor {
 
             final Optional<Product> product = moduleRunner
                 .lookupProduct(configuredTask.getModule(), productId)
-                .getAndWaitForProduct();
+                .getWithoutWait();
 
             if (product.isPresent() && product.get().outputInfo().isPresent()) {
                 final String outputInfo = product.get().outputInfo().get();

@@ -63,10 +63,6 @@ public class CheckstyleTask extends AbstractTask {
 
         reportPath = LoomPaths.REPORT_PATH.resolve(Paths.get("checkstyle",
             compileTarget.name().toLowerCase()));
-
-        if (pluginSettings.getConfigLocation() == null) {
-            throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
-        }
     }
 
     @Override

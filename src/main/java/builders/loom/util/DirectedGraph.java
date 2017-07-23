@@ -17,6 +17,7 @@
 package builders.loom.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -24,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class DirectedGraph<T> {
@@ -35,10 +37,6 @@ public class DirectedGraph<T> {
 
     public DirectedGraph(final Set<T> nodes) {
         nodes.forEach(this::addNode);
-    }
-
-    public Set<T> nodes() {
-        return Collections.unmodifiableSet(vertices.keySet());
     }
 
     public void addNode(final T node) {
@@ -61,6 +59,10 @@ public class DirectedGraph<T> {
         startVertex.addOutgoing(destVertex);
     }
 
+    public void addEdges(final T start, final Collection<T> dests) {
+        dests.forEach(dest -> addEdge(start, dest));
+    }
+
     public List<T> resolve(final T dest) {
         return resolve(Collections.singletonList(dest));
     }
@@ -78,6 +80,15 @@ public class DirectedGraph<T> {
             collect.add(destVertex);
         }
         return collect.stream().map(Vertex::getValue).collect(Collectors.toList());
+    }
+
+    public List<T> resolve(final Predicate<T> predicated) {
+        final List<T> requested = vertices.values().stream()
+            .map(Vertex::getValue)
+            .filter(predicated)
+            .collect(Collectors.toList());
+
+        return resolve(requested);
     }
 
     private void doCollect(final Set<Vertex<T>> collect, final List<Vertex<T>> destinations) {

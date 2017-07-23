@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
@@ -33,18 +32,14 @@ public class ModuleRunner {
 
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
-    private final BuildConfigWithSettings buildConfig;
-    private final RuntimeConfigurationImpl runtimeConfiguration;
     private final Map<Module, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<Module, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
     private final Map<Module, ProductRepository> moduleProductRepositories = new HashMap<>();
     private GlobalProductRepository globalProductRepository;
 
-    public ModuleRunner(final PluginLoader pluginLoader, final ModuleRegistry moduleRegistry, final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
+    public ModuleRunner(final PluginLoader pluginLoader, final ModuleRegistry moduleRegistry) {
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
-        this.buildConfig = buildConfig;
-        this.runtimeConfiguration = runtimeConfiguration;
     }
 
     public void init() {
@@ -60,7 +55,8 @@ public class ModuleRunner {
 
             final Set<String> pluginsToInitialize = new HashSet<>(defaultPlugins);
             pluginsToInitialize.addAll(module.getConfig().getPlugins());
-            pluginLoader.initPlugins(pluginsToInitialize, module.getConfig(), taskRegistry, serviceLocator);
+            pluginLoader.initPlugins(pluginsToInitialize, module.getConfig(), taskRegistry,
+                serviceLocator);
 
             moduleTaskRegistries.put(module, taskRegistry);
             moduleServiceLocators.put(module, serviceLocator);
@@ -72,76 +68,16 @@ public class ModuleRunner {
         LOG.debug("Initialized all plugins in {} ms", sw.duration());
     }
 
-    public List<ConfiguredTask> execute(final Set<String> productIds) throws BuildException, InterruptedException {
-        final Stopwatch sw = new Stopwatch();
+    public List<ConfiguredTask> execute(final Set<String> productIds)
+        throws BuildException, InterruptedException {
 
-        final Set<ConfiguredTask> allConfiguredTasks = moduleTaskRegistries.values().stream()
-            .flatMap(task -> task.configuredTasks().stream())
-            .collect(Collectors.toSet());
-
-        // Validate requested products
-        for (final String productId : productIds) {
-            if (allConfiguredTasks.stream().noneMatch(ct ->
-                ct.getProvidedProduct().equals(productId))) {
-                throw new IllegalStateException("Unknown product: " + productId);
-            }
-        }
-
-        // Initialize directed graph with all available ConfiguredTask instances
-        final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>(allConfiguredTasks);
-
-        for (final Module module : moduleRegistry.getModules()) {
-            final Collection<ConfiguredTask> configuredTasks = moduleTaskRegistries.get(module).configuredTasks();
-
-            for (final ConfiguredTask configuredTask : configuredTasks) {
-                for (final String productId : configuredTask.getUsedProducts()) {
-                    diGraph.addEdge(
-                        diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
-                        diGraph.nodes().stream().filter(cmt -> cmt.getModule() == module && cmt.getProvidedProduct().equals(productId)).findFirst().get()
-                    );
-                }
-
-                for (final String productId : configuredTask.getImportedProducts()) {
-                    for (final String depModuleName : module.getConfig().getModuleDependencies()) {
-                        final Module depModule = diGraph.nodes().stream()
-                            .map(cmt -> cmt.getModule())
-                            .filter(m -> m.getModuleName().equals(depModuleName)).findFirst()
-                            .orElseThrow(() -> new IllegalStateException("Dependent module " + depModuleName + " not found"));
-
-                        diGraph.addEdge(
-                            diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
-                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getProvidedProduct().equals(productId)).findFirst().get()
-                        );
-                    }
-                }
-
-
-                for (final String productId : configuredTask.getImportedAllProducts()) {
-                    for (final Module depModule : moduleTaskRegistries.keySet()) {
-                        diGraph.addEdge(
-                            diGraph.nodes().stream().filter(cmt -> cmt == configuredTask).findFirst().get(),
-                            diGraph.nodes().stream().filter(cmt -> cmt.getModule() == depModule && cmt.getProvidedProduct().equals(productId)).findFirst().get()
-                        );
-                    }
-                }
-
-            }
-
-        }
-
-        final List<ConfiguredTask> explicitlyRequestedTasks = productIds.stream()
-            .flatMap(p -> diGraph.nodes().stream().filter(cmt -> cmt.getProvidedProduct().equals(p)))
-            .collect(Collectors.toList());
-
-        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(explicitlyRequestedTasks);
-
-        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
+        final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds);
 
         if (resolvedTasks.isEmpty()) {
             return Collections.emptyList();
         }
 
-        final Stopwatch sw2 = new Stopwatch();
+        final Stopwatch sw = new Stopwatch();
 
         LOG.info("Execute {}", resolvedTasks.stream()
             .map(ConfiguredTask::toString)
@@ -158,12 +94,117 @@ public class ModuleRunner {
         jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
         jobPool.shutdown();
 
-        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
+        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw.duration());
 
         return resolvedTasks;
     }
 
-    private void registerProducts(final ProductRepository productRepository, final Collection<ConfiguredTask> resolvedTasks) {
+    private List<ConfiguredTask> resolveTasks(final Set<String> productIds) {
+        final Stopwatch sw = new Stopwatch();
+
+        final Set<ConfiguredTask> allConfiguredTasks = moduleTaskRegistries.values().stream()
+            .flatMap(task -> task.configuredTasks().stream())
+            .collect(Collectors.toSet());
+
+        validateRequestedProducts(productIds, allConfiguredTasks);
+
+        // Initialize directed graph with all available ConfiguredTask instances
+        final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>(allConfiguredTasks);
+
+        for (final Module module : moduleRegistry.getModules()) {
+            final Collection<ConfiguredTask> moduleConfiguredTasks =
+                moduleTaskRegistries.get(module).configuredTasks();
+
+            for (final ConfiguredTask moduleConfiguredTask : moduleConfiguredTasks) {
+                diGraph.addEdges(moduleConfiguredTask,
+                    collectUsedTasks(moduleConfiguredTasks, moduleConfiguredTask));
+
+                diGraph.addEdges(moduleConfiguredTask,
+                    collectImportedTasks(moduleConfiguredTask));
+
+                diGraph.addEdges(moduleConfiguredTask,
+                    collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
+            }
+        }
+
+        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(
+            configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
+
+        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
+        return resolvedTasks;
+    }
+
+    // find tasks providing requested products (within same module)
+    private List<ConfiguredTask> collectUsedTasks(
+        final Collection<ConfiguredTask> moduleConfiguredTasks,
+        final ConfiguredTask moduleConfiguredTask) {
+
+        return moduleConfiguredTask.getUsedProducts().stream()
+            .map(usedProductId -> findProvidingProduct(moduleConfiguredTasks, usedProductId))
+            .collect(Collectors.toList());
+    }
+
+    // find tasks providing imported products from dependent modules
+    private List<ConfiguredTask> collectImportedTasks(final ConfiguredTask moduleConfiguredTask) {
+        final Set<String> moduleDependencies =
+            moduleConfiguredTask.getModule().getConfig().getModuleDependencies();
+
+        return moduleConfiguredTask.getImportedProducts().stream()
+            .map(importedProductId -> moduleTaskRegistries.keySet().stream()
+                .filter(m -> moduleDependencies.contains(m.getModuleName()))
+                .map(m -> moduleTaskRegistries.get(m).configuredTasks()) // TODO throw module doesn't exist exception!!
+                .map(tasks -> findProvidingProduct(tasks, importedProductId))
+                .collect(Collectors.toList()))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+    }
+
+    // find tasks providing imported products from all modules
+    private List<ConfiguredTask> collectImportAllTasks(final Set<ConfiguredTask> allConfiguredTasks,
+                                                       final ConfiguredTask moduleConfiguredTask) {
+
+        return moduleConfiguredTask.getImportedAllProducts().stream()
+            .map(productId -> allConfiguredTasks.stream()
+                .filter(t -> t.getProvidedProduct().equals(productId))
+                .collect(Collectors.toList()))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+    }
+
+    private ConfiguredTask findProvidingProduct(
+        final Collection<ConfiguredTask> moduleConfiguredTasks, final String usedProductId) {
+
+        final List<ConfiguredTask> providingTasks = moduleConfiguredTasks.stream()
+            .filter(t -> t.getProvidedProduct().equals(usedProductId))
+            .collect(Collectors.toList());
+
+        if (providingTasks.size() != 1) {
+            throw new IllegalStateException("Found " + providingTasks.size()
+                + " products providing " + usedProductId + " expected exactly 1");
+        }
+
+        return providingTasks.get(0);
+    }
+
+    private void validateRequestedProducts(final Set<String> productIds,
+                                           final Set<ConfiguredTask> allConfiguredTasks) {
+
+        final Set<String> allProvidedProducts = allConfiguredTasks.stream()
+            .map(ConfiguredTask::getProvidedProduct)
+            .collect(Collectors.toSet());
+
+        final List<String> unknownProducts = productIds.stream()
+            .filter(productId -> !allProvidedProducts.contains(productId))
+            .collect(Collectors.toList());
+
+        if (!unknownProducts.isEmpty()) {
+            throw new IllegalStateException("Unknown products: " + unknownProducts);
+        }
+    }
+
+    private void registerProducts(final ProductRepository productRepository,
+                                  final Collection<ConfiguredTask> resolvedTasks) {
+
         resolvedTasks.stream()
             .map(ConfiguredTask::getProvidedProduct)
             .forEach(productRepository::createProduct);
@@ -206,7 +247,8 @@ public class ModuleRunner {
         moduleTaskRegistries.values().stream()
             .flatMap(reg -> reg.configuredTasks().stream())
             .filter(ConfiguredTask::isGoal)
-            .collect(Collectors.groupingBy(ConfiguredTask::getName, Collectors.flatMapping((ct) -> ct.getUsedProducts().stream(), Collectors.toSet())))
+            .collect(Collectors.groupingBy(ConfiguredTask::getName,
+                Collectors.flatMapping((ct) -> ct.getUsedProducts().stream(), Collectors.toSet())))
             .forEach((name, usedProducts) -> goalInfos.add(new GoalInfo(name, usedProducts)));
 
         return goalInfos;

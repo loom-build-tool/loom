@@ -115,6 +115,7 @@ public class ConfiguredTask {
 
     @Override
     public String toString() {
-        return name;
+        return module.getModuleName() + " > " + name;
     }
+
 }

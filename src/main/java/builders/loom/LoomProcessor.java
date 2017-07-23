@@ -73,7 +73,7 @@ public class LoomProcessor {
         log.debug("Initialized modules in {} ms", sw.duration());
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
-        moduleRunner = new ModuleRunner(pluginLoader, moduleRegistry, buildConfig, runtimeConfiguration);
+        moduleRunner = new ModuleRunner(pluginLoader, moduleRegistry);
         moduleRunner.init();
     }
 

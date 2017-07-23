@@ -42,6 +42,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         this.module = module;
     }
 
+    @SuppressWarnings("checkstyle:parameternumber")
     @Override
     public void registerTask(final String pluginName, final String taskName,
                              final Supplier<Task> taskSupplier, final String providedProduct,
@@ -54,8 +55,10 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         Objects.requireNonNull(providedProduct,
             "providedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
-        Objects.requireNonNull(importedProducts, "importedProducts missing on task <" + taskName + ">");
-        Objects.requireNonNull(importedAllProducts, "importedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(importedProducts,
+            "importedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(importedAllProducts,
+            "importedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(description, "description missing on task <" + taskName + ">");
 
         if (usedProducts.contains(null)) {
@@ -74,8 +77,9 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         }
 
         final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
-        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(module, taskName, pluginName, taskSupplier,
-            providedProduct, usedProducts, importedProducts, importedAllProducts, description, type)) != null) {
+        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(module, taskName, pluginName,
+            taskSupplier, providedProduct, usedProducts, importedProducts, importedAllProducts,
+            description, type)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
         }
@@ -97,8 +101,9 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
             configuredTask != null
                 ? configuredTask.addUsedProducts(pluginName, usedProducts)
-                : new ConfiguredTask(module, name, pluginName, WaitForAllProductsTask::new, goalName,
-                usedProducts, Collections.emptySet(), Collections.emptySet(), null, TaskType.GOAL);
+                : new ConfiguredTask(module, name, pluginName, WaitForAllProductsTask::new,
+                goalName, usedProducts, Collections.emptySet(), Collections.emptySet(), null,
+                TaskType.GOAL);
 
         taskMap.compute(goalName, fn);
     }

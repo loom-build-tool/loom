@@ -77,13 +77,15 @@ public class LoomProcessor {
         moduleRunner.init();
     }
 
-    public List<Module> listModules(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
+    public List<Module> listModules(final BuildConfigWithSettings buildConfig,
+                                    final RuntimeConfigurationImpl runtimeConfiguration) {
+
         checkForInconsistentSrcModuleStruct();
 
         final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
 
         final List<Module> modules = new ArrayList<>();
-        modules.add(singleModule(buildConfig, runtimeConfiguration));
+        modules.add(singleModule(buildConfig));
 
         if (Files.isDirectory(modulesPath)) {
             modules.addAll(scanForModules(runtimeConfiguration));
@@ -92,7 +94,7 @@ public class LoomProcessor {
         return modules;
     }
 
-    private Module singleModule(final BuildConfigWithSettings buildConfig, final RuntimeConfigurationImpl runtimeConfiguration) {
+    private Module singleModule(final BuildConfigWithSettings buildConfig) {
         final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
             throw new IllegalStateException("Missing build.yml in project root");
@@ -147,7 +149,6 @@ public class LoomProcessor {
     }
 
     private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
-
         final Path moduleInfoFile = baseDir.resolve(
             Paths.get("src", "main", "java", "module-info.java"));
 
@@ -156,7 +157,8 @@ public class LoomProcessor {
         }
 
         try {
-            final String moduleInfoSource = new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
+            final String moduleInfoSource =
+                new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);
             final Pattern pattern = Pattern.compile("module\\s*(\\S+)\\s*\\{", Pattern.MULTILINE);
             final Matcher matcher = pattern.matcher(moduleInfoSource);
 
@@ -233,8 +235,10 @@ public class LoomProcessor {
         for (final ConfiguredTask configuredTask : resolvedTasks) {
             final String productId = configuredTask.getProvidedProduct();
 
-            final Optional<Product> product = moduleRunner.lookupProduct(configuredTask.getModule(), productId)
+            final Optional<Product> product = moduleRunner
+                .lookupProduct(configuredTask.getModule(), productId)
                 .getAndWaitForProduct();
+
             if (product.isPresent() && product.get().outputInfo().isPresent()) {
                 final String outputInfo = product.get().outputInfo().get();
                 final String pluginName = configuredTask.getPluginName();
@@ -251,7 +255,7 @@ public class LoomProcessor {
         final List<String> pluginNames = new ArrayList<>(aggProducts.keySet());
         Collections.sort(pluginNames);
 
-        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext(); ) {
+        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
 
             final List<ProductInfo> productInfos = aggProducts.get(pluginName);

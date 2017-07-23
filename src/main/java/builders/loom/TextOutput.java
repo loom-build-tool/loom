@@ -42,12 +42,14 @@ public final class TextOutput {
                 .reset()
                 .newline());
 
+        final List<String> pluginNames = moduleRunner.getPluginNames().stream()
+            .sorted()
+            .collect(Collectors.toList());
 
-        final List<String> pluginNames = moduleRunner.getPluginNames().stream().sorted().collect(Collectors.toList());
-
-        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext(); ) {
+        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
-            final Collection<TaskInfo> configuredTasks = moduleRunner.configuredTasksByPluginName(pluginName);
+            final Collection<TaskInfo> configuredTasks =
+                moduleRunner.configuredTasksByPluginName(pluginName);
 
             AnsiConsole.out().println(
                 Ansi.ansi()

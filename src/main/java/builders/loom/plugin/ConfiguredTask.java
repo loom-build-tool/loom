@@ -37,9 +37,12 @@ public class ConfiguredTask {
     private final String description;
     private final TaskType type;
 
-    ConfiguredTask(final Module module, final String name, final String pluginName, final Supplier<Task> taskSupplier,
-                   final String providedProduct, final Set<String> usedProducts,
-                   final Set<String> importedProducts, final Set<String> importedAllProducts, final String description, final TaskType type) {
+    @SuppressWarnings("checkstyle:parameternumber")
+    ConfiguredTask(final Module module, final String name, final String pluginName,
+                   final Supplier<Task> taskSupplier, final String providedProduct,
+                   final Set<String> usedProducts, final Set<String> importedProducts,
+                   final Set<String> importedAllProducts, final String description,
+                   final TaskType type) {
         this.module = module;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
@@ -103,10 +106,6 @@ public class ConfiguredTask {
 
     public TaskType getType() {
         return type;
-    }
-
-    public boolean isIntermediateProduct() {
-        return type == TaskType.INTERMEDIATE;
     }
 
     public boolean isGoal() {

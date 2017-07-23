@@ -47,7 +47,8 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
-        this.moduleDependencies = Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
+        this.moduleDependencies =
+            Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
         this.dependencies = Collections.unmodifiableSet(Objects.requireNonNull(dependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));

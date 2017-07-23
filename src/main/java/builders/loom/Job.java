@@ -50,8 +50,11 @@ public class Job implements Callable<TaskStatus> {
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    Job(final String name, final Module module, final ConfiguredTask configuredTask, final ProductRepository productRepository, final GlobalProductRepository globalProductRepository,
+    Job(final String name, final Module module, final ConfiguredTask configuredTask,
+        final ProductRepository productRepository,
+        final GlobalProductRepository globalProductRepository,
         final ServiceLocator serviceLocator) {
+
         this.module = module;
         this.globalProductRepository = globalProductRepository;
         this.name = Objects.requireNonNull(name, "name required");

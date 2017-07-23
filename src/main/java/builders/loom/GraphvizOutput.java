@@ -84,7 +84,8 @@ public final class GraphvizOutput {
 
     private static void writeLabel(final PrintWriter pw, final GoalInfo task) {
         final String label = task.getName();
-        pw.printf("    %s [label=\"%s\", color=gold2, shape=tripleoctagon];%n", task.getName(), label);
+        pw.printf("    %s [label=\"%s\", color=gold2, shape=tripleoctagon];%n",
+            task.getName(), label);
     }
 
     private static void writeLabel(final PrintWriter pw, final TaskInfo task) {
@@ -102,7 +103,8 @@ public final class GraphvizOutput {
         writeEdge(pw, task.getProvidedProduct(), constructValue(task.getUsedProducts()));
     }
 
-    private static void writeEdge(final PrintWriter pw, final String providedProduct, final String usedProducts) {
+    private static void writeEdge(final PrintWriter pw, final String providedProduct,
+                                  final String usedProducts) {
         pw.printf("    %s -> %s;%n", providedProduct, usedProducts);
     }
 

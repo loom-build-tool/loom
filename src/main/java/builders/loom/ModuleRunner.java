@@ -171,9 +171,8 @@ public class ModuleRunner {
     }
 
     // find tasks providing imported products from dependent modules
-    private List<ConfiguredTask> collectImportedTasks(
-        Module module,
-        final ConfiguredTask moduleConfiguredTask) {
+    private List<ConfiguredTask> collectImportedTasks(final Module module,
+                                                      final ConfiguredTask moduleConfiguredTask) {
         final Set<String> moduleDependencies = module.getConfig().getModuleDependencies();
 
         return moduleConfiguredTask.getImportedProducts().stream()

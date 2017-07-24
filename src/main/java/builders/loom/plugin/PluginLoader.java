@@ -188,7 +188,8 @@ public class PluginLoader {
         final Set<String> configuredPluginSettings = new HashSet<>();
 
         if (moduleConfig instanceof BuildConfigWithSettings) {
-            final BuildConfigWithSettings moduleConfigWithSettings = (BuildConfigWithSettings) moduleConfig;
+            final BuildConfigWithSettings moduleConfigWithSettings =
+                (BuildConfigWithSettings) moduleConfig;
             final Map<String, String> settings = moduleConfigWithSettings.getSettings();
             final List<String> properties = settings.keySet().stream()
                 .filter(k -> k.startsWith(plugin + "."))
@@ -198,7 +199,12 @@ public class PluginLoader {
                 final String propertyName = property.substring(plugin.length() + 1);
                 final String propertyValue = settings.get(property);
 
-                BeanUtil.set(plugin, pluginSettings, propertyName, propertyValue);
+                try {
+                    BeanUtil.set(pluginSettings, propertyName, propertyValue);
+                } catch (final Exception e) {
+                    throw new IllegalStateException("Error injecting settings into plugin "
+                        + plugin, e);
+                }
 
                 configuredPluginSettings.add(property);
             }

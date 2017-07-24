@@ -93,7 +93,7 @@ public class LoomProcessor {
         return modules;
     }
 
-    private Module singleModule(RuntimeConfigurationImpl runtimeConfiguration) {
+    private Module singleModule(final RuntimeConfigurationImpl rtConfig) {
         final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
             throw new IllegalStateException("Missing build.yml in project root");
@@ -102,13 +102,13 @@ public class LoomProcessor {
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
             .orElse("unnamed");
 
-        return new Module(moduleName, LoomPaths.PROJECT_DIR, readConfig(runtimeConfiguration));
+        return new Module(moduleName, LoomPaths.PROJECT_DIR, readConfig(rtConfig));
     }
 
-    private static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl runtimeConfiguration) {
+    private static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl rtConfig) {
         if (Files.exists(LoomPaths.BUILD_FILE)) {
             try {
-                return ConfigReader.readConfig(runtimeConfiguration, LoomPaths.BUILD_FILE, "base");
+                return ConfigReader.readConfig(rtConfig, LoomPaths.BUILD_FILE, "base");
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

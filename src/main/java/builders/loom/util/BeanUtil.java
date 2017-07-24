@@ -28,50 +28,45 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import builders.loom.api.PluginSettings;
+public final class BeanUtil {
 
-public class BeanUtil {
+    private BeanUtil() {
+    }
 
-    public static void set(final String plugin, final PluginSettings pluginSettings, final String propertyName, final String propertyValue) {
+    public static void set(final Object bean, final String propertyName, final String propertyValue)
+        throws IntrospectionException {
 
         final List<PropertyDescriptor> propertyDescriptors =
-            getPropertyDescriptors(plugin, pluginSettings);
-
+            getPropertyDescriptors(bean);
 
         final Method setter = findSetter(propertyDescriptors, propertyName)
             .orElseThrow(() -> new IllegalStateException(
-                String.format("No property %s found in plugin %s. Available properties are: %s",
-                    propertyName, plugin, propertyDescriptors.stream()
+                String.format("No property %s found. Available properties are: %s", propertyName,
+                    propertyDescriptors.stream()
                         .map(FeatureDescriptor::getName).collect(Collectors.toList()))));
 
         if (setter.getParameterCount() != 1) {
-            throw new IllegalStateException("Setter " + setter + " expected to has exactly one parameter");
+            throw new IllegalStateException("Setter " + setter + " expected to has exactly one "
+                + "parameter");
         }
 
         try {
-            Class<?> parameterClass = setter.getParameterTypes()[0];
+            final Class<?> parameterClass = setter.getParameterTypes()[0];
             if (parameterClass.isAssignableFrom(boolean.class)) {
-                setter.invoke(pluginSettings, propertyValue.equalsIgnoreCase("true"));
+                setter.invoke(bean, "true".equalsIgnoreCase(propertyValue));
             } else {
-                setter.invoke(pluginSettings, propertyValue);
+                setter.invoke(bean, propertyValue);
             }
         } catch (final IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(
-                String.format("Error calling %s with args %s on plugin %s",
-                    setter, propertyValue, plugin), e);
+                String.format("Error calling %s with args %s", setter, propertyValue), e);
         }
-
     }
 
-    private static List<PropertyDescriptor> getPropertyDescriptors(
-        final String plugin, final PluginSettings pluginSettings) {
+    private static List<PropertyDescriptor> getPropertyDescriptors(final Object bean)
+        throws IntrospectionException {
 
-        final BeanInfo beanInfo;
-        try {
-            beanInfo = Introspector.getBeanInfo(pluginSettings.getClass());
-        } catch (final IntrospectionException e) {
-            throw new IllegalStateException("Can't inspect plugin " + plugin, e);
-        }
+        final BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass());
 
         return Arrays.stream(beanInfo.getPropertyDescriptors())
             .filter(pd -> pd.getWriteMethod() != null)

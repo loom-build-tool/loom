@@ -224,7 +224,7 @@ public class IdeaTask extends AbstractTask {
             component.element("orderEntry")
                 .attr("type", "module")
                 .attr("module-name", depModule + "_main")
-                .attr("scope", depModule + "PROVIDED");
+                .attr("scope", "PROVIDED");
         }
 
         // add compile artifacts

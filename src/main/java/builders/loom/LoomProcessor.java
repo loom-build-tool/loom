@@ -22,19 +22,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import builders.loom.api.JavaVersion;
+import builders.loom.config.BuildConfigImpl;
+import builders.loom.config.BuildSettingsImpl;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
@@ -59,8 +54,7 @@ public class LoomProcessor {
         System.setProperty("loom.version", Version.getVersion());
     }
 
-    public void init(final BuildConfigWithSettings buildConfig,
-                     final RuntimeConfigurationImpl runtimeConfiguration) {
+    public void init(final RuntimeConfigurationImpl runtimeConfiguration) {
 
         final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
 
@@ -68,7 +62,7 @@ public class LoomProcessor {
 
         // Init Modules / Plugins for Modules
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
-        listModules(buildConfig, runtimeConfiguration).forEach(moduleRegistry::register);
+        listModules(runtimeConfiguration).forEach(moduleRegistry::register);
 
         log.debug("Initialized modules in {} ms", sw.duration());
 
@@ -77,24 +71,25 @@ public class LoomProcessor {
         moduleRunner.init();
     }
 
-    public List<Module> listModules(final BuildConfigWithSettings buildConfig,
-                                    final RuntimeConfigurationImpl runtimeConfiguration) {
+    public List<Module> listModules(final RuntimeConfigurationImpl runtimeConfiguration) {
 
         checkForInconsistentSrcModuleStruct();
 
         final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
 
         final List<Module> modules = new ArrayList<>();
-        modules.add(singleModule(buildConfig));
+        modules.add(new Module(null, "global", null, new BuildConfigImpl(Set.of("eclipse", "idea"), new BuildSettingsImpl(JavaVersion.current()), Map.of(), Set.of(), Set.of(), Set.of()), true));
 
-        if (Files.isDirectory(modulesPath)) {
+        if (Files.notExists(modulesPath)) {
+            modules.add(singleModule(runtimeConfiguration));
+        } else {
             modules.addAll(scanForModules(runtimeConfiguration));
         }
 
         return modules;
     }
 
-    private Module singleModule(final BuildConfigWithSettings buildConfig) {
+    private Module singleModule(RuntimeConfigurationImpl runtimeConfiguration) {
         final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
             throw new IllegalStateException("Missing build.yml in project root");
@@ -103,7 +98,20 @@ public class LoomProcessor {
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
             .orElse("unnamed");
 
-        return new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, buildConfig);
+        return new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, readConfig(runtimeConfiguration), false);
+    }
+
+    private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl runtimeConfiguration){
+
+        if (Files.exists(LoomPaths.BUILD_FILE)) {
+            try {
+                return ConfigReader.readConfig(runtimeConfiguration, LoomPaths.BUILD_FILE, "base");
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
+        return null;
     }
 
     public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
@@ -131,7 +139,7 @@ public class LoomProcessor {
                     .orElseThrow(() -> new IllegalStateException(
                         "Missing module-info.java in module " + module));
 
-                modules.add(new Module(modulePathName, moduleName, module, buildConfig));
+                modules.add(new Module(modulePathName, moduleName, module, buildConfig, false));
             }
             return modules;
         } catch (final IOException e) {

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import builders.loom.api.product.Product;
 
@@ -42,7 +43,7 @@ public class GlobalProductRepository {
     }
 
     public Set<Module> getAllModules() {
-        return Collections.unmodifiableSet(moduleProductRepositories.keySet());
+        return Collections.unmodifiableSet(moduleProductRepositories.keySet().stream().filter(m -> !m.isGlobalModule()).collect(Collectors.toSet()));
     }
 
 }

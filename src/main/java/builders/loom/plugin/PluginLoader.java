@@ -16,38 +16,30 @@
 
 package builders.loom.plugin;
 
-import java.beans.BeanInfo;
-import java.beans.FeatureDescriptor;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
+import builders.loom.util.BeanUtil;
 import builders.loom.util.SystemUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({
     "checkstyle:classfanoutcomplexity",
@@ -189,9 +181,6 @@ public class PluginLoader {
             return Collections.emptySet();
         }
 
-        final List<PropertyDescriptor> propertyDescriptors =
-            getPropertyDescriptors(plugin, pluginSettings);
-
         final Set<String> configuredPluginSettings = new HashSet<>();
 
         final Map<String, String> settings = moduleConfig.getSettings();
@@ -203,47 +192,12 @@ public class PluginLoader {
             final String propertyName = property.substring(plugin.length() + 1);
             final String propertyValue = settings.get(property);
 
-            final Method setter = findSetter(propertyDescriptors, propertyName)
-                .orElseThrow(() -> new IllegalStateException(
-                    String.format("No property %s found in plugin %s. Available properties are: %s",
-                        propertyName, plugin, propertyDescriptors.stream()
-                            .map(FeatureDescriptor::getName).collect(Collectors.toList()))));
-
-            try {
-                setter.invoke(pluginSettings, propertyValue);
-            } catch (final IllegalAccessException | InvocationTargetException e) {
-                throw new IllegalStateException(
-                    String.format("Error calling %s with args %s on plugin %s",
-                        setter, propertyValue, plugin), e);
-            }
+            BeanUtil.set(plugin, pluginSettings, propertyName, propertyValue);
 
             configuredPluginSettings.add(property);
         }
 
         return configuredPluginSettings;
-    }
-
-    private static List<PropertyDescriptor> getPropertyDescriptors(
-        final String plugin, final PluginSettings pluginSettings) {
-
-        final BeanInfo beanInfo;
-        try {
-            beanInfo = Introspector.getBeanInfo(pluginSettings.getClass());
-        } catch (final IntrospectionException e) {
-            throw new IllegalStateException("Can't inspect plugin " + plugin, e);
-        }
-
-        return Arrays.stream(beanInfo.getPropertyDescriptors())
-            .filter(pd -> pd.getWriteMethod() != null)
-            .collect(Collectors.toList());
-    }
-
-    private static Optional<Method> findSetter(final List<PropertyDescriptor> propertyDescriptors,
-                                               final String propertyName) {
-        return propertyDescriptors.stream()
-            .filter(pd -> pd.getName().equals(propertyName))
-            .findFirst()
-            .map(PropertyDescriptor::getWriteMethod);
     }
 
     private void validateConfiguredTasks(final TaskRegistryLookup taskRegistry) {

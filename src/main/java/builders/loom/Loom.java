@@ -96,10 +96,6 @@ public class Loom {
         if (ToolProvider.getSystemJavaCompiler() == null) {
             throw new IllegalStateException("JDK required (running inside of JRE)");
         }
-
-        if (Files.notExists(LoomPaths.BUILD_FILE)) {
-            throw new IllegalStateException("No build.yml found");
-        }
     }
 
     private static Options buildOptions() {
@@ -212,9 +208,7 @@ public class Loom {
         loomProcessor.logSystemEnvironment();
         loomProcessor.logMemoryUsage();
 
-        final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);
-
-        loomProcessor.init(buildConfig, runtimeConfiguration);
+        loomProcessor.init(runtimeConfiguration);
 
         if (cmd.hasOption("products")) {
             final String format = cmd.getOptionValue("products");
@@ -248,11 +242,6 @@ public class Loom {
     private static void configureLogging() {
         LogConfiguration.configureLogger();
         Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
-    }
-
-    private static BuildConfigWithSettings readConfig(
-        final RuntimeConfigurationImpl runtimeConfiguration) throws IOException {
-        return ConfigReader.readConfig(runtimeConfiguration, Paths.get("build.yml"), "base");
     }
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {

@@ -16,15 +16,13 @@
 
 package builders.loom.plugin.mavenresolver;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicReference;
-
-import builders.loom.api.*;
+import builders.loom.api.AbstractTask;
+import builders.loom.api.BuildConfig;
+import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.TaskResult;
+import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.DirectoryProduct;
+import builders.loom.util.TempFile;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -35,6 +33,7 @@ import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.impl.ArtifactDescriptorReader;
 import org.sonatype.aether.impl.VersionRangeResolver;
 import org.sonatype.aether.impl.VersionResolver;
@@ -45,9 +44,13 @@ import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
-import builders.loom.util.TempFile;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenInstallTask extends AbstractTask {
@@ -77,6 +80,10 @@ public class MavenInstallTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
+        if (pluginSettings.getGroupAndArtifact() == null) {
+            return completeSkip();
+        }
+
         final AssemblyProduct jarProduct = requireProduct("jar", AssemblyProduct.class);
         final Path jarFile = jarProduct.getAssemblyFile();
 
@@ -93,10 +100,10 @@ public class MavenInstallTask extends AbstractTask {
         });
 
         try (final TempFile tmpPomFile = new TempFile("pom", null)) {
-            writePom(tmpPomFile.getFile());
+            final Artifact jarArtifact = buildArtifact("jar", jarFile);
+            writePom(buildModel(jarArtifact), tmpPomFile.getFile());
 
             final InstallRequest request = new InstallRequest();
-            final DefaultArtifact jarArtifact = buildArtifact("jar", jarFile);
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
                 tmpPomFile.getFile().toFile());
             request
@@ -110,10 +117,10 @@ public class MavenInstallTask extends AbstractTask {
             "Directory of installed artifact"));
     }
 
-    private void writePom(final Path tmpPomFile) throws IOException {
+    private void writePom(final Model model, final Path tmpPomFile) throws IOException {
         final MavenXpp3Writer writer = new MavenXpp3Writer();
         try (final OutputStream out = newOut(tmpPomFile)) {
-            writer.write(out, buildModel());
+            writer.write(out, model);
         }
     }
 
@@ -121,12 +128,12 @@ public class MavenInstallTask extends AbstractTask {
         return new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.APPEND));
     }
 
-    private Model buildModel() {
+    private Model buildModel(final Artifact artifact) {
         final Model pom = new Model();
         pom.setModelVersion("4.0.0");
-        pom.setGroupId(pluginSettings.getGroupId());
-        pom.setArtifactId(pluginSettings.getArtifactId());
-        pom.setVersion(runtimeConfiguration.getVersion());
+        pom.setGroupId(artifact.getGroupId());
+        pom.setArtifactId(artifact.getArtifactId());
+        pom.setVersion(artifact.getVersion());
 
         for (final String compileDependency : buildConfig.getDependencies()) {
             pom.addDependency(mapDependency(compileDependency, null));
@@ -149,9 +156,15 @@ public class MavenInstallTask extends AbstractTask {
         return dependency;
     }
 
-    private DefaultArtifact buildArtifact(final String extension, final Path assemblyFile) {
-        return new DefaultArtifact(pluginSettings.getGroupId(), pluginSettings.getArtifactId(), null,
-            extension, runtimeConfiguration.getVersion(), null, assemblyFile.toFile());
+    private Artifact buildArtifact(final String extension, final Path assemblyFile) {
+        final String version = runtimeConfiguration.getVersion();
+        if (version == null) {
+            throw new IllegalStateException("Artifact version required (specify --artifact-version)");
+        }
+
+        return new DefaultArtifact(
+            String.format("%s:%s", pluginSettings.getGroupAndArtifact(), runtimeConfiguration.getVersion()))
+            .setFile(assemblyFile.toFile());
     }
 
 }

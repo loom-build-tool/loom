@@ -25,7 +25,7 @@ import java.util.Set;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.BuildSettings;
 
-class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
+public class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,7 +36,7 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
     private final Set<String> dependencies;
     private final Set<String> testDependencies;
 
-    BuildConfigImpl(final Set<String> plugins,
+    public BuildConfigImpl(final Set<String> plugins,
                     final BuildSettings buildSettings,
                     final Map<String, String> settings,
                     final Set<String> moduleDependencies, final Set<String> dependencies,

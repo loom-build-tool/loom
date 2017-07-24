@@ -19,11 +19,11 @@ package builders.loom.config;
 import builders.loom.api.BuildSettings;
 import builders.loom.api.JavaVersion;
 
-class BuildSettingsImpl implements BuildSettings {
+public class BuildSettingsImpl implements BuildSettings {
 
     private final JavaVersion javaPlatformVersion;
 
-    BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
+    public BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
         this.javaPlatformVersion = javaPlatformVersion;
     }
 

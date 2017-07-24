@@ -8,12 +8,14 @@ public class Module {
     private final String moduleName;
     private final Path path;
     private final BuildConfigWithSettings config;
+    private final boolean globalModule;
 
-    public Module(final String pathName, final String moduleName, final Path path, final BuildConfigWithSettings config) {
+    public Module(final String pathName, final String moduleName, final Path path, final BuildConfigWithSettings config, boolean globalModule) {
         this.pathName = pathName;
         this.moduleName = moduleName;
         this.path = path;
         this.config = config;
+        this.globalModule = globalModule;
     }
 
     /**
@@ -33,6 +35,10 @@ public class Module {
 
     public BuildConfigWithSettings getConfig() {
         return config;
+    }
+
+    public boolean isGlobalModule() {
+        return globalModule;
     }
 
 }

@@ -21,14 +21,21 @@ import builders.loom.api.RuntimeConfiguration;
 public class RuntimeConfigurationImpl implements RuntimeConfiguration {
 
     private final boolean cacheEnabled;
+    private final String version;
 
-    public RuntimeConfigurationImpl(final boolean cacheEnabled) {
+    public RuntimeConfigurationImpl(final boolean cacheEnabled, String version) {
         this.cacheEnabled = cacheEnabled;
+        this.version = version;
     }
 
     @Override
     public boolean isCacheEnabled() {
         return cacheEnabled;
+    }
+
+    @Override
+    public String getVersion() {
+        return version;
     }
 
 }

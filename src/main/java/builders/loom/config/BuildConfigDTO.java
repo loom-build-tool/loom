@@ -27,20 +27,11 @@ public class BuildConfigDTO {
 
     private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
 
-    private ProjectDTO project;
     private Set<String> plugins;
     private Map<String, String> settings;
     private Set<String> moduleDependencies;
     private Set<String> dependencies;
     private Set<String> testDependencies;
-
-    public ProjectDTO getProject() {
-        return project;
-    }
-
-    public void setProject(final ProjectDTO project) {
-        this.project = project;
-    }
 
     public Set<String> getPlugins() {
         return plugins;
@@ -93,7 +84,6 @@ public class BuildConfigDTO {
         final BuildSettingsImpl buildSettings = new BuildSettingsImpl(javaPlatformVersion);
 
         return new BuildConfigImpl(
-            project.build(),
             plugins != null ? plugins : Collections.emptySet(),
             buildSettings,
             cfg,

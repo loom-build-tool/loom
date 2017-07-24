@@ -20,8 +20,6 @@ import java.util.Set;
 
 public interface BuildConfig {
 
-    Project getProject();
-
     Set<String> getPlugins();
 
     BuildSettings getBuildSettings();

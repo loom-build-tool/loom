@@ -76,9 +76,9 @@ public class ResourcesTask extends AbstractTask {
             : new NullKeyValueCache();
 
         final Map<String, String> variables = new HashMap<>();
-        variables.put("project.groupId", buildConfig.getProject().getGroupId());
-        variables.put("project.artifactId", buildConfig.getProject().getArtifactId());
-        variables.put("project.version", buildConfig.getProject().getVersion());
+        //variables.put("project.groupId", buildConfig.getProject().getGroupId());
+        //variables.put("project.artifactId", buildConfig.getProject().getArtifactId());
+        variables.put("project.version", runtimeConfiguration.getVersion());
 
         Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache,
             pluginSettings.getResourceFilterGlob(), variables));

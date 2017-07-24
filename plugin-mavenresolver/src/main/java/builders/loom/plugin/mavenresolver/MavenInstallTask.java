@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicReference;
 
+import builders.loom.api.*;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -44,10 +45,6 @@ import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
-import builders.loom.api.Project;
-import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.DirectoryProduct;
 import builders.loom.util.TempFile;
@@ -56,11 +53,16 @@ import builders.loom.util.TempFile;
 public class MavenInstallTask extends AbstractTask {
 
     private final BuildConfig buildConfig;
+    private final MavenResolverPluginSettings pluginSettings;
+    private final RuntimeConfiguration runtimeConfiguration;
     private final LocalRepositoryManager localRepositoryManager;
     private final RepositorySystem system;
 
-    public MavenInstallTask(final BuildConfig buildConfig) {
+    public MavenInstallTask(final BuildConfig buildConfig, final MavenResolverPluginSettings pluginSettings,
+                            final RuntimeConfiguration runtimeConfiguration) {
         this.buildConfig = buildConfig;
+        this.pluginSettings = pluginSettings;
+        this.runtimeConfiguration = runtimeConfiguration;
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
@@ -91,11 +93,10 @@ public class MavenInstallTask extends AbstractTask {
         });
 
         try (final TempFile tmpPomFile = new TempFile("pom", null)) {
-            final Project project = buildConfig.getProject();
-            writePom(tmpPomFile.getFile(), project);
+            writePom(tmpPomFile.getFile());
 
             final InstallRequest request = new InstallRequest();
-            final DefaultArtifact jarArtifact = buildArtifact(project, "jar", jarFile);
+            final DefaultArtifact jarArtifact = buildArtifact("jar", jarFile);
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
                 tmpPomFile.getFile().toFile());
             request
@@ -109,10 +110,10 @@ public class MavenInstallTask extends AbstractTask {
             "Directory of installed artifact"));
     }
 
-    private void writePom(final Path tmpPomFile, final Project project) throws IOException {
+    private void writePom(final Path tmpPomFile) throws IOException {
         final MavenXpp3Writer writer = new MavenXpp3Writer();
         try (final OutputStream out = newOut(tmpPomFile)) {
-            writer.write(out, buildModel(project));
+            writer.write(out, buildModel());
         }
     }
 
@@ -120,12 +121,12 @@ public class MavenInstallTask extends AbstractTask {
         return new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.APPEND));
     }
 
-    private Model buildModel(final Project project) {
+    private Model buildModel() {
         final Model pom = new Model();
         pom.setModelVersion("4.0.0");
-        pom.setGroupId(project.getGroupId());
-        pom.setArtifactId(project.getArtifactId());
-        pom.setVersion(project.getVersion());
+        pom.setGroupId(pluginSettings.getGroupId());
+        pom.setArtifactId(pluginSettings.getArtifactId());
+        pom.setVersion(runtimeConfiguration.getVersion());
 
         for (final String compileDependency : buildConfig.getDependencies()) {
             pom.addDependency(mapDependency(compileDependency, null));
@@ -148,10 +149,9 @@ public class MavenInstallTask extends AbstractTask {
         return dependency;
     }
 
-    private DefaultArtifact buildArtifact(final Project project, final String extension,
-                                          final Path assemblyFile) {
-        return new DefaultArtifact(project.getGroupId(), project.getArtifactId(), null,
-            extension, project.getVersion(), null, assemblyFile.toFile());
+    private DefaultArtifact buildArtifact(final String extension, final Path assemblyFile) {
+        return new DefaultArtifact(pluginSettings.getGroupId(), pluginSettings.getArtifactId(), null,
+            extension, runtimeConfiguration.getVersion(), null, assemblyFile.toFile());
     }
 
 }

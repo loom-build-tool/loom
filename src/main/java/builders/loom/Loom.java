@@ -108,6 +108,14 @@ public class Loom {
             .addOption("c", "clean", false, "Clean before execution")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
             .addOption(
+                Option.builder("a")
+                    .longOpt("artifact-version")
+                    .numberOfArgs(1)
+                    .optionalArg(false)
+                    .argName("version")
+                    .desc("Defines the version to use for artifact creation")
+                    .build())
+            .addOption(
                 Option.builder("p")
                     .longOpt("products")
                     .numberOfArgs(1)
@@ -188,7 +196,11 @@ public class Loom {
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(!noCacheMode);
+            new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"));
+
+        AnsiConsole.out.println(Ansi.ansi()
+            .render("Initialized runtime configuration @|bold %s|@",
+                runtimeConfiguration.getVersion()));
 
         if (noCacheMode) {
             AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
@@ -201,13 +213,6 @@ public class Loom {
         loomProcessor.logMemoryUsage();
 
         final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);
-
-        AnsiConsole.out.println(Ansi.ansi()
-            .render("Initialized configuration of @|bold %s:%s|@ version @|bold %s|@",
-                buildConfig.getProject().getGroupId(),
-                buildConfig.getProject().getArtifactId(),
-                buildConfig.getProject().getVersion())
-            .reset());
 
         loomProcessor.init(buildConfig, runtimeConfiguration);
 

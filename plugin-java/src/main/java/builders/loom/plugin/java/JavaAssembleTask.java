@@ -28,7 +28,6 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
@@ -38,12 +37,9 @@ import jdk.internal.module.ModuleInfoExtender;
 
 public class JavaAssembleTask extends AbstractTask {
 
-    private final BuildConfig buildConfig;
     private final JavaPluginSettings pluginSettings;
 
-    public JavaAssembleTask(final BuildConfig buildConfig,
-                            final JavaPluginSettings pluginSettings) {
-        this.buildConfig = buildConfig;
+    public JavaAssembleTask(final JavaPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 
@@ -62,9 +58,8 @@ public class JavaAssembleTask extends AbstractTask {
         final Path buildDir = Files.createDirectories(
             LoomPaths.buildDir(getModule().getModuleName(), "jar"));
 
-        final Path jarFile = buildDir.resolve(String.format("%s-%s.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
+        final Path jarFile = buildDir.resolve(String.format("%s.jar",
+            getModule().getModuleName()));
 
         try (final JarOutputStream os = buildJarOutput(jarFile)) {
             // compilation & module-info.class first !

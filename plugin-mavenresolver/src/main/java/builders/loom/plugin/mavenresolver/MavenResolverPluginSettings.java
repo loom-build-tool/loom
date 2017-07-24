@@ -21,6 +21,8 @@ import builders.loom.api.PluginSettings;
 public class MavenResolverPluginSettings implements PluginSettings {
 
     private String repositoryUrl = "http://repo1.maven.org/maven2/";
+    private String groupId;
+    private String artifactId;
 
     public String getRepositoryUrl() {
         return repositoryUrl;
@@ -28,6 +30,22 @@ public class MavenResolverPluginSettings implements PluginSettings {
 
     public void setRepositoryUrl(final String repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    public String getArtifactId() {
+        return artifactId;
+    }
+
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
     }
 
 }

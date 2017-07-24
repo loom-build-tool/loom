@@ -66,7 +66,7 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
             .register();
 
         task("install")
-            .impl(() -> new MavenInstallTask(getModuleConfig()))
+            .impl(() -> new MavenInstallTask(getModuleConfig(), pluginSettings, getRuntimeConfiguration()))
             .provides("mavenArtifact")
             .uses("jar")
             .desc("Installs the jar file to the local Maven repository.")

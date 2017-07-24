@@ -69,14 +69,14 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("assembleJar")
-            .impl(() -> new JavaAssembleTask(buildConfig, getPluginSettings()))
+            .impl(() -> new JavaAssembleTask(getPluginSettings()))
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
             .register();
 
         task("assembleSourcesJar")
-            .impl(() -> new JavaAssembleSourcesJarTask(buildConfig))
+            .impl(JavaAssembleSourcesJarTask::new)
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
@@ -118,7 +118,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("assembleJavadocJar")
-            .impl(() -> new JavaAssembleJavadocJarTask(buildConfig))
+            .impl(JavaAssembleJavadocJarTask::new)
             .provides("javadocJar")
             .uses("javadoc")
             .desc("Assembles .jar file from Javadocs.")

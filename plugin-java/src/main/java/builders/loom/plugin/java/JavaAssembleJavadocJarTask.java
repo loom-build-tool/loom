@@ -30,12 +30,6 @@ import builders.loom.api.product.ResourcesTreeProduct;
 
 public class JavaAssembleJavadocJarTask extends AbstractTask {
 
-    private final BuildConfig buildConfig;
-
-    public JavaAssembleJavadocJarTask(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-    }
-
     @Override
     public TaskResult run() throws Exception {
         final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
@@ -47,9 +41,8 @@ public class JavaAssembleJavadocJarTask extends AbstractTask {
 
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
-        final Path jarFile = buildDir.resolve(String.format("%s-%s-javadoc.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
+        final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
+            getModule().getModuleName()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
             FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);

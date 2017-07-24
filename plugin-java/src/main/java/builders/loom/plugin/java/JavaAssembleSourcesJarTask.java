@@ -31,12 +31,6 @@ import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaAssembleSourcesJarTask extends AbstractTask {
 
-    private final BuildConfig buildConfig;
-
-    public JavaAssembleSourcesJarTask(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-    }
-
     @Override
     public TaskResult run() throws Exception {
         final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
@@ -51,9 +45,8 @@ public class JavaAssembleSourcesJarTask extends AbstractTask {
 
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
-        final Path sourceJarFile = buildDir.resolve(String.format("%s-%s-sources.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
+        final Path sourceJarFile = buildDir.resolve(String.format("%s-sources.jar",
+            getModule().getModuleName()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
             if (resourcesTreeProduct.isPresent()) {

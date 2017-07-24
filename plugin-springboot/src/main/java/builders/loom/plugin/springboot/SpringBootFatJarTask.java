@@ -47,9 +47,8 @@ public class SpringBootFatJarTask extends AbstractTask {
         final Path baseDir = springBootApplication.getClassesDir();
         final Path buildDir = baseDir.resolve("build");
 
-        final Path jarFile = baseDir.resolve(String.format("%s-%s-fatjar.jar",
-            buildConfig.getProject().getArtifactId(),
-            buildConfig.getProject().getVersion()));
+        final Path jarFile = baseDir.resolve(String.format("%s-fatjar.jar",
+            getModule().getModuleName()));
 
         // scan for @SpringBootApplication
         final CompilationProduct compilationProduct =

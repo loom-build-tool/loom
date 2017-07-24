@@ -21,28 +21,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
 
-public class MavenResolverTask extends AbstractTask {
+public class MavenResolverModuleTask extends AbstractModuleTask {
 
     private final DependencyScope dependencyScope;
-    private final BuildConfig buildConfig;
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
     private MavenResolver mavenResolver;
 
-    public MavenResolverTask(final DependencyScope dependencyScope,
-                             final BuildConfig buildConfig,
-                             final MavenResolverPluginSettings pluginSettings,
-                             final Path cacheDir) {
+    public MavenResolverModuleTask(final DependencyScope dependencyScope,
+                                   final MavenResolverPluginSettings pluginSettings,
+                                   final Path cacheDir) {
 
         this.dependencyScope = dependencyScope;
-        this.buildConfig = buildConfig;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
     }
@@ -65,7 +61,7 @@ public class MavenResolverTask extends AbstractTask {
     }
 
     private ClasspathProduct compileScope() {
-        final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
+        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
             DependencyScope.COMPILE, null);
 
@@ -76,8 +72,8 @@ public class MavenResolverTask extends AbstractTask {
     }
 
     private ClasspathProduct testScope() {
-        final List<String> dependencies = new ArrayList<>(buildConfig.getDependencies());
-        dependencies.addAll(buildConfig.getTestDependencies());
+        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
+        dependencies.addAll(getModuleConfig().getTestDependencies());
 
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
             DependencyScope.TEST, null);

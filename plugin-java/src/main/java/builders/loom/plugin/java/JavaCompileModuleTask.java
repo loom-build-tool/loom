@@ -38,8 +38,7 @@ import javax.tools.ToolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
@@ -49,21 +48,18 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavaCompileTask extends AbstractTask {
+public class JavaCompileModuleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileModuleTask.class);
 
-    private final BuildConfig buildConfig;
     private final RuntimeConfiguration runtimeConfiguration;
     private final CompileTarget compileTarget;
     private final String subdirName;
     private final Path cacheDir;
 
-    public JavaCompileTask(final BuildConfig buildConfig,
-                           final RuntimeConfiguration runtimeConfiguration,
-                           final CompileTarget compileTarget,
-                           final Path cacheDir) {
-        this.buildConfig = Objects.requireNonNull(buildConfig);
+    public JavaCompileModuleTask(final RuntimeConfiguration runtimeConfiguration,
+                                 final CompileTarget compileTarget,
+                                 final Path cacheDir) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
         this.cacheDir = cacheDir;
@@ -82,7 +78,7 @@ public class JavaCompileTask extends AbstractTask {
 
     private Path getBuildDir() {
         return LoomPaths.BUILD_DIR.resolve(Paths.get("compilation",
-            compileTarget.name().toLowerCase(), getModule().getModuleName()));
+            compileTarget.name().toLowerCase(), getBuildContext().getModuleName()));
     }
 
     private static Optional<String> configuredPlatformVersion(final JavaVersion version) {
@@ -190,7 +186,7 @@ public class JavaCompileTask extends AbstractTask {
             new DiagnosticLogListener(LOG);
 
         final Optional<String> javaVersion =
-            configuredPlatformVersion(buildConfig.getBuildSettings().getJavaPlatformVersion());
+            configuredPlatformVersion(getModuleConfig().getBuildSettings().getJavaPlatformVersion());
 
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {

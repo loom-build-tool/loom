@@ -19,23 +19,19 @@ package builders.loom.plugin.springboot;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 
-public class SpringBootFatJarTask extends AbstractTask {
+public class SpringBootFatJarModuleTask extends AbstractModuleTask {
 
     private static final String SPRING_BOOT_APPLICATION_ANNOTATION =
         "org.springframework.boot.autoconfigure.SpringBootApplication";
 
-    private final BuildConfig buildConfig;
     private final SpringBootPluginSettings pluginSettings;
 
-    public SpringBootFatJarTask(final BuildConfig buildConfig,
-                                final SpringBootPluginSettings pluginSettings) {
-        this.buildConfig = buildConfig;
+    public SpringBootFatJarModuleTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 
@@ -48,7 +44,7 @@ public class SpringBootFatJarTask extends AbstractTask {
         final Path buildDir = baseDir.resolve("build");
 
         final Path jarFile = baseDir.resolve(String.format("%s-fatjar.jar",
-            getModule().getModuleName()));
+            getBuildContext().getModuleName()));
 
         // scan for @SpringBootApplication
         final CompilationProduct compilationProduct =

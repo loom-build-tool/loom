@@ -37,7 +37,7 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
@@ -46,16 +46,16 @@ import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class CheckstyleTask extends AbstractTask {
+public class CheckstyleModuleTask extends AbstractModuleTask {
 
     private final CompileTarget compileTarget;
 
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
 
-    public CheckstyleTask(final CompileTarget compileTarget,
-                          final CheckstylePluginSettings pluginSettings,
-                          final Path cacheDir) {
+    public CheckstyleModuleTask(final CompileTarget compileTarget,
+                                final CheckstylePluginSettings pluginSettings,
+                                final Path cacheDir) {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
@@ -79,7 +79,7 @@ public class CheckstyleTask extends AbstractTask {
             .filter(f -> !f.getName().equals("module-info.java"))
             .collect(Collectors.toList());
 
-        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "checkstyle")
+        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "checkstyle")
             .resolve(compileTarget.name().toLowerCase());
 
         final RootModule checker = createRootModule();

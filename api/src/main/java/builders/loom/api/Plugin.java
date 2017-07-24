@@ -37,8 +37,6 @@ public interface Plugin {
 
     void setServiceLocator(ServiceLocatorRegistration serviceLocator);
 
-    void setModuleConfig(BuildConfig moduleConfig);
-
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 
     void setRepositoryPath(Path path);

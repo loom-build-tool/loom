@@ -23,30 +23,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
-public class ResourcesTask extends AbstractTask {
+public class ResourcesModuleTask extends AbstractModuleTask {
 
     private final RuntimeConfiguration runtimeConfiguration;
-    private final BuildConfig buildConfig;
     private final JavaPluginSettings pluginSettings;
     private final Path destPath;
     private final CompileTarget compileTarget;
     private final Path cacheDir;
 
-    ResourcesTask(final RuntimeConfiguration runtimeConfiguration,
-                  final BuildConfig buildConfig,
-                  final JavaPluginSettings pluginSettings,
-                  final CompileTarget compileTarget, final Path cacheDir) {
+    ResourcesModuleTask(final RuntimeConfiguration runtimeConfiguration,
+                        final JavaPluginSettings pluginSettings,
+                        final CompileTarget compileTarget, final Path cacheDir) {
 
         this.runtimeConfiguration = runtimeConfiguration;
-        this.buildConfig = buildConfig;
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
 

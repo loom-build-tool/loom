@@ -2,43 +2,31 @@ package builders.loom.api;
 
 import java.nio.file.Path;
 
-public class Module {
+public class Module implements BuildContext {
 
-    private final String pathName;
     private final String moduleName;
     private final Path path;
-    private final BuildConfigWithSettings config;
-    private final boolean globalModule;
+    private final ModuleBuildConfig config;
 
-    public Module(final String pathName, final String moduleName, final Path path, final BuildConfigWithSettings config, boolean globalModule) {
-        this.pathName = pathName;
+    public Module(final String moduleName, final Path path, final ModuleBuildConfig config) {
         this.moduleName = moduleName;
         this.path = path;
         this.config = config;
-        this.globalModule = globalModule;
     }
 
-    /**
-     * Typically same as module name, but may differ (e.g. modulename=com.example.api; path=api).
-     */
-    public String getPathName() {
-        return pathName;
-    }
-
+    @Override
     public String getModuleName() {
         return moduleName;
     }
 
+    @Override
     public Path getPath() {
         return path;
     }
 
-    public BuildConfigWithSettings getConfig() {
+    @Override
+    public ModuleBuildConfig getConfig() {
         return config;
-    }
-
-    public boolean isGlobalModule() {
-        return globalModule;
     }
 
 }

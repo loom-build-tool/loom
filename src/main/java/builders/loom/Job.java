@@ -24,8 +24,10 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.BuildContext;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
+import builders.loom.api.ModuleBuildConfigAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.ProvidedProduct;
@@ -42,7 +44,7 @@ public class Job implements Callable<TaskStatus> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
 
-    private final Module module;
+    private final BuildContext buildContext;
     private final GlobalProductRepository globalProductRepository;
     private final String name;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
@@ -50,12 +52,12 @@ public class Job implements Callable<TaskStatus> {
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
 
-    Job(final String name, final Module module, final ConfiguredTask configuredTask,
+    Job(final String name, final BuildContext buildContext, final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final GlobalProductRepository globalProductRepository,
         final ServiceLocator serviceLocator) {
 
-        this.module = module;
+        this.buildContext = buildContext;
         this.globalProductRepository = globalProductRepository;
         this.name = Objects.requireNonNull(name, "name required");
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
@@ -116,7 +118,7 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private void injectTaskProperties(final Task task) {
-        task.setModule(module);
+        task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             pdaTask.setGlobalProductRepository(globalProductRepository);
@@ -129,6 +131,11 @@ public class Job implements Callable<TaskStatus> {
         if (task instanceof ServiceLocatorAware) {
             final ServiceLocatorAware slaTask = (ServiceLocatorAware) task;
             slaTask.setServiceLocator(serviceLocator);
+        }
+        if (task instanceof ModuleBuildConfigAware) {
+            final ModuleBuildConfigAware mbcaTask = (ModuleBuildConfigAware) task;
+            final Module module = (Module) buildContext;
+            mbcaTask.setModuleBuildConfig(module.getConfig());
         }
     }
 

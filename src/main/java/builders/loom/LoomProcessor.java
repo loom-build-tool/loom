@@ -22,22 +22,27 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import builders.loom.api.JavaVersion;
-import builders.loom.config.BuildConfigImpl;
-import builders.loom.config.BuildSettingsImpl;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.product.Product;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
@@ -78,7 +83,6 @@ public class LoomProcessor {
         final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
 
         final List<Module> modules = new ArrayList<>();
-        modules.add(new Module(null, "global", null, new BuildConfigImpl(Set.of("eclipse", "idea"), new BuildSettingsImpl(JavaVersion.current()), Map.of(), Set.of(), Set.of(), Set.of()), true));
 
         if (Files.notExists(modulesPath)) {
             modules.add(singleModule(runtimeConfiguration));
@@ -98,11 +102,10 @@ public class LoomProcessor {
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
             .orElse("unnamed");
 
-        return new Module(moduleName, moduleName, LoomPaths.PROJECT_DIR, readConfig(runtimeConfiguration), false);
+        return new Module(moduleName, LoomPaths.PROJECT_DIR, readConfig(runtimeConfiguration));
     }
 
-    private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl runtimeConfiguration){
-
+    private static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl runtimeConfiguration) {
         if (Files.exists(LoomPaths.BUILD_FILE)) {
             try {
                 return ConfigReader.readConfig(runtimeConfiguration, LoomPaths.BUILD_FILE, "base");
@@ -130,7 +133,7 @@ public class LoomProcessor {
                 }
 
                 final String modulePathName = module.getFileName().toString();
-                final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(
+                final ModuleBuildConfig buildConfig = ConfigReader.readConfig(
                     runtimeConfiguration, moduleBuildConfig, modulePathName);
 
                 // TODO src/test/java ?
@@ -139,7 +142,7 @@ public class LoomProcessor {
                     .orElseThrow(() -> new IllegalStateException(
                         "Missing module-info.java in module " + module));
 
-                modules.add(new Module(modulePathName, moduleName, module, buildConfig, false));
+                modules.add(new Module(moduleName, module, buildConfig));
             }
             return modules;
         } catch (final IOException e) {
@@ -244,7 +247,7 @@ public class LoomProcessor {
             final String productId = configuredTask.getProvidedProduct();
 
             final Optional<Product> product = moduleRunner
-                .lookupProduct(configuredTask.getModule(), productId)
+                .lookupProduct(configuredTask.getBuildContext(), productId)
                 .getWithoutWait();
 
             if (product.isPresent() && product.get().outputInfo().isPresent()) {

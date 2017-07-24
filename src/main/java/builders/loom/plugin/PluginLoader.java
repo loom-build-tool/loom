@@ -16,17 +16,6 @@
 
 package builders.loom.plugin;
 
-import builders.loom.RuntimeConfigurationImpl;
-import builders.loom.Version;
-import builders.loom.api.BuildConfigWithSettings;
-import builders.loom.api.LoomPaths;
-import builders.loom.api.Plugin;
-import builders.loom.api.PluginSettings;
-import builders.loom.util.BeanUtil;
-import builders.loom.util.SystemUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import builders.loom.RuntimeConfigurationImpl;
+import builders.loom.Version;
+import builders.loom.api.BuildConfig;
+import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.LoomPaths;
+import builders.loom.api.Plugin;
+import builders.loom.api.PluginSettings;
+import builders.loom.util.BeanUtil;
+import builders.loom.util.SystemUtil;
 
 @SuppressWarnings({
     "checkstyle:classfanoutcomplexity",
@@ -75,7 +77,7 @@ public class PluginLoader {
     }
 
     public void initPlugins(final Set<String> pluginsToInitialize,
-                            final BuildConfigWithSettings moduleConfig,
+                            final BuildConfig moduleConfig,
                             final TaskRegistryImpl taskRegistry,
                             final ServiceLocatorImpl serviceLocator) {
 
@@ -85,10 +87,13 @@ public class PluginLoader {
         }
 
         validateConfiguredTasks(taskRegistry);
-        validateSettings(moduleConfig, acceptedSettings);
+
+        if (moduleConfig instanceof BuildConfigWithSettings) {
+            validateSettings((BuildConfigWithSettings) moduleConfig, acceptedSettings);
+        }
     }
 
-    private Set<String> initPlugin(final String pluginName, final BuildConfigWithSettings config,
+    private Set<String> initPlugin(final String pluginName, final BuildConfig config,
                                    final TaskRegistryImpl taskRegistry,
                                    final ServiceLocatorImpl serviceLocator) {
 
@@ -97,7 +102,6 @@ public class PluginLoader {
         plugin.setName(pluginName);
         plugin.setTaskRegistry(taskRegistry);
         plugin.setServiceLocator(serviceLocator);
-        plugin.setModuleConfig(config);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.PROJECT_LOOM_PATH.resolve(
             Paths.get(Version.getVersion(), pluginName)));
@@ -173,7 +177,7 @@ public class PluginLoader {
     }
 
     private Set<String> injectPluginSettings(final String plugin, final Plugin regPlugin,
-                                             final BuildConfigWithSettings moduleConfig) {
+                                             final BuildConfig moduleConfig) {
 
         final PluginSettings pluginSettings = regPlugin.getPluginSettings();
 
@@ -183,18 +187,21 @@ public class PluginLoader {
 
         final Set<String> configuredPluginSettings = new HashSet<>();
 
-        final Map<String, String> settings = moduleConfig.getSettings();
-        final List<String> properties = settings.keySet().stream()
-            .filter(k -> k.startsWith(plugin + "."))
-            .collect(Collectors.toList());
+        if (moduleConfig instanceof BuildConfigWithSettings) {
+            final BuildConfigWithSettings moduleConfigWithSettings = (BuildConfigWithSettings) moduleConfig;
+            final Map<String, String> settings = moduleConfigWithSettings.getSettings();
+            final List<String> properties = settings.keySet().stream()
+                .filter(k -> k.startsWith(plugin + "."))
+                .collect(Collectors.toList());
 
-        for (final String property : properties) {
-            final String propertyName = property.substring(plugin.length() + 1);
-            final String propertyValue = settings.get(property);
+            for (final String property : properties) {
+                final String propertyName = property.substring(plugin.length() + 1);
+                final String propertyValue = settings.get(property);
 
-            BeanUtil.set(plugin, pluginSettings, propertyName, propertyValue);
+                BeanUtil.set(plugin, pluginSettings, propertyName, propertyValue);
 
-            configuredPluginSettings.add(property);
+                configuredPluginSettings.add(property);
+            }
         }
 
         return configuredPluginSettings;

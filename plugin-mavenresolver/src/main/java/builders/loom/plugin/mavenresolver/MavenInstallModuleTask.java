@@ -16,13 +16,14 @@
 
 package builders.loom.plugin.mavenresolver;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
-import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
-import builders.loom.util.TempFile;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -44,26 +45,23 @@ import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicReference;
+import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.TaskResult;
+import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.DirectoryProduct;
+import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class MavenInstallTask extends AbstractTask {
+public class MavenInstallModuleTask extends AbstractModuleTask {
 
-    private final BuildConfig buildConfig;
     private final MavenResolverPluginSettings pluginSettings;
     private final RuntimeConfiguration runtimeConfiguration;
     private final LocalRepositoryManager localRepositoryManager;
     private final RepositorySystem system;
 
-    public MavenInstallTask(final BuildConfig buildConfig, final MavenResolverPluginSettings pluginSettings,
-                            final RuntimeConfiguration runtimeConfiguration) {
-        this.buildConfig = buildConfig;
+    public MavenInstallModuleTask(final MavenResolverPluginSettings pluginSettings,
+                                  final RuntimeConfiguration runtimeConfiguration) {
         this.pluginSettings = pluginSettings;
         this.runtimeConfiguration = runtimeConfiguration;
 
@@ -135,11 +133,11 @@ public class MavenInstallTask extends AbstractTask {
         pom.setArtifactId(artifact.getArtifactId());
         pom.setVersion(artifact.getVersion());
 
-        for (final String compileDependency : buildConfig.getDependencies()) {
+        for (final String compileDependency : getModuleConfig().getDependencies()) {
             pom.addDependency(mapDependency(compileDependency, null));
         }
 
-        for (final String testDependency : buildConfig.getTestDependencies()) {
+        for (final String testDependency : getModuleConfig().getTestDependencies()) {
             pom.addDependency(mapDependency(testDependency, "test"));
         }
 

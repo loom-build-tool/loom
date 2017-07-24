@@ -17,7 +17,6 @@
 package builders.loom.plugin.java;
 
 import builders.loom.api.AbstractPlugin;
-import builders.loom.api.BuildConfig;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.RuntimeConfiguration;
 
@@ -30,30 +29,29 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
     @Override
     public void configure() {
-        final BuildConfig buildConfig = getModuleConfig();
         final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         task("provideSource")
-            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
+            .impl(() -> new JavaProvideSourceDirModuleTask(CompileTarget.MAIN))
             .provides("source", true)
             .desc("Provides main sources for other products.")
             .register();
 
         task("provideTestSource")
-            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.TEST))
+            .impl(() -> new JavaProvideSourceDirModuleTask(CompileTarget.TEST))
             .provides("testSource", true)
             .desc("Provides test sources for other products.")
             .register();
 
         task("provideModuleDependencies")
-            .impl(() -> new JavaModuleDependencyTask(buildConfig))
+            .impl(() -> new JavaModuleDependencyModuleTask())
             .provides("moduleDependencies", true)
             .importFromModules("compilation")
             .desc("Collects classes from dependent modules.")
             .register();
 
         task("compileJava")
-            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.MAIN,
+            .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.MAIN,
                 getRepositoryPath()))
             .provides("compilation")
             .uses("source", "compileDependencies", "moduleDependencies")
@@ -61,7 +59,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("compileTestJava")
-            .impl(() -> new JavaCompileTask(buildConfig, runtimeConfiguration, CompileTarget.TEST,
+            .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.TEST,
                 getRepositoryPath()))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies", "moduleDependencies")
@@ -69,33 +67,33 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("assembleJar")
-            .impl(() -> new JavaAssembleTask(getPluginSettings()))
+            .impl(() -> new JavaAssembleModuleTask(getPluginSettings()))
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
             .register();
 
         task("assembleSourcesJar")
-            .impl(JavaAssembleSourcesJarTask::new)
+            .impl(JavaAssembleSourcesJarModuleTask::new)
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
             .register();
 
         task("provideResources")
-            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.MAIN))
+            .impl(() -> new JavaProvideResourcesDirModuleTask(CompileTarget.MAIN))
             .provides("resources", true)
             .desc("Provides main resources for other products.")
             .register();
 
         task("provideTestResources")
-            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.TEST))
+            .impl(() -> new JavaProvideResourcesDirModuleTask(CompileTarget.TEST))
             .provides("testResources", true)
             .desc("Provides test resources for other products.")
             .register();
 
         task("processResources")
-            .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
+            .impl(() -> new ResourcesModuleTask(runtimeConfiguration, getPluginSettings(),
                 CompileTarget.MAIN, getRepositoryPath()))
             .provides("processedResources")
             .uses("resources")
@@ -103,7 +101,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processTestResources")
-            .impl(() -> new ResourcesTask(runtimeConfiguration, buildConfig, getPluginSettings(),
+            .impl(() -> new ResourcesModuleTask(runtimeConfiguration, getPluginSettings(),
                 CompileTarget.TEST, getRepositoryPath()))
             .provides("processedTestResources")
             .uses("testResources")
@@ -111,14 +109,14 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("javadoc")
-            .impl(JavadocTask::new)
+            .impl(JavadocModuleTask::new)
             .provides("javadoc")
             .uses("source", "compileDependencies")
             .desc("Creates Javadoc pages.")
             .register();
 
         task("assembleJavadocJar")
-            .impl(JavaAssembleJavadocJarTask::new)
+            .impl(JavaAssembleJavadocJarModuleTask::new)
             .provides("javadocJar")
             .uses("javadoc")
             .desc("Assembles .jar file from Javadocs.")

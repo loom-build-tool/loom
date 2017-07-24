@@ -19,43 +19,35 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.jar.JarOutputStream;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.CompileTarget;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
+import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
-public class JavaProvideResourcesDirTask extends AbstractTask {
-
-    private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");
-    private static final Path SRC_TESTRES_PATH = Paths.get("src", "test", "resources");
-
-    private final CompileTarget compileTarget;
-
-    public JavaProvideResourcesDirTask(final CompileTarget compileTarget) {
-        this.compileTarget = compileTarget;
-    }
+public class JavaAssembleJavadocJarModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path path = resourcesPath();
+        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
+            "javadoc", ResourcesTreeProduct.class);
 
-        if (!Files.isDirectory(path)) {
+        if (!resourcesTreeProduct.isPresent()) {
             return completeSkip();
         }
 
-        return completeOk(new ResourcesTreeProduct(path));
-    }
+        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
-    private Path resourcesPath() {
-        switch (compileTarget) {
-            case MAIN:
-                return SRC_RES_PATH;
-            case TEST:
-                return SRC_TESTRES_PATH;
-            default:
-                throw new IllegalStateException();
+        final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
+            getBuildContext().getModuleName()));
+
+        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
+            FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
         }
+
+        return completeOk(new AssemblyProduct(jarFile, "Jar of Javadoc"));
     }
 
 }

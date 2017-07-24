@@ -21,12 +21,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import builders.loom.api.Module;
+import builders.loom.api.BuildContext;
 import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
-    private final Module module;
+    private final BuildContext buildContext;
     private final String name;
     private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
@@ -38,12 +38,12 @@ public class ConfiguredTask {
     private final TaskType type;
 
     @SuppressWarnings("checkstyle:parameternumber")
-    ConfiguredTask(final Module module, final String name, final String pluginName,
+    ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
                    final Supplier<Task> taskSupplier, final String providedProduct,
                    final Set<String> usedProducts, final Set<String> importedProducts,
                    final Set<String> importedAllProducts, final String description,
                    final TaskType type) {
-        this.module = module;
+        this.buildContext = buildContext;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
@@ -55,8 +55,8 @@ public class ConfiguredTask {
         this.type = type;
     }
 
-    public Module getModule() {
-        return module;
+    public BuildContext getBuildContext() {
+        return buildContext;
     }
 
     public String getName() {
@@ -114,7 +114,7 @@ public class ConfiguredTask {
 
     @Override
     public String toString() {
-        return module.getModuleName() + " > " + name;
+        return buildContext.getModuleName() + " > " + name;
     }
 
 }

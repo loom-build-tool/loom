@@ -23,7 +23,7 @@ public class RuntimeConfigurationImpl implements RuntimeConfiguration {
     private final boolean cacheEnabled;
     private final String version;
 
-    public RuntimeConfigurationImpl(final boolean cacheEnabled, String version) {
+    public RuntimeConfigurationImpl(final boolean cacheEnabled, final String version) {
         this.cacheEnabled = cacheEnabled;
         this.version = version;
     }

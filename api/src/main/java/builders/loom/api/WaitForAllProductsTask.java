@@ -24,7 +24,7 @@ public class WaitForAllProductsTask implements Task, ProductDependenciesAware {
     private UsedProducts usedProducts;
 
     @Override
-    public void setModule(final Module module) {
+    public void setBuildContext(final BuildContext buildContext) {
         // TODO
     }
 

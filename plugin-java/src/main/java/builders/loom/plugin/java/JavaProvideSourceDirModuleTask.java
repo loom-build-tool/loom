@@ -22,19 +22,19 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavaProvideSourceDirTask extends AbstractTask {
+public class JavaProvideSourceDirModuleTask extends AbstractModuleTask {
 
     private static final Path SRC_MAIN_PATH = Paths.get("src", "main", "java");
     private static final Path SRC_TEST_PATH = Paths.get("src", "test", "java");
 
     private final CompileTarget compileTarget;
 
-    public JavaProvideSourceDirTask(final CompileTarget compileTarget) {
+    public JavaProvideSourceDirModuleTask(final CompileTarget compileTarget) {
         this.compileTarget = compileTarget;
     }
 
@@ -70,9 +70,9 @@ public class JavaProvideSourceDirTask extends AbstractTask {
     private Path srcPath() {
         switch (compileTarget) {
             case MAIN:
-                return getModule().getPath().resolve(SRC_MAIN_PATH);
+                return getBuildContext().getPath().resolve(SRC_MAIN_PATH);
             case TEST:
-                return getModule().getPath().resolve(SRC_TEST_PATH);
+                return getBuildContext().getPath().resolve(SRC_TEST_PATH);
             default:
                 throw new IllegalStateException();
         }

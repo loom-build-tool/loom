@@ -113,6 +113,11 @@ public class DirectedGraph<T> {
         visited.removeLast();
     }
 
+    @Override
+    public String toString() {
+        return vertices.keySet().stream().map(Object::toString).collect(Collectors.joining(", "));
+    }
+
     static final class Vertex<T> {
 
         private final T value;

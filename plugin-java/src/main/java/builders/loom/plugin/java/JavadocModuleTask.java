@@ -36,16 +36,16 @@ import javax.tools.ToolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavadocTask extends AbstractTask {
+public class JavadocModuleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavadocTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JavadocModuleTask.class);
 
     @Override
     public TaskResult run() throws Exception {
@@ -61,7 +61,7 @@ public class JavadocTask extends AbstractTask {
             .ifPresent(classpath::addAll);
 
         final Path dstDir =
-            Files.createDirectories(LoomPaths.buildDir(getModule().getModuleName(), "javadoc"));
+            Files.createDirectories(LoomPaths.buildDir(getBuildContext().getModuleName(), "javadoc"));
 
         final DocumentationTool docTool = ToolProvider.getSystemDocumentationTool();
 

@@ -16,10 +16,8 @@
 
 package builders.loom.api;
 
-import java.util.Map;
+public interface ModuleBuildConfigAware {
 
-public interface BuildConfigWithSettings {
-
-    Map<String, String> getSettings();
+    void setModuleBuildConfig(ModuleBuildConfig moduleConfig);
 
 }

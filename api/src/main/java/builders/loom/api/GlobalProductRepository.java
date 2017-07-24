@@ -11,9 +11,9 @@ import builders.loom.api.product.Product;
 
 public class GlobalProductRepository {
 
-    private final Map<Module, ProductRepository> moduleProductRepositories;
+    private final Map<BuildContext, ProductRepository> moduleProductRepositories;
 
-    public GlobalProductRepository(final Map<Module, ProductRepository> moduleProductRepositories) {
+    public GlobalProductRepository(final Map<BuildContext, ProductRepository> moduleProductRepositories) {
         this.moduleProductRepositories = moduleProductRepositories;
     }
 
@@ -43,7 +43,11 @@ public class GlobalProductRepository {
     }
 
     public Set<Module> getAllModules() {
-        return Collections.unmodifiableSet(moduleProductRepositories.keySet().stream().filter(m -> !m.isGlobalModule()).collect(Collectors.toSet()));
+        Set<Module> collect = moduleProductRepositories.keySet().stream()
+            .filter(m -> m instanceof Module)
+            .map(Module.class::cast)
+            .collect(Collectors.toSet());
+        return Collections.unmodifiableSet(collect);
     }
 
 }

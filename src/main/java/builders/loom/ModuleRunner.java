@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.api.BuildContext;
+import builders.loom.api.GlobalBuildContext;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
@@ -48,12 +50,13 @@ public class ModuleRunner {
 
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
-    private final Map<Module, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
-    private final Map<Module, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
-    private final Map<Module, ProductRepository> moduleProductRepositories = new HashMap<>();
+    private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
+    private final Map<BuildContext, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
+    private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private GlobalProductRepository globalProductRepository;
 
-    public ModuleRunner(final PluginLoader pluginLoader, final ModuleRegistry moduleRegistry) {
+    public ModuleRunner(final PluginLoader pluginLoader,
+                        final ModuleRegistry moduleRegistry) {
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
     }
@@ -61,32 +64,33 @@ public class ModuleRunner {
     public void init() {
         final Stopwatch sw = new Stopwatch();
 
-        final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
+        registerModule(Set.of("eclipse", "idea"), new GlobalBuildContext());
 
+        final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
         for (final Module module : moduleRegistry.getModules()) {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
-
-            final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(module);
-            final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
-
-            final Set<String> pluginsToInitialize = new HashSet<>();
-            if (module.isGlobalModule()) {
-                pluginsToInitialize.addAll(module.getConfig().getPlugins());
-            } else {
-                pluginsToInitialize.addAll(defaultPlugins);
-                pluginsToInitialize.addAll(module.getConfig().getPlugins());
-            }
-            pluginLoader.initPlugins(pluginsToInitialize, module.getConfig(), taskRegistry,
-                serviceLocator);
-
-            moduleTaskRegistries.put(module, taskRegistry);
-            moduleServiceLocators.put(module, serviceLocator);
-            moduleProductRepositories.put(module, new ProductRepositoryImpl());
+            registerModule(defaultPlugins, module);
         }
 
         globalProductRepository = new GlobalProductRepository(moduleProductRepositories);
 
         LOG.debug("Initialized all plugins in {} ms", sw.duration());
+    }
+
+    private void registerModule(final Set<String> defaultPlugins, final BuildContext buildContext) {
+        final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(buildContext);
+        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
+
+        final Set<String> pluginsToInitialize = new HashSet<>();
+        pluginsToInitialize.addAll(defaultPlugins);
+        pluginsToInitialize.addAll(buildContext.getConfig().getPlugins());
+
+        pluginLoader.initPlugins(pluginsToInitialize, buildContext.getConfig(), taskRegistry,
+            serviceLocator);
+
+        moduleTaskRegistries.put(buildContext, taskRegistry);
+        moduleServiceLocators.put(buildContext, serviceLocator);
+        moduleProductRepositories.put(buildContext, new ProductRepositoryImpl());
     }
 
     public List<ConfiguredTask> execute(final Set<String> productIds)
@@ -129,19 +133,23 @@ public class ModuleRunner {
         // Initialize directed graph with all available ConfiguredTask instances
         final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>(allConfiguredTasks);
 
-        for (final Module module : moduleRegistry.getModules()) {
+        for (final BuildContext buildContext : moduleTaskRegistries.keySet()) {
             final Collection<ConfiguredTask> moduleConfiguredTasks =
-                moduleTaskRegistries.get(module).configuredTasks();
+                moduleTaskRegistries.get(buildContext).configuredTasks();
 
             for (final ConfiguredTask moduleConfiguredTask : moduleConfiguredTasks) {
                 diGraph.addEdges(moduleConfiguredTask,
                     collectUsedTasks(moduleConfiguredTasks, moduleConfiguredTask));
 
-                diGraph.addEdges(moduleConfiguredTask,
-                    collectImportedTasks(moduleConfiguredTask));
+                if (buildContext instanceof  Module) {
+                    diGraph.addEdges(moduleConfiguredTask,
+                        collectImportedTasks((Module) buildContext, moduleConfiguredTask));
+                }
 
-                diGraph.addEdges(moduleConfiguredTask,
-                    collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
+                if (buildContext instanceof GlobalBuildContext) {
+                    diGraph.addEdges(moduleConfiguredTask,
+                        collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
+                }
             }
         }
 
@@ -163,9 +171,10 @@ public class ModuleRunner {
     }
 
     // find tasks providing imported products from dependent modules
-    private List<ConfiguredTask> collectImportedTasks(final ConfiguredTask moduleConfiguredTask) {
-        final Set<String> moduleDependencies =
-            moduleConfiguredTask.getModule().getConfig().getModuleDependencies();
+    private List<ConfiguredTask> collectImportedTasks(
+        Module module,
+        final ConfiguredTask moduleConfiguredTask) {
+        final Set<String> moduleDependencies = module.getConfig().getModuleDependencies();
 
         return moduleConfiguredTask.getImportedProducts().stream()
             .map(importedProductId -> moduleTaskRegistries.keySet().stream()
@@ -227,18 +236,18 @@ public class ModuleRunner {
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {
-        final Module module = configuredTask.getModule();
-        final ProductRepository productRepository = moduleProductRepositories.get(module);
-        final ServiceLocatorImpl serviceLocator = moduleServiceLocators.get(module);
+        final BuildContext buildContext = configuredTask.getBuildContext();
+        final ProductRepository productRepository = moduleProductRepositories.get(buildContext);
+        final ServiceLocatorImpl serviceLocator = moduleServiceLocators.get(buildContext);
 
-        final String jobName = module.getModuleName() + " > " + configuredTask.getName();
+        final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
-        return new Job(jobName, module, configuredTask, productRepository,
+        return new Job(jobName, buildContext, configuredTask, productRepository,
             globalProductRepository, serviceLocator);
     }
 
-    public ProductPromise lookupProduct(final Module module, final String productId) {
-        return moduleProductRepositories.get(module).lookup(productId);
+    public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {
+        return moduleProductRepositories.get(buildContext).lookup(productId);
     }
 
     public Set<String> getPluginNames() {

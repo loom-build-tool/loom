@@ -24,7 +24,7 @@ public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
     @Override
     public void configure() {
         task("configureEclipse")
-            .impl(() -> new EclipseTask(getModuleConfig()))
+            .impl(() -> new EclipseModuleTask())
             .provides("eclipse")
             .importFromAllModules("compileArtifacts", "testArtifacts")
             .desc("Generates .classpath and .project file for Eclipse.")

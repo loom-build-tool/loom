@@ -31,10 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
@@ -61,16 +61,18 @@ import net.sourceforge.pmd.util.datasource.DataSource;
 import net.sourceforge.pmd.util.datasource.FileDataSource;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class PmdTask extends AbstractTask {
+public class PmdModuleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PmdModuleTask.class);
 
     private final CompileTarget compileTarget;
-    private final PMDConfiguration configuration = new PMDConfiguration();
-    private final Path cacheDir;
 
-    public PmdTask(final BuildConfig buildConfig, final PmdPluginSettings pluginSettings,
-                   final CompileTarget compileTarget, final Path cacheDir) {
+    private final Path cacheDir;
+    private final PmdPluginSettings pluginSettings;
+
+    public PmdModuleTask(final PmdPluginSettings pluginSettings,
+                         final CompileTarget compileTarget, final Path cacheDir) {
+        this.pluginSettings = pluginSettings;
 
         // Ensure SLF4J is used (instead of java.util.logging)
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -79,6 +81,10 @@ public class PmdTask extends AbstractTask {
         this.compileTarget = compileTarget;
         this.cacheDir = cacheDir;
 
+    }
+
+    private PMDConfiguration getConfiguration() {
+        final PMDConfiguration configuration = new PMDConfiguration();
         configuration.setReportShortNames(true);
         configuration.setRuleSets(pluginSettings.getRuleSets());
         configuration.setRuleSetFactoryCompatibilityEnabled(false);
@@ -86,14 +92,15 @@ public class PmdTask extends AbstractTask {
         configuration.setThreads(0);
         configuration.setMinimumPriority(RulePriority.valueOf(pluginSettings.getMinimumPriority()));
         configuration.setAnalysisCacheLocation(resolveCacheFile().toString());
-        configuration.setDefaultLanguageVersion(getLanguageVersion(buildConfig));
+        configuration.setDefaultLanguageVersion(getLanguageVersion(getModuleConfig()));
 
         if (configuration.getSuppressMarker() != null) {
             LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
         }
+        return configuration;
     }
 
-    private LanguageVersion getLanguageVersion(final BuildConfig buildConfig) {
+    private LanguageVersion getLanguageVersion(final ModuleBuildConfig buildConfig) {
         final String version = buildConfig.getBuildSettings()
             .getJavaPlatformVersion().getStringVersion();
 
@@ -114,7 +121,8 @@ public class PmdTask extends AbstractTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final RuleSetFactory ruleSetFactory = buildRuleSetFactory();
+        final PMDConfiguration configuration = getConfiguration();
+        final RuleSetFactory ruleSetFactory = buildRuleSetFactory(configuration);
 
         final RuleContext ctx = new RuleContext();
         final AtomicInteger ruleViolations = new AtomicInteger(0);
@@ -136,7 +144,7 @@ public class PmdTask extends AbstractTask {
         final String inputPaths = srcDir.toString();
         configuration.setInputPaths(inputPaths);
 
-        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "pmd")
+        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "pmd")
             .resolve(compileTarget.name().toLowerCase());
 
         final HTMLRenderer htmlRenderer = buildHtmlRenderer(reportPath);
@@ -176,7 +184,7 @@ public class PmdTask extends AbstractTask {
         return htmlRenderer;
     }
 
-    private RuleSetFactory buildRuleSetFactory() {
+    private RuleSetFactory buildRuleSetFactory(final PMDConfiguration configuration) {
         final RuleSetFactory ruleSetFactory = RulesetsFactoryUtils.getRulesetFactory(configuration);
 
         if (LOG.isDebugEnabled()) {

@@ -26,7 +26,6 @@ import java.util.List;
 import org.w3c.dom.Document;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
@@ -39,15 +38,10 @@ import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
-public class IdeaTask extends AbstractTask {
+public class IdeaModuleTask extends AbstractTask {
 
-    private final BuildConfig buildConfig;
     private final XmlWriter xmlWriter = new XmlWriter();
     private GlobalProductRepository globalProductRepository;
-
-    public IdeaTask(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-    }
 
     @Override
     public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
@@ -84,16 +78,14 @@ public class IdeaTask extends AbstractTask {
 
     @SuppressWarnings("checkstyle:magicnumber")
     private Document createMiscFile() {
-        final JavaVersion javaVersion = buildConfig.getBuildSettings().getJavaPlatformVersion();
-
         return XmlBuilder
             .root("project").attr("version", "4")
             .element("component")
             .attr("name", "ProjectRootManager")
             .attr("version", "2")
-            .attr("languageLevel", buildLanguageLevel(javaVersion))
+            .attr("languageLevel", buildLanguageLevel(JavaVersion.current()))
             .attr("default", "false") // TODO gradle == false || intellij setup == true !?!?
-            .attr("project-jdk-name", buildProjectJdkName(javaVersion))
+            .attr("project-jdk-name", buildProjectJdkName(JavaVersion.current()))
             .attr("project-jdk-type", "JavaSDK")
             .element("output").attr("url", "file://$PROJECT_DIR$/out")
             .getDocument();

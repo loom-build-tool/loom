@@ -22,33 +22,42 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
-import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.SourceTreeProduct;
 
-public class JavaAssembleJavadocJarTask extends AbstractTask {
+public class JavaAssembleSourcesJarModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
         final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
-            "javadoc", ResourcesTreeProduct.class);
+            "resources", ResourcesTreeProduct.class);
 
-        if (!resourcesTreeProduct.isPresent()) {
+        final Optional<SourceTreeProduct> sourceTree = useProduct(
+            "source", SourceTreeProduct.class);
+
+        if (!resourcesTreeProduct.isPresent() && !sourceTree.isPresent()) {
             return completeSkip();
         }
 
         final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
 
-        final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
-            getModule().getModuleName()));
+        final Path sourceJarFile = buildDir.resolve(String.format("%s-sources.jar",
+            getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
+            if (resourcesTreeProduct.isPresent()) {
+                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            }
+
+            if (sourceTree.isPresent()) {
+                FileUtil.copy(sourceTree.get().getSrcDir(), os);
+            }
         }
 
-        return completeOk(new AssemblyProduct(jarFile, "Jar of Javadoc"));
+        return completeOk(new AssemblyProduct(sourceJarFile, "Jar of sources"));
     }
 
 }

@@ -22,10 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.BuildSettings;
+import builders.loom.api.ModuleBuildConfig;
 
-public class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
+public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
 
     private static final long serialVersionUID = 1L;
 

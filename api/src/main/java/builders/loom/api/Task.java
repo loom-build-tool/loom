@@ -17,11 +17,11 @@
 package builders.loom.api;
 
 /**
- * @see AbstractTask
+ * @see AbstractModuleTask
  */
 public interface Task {
 
-    void setModule(Module module);
+    void setBuildContext(BuildContext buildContext);
     TaskResult run() throws Exception;
 
 }

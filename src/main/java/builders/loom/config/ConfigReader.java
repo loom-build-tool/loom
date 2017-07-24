@@ -34,8 +34,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
-import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.util.Hasher;
 
 public final class ConfigReader {
@@ -45,8 +45,8 @@ public final class ConfigReader {
     private ConfigReader() {
     }
 
-    public static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl runtimeConfig,
-                                                     final Path buildFile, final String cacheName)
+    public static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl runtimeConfig,
+                                               final Path buildFile, final String cacheName)
         throws IOException {
 
         if (!Files.isRegularFile(buildFile)) {

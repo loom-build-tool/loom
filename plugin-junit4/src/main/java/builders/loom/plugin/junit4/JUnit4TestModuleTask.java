@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
@@ -47,9 +47,9 @@ import builders.loom.plugin.junit4.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class JUnit4TestTask extends AbstractTask {
+public class JUnit4TestModuleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JUnit4TestTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JUnit4TestModuleTask.class);
 
     @Override
     public TaskResult run() throws Exception {
@@ -66,7 +66,7 @@ public class JUnit4TestTask extends AbstractTask {
 
         final ClassLoader targetClassLoader = ClassLoaderUtil.privileged(
             () -> new SharedApiClassLoader(junitUrlClassLoader,
-            new RestrictedClassLoader(JUnit4TestTask.class.getClassLoader())));
+            new RestrictedClassLoader(JUnit4TestModuleTask.class.getClassLoader())));
 
         final List<Class<?>> testClasses = collectClasses(targetClassLoader);
         if (testClasses.isEmpty()) {
@@ -75,7 +75,7 @@ public class JUnit4TestTask extends AbstractTask {
 
         final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(
             () -> new InjectingClassLoader(
-                targetClassLoader, JUnit4TestTask.class.getClassLoader(),
+                targetClassLoader, JUnit4TestModuleTask.class.getClassLoader(),
                 className -> className.startsWith("builders.loom.plugin.junit4.wrapper.")));
 
         final Class<?> wrapperClass =
@@ -93,7 +93,7 @@ public class JUnit4TestTask extends AbstractTask {
 
         // note: junit reports are not yet supported, but product expects the folder
         final Path reportPath = Files.createDirectories(
-            LoomPaths.reportDir(getModule().getModuleName(), "test"));
+            LoomPaths.reportDir(getBuildContext().getModuleName(), "test"));
 
         return completeOk(new ReportProduct(reportPath, "Junit4 report"));
     }

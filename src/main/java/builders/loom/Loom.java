@@ -39,9 +39,6 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.api.BuildConfigWithSettings;
-import builders.loom.api.LoomPaths;
-import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.util.Stopwatches;
 import builders.loom.util.Watch;

@@ -30,7 +30,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
@@ -43,11 +43,11 @@ import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
 
-public class SpringBootTask extends AbstractTask {
+public class SpringBootModuleTask extends AbstractModuleTask {
 
     private final SpringBootPluginSettings pluginSettings;
 
-    public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
+    public SpringBootModuleTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 

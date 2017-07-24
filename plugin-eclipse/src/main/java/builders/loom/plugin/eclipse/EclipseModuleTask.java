@@ -44,22 +44,19 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.BuildConfig;
+import builders.loom.api.JavaVersion;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
-public class EclipseTask extends AbstractTask {
+public class EclipseModuleTask extends AbstractTask {
 
-    private final BuildConfig buildConfig;
     private final DocumentBuilder docBuilder;
     private final Transformer transformer;
 
-    public EclipseTask(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-
+    public EclipseModuleTask() {
         try {
             final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             docBuilder = dbFactory.newDocumentBuilder();
@@ -74,7 +71,7 @@ public class EclipseTask extends AbstractTask {
     }
 
     private static InputStream readResource(final String resourceName) {
-        return new BufferedInputStream(EclipseTask.class.getResourceAsStream(resourceName));
+        return new BufferedInputStream(EclipseModuleTask.class.getResourceAsStream(resourceName));
     }
 
     @Override
@@ -131,7 +128,7 @@ public class EclipseTask extends AbstractTask {
             final Element root = doc.getDocumentElement();
 
             final String projectJdkName;
-            final int javaPlatformVersion = buildConfig.getBuildSettings().getJavaPlatformVersion()
+            final int javaPlatformVersion = JavaVersion.current() // FIXME
                 .getNumericVersion();
 
             if (javaPlatformVersion < 9) {

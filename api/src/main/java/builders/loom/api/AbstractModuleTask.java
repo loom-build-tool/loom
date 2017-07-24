@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit4;
+package builders.loom.api;
 
-import builders.loom.api.AbstractPlugin;
-import builders.loom.api.PluginSettings;
+public abstract class AbstractModuleTask extends AbstractTask implements ModuleBuildConfigAware {
 
-public class JUnit4Plugin extends AbstractPlugin<PluginSettings> {
+    private ModuleBuildConfig moduleConfig;
 
     @Override
-    public void configure() {
-        task("runTest")
-            .impl(JUnit4TestModuleTask::new)
-            .provides("test")
-            .uses("testDependencies", "processedResources", "compilation",
-                "processedTestResources", "testCompilation")
-            .desc("Executes tests with JUnit 4 and creates test report.")
-            .register();
-
-        goal("check")
-            .requires("test")
-            .register();
+    public void setModuleBuildConfig(final ModuleBuildConfig moduleConfig) {
+        this.moduleConfig = moduleConfig;
     }
 
+    public ModuleBuildConfig getModuleConfig() {
+        return moduleConfig;
+    }
 }

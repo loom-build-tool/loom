@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import builders.loom.api.AbstractTask;
+import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
@@ -37,7 +37,7 @@ import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 import edu.umd.cs.findbugs.Priorities;
 
-public class FindbugsTask extends AbstractTask {
+public class FindbugsModuleTask extends AbstractModuleTask {
 
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
@@ -46,8 +46,8 @@ public class FindbugsTask extends AbstractTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public FindbugsTask(final FindbugsPluginSettings pluginSettings,
-                        final CompileTarget compileTarget) {
+    public FindbugsModuleTask(final FindbugsPluginSettings pluginSettings,
+                              final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
 
@@ -111,7 +111,7 @@ public class FindbugsTask extends AbstractTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        final Path reportPath = LoomPaths.reportDir(getModule().getModuleName(), "findbugs")
+        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "findbugs")
             .resolve(compileTarget.name().toLowerCase());
 
         new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
@@ -167,7 +167,7 @@ public class FindbugsTask extends AbstractTask {
                 break;
             case TEST:
                 final Path buildPath = LoomPaths.BUILD_DIR.resolve(
-                    Paths.get("compilation", "main", getModule().getModuleName()));
+                    Paths.get("compilation", "main", getBuildContext().getModuleName()));
                 classpath.add(buildPath);
 
                 useProduct("testDependencies",

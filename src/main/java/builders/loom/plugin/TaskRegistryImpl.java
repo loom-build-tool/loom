@@ -28,18 +28,18 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import builders.loom.api.Module;
+import builders.loom.api.BuildContext;
 import builders.loom.api.Task;
 import builders.loom.api.WaitForAllProductsTask;
 import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 
-    private final Module module;
+    private final BuildContext buildContext;
     private final Map<String, ConfiguredTask> taskMap = new ConcurrentHashMap<>();
 
-    public TaskRegistryImpl(final Module module) {
-        this.module = module;
+    public TaskRegistryImpl(final BuildContext buildContext) {
+        this.buildContext = buildContext;
     }
 
     @SuppressWarnings("checkstyle:parameternumber")
@@ -77,7 +77,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         }
 
         final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
-        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(module, taskName, pluginName,
+        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(buildContext, taskName, pluginName,
             taskSupplier, providedProduct, usedProducts, importedProducts, importedAllProducts,
             description, type)) != null) {
 
@@ -101,7 +101,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
             configuredTask != null
                 ? configuredTask.addUsedProducts(pluginName, usedProducts)
-                : new ConfiguredTask(module, name, pluginName, WaitForAllProductsTask::new,
+                : new ConfiguredTask(buildContext, name, pluginName, WaitForAllProductsTask::new,
                 goalName, usedProducts, Collections.emptySet(), Collections.emptySet(), null,
                 TaskType.GOAL);
 

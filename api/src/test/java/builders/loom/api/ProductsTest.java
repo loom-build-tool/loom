@@ -16,10 +16,6 @@
 
 package builders.loom.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +26,10 @@ import java.util.Optional;
 import org.junit.Test;
 
 import builders.loom.api.product.AbstractProduct;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ProductsTest {
 

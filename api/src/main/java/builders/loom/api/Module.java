@@ -29,4 +29,10 @@ public class Module implements BuildContext {
         return config;
     }
 
+    @Override
+    public String toString() {
+        return "Module{" +
+            "moduleName='" + moduleName + '\'' +
+            '}';
+    }
 }

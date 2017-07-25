@@ -136,13 +136,12 @@ public class LoomProcessor {
                 final ModuleBuildConfig buildConfig = ConfigReader.readConfig(
                     runtimeConfiguration, moduleBuildConfig, modulePathName);
 
-                // TODO src/test/java ?
-
                 final String moduleName = readModuleNameFromModuleInfo(module)
-                    .orElseThrow(() -> new IllegalStateException(
-                        "Missing module-info.java in module " + module));
+                    .orElse(module.getFileName().toString());
 
                 modules.add(new Module(moduleName, module, buildConfig));
+
+                // TODO duplicate module name check
             }
             return modules;
         } catch (final IOException e) {
@@ -163,10 +162,29 @@ public class LoomProcessor {
         final Path moduleInfoFile = baseDir.resolve(
             Paths.get("src", "main", "java", "module-info.java"));
 
-        if (Files.notExists(moduleInfoFile)) {
-            return Optional.empty();
+        final Path testModuleInfoFile = baseDir.resolve(
+            Paths.get("src", "test", "java", "module-info.java"));
+
+        if (Files.exists(testModuleInfoFile)) {
+            if (Files.exists(moduleInfoFile)) {
+                throw new IllegalStateException(""); // TODO
+            }
+            if (Files.exists(baseDir.resolve( Paths.get("src", "main")))) {
+                throw new IllegalStateException("no src/main allowed for itest case"); // TODO
+            }
+
+            // sicher ein itest
+            return readModuleNameFromInfoFile(testModuleInfoFile);
         }
 
+        if (Files.exists(moduleInfoFile)) {
+            return readModuleNameFromInfoFile(moduleInfoFile);
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<String> readModuleNameFromInfoFile(final Path moduleInfoFile) {
         try {
             final String moduleInfoSource =
                 new String(Files.readAllBytes(moduleInfoFile), StandardCharsets.UTF_8);

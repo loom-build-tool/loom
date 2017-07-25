@@ -16,6 +16,8 @@
 
 package builders.loom.api;
 
+import java.util.Set;
+
 public interface ModuleBuildConfigAware {
 
     void setModuleBuildConfig(ModuleBuildConfig moduleConfig);

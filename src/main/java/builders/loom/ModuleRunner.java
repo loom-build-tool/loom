@@ -53,6 +53,7 @@ public class ModuleRunner {
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<BuildContext, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
+    private final Map<Module, Set<Module>> transitiveModuleDependencies = new HashMap<>();
     private GlobalProductRepository globalProductRepository;
 
     public ModuleRunner(final PluginLoader pluginLoader,
@@ -63,6 +64,8 @@ public class ModuleRunner {
 
     public void init() {
         final Stopwatch sw = new Stopwatch();
+
+        resolveModuleDependencyGraph();
 
         registerModule(Set.of("eclipse", "idea"), new GlobalBuildContext());
 
@@ -98,27 +101,48 @@ public class ModuleRunner {
 
         final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds);
 
-        if (resolvedTasks.isEmpty()) {
-            return Collections.emptyList();
+            if (resolvedTasks.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            final Stopwatch sw = new Stopwatch();
+
+            LOG.info("Execute {}", resolvedTasks.stream()
+                .map(ConfiguredTask::toString)
+                .collect(Collectors.joining(", ")));
+
+            registerProducts();
+
+            ProgressMonitor.setTasks(resolvedTasks.size());
+
+            final JobPool jobPool = new JobPool();
+            jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
+            jobPool.shutdown();
+
+            LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw.duration());
+
+            return resolvedTasks;
         }
 
-        final Stopwatch sw = new Stopwatch();
+    private void resolveModuleDependencyGraph() {
+        final DirectedGraph<Module> dependentModules = new DirectedGraph<>(moduleRegistry.getModules());
 
-        LOG.info("Execute {}", resolvedTasks.stream()
-            .map(ConfiguredTask::toString)
-            .collect(Collectors.joining(", ")));
+        for (final Module module : moduleRegistry.getModules()) {
+            final Set<Module> moduleDependencies = module.getConfig().getModuleDependencies()
+                .stream().map(m -> moduleRegistry.lookup(m)
+                    .orElseThrow(() -> new IllegalStateException("Failed resolving dependent module "
+                        + m + " from module " + module.getModuleName())))
+                .collect(Collectors.toSet());
 
-        registerProducts();
+            dependentModules.addEdges(module, moduleDependencies);
+        }
 
-        ProgressMonitor.setTasks(resolvedTasks.size());
+        for (final Module module : moduleRegistry.getModules()) {
+            final Set<String> moduleDeps = module.getConfig().getModuleDependencies();
+            final List<Module> resolve = dependentModules.resolve((m) -> moduleDeps.contains(m.getModuleName()));
 
-        final JobPool jobPool = new JobPool();
-        jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
-        jobPool.shutdown();
-
-        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw.duration());
-
-        return resolvedTasks;
+            transitiveModuleDependencies.put(module, new HashSet<>(resolve));
+        }
     }
 
     private List<ConfiguredTask> resolveTasks(final Set<String> productIds) {
@@ -242,7 +266,7 @@ public class ModuleRunner {
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, configuredTask, productRepository,
-            globalProductRepository, serviceLocator);
+            globalProductRepository, serviceLocator, transitiveModuleDependencies);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

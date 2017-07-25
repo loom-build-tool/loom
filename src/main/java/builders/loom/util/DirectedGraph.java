@@ -35,7 +35,7 @@ public class DirectedGraph<T> {
     public DirectedGraph() {
     }
 
-    public DirectedGraph(final Set<T> nodes) {
+    public DirectedGraph(final Collection<T> nodes) {
         nodes.forEach(this::addNode);
     }
 
@@ -67,7 +67,7 @@ public class DirectedGraph<T> {
         return resolve(Collections.singletonList(dest));
     }
 
-    public List<T> resolve(final List<T> destinations) {
+    public List<T> resolve(final Collection<T> destinations) {
         checkCycle();
 
         final Set<Vertex<T>> collect = new LinkedHashSet<>();

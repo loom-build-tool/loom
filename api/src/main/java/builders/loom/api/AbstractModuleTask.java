@@ -16,6 +16,8 @@
 
 package builders.loom.api;
 
+import java.util.Set;
+
 public abstract class AbstractModuleTask extends AbstractTask implements ModuleBuildConfigAware {
 
     private ModuleBuildConfig moduleConfig;

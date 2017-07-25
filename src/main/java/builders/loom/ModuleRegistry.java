@@ -18,6 +18,7 @@ package builders.loom;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import builders.loom.api.Module;
 
@@ -31,6 +32,12 @@ public class ModuleRegistry {
 
     public List<Module> getModules() {
         return modules;
+    }
+
+    public Optional<Module> lookup(final String moduleName) {
+        return modules.stream()
+            .filter(m -> m.getModuleName().equals(moduleName))
+            .findFirst();
     }
 
 }

@@ -207,22 +207,29 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
                 // Unfortunately JDK doesn't support cross-compile for module-info.java
 
                 // First, compile module-info.java with current JDK version
-                final Path moduleInfo = srcFiles.stream()
+                final Optional<Path> moduleInfoOpt = srcFiles.stream()
                     .filter(f -> f.getFileName().toString().equals("module-info.java"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No module-info.java found"));
-                LOG.debug("Compile module-info.java");
-                compile(compiler, diagnosticListener, fileManager, buildOptions(null),
-                    fileManager.getJavaFileObjects(moduleInfo));
+                    .findFirst();
 
-                // Then, compile everything else with requested Version
-                final List<Path> otherFiles = srcFiles.stream()
-                    .filter(f -> f != moduleInfo)
-                    .collect(Collectors.toList());
+                final List<Path> srcFilesWithoutModuleInfo;
+                if (moduleInfoOpt.isPresent()) {
+                    final Path moduleInfo = moduleInfoOpt.get();
 
-                LOG.debug("Compile {} java files", otherFiles.size());
+                    LOG.debug("Compile {}", moduleInfo);
+                    compile(compiler, diagnosticListener, fileManager, buildOptions(null),
+                        fileManager.getJavaFileObjects(moduleInfo));
+
+                    // Then, compile everything else with requested Version
+                    srcFilesWithoutModuleInfo = srcFiles.stream()
+                        .filter(f -> f != moduleInfo)
+                        .collect(Collectors.toList());
+                } else {
+                    srcFilesWithoutModuleInfo = srcFiles;
+                }
+
+                LOG.debug("Compile {} java files", srcFilesWithoutModuleInfo.size());
                 compile(compiler, diagnosticListener, fileManager, buildOptions(javaVersion.get()),
-                    fileManager.getJavaFileObjectsFromPaths(otherFiles));
+                    fileManager.getJavaFileObjectsFromPaths(srcFilesWithoutModuleInfo));
             } else {
                 LOG.debug("Compile {} java files", srcFiles.size());
                 compile(compiler, diagnosticListener, fileManager, buildOptions(null),

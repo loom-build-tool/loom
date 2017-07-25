@@ -16,7 +16,9 @@
 
 package builders.loom;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -28,6 +30,7 @@ import builders.loom.api.BuildContext;
 import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfigAware;
+import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.ProvidedProduct;
@@ -51,11 +54,12 @@ public class Job implements Callable<TaskStatus> {
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
+    private final Map<Module, Set<Module>> transitiveModuleDependencies;
 
     Job(final String name, final BuildContext buildContext, final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final GlobalProductRepository globalProductRepository,
-        final ServiceLocator serviceLocator) {
+        final ServiceLocator serviceLocator, final Map<Module, Set<Module>> transitiveModuleDependencies) {
 
         this.buildContext = buildContext;
         this.globalProductRepository = globalProductRepository;
@@ -64,6 +68,7 @@ public class Job implements Callable<TaskStatus> {
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
         this.serviceLocator = serviceLocator;
+        this.transitiveModuleDependencies = transitiveModuleDependencies;
     }
 
     public String getName() {
@@ -136,6 +141,11 @@ public class Job implements Callable<TaskStatus> {
             final ModuleBuildConfigAware mbcaTask = (ModuleBuildConfigAware) task;
             final Module module = (Module) buildContext;
             mbcaTask.setModuleBuildConfig(module.getConfig());
+        }
+
+        if (task instanceof ModuleGraphAware) {
+            final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
+            mgaTask.setTransitiveModuleGraph(transitiveModuleDependencies);
         }
     }
 

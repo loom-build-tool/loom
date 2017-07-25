@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Document;
 
@@ -30,6 +32,7 @@ import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
+import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
@@ -38,14 +41,20 @@ import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
-public class IdeaModuleTask extends AbstractTask {
+public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
     private final XmlWriter xmlWriter = new XmlWriter();
     private GlobalProductRepository globalProductRepository;
+    private Map<Module, Set<Module>> moduleGraph;
 
     @Override
     public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
         this.globalProductRepository = globalProductRepository;
+    }
+
+    @Override
+    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> moduleGraph) {
+        this.moduleGraph = moduleGraph;
     }
 
     @Override
@@ -83,9 +92,9 @@ public class IdeaModuleTask extends AbstractTask {
             .element("component")
             .attr("name", "ProjectRootManager")
             .attr("version", "2")
-            .attr("languageLevel", buildLanguageLevel(JavaVersion.current()))
+            .attr("languageLevel", buildLanguageLevel(JavaVersion.current())) // TODO find better
             .attr("default", "false") // TODO gradle == false || intellij setup == true !?!?
-            .attr("project-jdk-name", buildProjectJdkName(JavaVersion.current()))
+            .attr("project-jdk-name", buildProjectJdkName(JavaVersion.current())) // TODO find better
             .attr("project-jdk-type", "JavaSDK")
             .element("output").attr("url", "file://$PROJECT_DIR$/out")
             .getDocument();
@@ -102,25 +111,31 @@ public class IdeaModuleTask extends AbstractTask {
 
     private List<IdeaModule> buildIdeaModules(final Path currentWorkDirName, final Path ideaDirectory) throws InterruptedException, IOException {
         final List<IdeaModule> ideaModules = new ArrayList<>();
-        for (final Module module : globalProductRepository.getAllModules()) {
-            if (module.getModuleName().equals("unnamed")) {
-                final Path imlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
-                final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
-                xmlWriter.write(createImlFile(imlFile, module, ModuleGroup.BASE), imlFile);
-                ideaModules.add(new IdeaModule(module.getModuleName(), null, imlFileName));
-            } else {
-                for (final ModuleGroup group : ModuleGroup.values()) {
 
-                    final Path ideaModulesDir = Files.createDirectories(ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
+        {
 
-                    final Path imlFile = ideaModulesDir.resolve(buildImlFilename(module, group));
-                    final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
-                    xmlWriter.write(createImlFile(imlFile, module, group), imlFile);
-                    ideaModules.add(new IdeaModule(module.getModuleName(), group, imlFileName));
-                }
-            }
+            // TODO cleanup
+
+            final Path imlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
+            final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
+            xmlWriter.write(createImlFile(imlFile, new Module(null, imlFile.getParent(), null), ModuleGroup.BASE), imlFile);
+            ideaModules.add(new IdeaModule(null, null, imlFileName));
 
         }
+
+
+        for (final Module module : globalProductRepository.getAllModules()) {
+            for (final ModuleGroup group : ModuleGroup.values()) {
+
+                final Path ideaModulesDir = Files.createDirectories(ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
+
+                final Path imlFile = ideaModulesDir.resolve(buildImlFilename(module, group));
+                final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
+                xmlWriter.write(createImlFile(imlFile, module, group), imlFile);
+                ideaModules.add(new IdeaModule(module.getModuleName(), group, imlFileName));
+            }
+        }
+
         return ideaModules;
     }
 
@@ -147,7 +162,7 @@ public class IdeaModuleTask extends AbstractTask {
                 .attr("filepath", "$PROJECT_DIR$/" + ideaModule.getFilename());
 
             if (ideaModule.getGroup() != null) {
-                module.attr("group", ideaModule.getModuleName());
+                module.attr("group", ideaModule.getModuleName()); // correct?
             }
         }
 
@@ -212,10 +227,10 @@ public class IdeaModuleTask extends AbstractTask {
             .attr("type", "java-resource");
 
         // dependent modules
-        for (final String depModule : module.getConfig().getModuleDependencies()) {
+        for (final Module depModule : moduleGraph.get(module)) {
             component.element("orderEntry")
                 .attr("type", "module")
-                .attr("module-name", depModule + "_main")
+                .attr("module-name", depModule.getModuleName() + "_main")
                 .attr("scope", "PROVIDED");
         }
 
@@ -248,6 +263,15 @@ public class IdeaModuleTask extends AbstractTask {
         component.element("orderEntry")
             .attr("type", "module")
             .attr("module-name", module.getModuleName() + "_main");
+
+
+        // dependent modules
+        for (final Module depModule : moduleGraph.get(module)) {
+            component.element("orderEntry")
+                .attr("type", "module")
+                .attr("module-name", depModule.getModuleName() + "_main")
+                .attr("scope", "PROVIDED");
+        }
 
         // TODO in module: <component name="TestModuleProperties" production-module="plugin-springboot_main" />
 

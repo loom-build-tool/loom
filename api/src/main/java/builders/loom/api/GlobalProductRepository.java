@@ -50,4 +50,10 @@ public class GlobalProductRepository {
         return Collections.unmodifiableSet(collect);
     }
 
+    public Set<ProductPromise> getAllProductPromises() {
+        return moduleProductRepositories.values().stream()
+            .flatMap(pr -> pr.getAllProductPromises().stream())
+            .collect(Collectors.toSet());
+    }
+
 }

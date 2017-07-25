@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -32,6 +33,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfigAware;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
+import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.ProvidedProduct;
 import builders.loom.api.ServiceLocatorAware;
@@ -92,10 +94,18 @@ public class Job implements Callable<TaskStatus> {
             Stopwatches.startProcess("Task " + name);
         }
 
+
+        final ProductPromise productPromise = productRepository
+            .lookup(configuredTask.getProvidedProduct());
+
+        productPromise
+            .setStartTime(System.nanoTime());
+
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
+
         final TaskResult taskResult = task.run();
 
         if (!configuredTask.isGoal()) {
@@ -115,8 +125,7 @@ public class Job implements Callable<TaskStatus> {
                 + "status: " + taskResult.getStatus());
         }
 
-        productRepository
-            .lookup(configuredTask.getProvidedProduct())
+        productPromise
             .complete(taskResult.getProduct());
 
         return taskResult.getStatus();

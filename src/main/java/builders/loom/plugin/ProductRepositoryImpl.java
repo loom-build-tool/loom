@@ -16,8 +16,10 @@
 
 package builders.loom.plugin;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import builders.loom.api.ProductPromise;
@@ -45,6 +47,11 @@ public class ProductRepositoryImpl implements ProductRepository {
                 "Product <" + productId + "> already registered");
         }
 
+    }
+
+    @Override
+    public Collection<ProductPromise> getAllProductPromises() {
+        return products.values();
     }
 
 }

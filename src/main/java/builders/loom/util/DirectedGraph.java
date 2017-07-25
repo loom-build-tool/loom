@@ -91,6 +91,12 @@ public class DirectedGraph<T> {
         return resolve(requested);
     }
 
+    public List<T> resolveDirectDependencies(T vertex) {
+        return vertices.get(vertex).getOutgoing().stream()
+            .map(Vertex::getValue)
+            .collect(Collectors.toList());
+    }
+
     private void doCollect(final Set<Vertex<T>> collect, final List<Vertex<T>> destinations) {
         for (final Vertex<T> dest : destinations) {
             doCollect(collect, dest.getOutgoing());

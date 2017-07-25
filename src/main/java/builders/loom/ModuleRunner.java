@@ -18,12 +18,15 @@ package builders.loom;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +46,8 @@ import builders.loom.plugin.TaskInfo;
 import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.DirectedGraph;
 import builders.loom.util.Stopwatch;
+import builders.loom.util.Stopwatches;
+import builders.loom.util.Watch;
 
 public class ModuleRunner {
 
@@ -99,30 +104,130 @@ public class ModuleRunner {
     public List<ConfiguredTask> execute(final Set<String> productIds)
         throws BuildException, InterruptedException {
 
-        final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds);
+        final Stopwatch sw = new Stopwatch();
 
-            if (resolvedTasks.isEmpty()) {
-                return Collections.emptyList();
+        final DirectedGraph<ConfiguredTask> diGraph = resolveTasks(productIds);
+
+        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(
+            configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
+
+        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
+
+        if (resolvedTasks.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final Stopwatch sw2 = new Stopwatch();
+
+        LOG.info("Execute {}", resolvedTasks.stream()
+            .map(ConfiguredTask::toString)
+            .collect(Collectors.joining(", ")));
+
+        registerProducts();
+
+        ProgressMonitor.setTasks(resolvedTasks.size());
+
+        long time0 = System.nanoTime();
+
+        final JobPool jobPool = new JobPool();
+        jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
+        jobPool.shutdown();
+
+        //long timetotal = System.nanoTime() - time0;
+
+        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
+
+        // TODO refactor
+        
+        final long timetotal = resolvedTasks.stream().sorted(Comparator.comparingLong(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()).getCompletedAt()))
+            .mapToLong(configuredTask -> {
+                final ProductPromise productPromise = moduleProductRepositories.get(configuredTask.getBuildContext()).lookup(configuredTask.getProvidedProduct());
+
+                final List<ConfiguredTask> depTasks = diGraph.resolveDirectDependencies(configuredTask);
+
+                final Optional<ProductPromise> latest = depTasks.stream()
+                    .map(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()))
+                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
+
+                if (latest.isPresent()) {
+                    return (productPromise.getCompletedAt() - latest.get().getCompletedAt());
+                } else {
+                    return productPromise.getCompletedAt() - productPromise.getStartTime();
+                }
+
+            }).sum();
+
+        resolvedTasks.stream().sorted(Comparator.comparingLong(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()).getCompletedAt()))
+        .forEach(configuredTask -> {
+            final ProductPromise productPromise = moduleProductRepositories.get(configuredTask.getBuildContext()).lookup(configuredTask.getProvidedProduct());
+
+            final List<ConfiguredTask> depTasks = diGraph.resolveDirectDependencies(configuredTask);
+
+            final Optional<ProductPromise> latest = depTasks.stream()
+                .map(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()))
+                .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
+
+            if (latest.isPresent()) {
+                printDuration(80, configuredTask.toString(), timetotal, (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
+
+                LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
+                    productPromise.getProductId(), productPromise.getCompletedAt(), (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000, latest.get().getProductId(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()) / 1_000_000);
+            } else {
+                printDuration(80, configuredTask.toString(), timetotal, (productPromise.getCompletedAt() - productPromise.getStartTime()));
+
+                LOG.info("Product {} was completed at {} after {}ms without any dependencies",
+                    productPromise.getProductId(), productPromise.getCompletedAt(), (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000);
             }
 
-            final Stopwatch sw = new Stopwatch();
+        });
 
-            LOG.info("Execute {}", resolvedTasks.stream()
-                .map(ConfiguredTask::toString)
-                .collect(Collectors.joining(", ")));
+        System.out.println();
 
-            registerProducts();
+        return resolvedTasks;
+    }
 
-            ProgressMonitor.setTasks(resolvedTasks.size());
 
-            final JobPool jobPool = new JobPool();
-            jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
-            jobPool.shutdown();
+    private static void printExecutionStatistics() {
+        System.out.println();
+        System.out.println("Execution statistics (ordered by time consumption):");
+        System.out.println();
 
-            LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw.duration());
+        final int longestKey = Stopwatches.getWatches().keySet().stream()
+            .mapToInt(String::length)
+            .max()
+            .orElse(10);
 
-            return resolvedTasks;
-        }
+        final Stream<Map.Entry<String, Watch>> sorted = Stopwatches.getWatches().entrySet().stream()
+            .sorted((o1, o2) ->
+                Long.compare(o2.getValue().getDuration(), o1.getValue().getDuration()));
+
+        final long totalDuration = Stopwatches.getTotalDuration();
+
+        sorted.forEach(stringWatchEntry -> {
+            final String name = stringWatchEntry.getKey();
+            final long watchDuration = stringWatchEntry.getValue().getDuration();
+            printDuration(longestKey, name, totalDuration, watchDuration);
+        });
+
+        System.out.println();
+    }
+
+    private static void printDuration(final int longestKey, final String name,
+                                      final long totalDuration, final long watchDuration) {
+        final double pct = 100D / totalDuration * watchDuration;
+        final String space = String.join("",
+            Collections.nCopies(longestKey - name.length(), " "));
+
+        final double minDuration = 0.1;
+        final String durationBar = pct < minDuration ? "." : String.join("",
+            Collections.nCopies((int) Math.ceil(pct / 2), "#"));
+
+        final double durationSecs = watchDuration / 1_000_000_000D;
+        System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
+            name, space, durationSecs, pct, durationBar);
+    }
+
+
 
     private void resolveModuleDependencyGraph() {
         final DirectedGraph<Module> dependentModules = new DirectedGraph<>(moduleRegistry.getModules());
@@ -145,9 +250,7 @@ public class ModuleRunner {
         }
     }
 
-    private List<ConfiguredTask> resolveTasks(final Set<String> productIds) {
-        final Stopwatch sw = new Stopwatch();
-
+    private DirectedGraph<ConfiguredTask> resolveTasks(final Set<String> productIds) {
         final Set<ConfiguredTask> allConfiguredTasks = moduleTaskRegistries.values().stream()
             .flatMap(task -> task.configuredTasks().stream())
             .collect(Collectors.toSet());
@@ -177,11 +280,8 @@ public class ModuleRunner {
             }
         }
 
-        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(
-            configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
 
-        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
-        return resolvedTasks;
+        return diGraph;
     }
 
     // find tasks providing requested products (within same module)

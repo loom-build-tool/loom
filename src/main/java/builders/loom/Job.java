@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -43,7 +42,6 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Stopwatches;
 
 public class Job implements Callable<TaskStatus> {
 
@@ -90,11 +88,6 @@ public class Job implements Callable<TaskStatus> {
     public TaskStatus runTask() throws Exception {
         LOG.info("Start task {}", name);
 
-        if (!configuredTask.isGoal()) {
-            Stopwatches.startProcess("Task " + name);
-        }
-
-
         final ProductPromise productPromise = productRepository
             .lookup(configuredTask.getProvidedProduct());
 
@@ -107,10 +100,6 @@ public class Job implements Callable<TaskStatus> {
         injectTaskProperties(task);
 
         final TaskResult taskResult = task.run();
-
-        if (!configuredTask.isGoal()) {
-            Stopwatches.stopProcess();
-        }
 
         LOG.info("Task resulted with {}", taskResult);
 

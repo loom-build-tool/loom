@@ -23,10 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import javax.tools.ToolProvider;
 
@@ -39,10 +38,6 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Stopwatches;
-import builders.loom.util.Watch;
-
 @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:hideutilityclassconstructor",
     "checkstyle:regexpmultiline", "checkstyle:illegalcatch"})
 public class Loom {
@@ -50,6 +45,8 @@ public class Loom {
     private static final Path LOCK_FILE = Paths.get(".loom.lock");
 
     public static void main(final String[] args) {
+        final long startTime = System.nanoTime();
+
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
                 .a("Interrupt received - stopping").reset()));
@@ -80,6 +77,17 @@ public class Loom {
                 .reset());
             System.exit(1);
         }
+
+        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
+            .truncatedTo(ChronoUnit.MILLIS);
+
+        AnsiConsole.out().println(Ansi.ansi().reset().fgBrightGreen()
+            .a("BUILD SUCCESSFUL").reset()
+            .a(" in ")
+            .a(duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase()));
 
         System.exit(0);
     }
@@ -172,8 +180,6 @@ public class Loom {
     }
 
     public static void run(final CommandLine cmd) throws Exception {
-        final long startTime = System.nanoTime();
-
         final LoomProcessor loomProcessor = new LoomProcessor();
 
         if (cmd.hasOption("clean")) {
@@ -215,22 +221,14 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
 
-            final Collection<ConfiguredTask> resolvedTasks;
+            final Optional<ExecutionReport> executionReport;
             try {
-                resolvedTasks = loomProcessor.execute(cmd.getArgList());
+                executionReport = loomProcessor.execute(cmd.getArgList());
             } finally {
                 ProgressMonitor.stop();
             }
 
-            loomProcessor.printProductInfos(resolvedTasks);
-
-            printExecutionStatistics();
-
-            final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-
-            AnsiConsole.out().print(Ansi.ansi().reset().fgBrightGreen()
-                .a("BUILD SUCCESSFUL").reset()
-                .format(" in %.2fs%n", duration));
+            executionReport.ifPresent(ExecutionReport::print);
         }
 
         loomProcessor.logMemoryUsage();
@@ -249,46 +247,6 @@ public class Loom {
         } else {
             throw new IllegalStateException("Unknown format: " + format);
         }
-    }
-
-    private static void printExecutionStatistics() {
-        System.out.println();
-        System.out.println("Execution statistics (ordered by time consumption):");
-        System.out.println();
-
-        final int longestKey = Stopwatches.getWatches().keySet().stream()
-            .mapToInt(String::length)
-            .max()
-            .orElse(10);
-
-        final Stream<Map.Entry<String, Watch>> sorted = Stopwatches.getWatches().entrySet().stream()
-            .sorted((o1, o2) ->
-                Long.compare(o2.getValue().getDuration(), o1.getValue().getDuration()));
-
-        final long totalDuration = Stopwatches.getTotalDuration();
-
-        sorted.forEach(stringWatchEntry -> {
-            final String name = stringWatchEntry.getKey();
-            final long watchDuration = stringWatchEntry.getValue().getDuration();
-            printDuration(longestKey, name, totalDuration, watchDuration);
-        });
-
-        System.out.println();
-    }
-
-    private static void printDuration(final int longestKey, final String name,
-                                      final long totalDuration, final long watchDuration) {
-        final double pct = 100D / totalDuration * watchDuration;
-        final String space = String.join("",
-            Collections.nCopies(longestKey - name.length(), " "));
-
-        final double minDuration = 0.1;
-        final String durationBar = pct < minDuration ? "." : String.join("",
-            Collections.nCopies((int) Math.ceil(pct / 2), "#"));
-
-        final double durationSecs = watchDuration / 1_000_000_000D;
-        System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
-            name, space, durationSecs, pct, durationBar);
     }
 
 }

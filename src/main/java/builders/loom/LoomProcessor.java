@@ -202,7 +202,7 @@ public class LoomProcessor {
         }
     }
 
-    public List<ConfiguredTask> execute(final List<String> productIds) throws Exception {
+    public Optional<ExecutionReport> execute(final List<String> productIds) throws Exception {
         return moduleRunner.execute(new HashSet<>(productIds));
     }
 

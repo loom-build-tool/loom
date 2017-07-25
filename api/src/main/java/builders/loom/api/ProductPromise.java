@@ -16,8 +16,6 @@
 
 package builders.loom.api;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +23,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +37,7 @@ public final class ProductPromise {
 
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-    private AtomicLong completedAt = new AtomicLong();
+    private long completedAt;
 
     private final String productId;
     private long startTime;
@@ -59,7 +56,15 @@ public final class ProductPromise {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
         }
-        completedAt.set(System.nanoTime());
+
+
+        final long newValue = System.nanoTime();
+
+        if (newValue < startTime) {
+            throw new IllegalStateException();
+        }
+
+        completedAt = newValue;
     }
 
     public String getProductId() {
@@ -105,7 +110,7 @@ public final class ProductPromise {
     }
 
     public long getCompletedAt() {
-        return completedAt.longValue();
+        return completedAt;
     }
 
 }

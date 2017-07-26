@@ -6,7 +6,7 @@ public class GlobalBuildContext implements BuildContext {
 
     @Override
     public String getModuleName() {
-        return "global";
+        return "_LOOM_GLOBAL_";
     }
 
     @Override

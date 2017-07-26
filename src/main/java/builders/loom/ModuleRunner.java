@@ -22,9 +22,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,9 +132,11 @@ public class ModuleRunner {
         final ExecutionReport executionReport = new ExecutionReport();
 
         resolvedTasks.stream()
-            .sorted(Comparator.comparingLong(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()).getCompletedAt()))
+            .sorted(Comparator.comparingLong(
+                ct -> lookupProductPromise(ct.getBuildContext(), ct.getProvidedProduct()).getCompletedAt()))
         .forEach(configuredTask -> {
-            final ProductPromise productPromise = moduleProductRepositories.get(configuredTask.getBuildContext()).lookup(configuredTask.getProvidedProduct());
+            final ProductPromise productPromise =
+                lookupProductPromise(configuredTask.getBuildContext(), configuredTask.getProvidedProduct());
             final Set<ProductPromise> actuallyUsedProducts =
                 configuredTaskJobMap.get(configuredTask).getActuallyUsedProducts().orElse(Set.of());
 
@@ -140,15 +144,18 @@ public class ModuleRunner {
                 .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
 
             if (latest.isPresent()) {
-                executionReport.add(configuredTask.toString(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
+                executionReport.add(
+                    configuredTask.toString(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
 
                 LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
-                    productPromise.getProductId(), productPromise.getCompletedAt(), (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000, latest.get().getProductId(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()) / 1_000_000);
+                    productPromise.getProductId(), productPromise.getCompletedAt(),
+                    (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000, latest.get().getProductId(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()) / 1_000_000);
             } else {
                 executionReport.add(configuredTask.toString(), (productPromise.getCompletedAt() - productPromise.getStartTime()));
 
                 LOG.info("Product {} was completed at {} after {}ms without any dependencies",
-                    productPromise.getProductId(), productPromise.getCompletedAt(), (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000);
+                    productPromise.getProductId(), productPromise.getCompletedAt(),
+                    (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000);
             }
 
         });
@@ -187,7 +194,8 @@ public class ModuleRunner {
         // Initialize directed graph with all available ConfiguredTask instances
         final DirectedGraph<ConfiguredTask> diGraph = new DirectedGraph<>(allConfiguredTasks);
 
-        for (final BuildContext buildContext : moduleTaskRegistries.keySet()) {
+        allBuildContexts().forEach(
+            buildContext ->  {
             final Collection<ConfiguredTask> moduleConfiguredTasks =
                 moduleTaskRegistries.get(buildContext).configuredTasks();
 
@@ -205,10 +213,23 @@ public class ModuleRunner {
                         collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
                 }
             }
-        }
-
+        });
 
         return diGraph;
+    }
+
+    private Stream<Module> allModules() {
+        return moduleTaskRegistries.keySet().stream().filter(Module.class::isInstance).map(Module.class::cast);
+    }
+
+    private Stream<BuildContext> allBuildContexts() {
+        return moduleTaskRegistries.keySet().stream();
+    }
+
+    private ProductPromise lookupProductPromise(BuildContext buildContext, String productId) {
+        Objects.requireNonNull(buildContext);
+        Objects.requireNonNull(productId);
+        return moduleProductRepositories.get(buildContext).lookup(productId);
     }
 
     // find tasks providing requested products (within same module)
@@ -227,7 +248,7 @@ public class ModuleRunner {
         final Set<String> moduleDependencies = module.getConfig().getModuleDependencies();
 
         return moduleConfiguredTask.getImportedProducts().stream()
-            .map(importedProductId -> moduleTaskRegistries.keySet().stream()
+            .map(importedProductId -> allModules()
                 .filter(m -> moduleDependencies.contains(m.getModuleName()))
                 .map(m -> moduleTaskRegistries.get(m).configuredTasks()) // TODO throw module doesn't exist exception!!
                 .map(tasks -> findProvidingProduct(tasks, importedProductId))

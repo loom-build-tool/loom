@@ -175,8 +175,7 @@ public class Job implements Callable<TaskStatus> {
     }
 
     // TODO moduleName is builtContext.name
-    private <P extends Product> ProductPromise buildModuleProduct(final String moduleName,
-                                                                  final String productId) {
+    private ProductPromise buildModuleProduct(final String moduleName, final String productId) {
         Objects.requireNonNull(moduleName, "moduleName required");
         Objects.requireNonNull(productId, "productId required");
 
@@ -188,7 +187,6 @@ public class Job implements Callable<TaskStatus> {
 
         return productRepository.lookup(productId);
     }
-
 
     public Optional<Set<ProductPromise>> getActuallyUsedProducts() {
         return Optional.ofNullable(usedProducts)

@@ -21,8 +21,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +30,6 @@ import builders.loom.api.product.Product;
 public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
-
-    private static final int FUTURE_WAIT_THRESHOLD = 10;
 
     private final String moduleName;
     private final String productId;
@@ -64,13 +60,13 @@ public final class ProductPromise {
         }
 
 
-        final long newValue = System.nanoTime();
+        final long now = System.nanoTime();
 
-        if (newValue < startTime) {
+        if (now < startTime) {
             throw new IllegalStateException();
         }
 
-        completedAt = newValue;
+        completedAt = now;
     }
 
     public String getModuleName() {
@@ -95,23 +91,11 @@ public final class ProductPromise {
         LOG.debug("Requesting product <{}> ...", productId);
 
         try {
-            final Optional<Product> product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
-
+            final Optional<Product> product = future.get();
             LOG.debug("Return product <{}> with value: {}", productId, product.orElse(null));
-
             return product;
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e);
-        } catch (final TimeoutException e) {
-
-            LOG.warn("Blocked for {} seconds waiting for product <{}> - continue",
-                FUTURE_WAIT_THRESHOLD, productId);
-
-            try {
-                return future.get();
-            } catch (final ExecutionException e1) {
-                throw new IllegalStateException(e1);
-            }
         }
     }
 

@@ -36,7 +36,7 @@ public final class GraphvizOutput {
 
     public static void generateDot(final ModuleRunner moduleRunner) {
         try {
-            final Path reportDir = Files.createDirectories(Paths.get("loombuild", "reports"));
+            final Path reportDir = Files.createDirectories(Paths.get("build", "reports"));
             final Path dotFile = reportDir.resolve(Paths.get("loom-products.dot"));
 
             try (PrintWriter pw = new PrintWriter(dotFile.toFile(), "UTF-8")) {

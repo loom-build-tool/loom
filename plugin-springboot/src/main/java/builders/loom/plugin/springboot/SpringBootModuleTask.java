@@ -53,7 +53,7 @@ public class SpringBootModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path baseDir = Paths.get("loombuild", "springboot");
+        final Path baseDir = Paths.get("build", "springboot");
         FileUtils.cleanDir(baseDir);
 
         final Path buildDir = baseDir.resolve("build");

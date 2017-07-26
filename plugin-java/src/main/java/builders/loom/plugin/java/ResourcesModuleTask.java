@@ -46,7 +46,7 @@ public class ResourcesModuleTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
 
-        destPath = Paths.get("loombuild", "resources", compileTarget.name().toLowerCase());
+        destPath = Paths.get("build", "resources", compileTarget.name().toLowerCase());
 
         this.cacheDir = cacheDir;
     }

@@ -42,7 +42,7 @@ public class JavaAssembleSourcesJarModuleTask extends AbstractModuleTask {
             return completeSkip();
         }
 
-        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
+        final Path buildDir = Files.createDirectories(Paths.get("build", "libs"));
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-sources.jar",
             getBuildContext().getModuleName()));

@@ -38,7 +38,7 @@ public class JavaAssembleJavadocJarModuleTask extends AbstractModuleTask {
             return completeSkip();
         }
 
-        final Path buildDir = Files.createDirectories(Paths.get("loombuild", "libs"));
+        final Path buildDir = Files.createDirectories(Paths.get("build", "libs"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
             getBuildContext().getModuleName()));

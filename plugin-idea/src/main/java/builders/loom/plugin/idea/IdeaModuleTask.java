@@ -283,7 +283,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
         // TODO nur im root
         content.element("excludeFolder").attr("url", relativeModuleDir + "/.loom");
-        content.element("excludeFolder").attr("url", relativeModuleDir + "/loombuild");
+        content.element("excludeFolder").attr("url", relativeModuleDir + "/build");
     }
 
     private void buildOrderEntries(final XmlBuilder.Element component,

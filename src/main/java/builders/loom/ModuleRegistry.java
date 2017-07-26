@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import builders.loom.api.GlobalBuildContext;
 import builders.loom.api.Module;
 
 public class ModuleRegistry {
@@ -27,6 +28,10 @@ public class ModuleRegistry {
     private final List<Module> modules = new ArrayList<>();
 
     public void register(final Module module) {
+        if (module.getModuleName().equals(GlobalBuildContext.GLOBAL_MODULE_NAME)) {
+            throw new IllegalArgumentException(
+                "Conflicting module name " + module.getModuleName());
+        }
         modules.add(module);
     }
 

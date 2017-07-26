@@ -4,9 +4,11 @@ import java.nio.file.Path;
 
 public class GlobalBuildContext implements BuildContext {
 
+    public static final String GLOBAL_MODULE_NAME = "global";
+
     @Override
     public String getModuleName() {
-        return "_LOOM_GLOBAL_";
+        return GLOBAL_MODULE_NAME;
     }
 
     @Override

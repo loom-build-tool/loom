@@ -121,15 +121,15 @@ public class ModuleRunner {
 
         final Map<ConfiguredTask, Job> configuredTaskJobMap =
             resolvedTasks.stream()
-                .collect(Collectors.toMap(ct -> ct, ct -> buildJob(ct)));
+                .collect(Collectors.toMap(ct -> ct, this::buildJob));
 
         final JobPool jobPool = new JobPool();
-        jobPool.submitAll(configuredTaskJobMap.values().stream());
+        jobPool.submitAll(configuredTaskJobMap.values());
         jobPool.shutdown();
 
         LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
 
-        final ExecutionReport executionReport = new ExecutionReport();
+        final ExecutionReport executionReport = new ExecutionReport(resolvedTasks);
 
         resolvedTasks.stream()
             .sorted(Comparator.comparingLong(

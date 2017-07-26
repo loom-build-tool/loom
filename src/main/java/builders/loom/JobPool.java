@@ -16,6 +16,7 @@
 
 package builders.loom;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -100,7 +101,7 @@ public class JobPool {
         }
     }
 
-    public void submitAll(final Stream<Job> jobs) {
+    public void submitAll(final Collection<Job> jobs) {
         Objects.requireNonNull(jobs, "jobs must not be null");
 
         jobs.forEach(job -> {

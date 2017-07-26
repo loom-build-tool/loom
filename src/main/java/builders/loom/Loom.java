@@ -228,7 +228,10 @@ public class Loom {
                 ProgressMonitor.stop();
             }
 
-            executionReport.ifPresent(ExecutionReport::print);
+            if (executionReport.isPresent()) {
+                loomProcessor.printProductInfos(executionReport.get().getResolvedTasks());
+                executionReport.get().print();
+            }
         }
 
         loomProcessor.logMemoryUsage();

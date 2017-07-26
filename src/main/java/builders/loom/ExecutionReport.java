@@ -2,11 +2,23 @@ package builders.loom;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import builders.loom.plugin.ConfiguredTask;
 
 public class ExecutionReport {
 
     private final Map<String, Long> durations = new LinkedHashMap<>();
+    private final List<ConfiguredTask> resolvedTasks;
+
+    public ExecutionReport(final List<ConfiguredTask> resolvedTasks) {
+        this.resolvedTasks = resolvedTasks;
+    }
+
+    public List<ConfiguredTask> getResolvedTasks() {
+        return resolvedTasks;
+    }
 
     public void add(final String taskName, final long duration) {
         durations.put(taskName, duration);

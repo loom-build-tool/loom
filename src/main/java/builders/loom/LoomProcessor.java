@@ -96,7 +96,7 @@ public class LoomProcessor {
     private Module singleModule(final RuntimeConfigurationImpl rtConfig) {
         final Path moduleBuildConfig = LoomPaths.BUILD_FILE;
         if (Files.notExists(moduleBuildConfig)) {
-            throw new IllegalStateException("Missing build.yml in project root");
+            throw new IllegalStateException("Missing module.yml in project root");
         }
 
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
@@ -127,9 +127,9 @@ public class LoomProcessor {
                 .collect(Collectors.toList());
 
             for (final Path module : modulePaths) {
-                final Path moduleBuildConfig = module.resolve("build.yml");
+                final Path moduleBuildConfig = module.resolve("module.yml");
                 if (Files.notExists(moduleBuildConfig)) {
-                    throw new IllegalStateException("Missing build.yml in module " + module);
+                    throw new IllegalStateException("Missing module.yml in module " + module);
                 }
 
                 final String modulePathName = module.getFileName().toString();

@@ -112,7 +112,6 @@ task zip(type: Zip) {
             from project(':plugin-eclipse').configurations.runtime
         }
         into("scripts") {
-            from 'scripts/build.yml'
             from 'scripts/loom'
             from 'scripts/loom.cmd'
         }

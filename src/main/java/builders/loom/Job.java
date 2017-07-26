@@ -121,8 +121,7 @@ public class Job implements Callable<TaskStatus> {
                 + "status: " + taskResult.getStatus());
         }
 
-        productPromise
-            .complete(taskResult.getProduct());
+        productPromise.complete(taskResult);
 
         return taskResult.getStatus();
     }

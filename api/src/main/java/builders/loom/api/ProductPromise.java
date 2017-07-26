@@ -43,6 +43,7 @@ public final class ProductPromise {
     // TODO startTimeAt
     private long startTime;
     private long completedAt;
+    private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {
         this.moduleName = Objects.requireNonNull(moduleName);
@@ -53,8 +54,10 @@ public final class ProductPromise {
         this.startTime = startTime;
     }
 
-    public void complete(final Product withValue) {
-        final boolean completed = promise.complete(Optional.ofNullable(withValue));
+    public void complete(final TaskResult taskResult) {
+        Objects.requireNonNull(taskResult, "taskResult required");
+        this.taskResult = taskResult;
+        final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
@@ -118,6 +121,13 @@ public final class ProductPromise {
 
     public long getCompletedAt() {
         return completedAt;
+    }
+
+    public TaskStatus getTaskStatus() {
+        if (taskResult == null) {
+            throw new IllegalStateException("taskResult is null");
+        }
+        return taskResult.getStatus();
     }
 
 }

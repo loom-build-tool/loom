@@ -50,7 +50,7 @@ public final class ConfigReader {
         throws IOException {
 
         if (!Files.isRegularFile(buildFile)) {
-            throw new IOException("No build.yml found");
+            throw new IOException("No module.yml found");
         }
 
         final byte[] configData = Files.readAllBytes(buildFile);

@@ -311,9 +311,9 @@ public class LoomInstaller {
             StandardCopyOption.REPLACE_EXISTING);
         chmod(loomScript, "rwxr-xr-x");
 
-        if (Files.notExists(projectRoot.resolve("build.yml"))) {
-            System.out.println("Create initial build.yml");
-            Files.copy(scriptsRoot.resolve("build.yml"), projectRoot.resolve("build.yml"));
+        if (Files.notExists(projectRoot.resolve("module.yml"))) {
+            System.out.println("Create initial module.yml");
+            Files.copy(scriptsRoot.resolve("module.yml"), projectRoot.resolve("module.yml"));
         }
     }
 

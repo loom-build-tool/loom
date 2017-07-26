@@ -70,4 +70,4 @@ loom_versioned_base="$LOOM_USER_HOME/library/loom-$loom_version"
 
 "$javacmd" -jar loom-installer/loom-installer.jar
 
-echo "Done. Adjust \`build.yml\` to your needs and then run \`./loom build\` to start your build."
+echo "Done. Run \`./loom build\` to start your build."

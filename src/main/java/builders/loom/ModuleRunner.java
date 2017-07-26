@@ -145,13 +145,13 @@ public class ModuleRunner {
 
             if (latest.isPresent()) {
                 executionReport.add(
-                    configuredTask.toString(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
+                    configuredTask.toString(), configuredTask.getType(), productPromise.getTaskStatus(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
 
                 LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
                     productPromise.getProductId(), productPromise.getCompletedAt(),
                     (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000, latest.get().getProductId(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()) / 1_000_000);
             } else {
-                executionReport.add(configuredTask.toString(), (productPromise.getCompletedAt() - productPromise.getStartTime()));
+                executionReport.add(configuredTask.toString(), configuredTask.getType(), productPromise.getTaskStatus(), (productPromise.getCompletedAt() - productPromise.getStartTime()));
 
                 LOG.info("Product {} was completed at {} after {}ms without any dependencies",
                     productPromise.getProductId(), productPromise.getCompletedAt(),

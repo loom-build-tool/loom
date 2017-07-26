@@ -36,7 +36,7 @@ public class ExecutionReport {
         }
 
         System.out.println();
-        System.out.println("Execution statistics (ordered by time consumption):");
+        System.out.println("Execution statistics (ordered by product completion time):");
         System.out.println();
 
         for (final Map.Entry<String, Long> entry : durations.entrySet()) {

@@ -93,10 +93,17 @@ public class Loom {
     }
 
     private static void init() {
+        final String loomVersion = Version.getVersion();
         AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
             .format("Loom Build Tool v%s (on Java %s)",
-                Version.getVersion(), System.getProperty("java.version"))
+                loomVersion, System.getProperty("java.version"))
             .reset());
+
+        if (!loomVersion.endsWith("GA")) {
+            AnsiConsole.out().println(Ansi.ansi().reset().fgBrightYellow()
+                .a("You're using an unstable version of Loom -- use it with caution!")
+                .reset());
+        }
 
         if (ToolProvider.getSystemJavaCompiler() == null) {
             throw new IllegalStateException("JDK required (running inside of JRE)");

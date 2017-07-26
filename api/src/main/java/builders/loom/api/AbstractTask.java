@@ -26,7 +26,6 @@ public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
 
     private BuildContext buildContext;
-    private ProvidedProduct providedProduct;
     private UsedProducts usedProducts;
     private ServiceLocator serviceLocator;
 
@@ -37,15 +36,6 @@ public abstract class AbstractTask implements Task,
     @Override
     public void setBuildContext(final BuildContext buildContext) {
         this.buildContext = buildContext;
-    }
-
-    @Override
-    public void setProvidedProduct(final ProvidedProduct providedProduct) {
-        this.providedProduct = providedProduct;
-    }
-
-    public ProvidedProduct getProvidedProduct() {
-        return providedProduct;
     }
 
     @Override

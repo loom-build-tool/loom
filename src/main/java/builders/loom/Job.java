@@ -36,7 +36,6 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
-import builders.loom.api.ProvidedProduct;
 import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
@@ -130,9 +129,6 @@ public class Job implements Callable<TaskStatus> {
         task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
-            pdaTask.setProvidedProduct(
-                new ProvidedProduct(
-                    configuredTask.getProvidedProduct(), productRepository, name));
             usedProducts = buildProductView(configuredTask);
             pdaTask.setUsedProducts(usedProducts);
         }

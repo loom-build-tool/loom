@@ -23,7 +23,6 @@ import builders.loom.api.product.DummyProduct;
 public class GoalTask implements Task, ProductDependenciesAware {
 
     private final Set<String> usedProductIds;
-    private ProvidedProduct providedProduct;
     private UsedProducts usedProducts;
 
     public GoalTask(final Set<String> usedProductIds) {
@@ -33,11 +32,6 @@ public class GoalTask implements Task, ProductDependenciesAware {
     @Override
     public void setBuildContext(final BuildContext buildContext) {
         // TODO
-    }
-
-    @Override
-    public void setProvidedProduct(final ProvidedProduct providedProduct) {
-        this.providedProduct = providedProduct;
     }
 
     @Override
@@ -52,7 +46,7 @@ public class GoalTask implements Task, ProductDependenciesAware {
         }
 
         return new TaskResult(TaskStatus.OK,
-            new DummyProduct(providedProduct.getProducedProductId()));
+            new DummyProduct("goal"));
     }
 
 }

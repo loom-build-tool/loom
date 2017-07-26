@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.BuildContext;
 import builders.loom.api.GlobalBuildContext;
-import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
@@ -55,7 +54,6 @@ public class ModuleRunner {
     private final Map<BuildContext, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private final Map<Module, Set<Module>> transitiveModuleDependencies = new HashMap<>();
-    private GlobalProductRepository globalProductRepository;
 
     public ModuleRunner(final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry) {
@@ -75,8 +73,6 @@ public class ModuleRunner {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
             registerModule(defaultPlugins, module);
         }
-
-        globalProductRepository = new GlobalProductRepository(moduleProductRepositories);
 
         LOG.debug("Initialized all plugins in {} ms", sw.duration());
     }
@@ -102,9 +98,7 @@ public class ModuleRunner {
 
         final Stopwatch sw = new Stopwatch();
 
-        final DirectedGraph<ConfiguredTask> diGraph = resolveTasks(productIds);
-
-        final List<ConfiguredTask> resolvedTasks = diGraph.resolve(
+        final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds).resolve(
             configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
 
         LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
@@ -123,23 +117,26 @@ public class ModuleRunner {
 
         ProgressMonitor.setTasks(resolvedTasks.size());
 
+        final Map<ConfiguredTask, Job> configuredTaskJobMap =
+            resolvedTasks.stream()
+                .collect(Collectors.toMap(ct -> ct, ct -> buildJob(ct)));
+
         final JobPool jobPool = new JobPool();
-        jobPool.submitAll(resolvedTasks.stream().map(this::buildJob));
+        jobPool.submitAll(configuredTaskJobMap.values().stream());
         jobPool.shutdown();
 
         LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
 
         final ExecutionReport executionReport = new ExecutionReport();
-        // TODO refactor
 
-        resolvedTasks.stream().sorted(Comparator.comparingLong(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()).getCompletedAt()))
+        resolvedTasks.stream()
+            .sorted(Comparator.comparingLong(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()).getCompletedAt()))
         .forEach(configuredTask -> {
             final ProductPromise productPromise = moduleProductRepositories.get(configuredTask.getBuildContext()).lookup(configuredTask.getProvidedProduct());
+            final Set<ProductPromise> actuallyUsedProducts =
+                configuredTaskJobMap.get(configuredTask).getActuallyUsedProducts().orElse(Set.of());
 
-            final List<ConfiguredTask> depTasks = diGraph.resolveDirectDependencies(configuredTask);
-
-            final Optional<ProductPromise> latest = depTasks.stream()
-                .map(ct -> moduleProductRepositories.get(ct.getBuildContext()).lookup(ct.getProvidedProduct()))
+            final Optional<ProductPromise> latest = actuallyUsedProducts.stream()
                 .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
 
             if (latest.isPresent()) {
@@ -285,7 +282,7 @@ public class ModuleRunner {
     private void registerProducts() {
         moduleProductRepositories
             .forEach((key, value) -> moduleTaskRegistries.get(key).configuredTasks()
-                .forEach(ct -> value.createProduct(ct.getProvidedProduct())));
+                .forEach(ct -> value.createProduct(ct.getBuildContext().getModuleName(), ct.getProvidedProduct())));
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {
@@ -296,7 +293,7 @@ public class ModuleRunner {
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, configuredTask, productRepository,
-            globalProductRepository, serviceLocator, transitiveModuleDependencies);
+             serviceLocator, transitiveModuleDependencies, moduleProductRepositories);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

@@ -35,14 +35,17 @@ public final class ProductPromise {
 
     private static final int FUTURE_WAIT_THRESHOLD = 10;
 
+    private final String moduleName;
+    private final String productId;
+
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
+    // TODO startTimeAt
+    private long startTime;
     private long completedAt;
 
-    private final String productId;
-    private long startTime;
-
-    public ProductPromise(final String productId) {
+    public ProductPromise(final String moduleName, final String productId) {
+        this.moduleName = Objects.requireNonNull(moduleName);
         this.productId = Objects.requireNonNull(productId);
     }
 
@@ -65,6 +68,10 @@ public final class ProductPromise {
         }
 
         completedAt = newValue;
+    }
+
+    public String getModuleName() {
+        return moduleName;
     }
 
     public String getProductId() {

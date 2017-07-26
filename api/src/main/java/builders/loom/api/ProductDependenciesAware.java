@@ -18,8 +18,6 @@ package builders.loom.api;
 
 public interface ProductDependenciesAware {
 
-    void setGlobalProductRepository(GlobalProductRepository globalProductRepository);
-
     void setProvidedProduct(ProvidedProduct providedProduct);
 
     void setUsedProducts(UsedProducts usedProducts);

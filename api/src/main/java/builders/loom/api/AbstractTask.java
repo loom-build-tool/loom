@@ -40,10 +40,6 @@ public abstract class AbstractTask implements Task,
     }
 
     @Override
-    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
-    }
-
-    @Override
     public void setProvidedProduct(final ProvidedProduct providedProduct) {
         this.providedProduct = providedProduct;
     }
@@ -65,16 +61,34 @@ public abstract class AbstractTask implements Task,
         throws InterruptedException {
 
         return useProduct(productId, productClass)
-            .orElseThrow(() -> new IllegalStateException("Requested product <"
-                + productId + "> is not present"));
+            .orElseThrow(() -> new IllegalStateException(
+                String.format("Requested product <%s> is not present", productId)));
+    }
+
+    public <P extends Product> P requireProduct(
+        final String moduleName, final String productId, final Class<P> productClass)
+        throws InterruptedException {
+
+        return useProduct(moduleName, productId, productClass)
+            .orElseThrow(() -> new IllegalStateException(
+                String.format("Requested product <%s> of module <%s> is not present", productId, moduleName)));
     }
 
     public <P extends Product> Optional<P> useProduct(final String productId,
-                                                      final Class<P> productClass)
+                                                       final Class<P> productClass)
         throws InterruptedException {
         Objects.requireNonNull(productId, "productId required");
         Objects.requireNonNull(productClass, "productClass required");
         return usedProducts.readProduct(productId, productClass);
+    }
+
+    public <P extends Product> Optional<P> useProduct(final String moduleName, final String productId,
+                                                      final Class<P> productClass)
+        throws InterruptedException {
+        Objects.requireNonNull(moduleName, "moduleName required");
+        Objects.requireNonNull(productId, "productId required");
+        Objects.requireNonNull(productClass, "productClass required");
+        return usedProducts.readProduct(moduleName, productId, productClass);
     }
 
     @Override

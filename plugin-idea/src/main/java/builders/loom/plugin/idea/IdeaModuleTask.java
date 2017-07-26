@@ -28,7 +28,6 @@ import java.util.Set;
 import org.w3c.dom.Document;
 
 import builders.loom.api.AbstractTask;
-import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
@@ -44,13 +43,7 @@ import builders.loom.util.xml.XmlWriter;
 public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
     private final XmlWriter xmlWriter = new XmlWriter();
-    private GlobalProductRepository globalProductRepository;
     private Map<Module, Set<Module>> moduleGraph;
-
-    @Override
-    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
-        this.globalProductRepository = globalProductRepository;
-    }
 
     @Override
     public void setTransitiveModuleGraph(final Map<Module, Set<Module>> moduleGraph) {
@@ -124,7 +117,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         }
 
 
-        for (final Module module : globalProductRepository.getAllModules()) {
+        for (final Module module : moduleGraph.keySet()) {
             for (final ModuleGroup group : ModuleGroup.values()) {
 
                 final Path ideaModulesDir = Files.createDirectories(ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
@@ -235,8 +228,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         }
 
         // add compile artifacts
-        globalProductRepository
-            .useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
+        useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
             .map(ArtifactListProduct::getArtifacts)
             .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
     }
@@ -276,8 +268,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         // TODO in module: <component name="TestModuleProperties" production-module="plugin-springboot_main" />
 
         // add test artifacts
-        globalProductRepository
-            .useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
+        useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
             .map(ArtifactListProduct::getArtifacts)
             .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
     }

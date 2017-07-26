@@ -16,20 +16,22 @@
 
 package builders.loom.api;
 
+import java.util.Set;
+
 import builders.loom.api.product.DummyProduct;
 
-public class WaitForAllProductsTask implements Task, ProductDependenciesAware {
+public class GoalTask implements Task, ProductDependenciesAware {
 
+    private final Set<String> usedProductIds;
     private ProvidedProduct providedProduct;
     private UsedProducts usedProducts;
 
-    @Override
-    public void setBuildContext(final BuildContext buildContext) {
-        // TODO
+    public GoalTask(final Set<String> usedProductIds) {
+        this.usedProductIds = usedProductIds;
     }
 
     @Override
-    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
+    public void setBuildContext(final BuildContext buildContext) {
         // TODO
     }
 
@@ -45,8 +47,8 @@ public class WaitForAllProductsTask implements Task, ProductDependenciesAware {
 
     @Override
     public TaskResult run() throws Exception {
-        for (final String productId : usedProducts.getAllowedProductIds()) {
-            usedProducts.waitForProduct(productId);
+        for (final String usedProductId : usedProductIds) {
+            usedProducts.waitForProduct(usedProductId);
         }
 
         return new TaskResult(TaskStatus.OK,

@@ -22,7 +22,7 @@ public interface ProductRepository {
 
     ProductPromise lookup(String productId);
 
-    void createProduct(String productId);
+    void createProduct(final String moduleName, String productId);
 
     Collection<ProductPromise> getAllProductPromises();
 

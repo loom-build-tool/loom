@@ -5,20 +5,12 @@ import java.util.List;
 import java.util.Set;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.GlobalProductRepository;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ModuleJarProduct;
 import builders.loom.api.product.ModulesJarProduct;
 
 public class ModuleJarDependencyModuleTask extends AbstractModuleTask {
-
-    private GlobalProductRepository globalProductRepository;
-
-    @Override
-    public void setGlobalProductRepository(final GlobalProductRepository globalProductRepository) {
-        this.globalProductRepository = globalProductRepository;
-    }
 
     public ModuleJarDependencyModuleTask() {
     }
@@ -31,7 +23,7 @@ public class ModuleJarDependencyModuleTask extends AbstractModuleTask {
 
         for (final String moduleName : moduleDependencies) {
             final AssemblyProduct compilation =
-                globalProductRepository.requireProduct(moduleName, "jar", AssemblyProduct.class);
+                requireProduct(moduleName, "jar", AssemblyProduct.class);
             moduleProducts.add(new ModuleJarProduct(moduleName, compilation.getAssemblyFile()));
         }
 

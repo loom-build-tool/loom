@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 import builders.loom.api.BuildContext;
 import builders.loom.api.Task;
-import builders.loom.api.WaitForAllProductsTask;
+import builders.loom.api.GoalTask;
 import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
@@ -101,7 +101,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
             configuredTask != null
                 ? configuredTask.addUsedProducts(pluginName, usedProducts)
-                : new ConfiguredTask(buildContext, name, pluginName, WaitForAllProductsTask::new,
+                : new ConfiguredTask(buildContext, name, pluginName, () -> new GoalTask(usedProducts),
                 goalName, usedProducts, Collections.emptySet(), Collections.emptySet(), null,
                 TaskType.GOAL);
 

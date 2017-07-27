@@ -59,6 +59,12 @@ public class XmlBuilder {
             return this;
         }
 
+        public Element text(String textContent) {
+            Objects.requireNonNull(textContent, "textContent required");
+            wrappedElement.setTextContent(textContent);
+            return this;
+        }
+
         public Element element(final String elementName) {
             Objects.requireNonNull(elementName, "elementName required");
 

@@ -26,6 +26,10 @@ public final class LoomPaths {
     public static final Path PROJECT_LOOM_PATH = PROJECT_DIR.resolve(".loom");
     public static final Path BUILD_DIR = PROJECT_DIR.resolve("build");
     public static final Path REPORT_PATH = BUILD_DIR.resolve("reports");
+    public static final Path SRC_MAIN = Paths.get("src", "main", "java");
+    public static final Path RES_MAIN = Paths.get("src", "main", "resources");
+    public static final Path SRC_TEST = Paths.get("src", "test", "java");
+    public static final Path RES_TEST = Paths.get("src", "test", "resources");
 
     static {
         checkState(Files.exists(PROJECT_DIR), "Invalid current directory");

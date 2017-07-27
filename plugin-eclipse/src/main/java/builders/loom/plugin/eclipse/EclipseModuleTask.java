@@ -48,12 +48,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.JavaVersion;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
@@ -135,16 +134,32 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createProjectFile(final Module module) throws IOException, SAXException {
-        try (final InputStream resourceAsStream = readResource("/project-template.xml")) {
-            final Document doc = docBuilder.parse(resourceAsStream);
-            final Node component = doc.getDocumentElement()
-                .getElementsByTagName("name").item(0);
+    private Document createProjectFile(final Module module) throws IOException {
 
-            component.setTextContent(module.getModuleName());
+        return XmlBuilder.root("projectDescription")
+            .element("name").text(module.getModuleName())
+                .and()
+            .element("comment")
+                .and()
+            .element("projects")
+                .and()
+            .element("natures")
+                .element("nature").text("org.eclipse.jdt.core.javanature")
+                    .and()
+                .and()
+            .element("buildSpec")
+                .element("buildCommand")
+                    .element("name").text("org.eclipse.jdt.core.javabuilder")
+                        .and()
+                    .element("arguments")
+                        .and()
+                    .and()
+                .and()
+            .element("linkedResources")
+                .and()
+            .element("filteredResources")
+            .getDocument();
 
-            return doc;
-        }
     }
 
     private void writeDocumentToFile(final Path file, final Document doc)
@@ -165,6 +180,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     }
 
+    // TODO use XmlWriter
     private OutputStream newOut(final Path file) throws IOException {
         return new BufferedOutputStream(Files.newOutputStream(file,
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
@@ -172,48 +188,44 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     @SuppressWarnings("checkstyle:magicnumber")
     private Document createClasspathFile(Module module)
-        throws IOException, InterruptedException, SAXException {
+        throws IOException, InterruptedException {
 
         final XmlBuilder.Element rootBuilder = XmlBuilder
             .root("classpath");
 
-        addSourceDirIfExists(rootBuilder, module.getPath(), Paths.get("src", "main", "java"));
-        addSourceDirIfExists(rootBuilder, module.getPath(), Paths.get("src", "main", "resources"));
-        addSourceDirIfExists(rootBuilder, module.getPath(), Paths.get("src", "test", "java"));
-        addSourceDirIfExists(rootBuilder, module.getPath(), Paths.get("src", "test", "resources"));
+        addSourceDirIfExists(rootBuilder, module.getPath(), LoomPaths.SRC_MAIN);
+        addSourceDirIfExists(rootBuilder, module.getPath(), LoomPaths.RES_MAIN);
+        addSourceDirIfExists(rootBuilder, module.getPath(), LoomPaths.SRC_TEST);
+        addSourceDirIfExists(rootBuilder, module.getPath(), LoomPaths.RES_TEST);
 
-        final Document doc = rootBuilder.element("classpathentry")
+        rootBuilder.element("classpathentry")
             .attr("kind", "output")
-            .attr("path", "bin")
-            .getDocument();
+            .attr("path", "bin");
 
-        final Element root = doc.getDocumentElement();
 
-        final Element jdkEntry = doc.createElement("classpathentry");
-        jdkEntry.setAttribute("kind", "con");
-        jdkEntry.setAttribute("path",
-            String.format("org.eclipse.jdt.launching.JRE_CONTAINER/"
-                + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-%s/",
-                buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion())));
-        root.appendChild(jdkEntry);
+        rootBuilder.element("classpathentry")
+            .attr("kind", "con")
+            .attr("path",
+                String.format("org.eclipse.jdt.launching.JRE_CONTAINER/"
+                        + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-%s/",
+                    buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion())));
 
         for (final Module depModule : moduleGraph.get(module)) {
-            final Element projectRef = doc.createElement("classpathentry");
-            projectRef.setAttribute("combineaccessrules", "false");
-            projectRef.setAttribute("kind", "src");
-            projectRef.setAttribute("path", "/" + depModule.getModuleName());
-            root.appendChild(projectRef);
+            rootBuilder.element("classpathentry")
+                .attr("combineaccessrules", "false")
+                .attr("kind", "src")
+                .attr("path", "/" + depModule.getModuleName());
         }
 
         final Optional<ArtifactListProduct> testArtifacts =
             useProduct(module.getModuleName(),"testArtifacts", ArtifactListProduct.class);
 
             testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList()).stream()
-            .forEach(artifactProduct -> {
-                root.appendChild(buildClasspathElement(doc, artifactProduct));
-            });
+                .forEach(artifactProduct -> {
+                    buildClasspathElement(rootBuilder, artifactProduct);
+                });
 
-        return doc;
+        return rootBuilder.getDocument();
     }
 
     private void addSourceDirIfExists(XmlBuilder.Element root, final Path modulePath, Path path) {
@@ -224,7 +236,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
     }
 
-    private Element buildClasspathElement(final Document doc,
+    private void buildClasspathElement(final XmlBuilder.Element rootBuilder,
                                           ArtifactProduct artifactProduct) {
 
         final String jar = artifactProduct.getMainArtifact().toAbsolutePath().toString();
@@ -234,12 +246,12 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
                 .map(Path::toAbsolutePath)
                 .map(Path::toString);
 
-        final Element classpathentry = doc.createElement("classpathentry");
-        sourceJar.ifPresent(path -> classpathentry.setAttribute("sourcepath", path));
-        classpathentry.setAttribute("kind", "lib");
-        classpathentry.setAttribute("path", jar);
+        final XmlBuilder.Element classpathentry = rootBuilder.element("classpathentry");
 
-        return classpathentry;
+        sourceJar.ifPresent(path -> classpathentry.attr("sourcepath", path));
+        classpathentry.attr("kind", "lib");
+        classpathentry.attr("path", jar);
+
     }
 
     @Override

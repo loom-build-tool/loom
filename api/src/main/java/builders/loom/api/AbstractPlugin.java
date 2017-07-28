@@ -146,7 +146,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, importedProducts, importedAllProducts, description);
+                intermediateProduct, usedProducts, importedProducts,
+                importedAllProducts, description);
         }
 
     }

@@ -22,6 +22,7 @@ package builders.loom.api;
 public interface Task {
 
     void setBuildContext(BuildContext buildContext);
+
     TaskResult run() throws Exception;
 
 }

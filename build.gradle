@@ -4,7 +4,7 @@ archivesBaseName = 'loom'
 
 allprojects {
     apply plugin: 'checkstyle'
-    apply plugin: 'findbugs'
+////    apply plugin: 'findbugs'
     apply plugin: 'pmd'
 
     group = 'builders.loom'

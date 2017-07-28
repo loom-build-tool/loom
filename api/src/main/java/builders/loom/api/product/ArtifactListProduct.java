@@ -38,8 +38,8 @@ public final class ArtifactListProduct extends AbstractProduct {
     @Override
     public String toString() {
         return "ArtifactListProduct{"
-            + "artifacts=" + artifacts +
-            '}';
+            + "artifacts=" + artifacts
+            + "}";
     }
 
 }

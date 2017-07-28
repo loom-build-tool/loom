@@ -34,36 +34,19 @@ public class UsedProducts {
 
     private static final Logger LOG = LoggerFactory.getLogger(UsedProducts.class);
 
-    private String moduleName;
+    private String selfModuleName;
     private final Set<ProductPromise> productPromises;
     private final Set<ProductPromise> actuallyWaitedForProducts = new CopyOnWriteArraySet<>();
 
-    public UsedProducts(final String moduleName, Set<ProductPromise> productPromises) {
-        this.moduleName = moduleName;
+    public UsedProducts(final String selfModuleName, final Set<ProductPromise> productPromises) {
+        this.selfModuleName = selfModuleName;
         this.productPromises = productPromises;
     }
 
     public <T extends Product> Optional<T> readProduct(final String productId, final Class<T> clazz)
         throws InterruptedException {
 
-        return readProduct(moduleName, productId, clazz);
-    }
-
-    public void waitForProduct(final String productId) throws InterruptedException {
-        getAndWaitProduct(moduleName, productId);
-    }
-
-    public void waitForProduct(final String moduleName, final String productId)
-        throws InterruptedException {
-        getAndWaitProduct(moduleName, productId);
-    }
-
-    private Optional<Product> getAndWaitProduct(final String moduleName, final String productId)
-        throws InterruptedException {
-
-        final ProductPromise productPromise = lookupProduct(moduleName, productId);
-        actuallyWaitedForProducts.add(productPromise);
-        return productPromise.getAndWaitForProduct();
+        return readProduct(selfModuleName, productId, clazz);
     }
 
     public <T extends Product> Optional<T> readProduct(
@@ -83,12 +66,26 @@ public class UsedProducts {
         return value.map(clazz::cast);
     }
 
-    private ProductPromise lookupProduct(final String moduleName, final String productId){
+    public void waitForProduct(final String productId) throws InterruptedException {
+        getAndWaitProduct(selfModuleName, productId);
+    }
+
+    public Optional<Product> getAndWaitProduct(final String moduleName, final String productId)
+        throws InterruptedException {
+
+        final ProductPromise productPromise = lookupProduct(moduleName, productId);
+        actuallyWaitedForProducts.add(productPromise);
+        return productPromise.getAndWaitForProduct();
+    }
+
+    private ProductPromise lookupProduct(final String moduleName, final String productId) {
         return productPromises.stream()
-            .filter(pp -> pp.getModuleName().equals(moduleName) && pp.getProductId().equals(productId))
+            .filter(pp -> pp.getModuleName().equals(moduleName)
+                && pp.getProductId().equals(productId))
             .findFirst().orElseThrow(()
                 -> new IllegalStateException(
-                    String.format("No access to product <%s> of module <%s>", productId, moduleName)));
+                    String.format("No access to product <%s> of module <%s>",
+                        productId, moduleName)));
 
     }
 

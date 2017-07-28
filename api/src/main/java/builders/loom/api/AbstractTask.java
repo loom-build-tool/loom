@@ -61,7 +61,9 @@ public abstract class AbstractTask implements Task,
 
         return useProduct(moduleName, productId, productClass)
             .orElseThrow(() -> new IllegalStateException(
-                String.format("Requested product <%s> of module <%s> is not present", productId, moduleName)));
+                String.format(
+                    "Requested product <%s> of module <%s> is not present",
+                    productId, moduleName)));
     }
 
     public <P extends Product> Optional<P> useProduct(final String productId,
@@ -72,8 +74,8 @@ public abstract class AbstractTask implements Task,
         return usedProducts.readProduct(productId, productClass);
     }
 
-    public <P extends Product> Optional<P> useProduct(final String moduleName, final String productId,
-                                                      final Class<P> productClass)
+    public <P extends Product> Optional<P> useProduct(
+        final String moduleName, final String productId, final Class<P> productClass)
         throws InterruptedException {
         Objects.requireNonNull(moduleName, "moduleName required");
         Objects.requireNonNull(productId, "productId required");

@@ -149,7 +149,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
 
         // Wait until other modules have delivered their compilations to module path
         for (final String moduleName : getModuleConfig().getModuleDependencies()) {
-            getUsedProducts().waitForProduct(moduleName, "compilation");
+            getUsedProducts().getAndWaitProduct(moduleName, "compilation");
         }
 
         compile(classpath, srcFiles);

@@ -16,15 +16,10 @@
 
 package builders.loom.api;
 
-import java.util.Collection;
-
 public interface ProductRepository {
 
     ProductPromise lookup(String productId);
 
     void createProduct(final String moduleName, String productId);
-
-    Collection<ProductPromise> getAllProductPromises();
-
 
 }

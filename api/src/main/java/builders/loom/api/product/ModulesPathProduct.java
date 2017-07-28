@@ -25,7 +25,8 @@ public final class ModulesPathProduct extends AbstractProduct {
     private final List<ModulePathProduct> modulesPathProducts;
 
     public ModulesPathProduct(final List<ModulePathProduct> modulesPathProducts) {
-        this.modulesPathProducts = Collections.unmodifiableList(new ArrayList<>(modulesPathProducts));
+        this.modulesPathProducts =
+            Collections.unmodifiableList(new ArrayList<>(modulesPathProducts));
     }
 
     public List<ModulePathProduct> getModulesPathProducts() {

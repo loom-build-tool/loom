@@ -16,15 +16,13 @@
 
 package builders.loom.api;
 
-import java.util.Set;
-
 public abstract class AbstractModuleTask extends AbstractTask implements ModuleBuildConfigAware {
 
     private ModuleBuildConfig moduleConfig;
 
     @Override
-    public void setModuleBuildConfig(final ModuleBuildConfig moduleConfig) {
-        this.moduleConfig = moduleConfig;
+    public void setModuleBuildConfig(final ModuleBuildConfig config) {
+        this.moduleConfig = config;
     }
 
     public ModuleBuildConfig getModuleConfig() {

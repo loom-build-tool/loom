@@ -77,7 +77,7 @@ public class ExecutionReport {
         final String durationBar = pct < minDuration ? "." : String.join("",
             Collections.nCopies((int) Math.ceil(pct / 2), "#"));
 
-        // TODO add task status and task type
+        // add task status and task type
         final double durationSecs = executionStatus.getDuration() / 1_000_000_000D;
         System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
             name, space, durationSecs, pct, durationBar);

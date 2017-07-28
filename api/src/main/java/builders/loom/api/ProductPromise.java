@@ -36,7 +36,6 @@ public final class ProductPromise {
 
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-    // TODO startTimeAt
     private long startTime;
     private long completedAt;
     private TaskResult taskResult;
@@ -50,9 +49,9 @@ public final class ProductPromise {
         this.startTime = startTime;
     }
 
-    public void complete(final TaskResult taskResult) {
-        Objects.requireNonNull(taskResult, "taskResult required");
-        this.taskResult = taskResult;
+    public void complete(final TaskResult result) {
+        Objects.requireNonNull(result, "taskResult required");
+        this.taskResult = result;
         final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
         if (!completed) {
             throw new IllegalStateException(

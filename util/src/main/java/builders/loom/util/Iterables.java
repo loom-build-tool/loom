@@ -39,10 +39,4 @@ public final class Iterables {
         return !collection.isEmpty() ? getOnlyElement(collection) : defaultValue;
     }
 
-    public static Element getOnlyElement(final NodeList nodes) {
-        if (nodes.getLength() == 1) {
-            return (Element) nodes.item(0);
-        }
-        throw new IllegalArgumentException("Expected one element, but got " + nodes.getLength());
-    }
 }

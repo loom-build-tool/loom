@@ -49,17 +49,19 @@ import builders.loom.api.AbstractTask;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.product.DummyProduct;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlUtil;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
-
     private final DocumentBuilder docBuilder;
+
     private final Transformer transformer;
     private Map<Module, Set<Module>> moduleGraph;
 
@@ -77,8 +79,9 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
     }
 
-    private Set<Module> allModules() {
-        return moduleGraph.keySet();
+    @Override
+    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> transitiveModuleGraph) {
+        this.moduleGraph = transitiveModuleGraph;
     }
 
     @Override
@@ -99,6 +102,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return completeOk(new DummyProduct("Eclipse project files"));
     }
 
+    private Set<Module> allModules() {
+        return moduleGraph.keySet();
+    }
+
     private void createModuleProject(final Module module)
         throws IOException, SAXException, TransformerException, InterruptedException {
 
@@ -109,12 +116,13 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         } else {
             final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
             if (mergeProjectBuildSpec(projectXmlDoc) || mergeProjectNature(projectXmlDoc)) {
-                 writeDocumentToFile(projectXml, projectXmlDoc);
+                writeDocumentToFile(projectXml, projectXmlDoc);
             }
         }
         writeDocumentToFile(module.getPath().resolve(".classpath"), createClasspathFile(module));
         final Path settingsPath = Files.createDirectories(module.getPath().resolve(".settings"));
-        writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"), createJdtPrefs(module));
+        writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"),
+            createJdtPrefs(module));
     }
 
     private Properties createJdtPrefs(final Module module) {
@@ -130,6 +138,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return prefs;
     }
 
+    @SuppressWarnings("checkstyle:magicnumber")
     private static String buildProjectJdkName(final JavaVersion javaVersion) {
         final int numericVersion = javaVersion.getNumericVersion();
         return (numericVersion < 9) ? "1." + numericVersion : String.valueOf(numericVersion);
@@ -167,10 +176,11 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private boolean mergeProjectBuildSpec(final Document projectXml) {
 
         boolean found = false;
-        final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
+        final Element buildSpec =
+            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
         final NodeList buildCommands = projectXml.getElementsByTagName("buildCommand");
 
-        for(int i=0; i<buildCommands.getLength(); i++) {
+        for (int i = 0; i < buildCommands.getLength(); i++) {
 
             final Element item = (Element) buildCommands.item(i);
             found |= XmlUtil.getOnlyElement(
@@ -194,7 +204,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
+        final Element naturesNode =
+            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
         final NodeList naturesList = projectXml.getElementsByTagName("nature");
 
         for (int i = 0; i < naturesList.getLength(); i++) {
@@ -233,8 +244,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
 
     }
-
     // TODO use XmlWriter
+
     private OutputStream newOut(final Path file) throws IOException {
         return new BufferedOutputStream(Files.newOutputStream(file,
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
@@ -257,12 +268,13 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
             .attr("path", "bin");
 
 
+        final ModuleBuildConfig moduleConfig = module.getConfig();
         rootBuilder.element("classpathentry")
             .attr("kind", "con")
             .attr("path",
                 String.format("org.eclipse.jdt.launching.JRE_CONTAINER/"
                         + "org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-%s/",
-                    buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion())));
+                    buildProjectJdkName(moduleConfig.getBuildSettings().getJavaPlatformVersion())));
 
         for (final Module depModule : moduleGraph.get(module)) {
             rootBuilder.element("classpathentry")
@@ -272,10 +284,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
 
         final Optional<ArtifactListProduct> testArtifacts =
-            useProduct(module.getModuleName(),"testArtifacts", ArtifactListProduct.class);
+            useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class);
 
-            testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList())
-                .forEach(artifactProduct -> buildClasspathElement(rootBuilder, artifactProduct));
+        testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList())
+            .forEach(artifactProduct -> buildClasspathElement(rootBuilder, artifactProduct));
 
         return rootBuilder.getDocument();
     }
@@ -307,8 +319,4 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     }
 
-    @Override
-    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> moduleGraph) {
-        this.moduleGraph = moduleGraph;
-    }
 }

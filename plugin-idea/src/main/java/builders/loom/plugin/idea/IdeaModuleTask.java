@@ -46,8 +46,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
     private Map<Module, Set<Module>> moduleGraph;
 
     @Override
-    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> moduleGraph) {
-        this.moduleGraph = moduleGraph;
+    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> transitiveModuleGraph) {
+        this.moduleGraph = transitiveModuleGraph;
     }
 
     @Override
@@ -62,8 +62,11 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
         xmlWriter.write(createEncodingsFile(), ideaDirectory.resolve("encodings.xml"));
         xmlWriter.write(createMiscFile(), ideaDirectory.resolve("misc.xml"));
-        xmlWriter.write(createModulesFile(buildIdeaModules(currentWorkDirName, ideaDirectory)),
-            ideaDirectory.resolve("modules.xml"));
+
+        final List<IdeaModule> ideaModules = new ArrayList<>();
+        ideaModules.add(buildIdeaRootModule(currentWorkDirName));
+        ideaModules.addAll(buildIdeaModules(ideaDirectory));
+        xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
         return completeOk(new DummyProduct("Idea project files"));
     }
@@ -97,30 +100,32 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         return "JDK_1_" + javaVersion.getNumericVersion();
     }
 
+    @SuppressWarnings("checkstyle:magicnumber")
     private static String buildProjectJdkName(final JavaVersion javaVersion) {
         final int numericVersion = javaVersion.getNumericVersion();
         return (numericVersion < 9) ? "1." + numericVersion : String.valueOf(numericVersion);
     }
 
-    private List<IdeaModule> buildIdeaModules(final Path currentWorkDirName, final Path ideaDirectory) throws InterruptedException, IOException {
+    private IdeaModule buildIdeaRootModule(final Path currentWorkDirName)
+        throws InterruptedException {
+
+        final Path rootImlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
+        final String rootImlFilename = LoomPaths.PROJECT_DIR.relativize(rootImlFile).toString();
+        final Module module = new Module(null, rootImlFile.getParent(), null);
+        xmlWriter.write(createImlFile(rootImlFile, module, ModuleGroup.BASE), rootImlFile);
+        return new IdeaModule(null, null, rootImlFilename);
+    }
+
+    private List<IdeaModule> buildIdeaModules(final Path ideaDirectory)
+        throws InterruptedException, IOException {
+
         final List<IdeaModule> ideaModules = new ArrayList<>();
-
-        {
-
-            // TODO cleanup
-
-            final Path imlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
-            final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
-            xmlWriter.write(createImlFile(imlFile, new Module(null, imlFile.getParent(), null), ModuleGroup.BASE), imlFile);
-            ideaModules.add(new IdeaModule(null, null, imlFileName));
-
-        }
-
 
         for (final Module module : moduleGraph.keySet()) {
             for (final ModuleGroup group : ModuleGroup.values()) {
 
-                final Path ideaModulesDir = Files.createDirectories(ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
+                final Path ideaModulesDir = Files.createDirectories(
+                    ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
 
                 final Path imlFile = ideaModulesDir.resolve(buildImlFilename(module, group));
                 final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
@@ -162,7 +167,9 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         return element.getDocument();
     }
 
-    private Document createImlFile(final Path imlFile, final Module module, final ModuleGroup group) throws InterruptedException {
+    private Document createImlFile(final Path imlFile, final Module module, final ModuleGroup group)
+        throws InterruptedException {
+
         final XmlBuilder.Element moduleE = XmlBuilder.root("module")
             .attr("type", "JAVA_MODULE")
             .attr("version", "4");
@@ -201,8 +208,10 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         return relativeModuleDir;
     }
 
-    private void buildMainComponent(final Module module, final XmlBuilder.Element component, final String relativeModuleDir) throws InterruptedException {
-        component.attr("LANGUAGE_LEVEL", buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
+    private void buildMainComponent(final Module module, final XmlBuilder.Element component,
+                                    final String relativeModuleDir) throws InterruptedException {
+        component.attr("LANGUAGE_LEVEL",
+            buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
 
         component.element("output")
             .attr("url", relativeModuleDir + "/out/production/classes");
@@ -233,8 +242,10 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
     }
 
-    private void buildTestComponent(final Module module, final XmlBuilder.Element component, final String relativeModuleDir) throws InterruptedException {
-        component.attr("LANGUAGE_LEVEL", buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
+    private void buildTestComponent(final Module module, final XmlBuilder.Element component,
+                                    final String relativeModuleDir) throws InterruptedException {
+        component.attr("LANGUAGE_LEVEL",
+            buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
 
         component.element("output-test")
             .attr("url", relativeModuleDir + "/out/test/classes");
@@ -273,7 +284,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
     }
 
-    private void buildBaseComponent(final XmlBuilder.Element component, final String relativeModuleDir) {
+    private void buildBaseComponent(final XmlBuilder.Element component,
+                                    final String relativeModuleDir) {
         component.attr("inherit-compiler-output", "true");
 
         final XmlBuilder.Element content = component.element("content")
@@ -312,7 +324,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         appendJarElement(library, "JAVADOC", null);
     }
 
-    private void appendJarElement(final XmlBuilder.Element library, final String name, final String jar) {
+    private void appendJarElement(final XmlBuilder.Element library, final String name,
+                                  final String jar) {
         final XmlBuilder.Element libHolder = library.element(name);
         if (jar != null) {
             libHolder.element("root")

@@ -4,8 +4,8 @@ archivesBaseName = 'loom'
 
 allprojects {
     apply plugin: 'checkstyle'
-////    apply plugin: 'findbugs'
-    apply plugin: 'pmd'
+//    apply plugin: 'findbugs'
+//    apply plugin: 'pmd'
 
     group = 'builders.loom'
     version = '1.0.0'
@@ -17,16 +17,16 @@ allprojects {
         configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
     }
 
-    pmd {
-        consoleOutput = true
-    }
-
-    tasks.withType(FindBugs) {
-        reports {
-            xml.enabled = false
-            html.enabled = true
-        }
-    }
+//    pmd {
+//        consoleOutput = true
+//    }
+//
+//    tasks.withType(FindBugs) {
+//        reports {
+//            xml.enabled = false
+//            html.enabled = true
+//        }
+//    }
 
     repositories {
         jcenter()

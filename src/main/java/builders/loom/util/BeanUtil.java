@@ -59,6 +59,8 @@ public final class BeanUtil {
         }
     }
 
+    @SuppressWarnings({"checkstyle:returncount", "checkstyle:npathcomplexity",
+        "checkstyle:cyclomaticcomplexity"})
     private static Object parseValue(final String propertyValue, final Class<?> parameterClass) {
         if (parameterClass.isAssignableFrom(boolean.class)) {
             return Boolean.parseBoolean(propertyValue);

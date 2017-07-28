@@ -52,15 +52,58 @@ public final class BeanUtil {
 
         try {
             final Class<?> parameterClass = setter.getParameterTypes()[0];
-            if (parameterClass.isAssignableFrom(boolean.class)) {
-                setter.invoke(bean, "true".equalsIgnoreCase(propertyValue));
-            } else {
-                setter.invoke(bean, propertyValue);
-            }
+            setter.invoke(bean, parseValue(propertyValue, parameterClass));
         } catch (final IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(
                 String.format("Error calling %s with args %s", setter, propertyValue), e);
         }
+    }
+
+    private static Object parseValue(final String propertyValue, final Class<?> parameterClass) {
+        if (parameterClass.isAssignableFrom(boolean.class)) {
+            return Boolean.parseBoolean(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Boolean.class)) {
+            return Boolean.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(byte.class)) {
+            return Byte.parseByte(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Byte.class)) {
+            return Byte.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(short.class)) {
+            return Short.parseShort(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Short.class)) {
+            return Short.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(int.class)) {
+            return Integer.parseInt(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Integer.class)) {
+            return Integer.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(long.class)) {
+            return Long.parseLong(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Long.class)) {
+            return Long.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(float.class)) {
+            return Float.parseFloat(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Float.class)) {
+            return Float.valueOf(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(double.class)) {
+            return Double.parseDouble(propertyValue);
+        }
+        if (parameterClass.isAssignableFrom(Double.class)) {
+            return Double.valueOf(propertyValue);
+        }
+
+        return propertyValue;
     }
 
     private static List<PropertyDescriptor> getPropertyDescriptors(final Object bean)

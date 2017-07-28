@@ -21,11 +21,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
+
 import builders.loom.api.TaskStatus;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.TaskType;
 
-@SuppressWarnings("checkstyle:regexpmultiline")
 public class ExecutionReport {
 
     private final Map<String, ExecutionStatus> durations = new LinkedHashMap<>();
@@ -55,15 +57,18 @@ public class ExecutionReport {
             totalDuration += entry.getValue().getDuration();
         }
 
-        System.out.println();
-        System.out.println("Execution statistics (ordered by product completion time):");
-        System.out.println();
+        AnsiConsole.out().println(Ansi.ansi()
+            .newline()
+            .bold()
+            .a("Execution statistics (ordered by product completion time):")
+            .reset()
+            .newline());
 
         for (final Map.Entry<String, ExecutionStatus> entry : durations.entrySet()) {
             printDuration(longestKey, entry.getKey(), totalDuration, entry.getValue());
         }
 
-        System.out.println();
+        AnsiConsole.out().println();
     }
 
     private static void printDuration(final int longestKey, final String name,
@@ -77,10 +82,42 @@ public class ExecutionReport {
         final String durationBar = pct < minDuration ? "." : String.join("",
             Collections.nCopies((int) Math.ceil(pct / 2), "#"));
 
-        // TODO add task status and task type
         final double durationSecs = executionStatus.getDuration() / 1_000_000_000D;
-        System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
-            name, space, durationSecs, pct, durationBar);
+
+        final Ansi a = Ansi.ansi();
+
+        if (executionStatus.getType() == TaskType.GOAL) {
+            a.fgBrightYellow().a("Goal");
+        } else {
+            a.fgBrightCyan().a("Task");
+        }
+
+        a.reset()
+            .a(' ')
+            .a(statusColor(executionStatus.getTaskStatus()))
+            .a(' ')
+            .a(name)
+            .a(' ')
+            .a(space)
+            .format(" %5.2fs", durationSecs)
+            .format(" (%4.1f%%)", pct)
+            .a(' ')
+            .a(durationBar);
+
+        AnsiConsole.out().println(a);
+    }
+
+    private static Ansi statusColor(final TaskStatus taskStatus) {
+        switch (taskStatus) {
+            case SKIP:
+                return Ansi.ansi().fgBrightBlack().a("<SK>").fgDefault();
+            case UP_TO_DATE:
+                return Ansi.ansi().fgBrightMagenta().a("<UP>").fgDefault();
+            case OK:
+                return Ansi.ansi().fgBrightGreen().a("<OK>").fgDefault();
+            default:
+                throw new IllegalStateException("Unknown status " + taskStatus);
+        }
     }
 
     private class ExecutionStatus {
@@ -89,7 +126,7 @@ public class ExecutionReport {
         private final long duration;
 
         ExecutionStatus(final TaskStatus taskStatus, final TaskType type,
-                               final long duration) {
+                        final long duration) {
             this.taskStatus = taskStatus;
             this.type = type;
             this.duration = duration;

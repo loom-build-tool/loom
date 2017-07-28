@@ -25,12 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -48,6 +43,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
@@ -59,6 +56,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
+import builders.loom.util.Iterables;
 import builders.loom.util.xml.XmlBuilder;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
@@ -86,8 +84,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return moduleGraph.keySet();
     }
 
-    private static InputStream readResource(final String resourceName) {
-        return new BufferedInputStream(EclipseModuleTask.class.getResourceAsStream(resourceName));
+    private Document readXml(final String resourceName) throws IOException, SAXException {
+        try(InputStream is = EclipseModuleTask.class.getResourceAsStream(resourceName)) {
+            return docBuilder.parse(new BufferedInputStream(is));
+        }
     }
 
     @Override
@@ -110,7 +110,17 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     private void createModuleProject(final Module module)
         throws IOException, SAXException, TransformerException, InterruptedException {
-        writeDocumentToFile(module.getPath().resolve(".project"), createProjectFile(module));
+
+        final Path projectXml = module.getPath().resolve(".project");
+
+        if (!Files.exists(projectXml)) {
+            writeDocumentToFile(projectXml, createProjectFile(module));
+        } else {
+            final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
+            if (mergeProjectBuildSpec(projectXmlDoc) || mergeProjectNature(projectXmlDoc)) {
+                 writeDocumentToFile(projectXml, projectXmlDoc);
+            }
+        }
         writeDocumentToFile(module.getPath().resolve(".classpath"), createClasspathFile(module));
         final Path settingsPath = Files.createDirectories(module.getPath().resolve(".settings"));
         writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"), createJdtPrefs(module));
@@ -161,6 +171,58 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
             .getDocument();
 
     }
+
+    private boolean mergeProjectBuildSpec(final Document projectXml) {
+
+        boolean found = false;
+        final Element buildSpec = Iterables.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
+        final NodeList buildCommands = projectXml.getElementsByTagName("buildCommand");
+
+        for(int i=0; i<buildCommands.getLength(); i++) {
+
+            final Element item = (Element) buildCommands.item(i);
+            found |= Iterables.getOnlyElement(
+                item.getElementsByTagName("name")).getTextContent().equals("org.eclipse.jdt.core.javabuilder");
+        }
+
+        if (!found) {
+            XmlBuilder.wrap(buildSpec)
+                .element("buildCommand")
+                    .element("name").text("org.eclipse.jdt.core.javabuilder")
+                        .and()
+                    .element("arguments");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean mergeProjectNature(final Document projectXml) {
+
+        boolean found = false;
+
+        final Element naturesNode = Iterables.getOnlyElement(projectXml.getElementsByTagName("natures"));
+        final NodeList naturesList = projectXml.getElementsByTagName("nature");
+
+        for(int i=0; i<naturesList.getLength(); i++) {
+
+            final Element item = (Element) naturesList.item(i);
+
+            found |= item.getTextContent().equals("org.eclipse.jdt.core.javanature");
+
+        }
+
+        if (!found) {
+            XmlBuilder.wrap(naturesNode)
+                .element("nature")
+                .text("org.eclipse.jdt.core.javanature");
+            return true;
+        }
+
+        return false;
+    }
+
+
 
     private void writeDocumentToFile(final Path file, final Document doc)
         throws IOException, TransformerException {

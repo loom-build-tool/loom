@@ -16,9 +16,7 @@ public class XmlBuilder {
         this.document = document;
     }
 
-    public static Element root(final String rootElementName) {
-        Objects.requireNonNull(rootElementName, "rootElementName required");
-
+    private static XmlBuilder createXmlBuilder() {
         final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder documentBuilder;
         try {
@@ -27,8 +25,27 @@ public class XmlBuilder {
             throw new IllegalStateException(e);
         }
 
-        final XmlBuilder xmlBuilder = new XmlBuilder(documentBuilder.newDocument());
+        return new XmlBuilder(documentBuilder.newDocument());
+
+    }
+
+    /**
+     * Start a new tree by declaring a root element.
+     */
+    public static Element root(final String rootElementName) {
+        Objects.requireNonNull(rootElementName, "rootElementName required");
+
+        XmlBuilder xmlBuilder = createXmlBuilder();
+
         return new Element(xmlBuilder, null, rootElementName);
+    }
+
+    /**
+     * Wrap existing element of a dom tree - use this to extend a tree.
+     */
+    public static Element wrap(org.w3c.dom.Element element) {
+        XmlBuilder xmlBuilder = new XmlBuilder(element.getOwnerDocument());
+        return new Element(xmlBuilder, element);
     }
 
     Document getDocument() {
@@ -50,6 +67,12 @@ public class XmlBuilder {
             } else {
                 getDocument().appendChild(wrappedElement);
             }
+        }
+
+        Element(final XmlBuilder xmlBuilder, final org.w3c.dom.Element element) {
+            this.xmlBuilder = xmlBuilder;
+            this.wrappedElement = element;
+            this.parent = null;
         }
 
         public Element attr(final String name, final String value) {
@@ -79,6 +102,9 @@ public class XmlBuilder {
             return xmlBuilder.getDocument();
         }
 
+        public org.w3c.dom.Element getElement() {
+            return wrappedElement;
+        }
     }
 
 }

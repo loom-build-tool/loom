@@ -18,6 +18,10 @@ package builders.loom.util;
 
 import java.util.Collection;
 
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 public final class Iterables {
 
     private Iterables() {
@@ -35,4 +39,10 @@ public final class Iterables {
         return !collection.isEmpty() ? getOnlyElement(collection) : defaultValue;
     }
 
+    public static Element getOnlyElement(final NodeList nodes) {
+        if (nodes.getLength() == 1) {
+            return (Element) nodes.item(0);
+        }
+        throw new IllegalArgumentException("Expected one element, but got " + nodes.getLength());
+    }
 }

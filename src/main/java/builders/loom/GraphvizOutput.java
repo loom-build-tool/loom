@@ -90,7 +90,7 @@ public final class GraphvizOutput {
 
     private static void writeLabel(final PrintWriter pw, final TaskInfo task) {
         pw.printf("    %s [label=\"%s\\n[%s Plugin]\"",
-            task.getName(), task.getName(), task.getPluginName());
+            task.getProvidedProduct(), task.getProvidedProduct(), task.getPluginName());
 
         if (task.isIntermediateProduct()) {
             pw.print(", color=grey, fontcolor=grey");

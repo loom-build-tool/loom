@@ -102,10 +102,12 @@ public class LoomProcessor {
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
             .orElse("unnamed");
 
-        return new Module(moduleName, LoomPaths.PROJECT_DIR, readConfig(rtConfig, LoomPaths.PROJECT_DIR.resolve("module.yml")));
+        return new Module(moduleName, LoomPaths.PROJECT_DIR,
+            readConfig(rtConfig, LoomPaths.PROJECT_DIR.resolve("module.yml")));
     }
 
-    private static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl rtConfig, final Path buildFile) {
+    private static ModuleBuildConfig readConfig(
+        final RuntimeConfigurationImpl rtConfig, final Path buildFile) {
         if (Files.exists(buildFile)) {
             try {
                 return ConfigReader.readConfig(rtConfig, buildFile, "base");
@@ -140,8 +142,6 @@ public class LoomProcessor {
                     .orElse(module.getFileName().toString());
 
                 modules.add(new Module(moduleName, module, buildConfig));
-
-                // TODO duplicate module name check
             }
             return modules;
         } catch (final IOException e) {
@@ -167,10 +167,11 @@ public class LoomProcessor {
 
         if (Files.exists(testModuleInfoFile)) {
             if (Files.exists(moduleInfoFile)) {
-                throw new IllegalStateException(""); // TODO
+                throw new IllegalStateException(
+                    "module-info.java must not exist in both src/main and src/test");
             }
-            if (Files.exists(baseDir.resolve( Paths.get("src", "main")))) {
-                throw new IllegalStateException("no src/main allowed for itest case"); // TODO
+            if (Files.exists(baseDir.resolve(Paths.get("src", "main")))) {
+                throw new IllegalStateException("No src/main must exist for itest case");
             }
 
             // sicher ein itest

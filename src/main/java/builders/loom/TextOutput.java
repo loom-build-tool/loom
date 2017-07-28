@@ -62,7 +62,7 @@ public final class TextOutput {
 
             final List<TaskInfo> productTasks = configuredTasks.stream()
                 .filter(ct -> ct.getPluginName().equals(pluginName))
-                .sorted(Comparator.comparing(TaskInfo::getName))
+                .sorted(Comparator.comparing(TaskInfo::getProvidedProduct))
                 .collect(Collectors.toList());
 
             for (final TaskInfo task : productTasks) {
@@ -74,7 +74,7 @@ public final class TextOutput {
                     ansi.fgYellow();
                 }
 
-                ansi.a(task.getName())
+                ansi.a(task.getProvidedProduct())
                     .reset()
                     .a(" - ")
                     .fgCyan()

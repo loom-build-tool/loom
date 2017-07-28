@@ -32,6 +32,10 @@ public class ModuleRegistry {
             throw new IllegalArgumentException(
                 "Conflicting module name " + module.getModuleName());
         }
+        if (lookup(module.getModuleName()).isPresent()) {
+            throw new IllegalStateException(
+                "A module with name " + module.getModuleName() + " already exists");
+        }
         modules.add(module);
     }
 

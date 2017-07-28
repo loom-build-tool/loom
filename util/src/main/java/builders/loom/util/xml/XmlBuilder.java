@@ -41,9 +41,11 @@ public class XmlBuilder {
     }
 
     /**
-     * Wrap existing element of a dom tree - use this to extend a tree.
+     * Wrap existing element of a dom tree - use this to extend a tree starting from the supplied node.
      */
     public static Element wrap(org.w3c.dom.Element element) {
+        Objects.requireNonNull(element, "element required");
+
         XmlBuilder xmlBuilder = new XmlBuilder(element.getOwnerDocument());
         return new Element(xmlBuilder, element);
     }

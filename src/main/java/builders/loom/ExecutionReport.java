@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package builders.loom;
 
 import java.util.Collections;
@@ -9,6 +25,7 @@ import builders.loom.api.TaskStatus;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.TaskType;
 
+@SuppressWarnings("checkstyle:regexpmultiline")
 public class ExecutionReport {
 
     private final Map<String, ExecutionStatus> durations = new LinkedHashMap<>();
@@ -22,7 +39,8 @@ public class ExecutionReport {
         return resolvedTasks;
     }
 
-    public void add(final String taskName, final TaskType type, final TaskStatus taskStatus, final long duration) {
+    public void add(final String taskName, final TaskType type, final TaskStatus taskStatus,
+                    final long duration) {
         durations.put(taskName, new ExecutionStatus(taskStatus, type, duration));
     }
 
@@ -49,7 +67,8 @@ public class ExecutionReport {
     }
 
     private static void printDuration(final int longestKey, final String name,
-                                      final long totalDuration, final ExecutionStatus executionStatus) {
+                                      final long totalDuration,
+                                      final ExecutionStatus executionStatus) {
         final double pct = 100D / totalDuration * executionStatus.getDuration();
         final String space = String.join("",
             Collections.nCopies(longestKey - name.length(), " "));
@@ -69,7 +88,8 @@ public class ExecutionReport {
         private final TaskType type;
         private final long duration;
 
-        public ExecutionStatus(final TaskStatus taskStatus, final TaskType type, final long duration) {
+        ExecutionStatus(final TaskStatus taskStatus, final TaskType type,
+                               final long duration) {
             this.taskStatus = taskStatus;
             this.type = type;
             this.duration = duration;

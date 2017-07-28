@@ -45,11 +45,6 @@ public class TaskInfo {
         this.usedProducts = Collections.unmodifiableSet(usedProducts);
     }
 
-    // FIXME provided productID
-    public String getName() {
-        return name;
-    }
-
     public String getPluginName() {
         return pluginName;
     }

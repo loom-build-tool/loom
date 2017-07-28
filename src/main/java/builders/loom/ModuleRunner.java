@@ -46,9 +46,12 @@ import builders.loom.plugin.TaskRegistryImpl;
 import builders.loom.util.DirectedGraph;
 import builders.loom.util.Stopwatch;
 
+@SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:classdataabstractioncoupling"})
 public class ModuleRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(ModuleRunner.class);
+
+    private static final long NANO_MILLI = 1_000_000;
 
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
@@ -133,43 +136,58 @@ public class ModuleRunner {
 
         resolvedTasks.stream()
             .sorted(Comparator.comparingLong(
-                ct -> lookupProductPromise(ct.getBuildContext(), ct.getProvidedProduct()).getCompletedAt()))
-        .forEach(configuredTask -> {
-            final ProductPromise productPromise =
-                lookupProductPromise(configuredTask.getBuildContext(), configuredTask.getProvidedProduct());
-            final Set<ProductPromise> actuallyUsedProducts =
-                configuredTaskJobMap.get(configuredTask).getActuallyUsedProducts().orElse(Set.of());
+                ct -> lookupProductPromise(
+                    ct.getBuildContext(), ct.getProvidedProduct()).getCompletedAt()))
+            .forEach(configuredTask -> {
+                final ProductPromise productPromise =
+                    lookupProductPromise(configuredTask.getBuildContext(),
+                        configuredTask.getProvidedProduct());
+                final Set<ProductPromise> actuallyUsedProducts =
+                    configuredTaskJobMap.get(configuredTask)
+                        .getActuallyUsedProducts().orElse(Set.of());
 
-            final Optional<ProductPromise> latest = actuallyUsedProducts.stream()
-                .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
+                final Optional<ProductPromise> latest = actuallyUsedProducts.stream()
+                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
 
-            if (latest.isPresent()) {
-                executionReport.add(
-                    configuredTask.toString(), configuredTask.getType(), productPromise.getTaskStatus(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()));
+                if (latest.isPresent()) {
+                    executionReport.add(
+                        configuredTask.toString(), configuredTask.getType(),
+                        productPromise.getTaskStatus(),
+                        productPromise.getCompletedAt() - latest.get().getCompletedAt());
 
-                LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
-                    productPromise.getProductId(), productPromise.getCompletedAt(),
-                    (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000, latest.get().getProductId(), (productPromise.getCompletedAt() - latest.get().getCompletedAt()) / 1_000_000);
-            } else {
-                executionReport.add(configuredTask.toString(), configuredTask.getType(), productPromise.getTaskStatus(), (productPromise.getCompletedAt() - productPromise.getStartTime()));
+                    LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
+                        productPromise.getProductId(), productPromise.getCompletedAt(),
+                        (productPromise.getCompletedAt()
+                            - productPromise.getStartTime()) / NANO_MILLI,
+                        latest.get().getProductId(),
+                        (productPromise.getCompletedAt()
+                            - latest.get().getCompletedAt()) / NANO_MILLI);
+                } else {
+                    executionReport.add(configuredTask.toString(), configuredTask.getType(),
+                        productPromise.getTaskStatus(),
+                        productPromise.getCompletedAt()
+                            - productPromise.getStartTime());
 
-                LOG.info("Product {} was completed at {} after {}ms without any dependencies",
-                    productPromise.getProductId(), productPromise.getCompletedAt(),
-                    (productPromise.getCompletedAt() - productPromise.getStartTime() ) / 1_000_000);
-            }
+                    LOG.info("Product {} was completed at {} after {}ms without any dependencies",
+                        productPromise.getProductId(), productPromise.getCompletedAt(),
+                        (productPromise.getCompletedAt()
+                            - productPromise.getStartTime()) / NANO_MILLI);
+                }
 
-        });
+            });
 
         return Optional.of(executionReport);
     }
 
     private void resolveModuleDependencyGraph() {
-        final DirectedGraph<Module> dependentModules = new DirectedGraph<>(moduleRegistry.getModules());
+        final DirectedGraph<Module> dependentModules =
+            new DirectedGraph<>(moduleRegistry.getModules());
 
         for (final Module module : moduleRegistry.getModules()) {
             final Set<Module> moduleDependencies = module.getConfig().getModuleDependencies()
                 .stream().map(m -> moduleRegistry.lookup(m)
-                    .orElseThrow(() -> new IllegalStateException("Failed resolving dependent module "
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Failed resolving dependent module "
                         + m + " from module " + module.getModuleName())))
                 .collect(Collectors.toSet());
 
@@ -178,7 +196,8 @@ public class ModuleRunner {
 
         for (final Module module : moduleRegistry.getModules()) {
             final Set<String> moduleDeps = module.getConfig().getModuleDependencies();
-            final List<Module> resolve = dependentModules.resolve((m) -> moduleDeps.contains(m.getModuleName()));
+            final List<Module> resolve =
+                dependentModules.resolve((m) -> moduleDeps.contains(m.getModuleName()));
 
             transitiveModuleDependencies.put(module, new HashSet<>(resolve));
         }
@@ -196,37 +215,39 @@ public class ModuleRunner {
 
         allBuildContexts().forEach(
             buildContext ->  {
-            final Collection<ConfiguredTask> moduleConfiguredTasks =
-                moduleTaskRegistries.get(buildContext).configuredTasks();
+                final Collection<ConfiguredTask> moduleConfiguredTasks =
+                    moduleTaskRegistries.get(buildContext).configuredTasks();
 
-            for (final ConfiguredTask moduleConfiguredTask : moduleConfiguredTasks) {
-                diGraph.addEdges(moduleConfiguredTask,
-                    collectUsedTasks(moduleConfiguredTasks, moduleConfiguredTask));
-
-                if (buildContext instanceof  Module) {
+                for (final ConfiguredTask moduleConfiguredTask : moduleConfiguredTasks) {
                     diGraph.addEdges(moduleConfiguredTask,
-                        collectImportedTasks((Module) buildContext, moduleConfiguredTask));
-                }
+                        collectUsedTasks(moduleConfiguredTasks, moduleConfiguredTask));
 
-                if (buildContext instanceof GlobalBuildContext) {
-                    diGraph.addEdges(moduleConfiguredTask,
-                        collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
+                    if (buildContext instanceof  Module) {
+                        diGraph.addEdges(moduleConfiguredTask,
+                            collectImportedTasks((Module) buildContext, moduleConfiguredTask));
+                    }
+
+                    if (buildContext instanceof GlobalBuildContext) {
+                        diGraph.addEdges(moduleConfiguredTask,
+                            collectImportAllTasks(allConfiguredTasks, moduleConfiguredTask));
+                    }
                 }
-            }
-        });
+            });
 
         return diGraph;
     }
 
     private Stream<Module> allModules() {
-        return moduleTaskRegistries.keySet().stream().filter(Module.class::isInstance).map(Module.class::cast);
+        return moduleTaskRegistries.keySet().stream()
+            .filter(Module.class::isInstance).map(Module.class::cast);
     }
 
     private Stream<BuildContext> allBuildContexts() {
         return moduleTaskRegistries.keySet().stream();
     }
 
-    private ProductPromise lookupProductPromise(BuildContext buildContext, String productId) {
+    private ProductPromise lookupProductPromise(
+        final BuildContext buildContext, final String productId) {
         Objects.requireNonNull(buildContext);
         Objects.requireNonNull(productId);
         return moduleProductRepositories.get(buildContext).lookup(productId);
@@ -250,7 +271,19 @@ public class ModuleRunner {
         return moduleConfiguredTask.getImportedProducts().stream()
             .map(importedProductId -> allModules()
                 .filter(m -> moduleDependencies.contains(m.getModuleName()))
-                .map(m -> moduleTaskRegistries.get(m).configuredTasks()) // TODO throw module doesn't exist exception!!
+                .map(
+                    m -> {
+                        final TaskRegistryImpl taskRegistry = moduleTaskRegistries.get(m);
+                        if (taskRegistry == null) {
+                            throw new IllegalStateException(
+                                "Unknown module name <" + m.getModuleName() + ">"
+                                    + " in module dependencies"
+                            );
+                        }
+                        return taskRegistry;
+                    }
+                )
+                .map(TaskRegistryImpl::configuredTasks)
                 .map(tasks -> findProvidingProduct(tasks, importedProductId))
                 .collect(Collectors.toList()))
             .flatMap(Collection::stream)
@@ -303,7 +336,8 @@ public class ModuleRunner {
     private void registerProducts() {
         moduleProductRepositories
             .forEach((key, value) -> moduleTaskRegistries.get(key).configuredTasks()
-                .forEach(ct -> value.createProduct(ct.getBuildContext().getModuleName(), ct.getProvidedProduct())));
+                .forEach(ct -> value.createProduct(
+                    ct.getBuildContext().getModuleName(), ct.getProvidedProduct())));
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {

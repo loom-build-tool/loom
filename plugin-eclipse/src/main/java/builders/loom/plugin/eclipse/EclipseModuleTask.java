@@ -84,12 +84,6 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return moduleGraph.keySet();
     }
 
-    private Document readXml(final String resourceName) throws IOException, SAXException {
-        try(InputStream is = EclipseModuleTask.class.getResourceAsStream(resourceName)) {
-            return docBuilder.parse(new BufferedInputStream(is));
-        }
-    }
-
     @Override
     public TaskResult run() throws Exception {
 
@@ -282,7 +276,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         final Optional<ArtifactListProduct> testArtifacts =
             useProduct(module.getModuleName(),"testArtifacts", ArtifactListProduct.class);
 
-            testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList()).stream()
+            testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList())
                 .forEach(artifactProduct -> {
                     buildClasspathElement(rootBuilder, artifactProduct);
                 });

@@ -41,7 +41,6 @@ import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
-import builders.loom.api.product.Product;
 import builders.loom.api.service.ServiceLocator;
 import builders.loom.plugin.ConfiguredTask;
 
@@ -62,7 +61,9 @@ public class Job implements Callable<TaskStatus> {
 
     Job(final String name, final BuildContext buildContext, final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
-        final ServiceLocator serviceLocator, final Map<Module, Set<Module>> transitiveModuleDependencies, final Map<BuildContext, ProductRepository> moduleProductRepositories) {
+        final ServiceLocator serviceLocator,
+        final Map<Module, Set<Module>> transitiveModuleDependencies,
+        final Map<BuildContext, ProductRepository> moduleProductRepositories) {
 
         this.buildContext = buildContext;
         this.name = Objects.requireNonNull(name, "name required");
@@ -74,7 +75,7 @@ public class Job implements Callable<TaskStatus> {
         this.moduleProductRepositories = moduleProductRepositories;
         this.modules = moduleProductRepositories.keySet().stream()
             .filter(Module.class::isInstance)
-            .map(Module.class::cast).collect(Collectors.toSet()) ;
+            .map(Module.class::cast).collect(Collectors.toSet());
     }
 
     public String getName() {
@@ -129,7 +130,7 @@ public class Job implements Callable<TaskStatus> {
         task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
-            usedProducts = buildProductView(configuredTask);
+            usedProducts = buildProductView();
             pdaTask.setUsedProducts(usedProducts);
         }
         if (task instanceof ServiceLocatorAware) {
@@ -148,9 +149,10 @@ public class Job implements Callable<TaskStatus> {
         }
     }
 
-    private UsedProducts buildProductView(final ConfiguredTask configuredTask) {
+    private UsedProducts buildProductView() {
 
-        final Stream<ProductPromise> usedProductsPromises = configuredTask.getUsedProducts().stream()
+        final Stream<ProductPromise> usedProductsPromises =
+            configuredTask.getUsedProducts().stream()
             .map(moduleProductRepositories.get(buildContext)::lookup);
 
 
@@ -159,7 +161,7 @@ public class Job implements Callable<TaskStatus> {
             .flatMap(moduleName -> configuredTask.getImportedProducts().stream()
                 .map(p -> buildModuleProduct(moduleName, p)));
 
-        Stream<ProductPromise> importedAllProductPromises = modules.stream()
+        final Stream<ProductPromise> importedAllProductPromises = modules.stream()
             .flatMap(bc -> configuredTask.getImportedAllProducts().stream()
                 .map(p -> buildModuleProduct(bc.getModuleName(), p)));
 
@@ -174,21 +176,19 @@ public class Job implements Callable<TaskStatus> {
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 
-    // TODO moduleName is builtContext.name
     private ProductPromise buildModuleProduct(final String moduleName, final String productId) {
         Objects.requireNonNull(moduleName, "moduleName required");
         Objects.requireNonNull(productId, "productId required");
 
-        final ProductRepository productRepository = moduleProductRepositories.entrySet().stream()
+        return moduleProductRepositories.entrySet().stream()
             .filter(e -> e.getKey().getModuleName().equals(moduleName))
             .map(Map.Entry::getValue)
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Module <" + moduleName + "> not found"));
-
-        return productRepository.lookup(productId);
+            .orElseThrow(() -> new IllegalStateException("Module <" + moduleName + "> not found"))
+            .lookup(productId);
     }
 
-    public Optional<Set<ProductPromise>> getActuallyUsedProducts() {
+    Optional<Set<ProductPromise>> getActuallyUsedProducts() {
         return Optional.ofNullable(usedProducts)
             .map(UsedProducts::getActuallyUsedProducts);
     }

@@ -51,7 +51,7 @@ public class PluginLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginLoader.class);
 
-    // FIXMzz
+    // FIXME
     private static final Map<String, String> INTERNAL_GLOBAL_PLUGINS = Map.of(
         "idea", "builders.loom.plugin.idea.IdeaPlugin",
         "eclipse", "builders.loom.plugin.eclipse.EclipsePlugin"

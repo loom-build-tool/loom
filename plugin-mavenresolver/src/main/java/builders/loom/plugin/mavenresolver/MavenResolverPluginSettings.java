@@ -35,7 +35,7 @@ public class MavenResolverPluginSettings implements PluginSettings {
         return groupAndArtifact;
     }
 
-    public void setGroupAndArtifact(String groupAndArtifact) {
+    public void setGroupAndArtifact(final String groupAndArtifact) {
         this.groupAndArtifact = groupAndArtifact;
     }
 

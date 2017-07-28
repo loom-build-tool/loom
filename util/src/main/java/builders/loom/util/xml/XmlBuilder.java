@@ -35,7 +35,7 @@ public class XmlBuilder {
     public static Element root(final String rootElementName) {
         Objects.requireNonNull(rootElementName, "rootElementName required");
 
-        XmlBuilder xmlBuilder = createXmlBuilder();
+        final XmlBuilder xmlBuilder = createXmlBuilder();
 
         return new Element(xmlBuilder, null, rootElementName);
     }
@@ -43,10 +43,10 @@ public class XmlBuilder {
     /**
      * Wrap existing element of a dom tree - use this to extend a tree starting from the supplied node.
      */
-    public static Element wrap(org.w3c.dom.Element element) {
+    public static Element wrap(final org.w3c.dom.Element element) {
         Objects.requireNonNull(element, "element required");
 
-        XmlBuilder xmlBuilder = new XmlBuilder(element.getOwnerDocument());
+        final XmlBuilder xmlBuilder = new XmlBuilder(element.getOwnerDocument());
         return new Element(xmlBuilder, element);
     }
 
@@ -84,7 +84,7 @@ public class XmlBuilder {
             return this;
         }
 
-        public Element text(String textContent) {
+        public Element text(final String textContent) {
             Objects.requireNonNull(textContent, "textContent required");
             wrappedElement.setTextContent(textContent);
             return this;

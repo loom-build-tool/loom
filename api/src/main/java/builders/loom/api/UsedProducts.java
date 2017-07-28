@@ -34,7 +34,7 @@ public class UsedProducts {
 
     private static final Logger LOG = LoggerFactory.getLogger(UsedProducts.class);
 
-    private String selfModuleName;
+    private final String selfModuleName;
     private final Set<ProductPromise> productPromises;
     private final Set<ProductPromise> actuallyWaitedForProducts = new CopyOnWriteArraySet<>();
 

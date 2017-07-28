@@ -206,7 +206,7 @@ public class LoomInstaller {
         return Files.createDirectories(baseDir.resolve("library"));
     }
 
-    private static Path determineBaseDir() throws IOException {
+    private static Path determineBaseDir() {
         final String loomUserHome = System.getenv("LOOM_USER_HOME");
         if (loomUserHome != null) {
             return Paths.get(loomUserHome);

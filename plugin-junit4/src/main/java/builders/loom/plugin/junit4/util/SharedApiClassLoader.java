@@ -16,7 +16,6 @@
 
 package builders.loom.plugin.junit4.util;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ public final class SharedApiClassLoader extends ClassLoader {
 
     // please add DOTs
     private static final List<String> API_PACKAGES =
-        Arrays.asList("builders.loom.plugin.junit4.shared.");
+        List.of("builders.loom.plugin.junit4.shared.");
 
     private final ClassLoader sharedClassLoader;
 

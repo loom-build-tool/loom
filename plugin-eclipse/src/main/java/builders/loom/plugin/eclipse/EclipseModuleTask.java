@@ -16,10 +16,8 @@
 
 package builders.loom.plugin.eclipse;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,8 +53,6 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
-import builders.loom.api.product.DummyProduct;
-import builders.loom.util.Iterables;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlUtil;
 
@@ -121,10 +117,11 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"), createJdtPrefs(module));
     }
 
-    private Properties createJdtPrefs(Module module) {
+    private Properties createJdtPrefs(final Module module) {
 
-        Properties prefs = new Properties();
-        String javaLangLevel = buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
+        final Properties prefs = new Properties();
+        final String javaLangLevel =
+            buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
 
         prefs.setProperty("eclipse.preferences.version", "1");
         prefs.setProperty("org.eclipse.jdt.core.compiler.source", javaLangLevel);
@@ -139,7 +136,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createProjectFile(final Module module) throws IOException {
+    private Document createProjectFile(final Module module) {
 
         return XmlBuilder.root("projectDescription")
             .element("name").text(module.getModuleName())
@@ -200,7 +197,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
         final NodeList naturesList = projectXml.getElementsByTagName("nature");
 
-        for(int i=0; i<naturesList.getLength(); i++) {
+        for (int i = 0; i < naturesList.getLength(); i++) {
 
             final Element item = (Element) naturesList.item(i);
 
@@ -218,8 +215,6 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return false;
     }
 
-
-
     private void writeDocumentToFile(final Path file, final Document doc)
         throws IOException, TransformerException {
 
@@ -230,7 +225,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
     }
 
-    private void writePropertiesToFile(Path file, Properties properties) throws IOException {
+    private void writePropertiesToFile(final Path file, final Properties properties)
+        throws IOException {
 
         try (final OutputStream outputStream = newOut(file)) {
             properties.store(outputStream, "Loom Eclipse Plugin");
@@ -245,8 +241,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createClasspathFile(Module module)
-        throws IOException, InterruptedException {
+    private Document createClasspathFile(final Module module)
+        throws InterruptedException {
 
         final XmlBuilder.Element rootBuilder = XmlBuilder
             .root("classpath");
@@ -279,14 +275,13 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
             useProduct(module.getModuleName(),"testArtifacts", ArtifactListProduct.class);
 
             testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList())
-                .forEach(artifactProduct -> {
-                    buildClasspathElement(rootBuilder, artifactProduct);
-                });
+                .forEach(artifactProduct -> buildClasspathElement(rootBuilder, artifactProduct));
 
         return rootBuilder.getDocument();
     }
 
-    private void addSourceDirIfExists(XmlBuilder.Element root, final Path modulePath, Path path) {
+    private void addSourceDirIfExists(final XmlBuilder.Element root, final Path modulePath,
+                                      final Path path) {
         if (Files.exists(modulePath.resolve(path))) {
             root.element("classpathentry")
                 .attr("kind", "src")
@@ -295,7 +290,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     }
 
     private void buildClasspathElement(final XmlBuilder.Element rootBuilder,
-                                          ArtifactProduct artifactProduct) {
+                                       final ArtifactProduct artifactProduct) {
 
         final String jar = artifactProduct.getMainArtifact().toAbsolutePath().toString();
         final Path sourceArtifact = artifactProduct.getSourceArtifact();

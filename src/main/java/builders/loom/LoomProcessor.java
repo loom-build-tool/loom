@@ -257,7 +257,7 @@ public class LoomProcessor {
     }
 
     private Map<String, List<ProductInfo>> aggregateProducts(
-        final Collection<ConfiguredTask> resolvedTasks) throws InterruptedException {
+        final Collection<ConfiguredTask> resolvedTasks) {
 
         // plugin -> products
         final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();

@@ -16,7 +16,6 @@
 
 package builders.loom.plugin.junit4.util;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,7 +27,7 @@ public class RestrictedClassLoader extends ClassLoader {
 
     // please add DOTs
     private static final List<String> WHITELISTED_PACKAGES =
-        Arrays.asList("builders.loom.plugin.junit4.shared.");
+        List.of("builders.loom.plugin.junit4.shared.");
 
     public RestrictedClassLoader(final ClassLoader parent) {
         super(parent);

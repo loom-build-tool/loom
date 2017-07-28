@@ -58,6 +58,7 @@ import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
 import builders.loom.util.Iterables;
 import builders.loom.util.xml.XmlBuilder;
+import builders.loom.util.xml.XmlUtil;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
@@ -169,14 +170,15 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private boolean mergeProjectBuildSpec(final Document projectXml) {
 
         boolean found = false;
-        final Element buildSpec = Iterables.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
+        final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
         final NodeList buildCommands = projectXml.getElementsByTagName("buildCommand");
 
         for(int i=0; i<buildCommands.getLength(); i++) {
 
             final Element item = (Element) buildCommands.item(i);
-            found |= Iterables.getOnlyElement(
-                item.getElementsByTagName("name")).getTextContent().equals("org.eclipse.jdt.core.javabuilder");
+            found |= XmlUtil.getOnlyElement(
+                item.getElementsByTagName("name")).getTextContent()
+                .equals("org.eclipse.jdt.core.javabuilder");
         }
 
         if (!found) {
@@ -195,7 +197,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element naturesNode = Iterables.getOnlyElement(projectXml.getElementsByTagName("natures"));
+        final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
         final NodeList naturesList = projectXml.getElementsByTagName("nature");
 
         for(int i=0; i<naturesList.getLength(); i++) {

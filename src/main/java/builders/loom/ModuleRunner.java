@@ -71,15 +71,15 @@ public class ModuleRunner {
 
         resolveModuleDependencyGraph();
 
-        registerModule(Set.of("eclipse", "idea"), new GlobalBuildContext());
-
-        final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
-        for (final Module module : moduleRegistry.getModules()) {
-            LOG.info("Initialize Plugins for module {}", module.getModuleName());
-            registerModule(defaultPlugins, module);
-        }
+        registerGlobalPlugins();
+        registerModulePlugins();
 
         LOG.debug("Initialized all plugins in {} ms", sw.duration());
+    }
+
+    private void registerGlobalPlugins() {
+        LOG.info("Initialize Plugins for global build context");
+        registerModule(Set.of("eclipse", "idea"), new GlobalBuildContext());
     }
 
     private void registerModule(final Set<String> defaultPlugins, final BuildContext buildContext) {
@@ -96,6 +96,14 @@ public class ModuleRunner {
         moduleTaskRegistries.put(buildContext, taskRegistry);
         moduleServiceLocators.put(buildContext, serviceLocator);
         moduleProductRepositories.put(buildContext, new ProductRepositoryImpl());
+    }
+
+    private void registerModulePlugins() {
+        final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
+        for (final Module module : moduleRegistry.getModules()) {
+            LOG.info("Initialize Plugins for module {}", module.getModuleName());
+            registerModule(defaultPlugins, module);
+        }
     }
 
     public Optional<ExecutionReport> execute(final Set<String> productIds)

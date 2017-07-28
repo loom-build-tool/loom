@@ -32,17 +32,11 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             throw new IllegalStateException("Missing required setting: springboot.version");
         }
 
-        task("provideModuleJarDependencies")
-	        .impl(() -> new ModuleJarDependencyModuleTask())
-	        .provides("moduleJarDependencies", true)
-	        .importFromModules("jar")
-	        .desc("") // TODO
-	        .register();
-
         task("springBootApplication")
             .impl(() -> new SpringBootModuleTask(pluginSettings))
             .provides("springBootApplication")
-            .uses("processedResources", "compilation", "compileDependencies", "moduleJarDependencies")
+            .uses("processedResources", "compilation", "compileDependencies")
+            .importFromModules("jar")
             .desc("Builds Spring Boot application.")
             .register();
 

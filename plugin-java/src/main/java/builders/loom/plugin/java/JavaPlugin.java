@@ -43,18 +43,12 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .desc("Provides test sources for other products.")
             .register();
 
-        task("provideModuleDependencies")
-            .impl(() -> new JavaModuleDependencyModuleTask())
-            .provides("moduleDependencies", true)
-            .importFromModules("compilation")
-            .desc("Collects classes from dependent modules.")
-            .register();
-
         task("compileJava")
             .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.MAIN,
                 getRepositoryPath()))
             .provides("compilation")
-            .uses("source", "compileDependencies", "moduleDependencies")
+            .uses("source", "compileDependencies")
+            .importFromModules("compilation")
             .desc("Compiles main sources.")
             .register();
 
@@ -62,7 +56,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.TEST,
                 getRepositoryPath()))
             .provides("testCompilation")
-            .uses("compilation", "testSource", "testDependencies", "moduleDependencies")
+            .uses("compilation", "testSource", "testDependencies")
+            .importFromModules("compilation")
             .desc("Compiles test sources.")
             .register();
 

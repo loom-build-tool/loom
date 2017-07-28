@@ -28,16 +28,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
+import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ModuleJarProduct;
-import builders.loom.api.product.ModulesJarProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
@@ -81,12 +79,12 @@ public class SpringBootModuleTask extends AbstractModuleTask {
         FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
 
         // copy dep modules
-        final ModulesJarProduct moduleJarDependenciesProduct =
-            requireProduct("moduleJarDependencies", ModulesJarProduct.class);
-        FileUtils.copyFiles(moduleJarDependenciesProduct.getModulesJarProducts().stream()
-                .map(ModuleJarProduct::getJarPath)
-                .collect(Collectors.toList()),
-            libDir);
+        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+            final Path jarFile =
+                requireProduct(moduleName, "jar", AssemblyProduct.class).getAssemblyFile();
+
+            Files.copy(jarFile, libDir.resolve(jarFile.getFileName()));
+        }
 
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);

@@ -53,6 +53,11 @@ public class UsedProducts {
         getAndWaitProduct(moduleName, productId);
     }
 
+    public void waitForProduct(final String moduleName, final String productId)
+        throws InterruptedException {
+        getAndWaitProduct(moduleName, productId);
+    }
+
     private Optional<Product> getAndWaitProduct(final String moduleName, final String productId)
         throws InterruptedException {
 

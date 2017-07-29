@@ -206,9 +206,7 @@ public class Loom {
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"));
 
-        AnsiConsole.out.println(Ansi.ansi()
-            .render("Initialized runtime configuration @|bold %s|@",
-                runtimeConfiguration.getVersion()));
+        printRuntimeConfiguration(runtimeConfiguration);
 
         if (noCacheMode) {
             AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
@@ -244,6 +242,20 @@ public class Loom {
         }
 
         loomProcessor.logMemoryUsage();
+    }
+
+    private static void printRuntimeConfiguration(final RuntimeConfigurationImpl rtConfig) {
+        final Ansi a = Ansi.ansi()
+            .a("Initialized runtime configuration");
+
+        if (rtConfig.getVersion() != null) {
+            a.a(' ')
+                .bold()
+                .a(rtConfig.getVersion())
+                .boldOff();
+        }
+
+        AnsiConsole.out.println(a);
     }
 
     private static void configureLogging() {

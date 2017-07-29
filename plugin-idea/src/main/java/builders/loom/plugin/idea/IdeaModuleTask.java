@@ -76,22 +76,27 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .root("project").attr("version", "4")
             .element("component").attr("name", "Encoding")
             .element("file")
-            .attr("url", "PROJECT")
-            .attr("charset", "UTF-8")
+                .attr("url", "PROJECT")
+                .attr("charset", "UTF-8")
             .getDocument();
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
     private Document createMiscFile() {
+        final JavaVersion highestVersion = moduleGraph.keySet().stream()
+            .map(m -> m.getConfig().getBuildSettings().getJavaPlatformVersion())
+            .reduce((lhs, rhs) -> lhs.getNumericVersion() > rhs.getNumericVersion() ? lhs : rhs)
+            .orElseGet(JavaVersion::current);
+
         return XmlBuilder
             .root("project").attr("version", "4")
             .element("component")
-            .attr("name", "ProjectRootManager")
-            .attr("version", "2")
-            .attr("languageLevel", buildLanguageLevel(JavaVersion.current())) // TODO find better
-            .attr("default", "false") // TODO gradle == false || intellij setup == true !?!?
-            .attr("project-jdk-name", buildProjectJdkName(JavaVersion.current())) // TODO find better
-            .attr("project-jdk-type", "JavaSDK")
+                .attr("name", "ProjectRootManager")
+                .attr("version", "2")
+                .attr("languageLevel", buildLanguageLevel(highestVersion))
+                .attr("default", "false")
+                .attr("project-jdk-name", buildProjectJdkName(highestVersion))
+                .attr("project-jdk-type", "JavaSDK")
             .element("output").attr("url", "file://$PROJECT_DIR$/out")
             .getDocument();
     }

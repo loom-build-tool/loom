@@ -22,4 +22,6 @@ public interface RuntimeConfiguration {
 
     String getVersion();
 
+    boolean isModuleBuild();
+
 }

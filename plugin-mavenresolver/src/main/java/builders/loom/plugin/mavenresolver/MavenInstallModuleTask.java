@@ -46,7 +46,6 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.DirectoryProduct;
@@ -56,14 +55,11 @@ import builders.loom.util.TempFile;
 public class MavenInstallModuleTask extends AbstractModuleTask {
 
     private final MavenResolverPluginSettings pluginSettings;
-    private final RuntimeConfiguration runtimeConfiguration;
     private final LocalRepositoryManager localRepositoryManager;
     private final RepositorySystem system;
 
-    public MavenInstallModuleTask(final MavenResolverPluginSettings pluginSettings,
-                                  final RuntimeConfiguration runtimeConfiguration) {
+    public MavenInstallModuleTask(final MavenResolverPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
-        this.runtimeConfiguration = runtimeConfiguration;
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
@@ -155,13 +151,14 @@ public class MavenInstallModuleTask extends AbstractModuleTask {
     }
 
     private Artifact buildArtifact(final String extension, final Path assemblyFile) {
-        final String version = runtimeConfiguration.getVersion();
+        final String version = getRuntimeConfiguration().getVersion();
         if (version == null) {
-            throw new IllegalStateException("Artifact version required (specify --artifact-version)");
+            throw new IllegalStateException("Artifact version required "
+                + "(specify --artifact-version)");
         }
 
         return new DefaultArtifact(
-            String.format("%s:%s", pluginSettings.getGroupAndArtifact(), runtimeConfiguration.getVersion()))
+            String.format("%s:%s", pluginSettings.getGroupAndArtifact(), version))
             .setFile(assemblyFile.toFile());
     }
 

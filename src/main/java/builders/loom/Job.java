@@ -36,6 +36,7 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
+import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
@@ -48,8 +49,9 @@ public class Job implements Callable<TaskStatus> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
 
-    private final BuildContext buildContext;
     private final String name;
+    private final BuildContext buildContext;
+    private final RuntimeConfiguration runtimeConfiguration;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
@@ -59,14 +61,19 @@ public class Job implements Callable<TaskStatus> {
     private final Map<BuildContext, ProductRepository> moduleProductRepositories;
     private final Set<Module> modules;
 
-    Job(final String name, final BuildContext buildContext, final ConfiguredTask configuredTask,
+    @SuppressWarnings("checkstyle:parameternumber")
+    Job(final String name,
+        final BuildContext buildContext,
+        final RuntimeConfiguration runtimeConfiguration,
+        final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final ServiceLocator serviceLocator,
         final Map<Module, Set<Module>> transitiveModuleDependencies,
         final Map<BuildContext, ProductRepository> moduleProductRepositories) {
 
-        this.buildContext = buildContext;
         this.name = Objects.requireNonNull(name, "name required");
+        this.buildContext = buildContext;
+        this.runtimeConfiguration = runtimeConfiguration;
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
@@ -127,6 +134,7 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private void injectTaskProperties(final Task task) {
+        task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
@@ -142,7 +150,6 @@ public class Job implements Callable<TaskStatus> {
             final Module module = (Module) buildContext;
             mbcaTask.setModuleBuildConfig(module.getConfig());
         }
-
         if (task instanceof ModuleGraphAware) {
             final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
             mgaTask.setTransitiveModuleGraph(transitiveModuleDependencies);

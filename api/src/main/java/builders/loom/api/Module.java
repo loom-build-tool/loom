@@ -17,6 +17,7 @@
 package builders.loom.api;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class Module implements BuildContext {
 
@@ -25,9 +26,9 @@ public class Module implements BuildContext {
     private final ModuleBuildConfig config;
 
     public Module(final String moduleName, final Path path, final ModuleBuildConfig config) {
-        this.moduleName = moduleName;
-        this.path = path;
-        this.config = config;
+        this.moduleName = Objects.requireNonNull(moduleName, "moduleName required");
+        this.path = Objects.requireNonNull(path, "path required");
+        this.config = Objects.requireNonNull(config, "config required");
     }
 
     @Override
@@ -49,6 +50,9 @@ public class Module implements BuildContext {
     public String toString() {
         return "Module{"
             + "moduleName='" + moduleName + '\''
+            + ", path=" + path
+            + ", config=" + config
             + '}';
     }
+
 }

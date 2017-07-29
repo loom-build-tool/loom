@@ -44,6 +44,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.product.Product;
+import builders.loom.config.BuildConfigImpl;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginLoader;
@@ -72,60 +73,57 @@ public class LoomProcessor {
         log.debug("Initialized modules in {} ms", sw.duration());
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
-        moduleRunner = new ModuleRunner(pluginLoader, moduleRegistry);
+        moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry);
         moduleRunner.init();
     }
 
     public List<Module> listModules(final RuntimeConfigurationImpl runtimeConfiguration) {
-
-        checkForInconsistentSrcModuleStruct();
-
-        final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
-
         final List<Module> modules = new ArrayList<>();
 
-        if (Files.notExists(modulesPath)) {
-            modules.add(singleModule(runtimeConfiguration));
-        } else {
+        if (runtimeConfiguration.isModuleBuild()) {
             modules.addAll(scanForModules(runtimeConfiguration));
+        } else {
+            modules.add(singleModule(runtimeConfiguration));
         }
 
         return modules;
     }
 
     private Module singleModule(final RuntimeConfigurationImpl rtConfig) {
-        final Path moduleBuildConfig = LoomPaths.PROJECT_DIR.resolve("module.yml");
-        if (Files.notExists(moduleBuildConfig)) {
+        final Path configFile = LoomPaths.PROJECT_DIR.resolve("module.yml");
+        if (Files.notExists(configFile)) {
             throw new IllegalStateException("Missing module.yml in project root");
         }
 
         final String moduleName = readModuleNameFromModuleInfo(LoomPaths.PROJECT_DIR)
             .orElse("unnamed");
 
-        return new Module(moduleName, LoomPaths.PROJECT_DIR,
-            readConfig(rtConfig, LoomPaths.PROJECT_DIR.resolve("module.yml")));
+        final ModuleBuildConfig buildConfig = readConfig(rtConfig, configFile)
+            .orElseGet(BuildConfigImpl::new);
+
+        return new Module(moduleName, LoomPaths.PROJECT_DIR, buildConfig);
     }
 
-    private static ModuleBuildConfig readConfig(
+    private static Optional<ModuleBuildConfig> readConfig(
         final RuntimeConfigurationImpl rtConfig, final Path buildFile) {
-        if (Files.exists(buildFile)) {
-            try {
-                return ConfigReader.readConfig(rtConfig, buildFile, "base");
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+
+        if (Files.notExists(buildFile)) {
+            return Optional.empty();
         }
 
-        return null;
+        try {
+            return Optional.of(ConfigReader.readConfig(rtConfig, buildFile, "base"));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
 
         final List<Module> modules = new ArrayList<>();
 
-        final Path modulesPath = LoomPaths.PROJECT_DIR.resolve("modules");
         try {
-            final List<Path> modulePaths = Files.list(modulesPath)
+            final List<Path> modulePaths = Files.list(LoomPaths.MODULES_DIR)
                 .collect(Collectors.toList());
 
             for (final Path module : modulePaths) {
@@ -151,7 +149,7 @@ public class LoomProcessor {
 
     private void checkForInconsistentSrcModuleStruct() {
         final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
-        final boolean hasModules = Files.exists(LoomPaths.PROJECT_DIR.resolve("modules"));
+        final boolean hasModules = Files.exists(LoomPaths.MODULES_DIR);
 
         if (hasSrc && hasModules) {
             throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
@@ -318,6 +316,11 @@ public class LoomProcessor {
 
             AnsiConsole.out().print(ansi);
         }
+    }
+
+    public boolean isModuleBuild() {
+        checkForInconsistentSrcModuleStruct();
+        return Files.exists(LoomPaths.MODULES_DIR);
     }
 
     private static final class ProductInfo {

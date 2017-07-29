@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 public final class LoomPaths {
 
     public static final Path PROJECT_DIR = Paths.get("").toAbsolutePath().normalize();
+    public static final Path MODULES_DIR = LoomPaths.PROJECT_DIR.resolve("modules");
     public static final Path PROJECT_LOOM_PATH = PROJECT_DIR.resolve(".loom");
     public static final Path BUILD_DIR = PROJECT_DIR.resolve("build");
     public static final Path REPORT_PATH = BUILD_DIR.resolve("reports");

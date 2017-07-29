@@ -22,10 +22,13 @@ public class RuntimeConfigurationImpl implements RuntimeConfiguration {
 
     private final boolean cacheEnabled;
     private final String version;
+    private final boolean moduleBuild;
 
-    public RuntimeConfigurationImpl(final boolean cacheEnabled, final String version) {
+    public RuntimeConfigurationImpl(final boolean cacheEnabled, final String version,
+                                    final boolean moduleBuild) {
         this.cacheEnabled = cacheEnabled;
         this.version = version;
+        this.moduleBuild = moduleBuild;
     }
 
     @Override
@@ -36,6 +39,10 @@ public class RuntimeConfigurationImpl implements RuntimeConfiguration {
     @Override
     public String getVersion() {
         return version;
+    }
+
+    public boolean isModuleBuild() {
+        return moduleBuild;
     }
 
 }

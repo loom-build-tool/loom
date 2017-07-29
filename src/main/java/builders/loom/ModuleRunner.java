@@ -36,6 +36,7 @@ import builders.loom.api.GlobalBuildContext;
 import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
+import builders.loom.api.RuntimeConfiguration;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.PluginLoader;
@@ -53,6 +54,7 @@ public class ModuleRunner {
 
     private static final long NANO_MILLI = 1_000_000;
 
+    private final RuntimeConfiguration runtimeConfiguration;
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
@@ -60,8 +62,10 @@ public class ModuleRunner {
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private final Map<Module, Set<Module>> transitiveModuleDependencies = new HashMap<>();
 
-    public ModuleRunner(final PluginLoader pluginLoader,
+    public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
+                        final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry) {
+        this.runtimeConfiguration = runtimeConfiguration;
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
     }
@@ -355,8 +359,9 @@ public class ModuleRunner {
 
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
-        return new Job(jobName, buildContext, configuredTask, productRepository,
-             serviceLocator, transitiveModuleDependencies, moduleProductRepositories);
+        return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
+            productRepository, serviceLocator, transitiveModuleDependencies,
+            moduleProductRepositories);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

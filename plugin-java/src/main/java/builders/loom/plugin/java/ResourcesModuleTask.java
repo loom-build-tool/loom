@@ -32,17 +32,14 @@ import builders.loom.api.product.ResourcesTreeProduct;
 
 public class ResourcesModuleTask extends AbstractModuleTask {
 
-    private final RuntimeConfiguration runtimeConfiguration;
     private final JavaPluginSettings pluginSettings;
     private final Path destPath;
     private final CompileTarget compileTarget;
     private final Path cacheDir;
 
-    ResourcesModuleTask(final RuntimeConfiguration runtimeConfiguration,
-                        final JavaPluginSettings pluginSettings,
+    ResourcesModuleTask(final JavaPluginSettings pluginSettings,
                         final CompileTarget compileTarget, final Path cacheDir) {
 
-        this.runtimeConfiguration = runtimeConfiguration;
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
 
@@ -66,6 +63,8 @@ public class ResourcesModuleTask extends AbstractModuleTask {
 
         assertDirectoryOrMissing(srcPath);
         assertDirectoryOrMissing(destPath);
+
+        final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
 
         final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
             ? new DiskKeyValueCache(getCacheFileName())

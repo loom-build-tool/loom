@@ -16,11 +16,10 @@
 
 package builders.loom.plugin.idea;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +41,6 @@ import builders.loom.util.xml.XmlWriter;
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
-    private final XmlWriter xmlWriter = new XmlWriter();
     private Map<Module, Set<Module>> moduleGraph;
 
     @Override
@@ -52,23 +50,60 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path currentWorkDirName = LoomPaths.PROJECT_DIR.getFileName();
+        final Path ideaDirectory = Files.createDirectories(LoomPaths.PROJECT_DIR.resolve(".idea"));
+
+        final XmlWriter xmlWriter = new XmlWriter();
+        final JavaVersion projectJavaVersion = determineModulesHighestJavaVersion();
+        final List<IdeaModule> ideaModules = new ArrayList<>();
+
+        // encodings.xml
+        xmlWriter.write(createEncodingsFile(), ideaDirectory.resolve("encodings.xml"));
+
+        // misc.xml
+        xmlWriter.write(createMiscFile(projectJavaVersion), ideaDirectory.resolve("misc.xml"));
+
+        // 1-n module (.iml) files
+        for (final Module module : moduleGraph.keySet()) {
+            final String moduleName = ideaModuleName(module.getPath());
+            final Path imlFile = module.getPath()
+                .resolve(imlFileFromPath(module.getPath(), moduleName));
+            xmlWriter.write(createModuleImlFile(imlFile, module, projectJavaVersion), imlFile);
+            ideaModules.add(new IdeaModule(imlFile, moduleName));
+        }
+
+        if (getRuntimeConfiguration().isModuleBuild()) {
+            // create separate umbrella .iml for multi-module projects
+            final String moduleName = ideaModuleName(LoomPaths.PROJECT_DIR);
+            final Path rootImlFile = imlFileFromPath(LoomPaths.PROJECT_DIR, moduleName);
+            xmlWriter.write(createUmbrellaImlFile(), rootImlFile);
+            ideaModules.add(new IdeaModule(rootImlFile, moduleName));
+        }
+
+        // modules.xml file containing referencing all modules
+        xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
+
+        return completeOk(new DummyProduct("Idea project files"));
+    }
+
+    private String ideaModuleName(final Path path) {
+        final Path currentWorkDirName = path.getFileName();
 
         if (currentWorkDirName == null) {
             throw new IllegalStateException("Can't get current working directory");
         }
 
-        final Path ideaDirectory = Files.createDirectories(LoomPaths.PROJECT_DIR.resolve(".idea"));
+        return currentWorkDirName.toString();
+    }
 
-        xmlWriter.write(createEncodingsFile(), ideaDirectory.resolve("encodings.xml"));
-        xmlWriter.write(createMiscFile(), ideaDirectory.resolve("misc.xml"));
+    private Path imlFileFromPath(final Path path, final String ideaModuleName) {
+        return path.resolve(ideaModuleName + ".iml");
+    }
 
-        final List<IdeaModule> ideaModules = new ArrayList<>();
-        ideaModules.add(buildIdeaRootModule(currentWorkDirName));
-        ideaModules.addAll(buildIdeaModules(ideaDirectory));
-        xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
-
-        return completeOk(new DummyProduct("Idea project files"));
+    private JavaVersion determineModulesHighestJavaVersion() {
+        return moduleGraph.keySet().stream()
+            .map(m -> m.getConfig().getBuildSettings().getJavaPlatformVersion())
+            .max(Comparator.comparingInt(JavaVersion::getNumericVersion))
+            .orElseGet(JavaVersion::current);
     }
 
     private Document createEncodingsFile() {
@@ -82,20 +117,15 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private Document createMiscFile() {
-        final JavaVersion highestVersion = moduleGraph.keySet().stream()
-            .map(m -> m.getConfig().getBuildSettings().getJavaPlatformVersion())
-            .reduce((lhs, rhs) -> lhs.getNumericVersion() > rhs.getNumericVersion() ? lhs : rhs)
-            .orElseGet(JavaVersion::current);
-
+    private Document createMiscFile(final JavaVersion projectJavaVersion) {
         return XmlBuilder
             .root("project").attr("version", "4")
             .element("component")
                 .attr("name", "ProjectRootManager")
                 .attr("version", "2")
-                .attr("languageLevel", buildLanguageLevel(highestVersion))
+                .attr("languageLevel", buildLanguageLevel(projectJavaVersion))
                 .attr("default", "false")
-                .attr("project-jdk-name", buildProjectJdkName(highestVersion))
+                .attr("project-jdk-name", buildJdkName(projectJavaVersion))
                 .attr("project-jdk-type", "JavaSDK")
             .element("output").attr("url", "file://$PROJECT_DIR$/out")
             .getDocument();
@@ -106,50 +136,9 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
-    private static String buildProjectJdkName(final JavaVersion javaVersion) {
+    private static String buildJdkName(final JavaVersion javaVersion) {
         final int numericVersion = javaVersion.getNumericVersion();
         return (numericVersion < 9) ? "1." + numericVersion : String.valueOf(numericVersion);
-    }
-
-    private IdeaModule buildIdeaRootModule(final Path currentWorkDirName)
-        throws InterruptedException {
-
-        final Path rootImlFile = LoomPaths.PROJECT_DIR.resolve(currentWorkDirName + ".iml");
-        final String rootImlFilename = LoomPaths.PROJECT_DIR.relativize(rootImlFile).toString();
-        final Module module = new Module(null, rootImlFile.getParent(), null);
-        xmlWriter.write(createImlFile(rootImlFile, module, ModuleGroup.BASE), rootImlFile);
-        return new IdeaModule(null, null, rootImlFilename);
-    }
-
-    private List<IdeaModule> buildIdeaModules(final Path ideaDirectory)
-        throws InterruptedException, IOException {
-
-        final List<IdeaModule> ideaModules = new ArrayList<>();
-
-        for (final Module module : moduleGraph.keySet()) {
-            for (final ModuleGroup group : ModuleGroup.values()) {
-
-                final Path ideaModulesDir = Files.createDirectories(
-                    ideaDirectory.resolve(Paths.get("modules", module.getModuleName())));
-
-                final Path imlFile = ideaModulesDir.resolve(buildImlFilename(module, group));
-                final String imlFileName = LoomPaths.PROJECT_DIR.relativize(imlFile).toString();
-                xmlWriter.write(createImlFile(imlFile, module, group), imlFile);
-                ideaModules.add(new IdeaModule(module.getModuleName(), group, imlFileName));
-            }
-        }
-
-        return ideaModules;
-    }
-
-    private String buildImlFilename(final Module module, final ModuleGroup group) {
-        final StringBuilder filenameSb = new StringBuilder(module.getModuleName());
-        if (group != ModuleGroup.BASE) {
-            filenameSb.append('_');
-            filenameSb.append(group.name().toLowerCase());
-        }
-        filenameSb.append(".iml");
-        return filenameSb.toString();
     }
 
     private Document createModulesFile(final List<IdeaModule> ideaModules) {
@@ -159,44 +148,119 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .element("modules");
 
         for (final IdeaModule ideaModule : ideaModules) {
-            final XmlBuilder.Element module = element
-                .element("module")
-                .attr("fileurl", "file://$PROJECT_DIR$/" + ideaModule.getFilename())
-                .attr("filepath", "$PROJECT_DIR$/" + ideaModule.getFilename());
+            final String relativeImlFilename =
+                LoomPaths.PROJECT_DIR.relativize(ideaModule.getImlFile()).toString();
 
-            if (ideaModule.getGroup() != null) {
-                module.attr("group", ideaModule.getModuleName()); // correct?
-            }
+            element
+                .element("module")
+                .attr("fileurl", "file://$PROJECT_DIR$/" + relativeImlFilename)
+                .attr("filepath", "$PROJECT_DIR$/" + relativeImlFilename);
         }
 
         return element.getDocument();
     }
 
-    private Document createImlFile(final Path imlFile, final Module module, final ModuleGroup group)
+    private Document createUmbrellaImlFile() {
+        return XmlBuilder.root("module")
+            .attr("type", "JAVA_MODULE")
+            .attr("version", "4")
+            .element("component")
+                .attr("name", "NewModuleRootManager")
+                .attr("inherit-compiler-output", "true")
+            .element("exclude-output")
+                .and()
+            .element("content")
+                .attr("url", "file://$MODULE_DIR$")
+                .element("excludeFolder").attr("url", "file://$MODULE_DIR$/.loom").and()
+                .element("excludeFolder").attr("url", "file://$MODULE_DIR$/build").and()
+            .and()
+            .element("orderEntry")
+                .attr("type", "inheritedJdk")
+                .and()
+            .element("orderEntry")
+                .attr("type", "sourceFolder")
+                .attr("forTests", "false")
+            .getDocument();
+    }
+
+    private Document createModuleImlFile(final Path imlFile, final Module module,
+                                         final JavaVersion projectJavaVersion)
         throws InterruptedException {
 
         final XmlBuilder.Element moduleE = XmlBuilder.root("module")
             .attr("type", "JAVA_MODULE")
             .attr("version", "4");
 
-        final XmlBuilder.Element component = moduleE
-            .element("component").attr("name", "NewModuleRootManager");
+        final XmlBuilder.Element component = moduleE.element("component")
+                .attr("name", "NewModuleRootManager")
+                .attr("inherit-compiler-output", "true");
 
         component.element("exclude-output");
 
         final String relativeModuleDir =
             buildRelativeModuleDir(imlFile.getParent().relativize(module.getPath()));
 
-        if (group == ModuleGroup.MAIN) {
-            buildMainComponent(module, component, relativeModuleDir);
-        } else if (group == ModuleGroup.TEST) {
-            buildTestComponent(module, component, relativeModuleDir);
-        } else {
-            buildBaseComponent(component, relativeModuleDir);
+        final String mainSrcRoot = relativeModuleDir + "/src/main";
+        final String testSrcRoot = relativeModuleDir + "/src/test";
+        final XmlBuilder.Element content = component.element("content")
+            .attr("url", relativeModuleDir);
+
+        content.element("sourceFolder")
+            .attr("url", mainSrcRoot + "/java")
+            .attr("isTestSource", "false");
+
+        content.element("sourceFolder")
+            .attr("url", mainSrcRoot + "/resources")
+            .attr("type", "java-resource");
+
+        content.element("sourceFolder")
+            .attr("url", testSrcRoot + "/java")
+            .attr("isTestSource", "true");
+
+        content.element("sourceFolder")
+            .attr("url", testSrcRoot + "/resources")
+            .attr("type", "java-test-resource");
+
+
+        if (module.getPath().equals(LoomPaths.PROJECT_DIR)) {
+            content
+                .element("excludeFolder").attr("url", "file://$MODULE_DIR$/.loom").and()
+                .element("excludeFolder").attr("url", "file://$MODULE_DIR$/build");
         }
 
-        component.element("orderEntry")
-            .attr("type", "inheritedJdk");
+        final JavaVersion moduleJavaVersion =
+            module.getConfig().getBuildSettings().getJavaPlatformVersion();
+        final boolean inheritProjectJavaVersion = moduleJavaVersion.equals(projectJavaVersion);
+
+        if (inheritProjectJavaVersion) {
+            component.element("orderEntry")
+                .attr("type", "inheritedJdk");
+        } else {
+            component.attr("LANGUAGE_LEVEL", buildLanguageLevel(moduleJavaVersion));
+
+            component.element("orderEntry")
+                .attr("type", "jdk")
+                .attr("jdkName", buildJdkName(moduleJavaVersion))
+                .attr("jdkType", "JavaSDK");
+        }
+
+        // dependent modules
+        for (final Module depModule : moduleGraph.get(module)) {
+            component.element("orderEntry")
+                .attr("type", "module")
+                .attr("module-name", ideaModuleName(depModule.getPath()))
+                .attr("scope", "PROVIDED");
+        }
+
+        // add compile artifacts
+        useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
+            .map(ArtifactListProduct::getArtifacts)
+            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
+
+        // add test artifacts
+        useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
+            .map(ArtifactListProduct::getArtifacts)
+            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
 
         component.element("orderEntry")
             .attr("type", "sourceFolder")
@@ -211,96 +275,6 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             return relativeModuleDir.substring(0, relativeModuleDir.length() - 1);
         }
         return relativeModuleDir;
-    }
-
-    private void buildMainComponent(final Module module, final XmlBuilder.Element component,
-                                    final String relativeModuleDir) throws InterruptedException {
-        component.attr("LANGUAGE_LEVEL",
-            buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
-
-        component.element("output")
-            .attr("url", relativeModuleDir + "/out/production/classes");
-
-        final String srcRoot = relativeModuleDir + "/src/main";
-        final XmlBuilder.Element content = component.element("content")
-            .attr("url", srcRoot);
-
-        content.element("sourceFolder")
-            .attr("url", srcRoot + "/java")
-            .attr("isTestSource", "false");
-
-        content.element("sourceFolder")
-            .attr("url", srcRoot + "/resources")
-            .attr("type", "java-resource");
-
-        // dependent modules
-        for (final Module depModule : moduleGraph.get(module)) {
-            component.element("orderEntry")
-                .attr("type", "module")
-                .attr("module-name", depModule.getModuleName() + "_main")
-                .attr("scope", "PROVIDED");
-        }
-
-        // add compile artifacts
-        useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
-            .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
-    }
-
-    private void buildTestComponent(final Module module, final XmlBuilder.Element component,
-                                    final String relativeModuleDir) throws InterruptedException {
-        component.attr("LANGUAGE_LEVEL",
-            buildLanguageLevel(module.getConfig().getBuildSettings().getJavaPlatformVersion()));
-
-        component.element("output-test")
-            .attr("url", relativeModuleDir + "/out/test/classes");
-
-        final String srcRoot = relativeModuleDir + "/src/test";
-        final XmlBuilder.Element content = component.element("content")
-            .attr("url", srcRoot);
-
-        content.element("sourceFolder")
-            .attr("url", srcRoot + "/java")
-            .attr("isTestSource", "true");
-
-        content.element("sourceFolder")
-            .attr("url", srcRoot + "/resources")
-            .attr("type", "java-test-resource");
-
-        // main module
-        component.element("orderEntry")
-            .attr("type", "module")
-            .attr("module-name", module.getModuleName() + "_main");
-
-
-        // dependent modules
-        for (final Module depModule : moduleGraph.get(module)) {
-            component.element("orderEntry")
-                .attr("type", "module")
-                .attr("module-name", depModule.getModuleName() + "_main")
-                .attr("scope", "PROVIDED");
-        }
-
-        // TODO in module: <component name="TestModuleProperties" production-module="plugin-springboot_main" />
-
-        // add test artifacts
-        useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
-            .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
-    }
-
-    private void buildBaseComponent(final XmlBuilder.Element component,
-                                    final String relativeModuleDir) {
-        component.attr("inherit-compiler-output", "true");
-
-        final XmlBuilder.Element content = component.element("content")
-            .attr("url", relativeModuleDir);
-
-        content.element("excludeFolder").attr("url", relativeModuleDir + "/out");
-
-        // TODO nur im root
-        content.element("excludeFolder").attr("url", relativeModuleDir + "/.loom");
-        content.element("excludeFolder").attr("url", relativeModuleDir + "/build");
     }
 
     private void buildOrderEntries(final XmlBuilder.Element component,

@@ -18,7 +18,6 @@ package builders.loom.plugin.java;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.RuntimeConfiguration;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
@@ -29,8 +28,6 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
     @Override
     public void configure() {
-        final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
-
         task("provideSource")
             .impl(() -> new JavaProvideSourceDirModuleTask(CompileTarget.MAIN))
             .provides("source", true)
@@ -44,8 +41,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("compileJava")
-            .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.MAIN,
-                getRepositoryPath()))
+            .impl(() -> new JavaCompileModuleTask(CompileTarget.MAIN, getRepositoryPath()))
             .provides("compilation")
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
@@ -53,8 +49,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("compileTestJava")
-            .impl(() -> new JavaCompileModuleTask(runtimeConfiguration, CompileTarget.TEST,
-                getRepositoryPath()))
+            .impl(() -> new JavaCompileModuleTask(CompileTarget.TEST, getRepositoryPath()))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
             .importFromModules("compilation")
@@ -88,7 +83,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processResources")
-            .impl(() -> new ResourcesModuleTask(runtimeConfiguration, getPluginSettings(),
+            .impl(() -> new ResourcesModuleTask(getPluginSettings(),
                 CompileTarget.MAIN, getRepositoryPath()))
             .provides("processedResources")
             .uses("resources")
@@ -96,7 +91,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processTestResources")
-            .impl(() -> new ResourcesModuleTask(runtimeConfiguration, getPluginSettings(),
+            .impl(() -> new ResourcesModuleTask(getPluginSettings(),
                 CompileTarget.TEST, getRepositoryPath()))
             .provides("processedTestResources")
             .uses("testResources")

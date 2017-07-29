@@ -204,7 +204,8 @@ public class Loom {
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"));
+            new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"),
+                loomProcessor.isModuleBuild());
 
         printRuntimeConfiguration(runtimeConfiguration);
 

@@ -16,14 +16,14 @@
 
 package builders.loom.util;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class StringReplaceUtilTest {
 

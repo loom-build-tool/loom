@@ -16,28 +16,25 @@
 
 package builders.loom.plugin.idea;
 
+import java.nio.file.Path;
+import java.util.Objects;
+
 public class IdeaModule {
 
+    private final Path imlFile;
     private final String moduleName;
-    private final ModuleGroup group;
-    private final String imlFileName;
 
-    public IdeaModule(final String moduleName, final ModuleGroup group, final String imlFileName) {
-        this.moduleName = moduleName;
-        this.group = group;
-        this.imlFileName = imlFileName;
+    public IdeaModule(final Path imlFile, final String moduleName) {
+        this.imlFile = Objects.requireNonNull(imlFile, "imlFile required");
+        this.moduleName = Objects.requireNonNull(moduleName, "moduleName required");
+    }
+
+    public Path getImlFile() {
+        return imlFile;
     }
 
     public String getModuleName() {
         return moduleName;
-    }
-
-    public String getFilename() {
-        return imlFileName;
-    }
-
-    public ModuleGroup getGroup() {
-        return group;
     }
 
 }

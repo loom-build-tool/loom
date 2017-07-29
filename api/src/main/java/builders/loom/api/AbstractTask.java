@@ -25,9 +25,19 @@ import builders.loom.api.service.ServiceLocator;
 public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
 
+    private RuntimeConfiguration runtimeConfiguration;
     private BuildContext buildContext;
     private UsedProducts usedProducts;
     private ServiceLocator serviceLocator;
+
+    public RuntimeConfiguration getRuntimeConfiguration() {
+        return runtimeConfiguration;
+    }
+
+    @Override
+    public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+        this.runtimeConfiguration = runtimeConfiguration;
+    }
 
     public BuildContext getBuildContext() {
         return buildContext;

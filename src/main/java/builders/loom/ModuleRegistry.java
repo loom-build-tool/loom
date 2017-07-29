@@ -17,6 +17,7 @@
 package builders.loom;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +41,7 @@ public class ModuleRegistry {
     }
 
     public List<Module> getModules() {
-        return modules;
+        return Collections.unmodifiableList(modules);
     }
 
     public Optional<Module> lookup(final String moduleName) {

@@ -42,7 +42,6 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
-import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -52,15 +51,12 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileModuleTask.class);
 
-    private final RuntimeConfiguration runtimeConfiguration;
     private final CompileTarget compileTarget;
     private final String subdirName;
     private final Path cacheDir;
 
-    public JavaCompileModuleTask(final RuntimeConfiguration runtimeConfiguration,
-                                 final CompileTarget compileTarget,
+    public JavaCompileModuleTask(final CompileTarget compileTarget,
                                  final Path cacheDir) {
-        this.runtimeConfiguration = runtimeConfiguration;
         this.compileTarget = Objects.requireNonNull(compileTarget);
         this.cacheDir = cacheDir;
 
@@ -187,8 +183,8 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         final DiagnosticListener<JavaFileObject> diagnosticListener =
             new DiagnosticLogListener(LOG);
 
-        final Optional<String> javaVersion =
-            configuredPlatformVersion(getModuleConfig().getBuildSettings().getJavaPlatformVersion());
+        final Optional<String> javaVersion = configuredPlatformVersion(getModuleConfig()
+            .getBuildSettings().getJavaPlatformVersion());
 
         try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {

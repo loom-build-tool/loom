@@ -70,7 +70,8 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
                 // TODO move module-info.class related stuff to LoomPaths
                 final Path modulesInfoClassFile = resolve.resolve("module-info.class");
                 if (Files.exists(modulesInfoClassFile)) {
-                    final JarEntry entry = new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
+                    final JarEntry entry =
+                        new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
                     entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
                     os.putNextEntry(entry);
                     os.write(extendedModuleInfoClass(modulesInfoClassFile));

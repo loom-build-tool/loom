@@ -28,4 +28,5 @@ public abstract class AbstractModuleTask extends AbstractTask implements ModuleB
     public ModuleBuildConfig getModuleConfig() {
         return moduleConfig;
     }
+
 }

@@ -30,6 +30,11 @@ public class GoalTask implements Task, ProductDependenciesAware {
     }
 
     @Override
+    public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+        // TODO
+    }
+
+    @Override
     public void setBuildContext(final BuildContext buildContext) {
         // TODO
     }

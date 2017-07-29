@@ -36,6 +36,10 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     private final Set<String> dependencies;
     private final Set<String> testDependencies;
 
+    public BuildConfigImpl() {
+        this(Set.of(), new BuildSettingsImpl(), Map.of(), Set.of(), Set.of(), Set.of());
+    }
+
     public BuildConfigImpl(final Set<String> plugins,
                     final BuildSettings buildSettings,
                     final Map<String, String> settings,

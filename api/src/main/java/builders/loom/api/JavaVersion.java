@@ -63,13 +63,7 @@ public enum JavaVersion {
     }
 
     public static JavaVersion current() {
-        final String javaSpecVersion = System.getProperty("java.specification.version");
-
-        if (javaSpecVersion == null) {
-            throw new IllegalStateException("Unknown java.specification.version");
-        }
-
-        return ofVersion(javaSpecVersion);
+        return ofVersion(Integer.toString(Runtime.version().major()));
     }
 
 }

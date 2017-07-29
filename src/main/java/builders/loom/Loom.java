@@ -74,6 +74,7 @@ public class Loom {
             }
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
                 .format("BUILD FAILED - see %s for details", LogConfiguration.LOOM_BUILD_LOG)
+                .newline()
                 .reset());
             System.exit(1);
         }
@@ -87,7 +88,8 @@ public class Loom {
             .a(duration.toString()
                 .substring(2)
                 .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase()));
+                .toLowerCase())
+            .newline());
 
         System.exit(0);
     }
@@ -96,7 +98,7 @@ public class Loom {
         final String loomVersion = Version.getVersion();
         AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
             .format("Loom Build Tool v%s (on Java %s)",
-                loomVersion, System.getProperty("java.version"))
+                loomVersion, Runtime.version())
             .reset());
 
         if (!loomVersion.endsWith("GA")) {

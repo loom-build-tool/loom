@@ -17,6 +17,7 @@
 package builders.loom.plugin.eclipse;
 
 import java.io.BufferedOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -56,6 +57,8 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
+import builders.loom.util.Preconditions;
+import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlUtil;
 
@@ -112,6 +115,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         final Path projectXml = module.getPath().resolve(".project");
 
+        // pickup and merge existing .project file or create a new one
         if (Files.notExists(projectXml)) {
             writeDocumentToFile(projectXml, createProjectFile(module));
         } else {
@@ -120,31 +124,71 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
                 writeDocumentToFile(projectXml, projectXmlDoc);
             }
         }
+
+        // always create a new .classpath file
         writeDocumentToFile(module.getPath().resolve(".classpath"), createClasspathFile(module));
-        final Path settingsPath = Files.createDirectories(module.getPath().resolve(".settings"));
-        writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"),
-            createJdtPrefs(module));
+
+        // pickup and merge existing .prefs file or create a new one
+        final Path settingsFile = Files.createDirectories(module.getPath().resolve(".settings"))
+            .resolve("org.eclipse.jdt.core.prefs");
+        if (Files.notExists(settingsFile)) {
+            writePropertiesToFile(settingsFile, createJdtPrefs(module));
+        } else {
+            final Properties props = new Properties();
+            props.load(new FileReader(settingsFile.toFile()));
+            if (mergeJdtPrefs(props, module)) {
+                writePropertiesToFile(settingsFile, props);
+            }
+        }
     }
 
     private Properties createJdtPrefs(final Module module) {
 
-        final Properties prefs = new Properties();
         final String javaLangLevel =
             buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
+
+        final Properties prefs = new Properties();
 
         prefs.setProperty("eclipse.preferences.version", "1");
         prefs.setProperty("org.eclipse.jdt.core.compiler.source", javaLangLevel);
         prefs.setProperty("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
-        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
-        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode", "enabled");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.unusedLocal", "preserve");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.lineNumber", "generate");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.localVariable", "generate");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.sourceFile", "generate");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.problem.assertIdentifier", "error");
-        prefs.setProperty("org.eclipse.jdt.core.compiler.problem.enumIdentifier", "error");
-        
+
+        addJdtPrefDefaults(prefs);
+
         return prefs;
+    }
+
+    private boolean mergeJdtPrefs(final Properties prefs, Module module) {
+
+        Preconditions.checkState(prefs.getProperty("eclipse.preferences.version").equals("1"));
+
+        final String javaLangLevel =
+            buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
+
+        PropertiesMerger merger = new PropertiesMerger(prefs);
+
+        merger.fixup("org.eclipse.jdt.core.compiler.source", javaLangLevel);
+        merger.fixup("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
+        merger.fixup("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
+
+        final boolean changedByDefaults = addJdtPrefDefaults(prefs);
+
+        return merger.isChanged() || changedByDefaults;
+    }
+
+    private boolean addJdtPrefDefaults(Properties prefs) {
+
+        PropertiesMerger merger = new PropertiesMerger(prefs);
+
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode", "enabled");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.unusedLocal", "preserve");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.lineNumber", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.localVariable", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.sourceFile", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.problem.assertIdentifier", "error");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.problem.enumIdentifier", "error");
+
+        return merger.isChanged();
     }
 
     @SuppressWarnings("checkstyle:magicnumber")

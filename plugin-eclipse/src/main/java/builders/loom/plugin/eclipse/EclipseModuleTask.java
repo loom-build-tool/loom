@@ -135,7 +135,15 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         prefs.setProperty("eclipse.preferences.version", "1");
         prefs.setProperty("org.eclipse.jdt.core.compiler.source", javaLangLevel);
         prefs.setProperty("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
-
+        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
+        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode", "enabled");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.unusedLocal", "preserve");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.lineNumber", "generate");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.localVariable", "generate");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.debug.sourceFile", "generate");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.problem.assertIdentifier", "error");
+        prefs.setProperty("org.eclipse.jdt.core.compiler.problem.enumIdentifier", "error");
+        
         return prefs;
     }
 

@@ -16,7 +16,11 @@
 
 package builders.loom.util.xml;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public final class XmlUtil {
@@ -29,6 +33,38 @@ public final class XmlUtil {
             return (Element) nodes.item(0);
         }
         throw new IllegalArgumentException("Expected one element, but got " + nodes.getLength());
+    }
+
+    public static Iterable<Node> iterable(final NodeList nodes) {
+        return new Iterable<Node>() {
+            @Override
+            public Iterator<Node> iterator() {
+
+                return new Iterator<Node>() {
+
+                    int index = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return index < nodes.getLength();
+                    }
+
+                    @Override
+                    public Node next() {
+                        if (hasNext()) {
+                            return nodes.item(index++);
+                        } else {
+                            throw new NoSuchElementException();
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
     }
 
 }

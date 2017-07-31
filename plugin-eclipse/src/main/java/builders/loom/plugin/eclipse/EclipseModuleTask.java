@@ -42,6 +42,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -111,7 +112,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         final Path projectXml = module.getPath().resolve(".project");
 
-        if (!Files.exists(projectXml)) {
+        if (Files.notExists(projectXml)) {
             writeDocumentToFile(projectXml, createProjectFile(module));
         } else {
             final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
@@ -176,13 +177,15 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private boolean mergeProjectBuildSpec(final Document projectXml) {
 
         boolean found = false;
-        final Element buildSpec =
-            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
-        final NodeList buildCommands = projectXml.getElementsByTagName("buildCommand");
 
-        for (int i = 0; i < buildCommands.getLength(); i++) {
+        final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
 
-            final Element item = (Element) buildCommands.item(i);
+        for(final Node itemX : XmlUtil.iterable(projectXml.getElementsByTagName("buildCommand"))) {
+
+            // FIXME
+            Element item = (Element ) itemX;
+
+
             found |= XmlUtil.getOnlyElement(
                 item.getElementsByTagName("name")).getTextContent()
                 .equals("org.eclipse.jdt.core.javabuilder");
@@ -204,14 +207,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element naturesNode =
-            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
-        final NodeList naturesList = projectXml.getElementsByTagName("nature");
+        final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
 
-        for (int i = 0; i < naturesList.getLength(); i++) {
-
-            final Element item = (Element) naturesList.item(i);
-
+        for (final Node item : XmlUtil.iterable(projectXml.getElementsByTagName("nature"))) {
+            
             found |= item.getTextContent().equals("org.eclipse.jdt.core.javanature");
 
         }

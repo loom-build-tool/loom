@@ -23,35 +23,36 @@ import java.util.Objects;
 import java.util.Set;
 
 import builders.loom.api.BuildSettings;
-import builders.loom.api.Project;
+import builders.loom.api.ModuleBuildConfig;
 
-class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
+public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final Project project;
     private final Set<String> plugins;
     private final BuildSettings buildSettings;
     private final Map<String, String> settings;
+    private final Set<String> moduleDependencies;
     private final Set<String> dependencies;
     private final Set<String> testDependencies;
 
-    BuildConfigImpl(final ProjectImpl project, final Set<String> plugins,
+    public BuildConfigImpl() {
+        this(Set.of(), new BuildSettingsImpl(), Map.of(), Set.of(), Set.of(), Set.of());
+    }
+
+    public BuildConfigImpl(final Set<String> plugins,
                     final BuildSettings buildSettings,
                     final Map<String, String> settings,
-                    final Set<String> dependencies, final Set<String> testDependencies) {
-        this.project = Objects.requireNonNull(project);
+                    final Set<String> moduleDependencies, final Set<String> dependencies,
+                    final Set<String> testDependencies) {
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
+        this.moduleDependencies =
+            Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
         this.dependencies = Collections.unmodifiableSet(Objects.requireNonNull(dependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));
-    }
-
-    @Override
-    public Project getProject() {
-        return project;
     }
 
     @Override
@@ -70,6 +71,11 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
     }
 
     @Override
+    public Set<String> getModuleDependencies() {
+        return moduleDependencies;
+    }
+
+    @Override
     public Set<String> getDependencies() {
         return dependencies;
     }
@@ -82,9 +88,10 @@ class BuildConfigImpl implements BuildConfigWithSettings, Serializable {
     @Override
     public String toString() {
         return "BuildConfigImpl{"
-            + "project=" + project
-            + ", plugins=" + plugins
+            + "plugins=" + plugins
             + ", buildSettings=" + buildSettings
+            + ", settings=" + settings
+            + ", moduleDependencies=" + moduleDependencies
             + ", dependencies=" + dependencies
             + ", testDependencies=" + testDependencies
             + '}';

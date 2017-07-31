@@ -25,8 +25,8 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import builders.loom.plugin.ConfiguredTask;
-import builders.loom.plugin.TaskRegistryLookup;
+import builders.loom.plugin.GoalInfo;
+import builders.loom.plugin.TaskInfo;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
 public final class GraphvizOutput {
@@ -34,13 +34,13 @@ public final class GraphvizOutput {
     private GraphvizOutput() {
     }
 
-    public static void generateDot(final TaskRegistryLookup taskRegistryLookup) {
+    public static void generateDot(final ModuleRunner moduleRunner) {
         try {
-            final Path reportDir = Files.createDirectories(Paths.get("loombuild", "reports"));
+            final Path reportDir = Files.createDirectories(Paths.get("build", "reports"));
             final Path dotFile = reportDir.resolve(Paths.get("loom-products.dot"));
 
             try (PrintWriter pw = new PrintWriter(dotFile.toFile(), "UTF-8")) {
-                writeTasks(taskRegistryLookup, pw);
+                writeTasks(moduleRunner, pw);
             }
 
             System.out.println("Products overview written to " + dotFile);
@@ -51,7 +51,7 @@ public final class GraphvizOutput {
         }
     }
 
-    private static void writeTasks(final TaskRegistryLookup taskRegistryLookup,
+    private static void writeTasks(final ModuleRunner moduleRunner,
                                    final PrintWriter pw) {
 
         pw.println("digraph dependencies {");
@@ -59,11 +59,21 @@ public final class GraphvizOutput {
         pw.println("    graph [splines=spline, nodesep=1];");
         pw.println("    node [shape=box];");
 
-        for (final ConfiguredTask task : taskRegistryLookup.configuredTasks()) {
+        for (final TaskInfo task : moduleRunner.describeTasks()) {
             writeLabel(pw, task);
         }
 
-        for (final ConfiguredTask task : taskRegistryLookup.configuredTasks()) {
+        for (final GoalInfo task : moduleRunner.describeGoals()) {
+            writeLabel(pw, task);
+        }
+
+        for (final TaskInfo task : moduleRunner.describeTasks()) {
+            if (!task.getUsedProducts().isEmpty()) {
+                writeEdge(pw, task);
+            }
+        }
+
+        for (final GoalInfo task : moduleRunner.describeGoals()) {
             if (!task.getUsedProducts().isEmpty()) {
                 writeEdge(pw, task);
             }
@@ -72,34 +82,34 @@ public final class GraphvizOutput {
         pw.println("}");
     }
 
-    private static void writeLabel(final PrintWriter pw, final ConfiguredTask task) {
-        pw.print("    ");
-        pw.print(task.getProvidedProduct());
-        final String label;
-        if (task.isGoal()) {
-            label = task.getProvidedProduct();
-        } else {
-            label = task.getProvidedProduct() + "\\n[" + task.getPluginName() + " Plugin]";
-        }
-        pw.print(" [label=\"" + label + "\"");
+    private static void writeLabel(final PrintWriter pw, final GoalInfo task) {
+        final String label = task.getName();
+        pw.printf("    %s [label=\"%s\", color=gold2, shape=tripleoctagon];%n",
+            task.getName(), label);
+    }
 
-        if (task.isGoal()) {
-            pw.print(", color=gold2, shape=tripleoctagon");
-        } else if (task.isIntermediateProduct()) {
+    private static void writeLabel(final PrintWriter pw, final TaskInfo task) {
+        pw.printf("    %s [label=\"%s\\n[%s Plugin]\"",
+            task.getProvidedProduct(), task.getProvidedProduct(), task.getPluginName());
+
+        if (task.isIntermediateProduct()) {
             pw.print(", color=grey, fontcolor=grey");
         }
 
-        pw.print("]");
-
-        pw.println(";");
+        pw.println("];");
     }
 
-    private static void writeEdge(final PrintWriter pw, final ConfiguredTask task) {
-        pw.print("    ");
-        pw.print(task.getProvidedProduct());
-        pw.print(" -> ");
-        pw.print(constructValue(task.getUsedProducts()));
-        pw.println(";");
+    private static void writeEdge(final PrintWriter pw, final TaskInfo task) {
+        writeEdge(pw, task.getProvidedProduct(), constructValue(task.getUsedProducts()));
+    }
+
+    private static void writeEdge(final PrintWriter pw, final String providedProduct,
+                                  final String usedProducts) {
+        pw.printf("    %s -> %s;%n", providedProduct, usedProducts);
+    }
+
+    private static void writeEdge(final PrintWriter pw, final GoalInfo task) {
+        writeEdge(pw, task.getName(), constructValue(task.getUsedProducts()));
     }
 
     private static String constructValue(final Collection<String> dependentNodes) {

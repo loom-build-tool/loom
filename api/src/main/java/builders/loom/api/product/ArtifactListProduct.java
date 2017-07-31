@@ -25,14 +25,21 @@ public final class ArtifactListProduct extends AbstractProduct {
     private final List<ArtifactProduct> artifacts;
 
     public ArtifactListProduct(final List<ArtifactProduct> artifacts) {
-        if (artifacts == null || artifacts.isEmpty()) {
-            throw new IllegalArgumentException("artifacts must not be null or empty");
+        if (artifacts == null) {
+            throw new IllegalArgumentException("artifacts must not be null");
         }
         this.artifacts = Collections.unmodifiableList(new ArrayList<>(artifacts));
     }
 
     public List<ArtifactProduct> getArtifacts() {
         return artifacts;
+    }
+
+    @Override
+    public String toString() {
+        return "ArtifactListProduct{"
+            + "artifacts=" + artifacts
+            + "}";
     }
 
 }

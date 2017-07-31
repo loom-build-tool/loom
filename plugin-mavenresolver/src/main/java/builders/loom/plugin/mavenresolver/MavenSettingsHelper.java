@@ -36,7 +36,7 @@ import builders.loom.util.StringReplaceUtil;
 
 class MavenSettingsHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MavenInstallTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MavenInstallModuleTask.class);
 
     private final DocumentBuilder documentBuilder;
 

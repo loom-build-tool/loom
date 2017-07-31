@@ -20,7 +20,7 @@ import builders.loom.api.PluginSettings;
 
 public class CheckstylePluginSettings implements PluginSettings {
 
-    private String configLocation;
+    private String configLocation = "config/checkstyle/checkstyle.xml";
 
     public String getConfigLocation() {
         return configLocation;

@@ -23,10 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import javax.tools.ToolProvider;
 
@@ -39,20 +38,15 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.config.BuildConfigWithSettings;
-import builders.loom.config.ConfigReader;
-import builders.loom.plugin.ConfiguredTask;
-import builders.loom.util.Stopwatch;
-import builders.loom.util.Watch;
-
 @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:hideutilityclassconstructor",
     "checkstyle:regexpmultiline", "checkstyle:illegalcatch"})
 public class Loom {
 
-    private static final Path BUILD_FILE = Paths.get("build.yml");
     private static final Path LOCK_FILE = Paths.get(".loom.lock");
 
     public static void main(final String[] args) {
+        final long startTime = System.nanoTime();
+
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
                 .a("Interrupt received - stopping").reset()));
@@ -80,25 +74,41 @@ public class Loom {
             }
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
                 .format("BUILD FAILED - see %s for details", LogConfiguration.LOOM_BUILD_LOG)
+                .newline()
                 .reset());
             System.exit(1);
         }
+
+        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
+            .truncatedTo(ChronoUnit.MILLIS);
+
+        AnsiConsole.out().println(Ansi.ansi().reset().fgBrightGreen()
+            .a("BUILD SUCCESSFUL").reset()
+            .a(" in ")
+            .a(duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase())
+            .newline());
 
         System.exit(0);
     }
 
     private static void init() {
+        final String loomVersion = Version.getVersion();
         AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
             .format("Loom Build Tool v%s (on Java %s)",
-                Version.getVersion(), System.getProperty("java.version"))
+                loomVersion, Runtime.version())
             .reset());
+
+        if (!loomVersion.endsWith("GA")) {
+            AnsiConsole.out().println(Ansi.ansi().reset().fgBrightYellow()
+                .a("You're using an unstable version of Loom -- use it with caution!")
+                .reset());
+        }
 
         if (ToolProvider.getSystemJavaCompiler() == null) {
             throw new IllegalStateException("JDK required (running inside of JRE)");
-        }
-
-        if (Files.notExists(BUILD_FILE)) {
-            throw new IllegalStateException("No build.yml found");
         }
     }
 
@@ -107,6 +117,14 @@ public class Loom {
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
+            .addOption(
+                Option.builder("a")
+                    .longOpt("artifact-version")
+                    .numberOfArgs(1)
+                    .optionalArg(false)
+                    .argName("version")
+                    .desc("Defines the version to use for artifact creation")
+                    .build())
             .addOption(
                 Option.builder("p")
                     .longOpt("products")
@@ -171,8 +189,6 @@ public class Loom {
     }
 
     public static void run(final CommandLine cmd) throws Exception {
-        final long startTime = System.nanoTime();
-
         final LoomProcessor loomProcessor = new LoomProcessor();
 
         if (cmd.hasOption("clean")) {
@@ -188,7 +204,10 @@ public class Loom {
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(!noCacheMode);
+            new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"),
+                loomProcessor.isModuleBuild());
+
+        printRuntimeConfiguration(runtimeConfiguration);
 
         if (noCacheMode) {
             AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
@@ -200,16 +219,7 @@ public class Loom {
         loomProcessor.logSystemEnvironment();
         loomProcessor.logMemoryUsage();
 
-        final BuildConfigWithSettings buildConfig = readConfig(runtimeConfiguration);
-
-        AnsiConsole.out.println(Ansi.ansi()
-            .render("Initialized configuration of @|bold %s:%s|@ version @|bold %s|@",
-                buildConfig.getProject().getGroupId(),
-                buildConfig.getProject().getArtifactId(),
-                buildConfig.getProject().getVersion())
-            .reset());
-
-        loomProcessor.init(buildConfig, runtimeConfiguration);
+        loomProcessor.init(runtimeConfiguration);
 
         if (cmd.hasOption("products")) {
             final String format = cmd.getOptionValue("products");
@@ -219,40 +229,39 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             ProgressMonitor.start();
 
-            final Collection<ConfiguredTask> resolvedTasks;
+            final Optional<ExecutionReport> executionReport;
             try {
-                resolvedTasks = loomProcessor.execute(cmd.getArgList());
+                executionReport = loomProcessor.execute(cmd.getArgList());
             } finally {
                 ProgressMonitor.stop();
             }
 
-            loomProcessor.printProductInfos(resolvedTasks);
-
-            printExecutionStatistics();
-
-            final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
-
-            AnsiConsole.out().print(Ansi.ansi().reset().fgBrightGreen()
-                .a("BUILD SUCCESSFUL").reset()
-                .format(" in %.2fs%n", duration));
+            if (executionReport.isPresent()) {
+                loomProcessor.printProductInfos(executionReport.get().getResolvedTasks());
+                executionReport.get().print();
+            }
         }
 
         loomProcessor.logMemoryUsage();
     }
 
-    private static void configureLogging() {
-        Stopwatch.startProcess("Configure logging");
-        LogConfiguration.configureLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
-        Stopwatch.stopProcess();
+    private static void printRuntimeConfiguration(final RuntimeConfigurationImpl rtConfig) {
+        final Ansi a = Ansi.ansi()
+            .a("Initialized runtime configuration");
+
+        if (rtConfig.getVersion() != null) {
+            a.a(' ')
+                .bold()
+                .a(rtConfig.getVersion())
+                .boldOff();
+        }
+
+        AnsiConsole.out.println(a);
     }
 
-    private static BuildConfigWithSettings readConfig(final RuntimeConfigurationImpl
-                                                          runtimeConfiguration) throws IOException {
-        Stopwatch.startProcess("Read configuration");
-        final BuildConfigWithSettings buildConfig = ConfigReader.readConfig(runtimeConfiguration);
-        Stopwatch.stopProcess();
-        return buildConfig;
+    private static void configureLogging() {
+        LogConfiguration.configureLogger();
+        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
     }
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {
@@ -263,46 +272,6 @@ public class Loom {
         } else {
             throw new IllegalStateException("Unknown format: " + format);
         }
-    }
-
-    private static void printExecutionStatistics() {
-        System.out.println();
-        System.out.println("Execution statistics (ordered by time consumption):");
-        System.out.println();
-
-        final int longestKey = Stopwatch.getWatches().keySet().stream()
-            .mapToInt(String::length)
-            .max()
-            .orElse(10);
-
-        final Stream<Map.Entry<String, Watch>> sorted = Stopwatch.getWatches().entrySet().stream()
-            .sorted((o1, o2) ->
-                Long.compare(o2.getValue().getDuration(), o1.getValue().getDuration()));
-
-        final long totalDuration = Stopwatch.getTotalDuration();
-
-        sorted.forEach(stringWatchEntry -> {
-            final String name = stringWatchEntry.getKey();
-            final long watchDuration = stringWatchEntry.getValue().getDuration();
-            printDuration(longestKey, name, totalDuration, watchDuration);
-        });
-
-        System.out.println();
-    }
-
-    private static void printDuration(final int longestKey, final String name,
-                                      final long totalDuration, final long watchDuration) {
-        final double pct = 100D / totalDuration * watchDuration;
-        final String space = String.join("",
-            Collections.nCopies(longestKey - name.length(), " "));
-
-        final double minDuration = 0.1;
-        final String durationBar = pct < minDuration ? "." : String.join("",
-            Collections.nCopies((int) Math.ceil(pct / 2), "#"));
-
-        final double durationSecs = watchDuration / 1_000_000_000D;
-        System.out.printf("%s %s: %5.2fs (%4.1f%%) %s%n",
-            name, space, durationSecs, pct, durationBar);
     }
 
 }

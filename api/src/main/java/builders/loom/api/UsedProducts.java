@@ -17,10 +17,10 @@
 package builders.loom.api;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,21 +34,23 @@ public class UsedProducts {
 
     private static final Logger LOG = LoggerFactory.getLogger(UsedProducts.class);
 
-    private final ProductRepository productRepository;
+    private final String selfModuleName;
+    private final Set<ProductPromise> productPromises;
+    private final Set<ProductPromise> actuallyWaitedForProducts = new CopyOnWriteArraySet<>();
 
-    private final Set<String> allowedProductIds;
-
-    public UsedProducts(
-        final Set<String> allowedProductIds,
-        final ProductRepository productRepository) {
-        Objects.requireNonNull(allowedProductIds);
-        allowedProductIds.forEach(ProvidedProduct::validateProductIdFormat);
-        Objects.requireNonNull(productRepository);
-        this.allowedProductIds = Collections.unmodifiableSet(new HashSet<>(allowedProductIds));
-        this.productRepository = productRepository;
+    public UsedProducts(final String selfModuleName, final Set<ProductPromise> productPromises) {
+        this.selfModuleName = selfModuleName;
+        this.productPromises = productPromises;
     }
 
     public <T extends Product> Optional<T> readProduct(final String productId, final Class<T> clazz)
+        throws InterruptedException {
+
+        return readProduct(selfModuleName, productId, clazz);
+    }
+
+    public <T extends Product> Optional<T> readProduct(
+        final String moduleName, final String productId, final Class<T> clazz)
         throws InterruptedException {
 
         Objects.requireNonNull(productId);
@@ -56,14 +58,7 @@ public class UsedProducts {
 
         final long start = System.nanoTime();
 
-        final ProductPromise productPromise = productRepository.lookup(productId);
-
-        if (!allowedProductIds.contains(productId)) {
-            throw new IllegalAccessError(
-                "Access to productId <" + productId + "> not configured for task");
-        }
-
-        final Optional<Product> value = productPromise.getAndWaitForProduct();
+        final Optional<Product> value = getAndWaitProduct(moduleName, productId);
 
         final long timeElapsed = (System.nanoTime() - start) / 1_000_000;
         LOG.debug("Blocked for {}ms waiting for product <{}>", timeElapsed, productId);
@@ -72,19 +67,33 @@ public class UsedProducts {
     }
 
     public void waitForProduct(final String productId) throws InterruptedException {
-
-        final ProductPromise productPromise = productRepository.lookup(productId);
-
-        if (!allowedProductIds.contains(productId)) {
-            throw new IllegalAccessError(
-                "Access to productId <" + productId + "> not configured for task");
-        }
-
-        productPromise.getAndWaitForProduct();
+        getAndWaitProduct(selfModuleName, productId);
     }
 
-    public Set<String> getAllowedProductIds() {
-        return allowedProductIds;
+    public Optional<Product> getAndWaitProduct(final String moduleName, final String productId)
+        throws InterruptedException {
+
+        final ProductPromise productPromise = lookupProduct(moduleName, productId);
+        actuallyWaitedForProducts.add(productPromise);
+        return productPromise.getAndWaitForProduct();
+    }
+
+    private ProductPromise lookupProduct(final String moduleName, final String productId) {
+        return productPromises.stream()
+            .filter(pp -> pp.getModuleName().equals(moduleName)
+                && pp.getProductId().equals(productId))
+            .findFirst().orElseThrow(()
+                -> new IllegalStateException(
+                    String.format("No access to product <%s> of module <%s>",
+                        productId, moduleName)));
+
+    }
+
+    /**
+     * Value is only useful after tasks have been running.
+     */
+    public Set<ProductPromise> getActuallyUsedProducts() {
+        return Collections.unmodifiableSet(actuallyWaitedForProducts);
     }
 
 }

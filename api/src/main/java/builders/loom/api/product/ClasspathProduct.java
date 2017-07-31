@@ -32,7 +32,7 @@ public final class ClasspathProduct extends AbstractProduct {
     private final List<Path> entries;
 
     public ClasspathProduct(final List<Path> entries) {
-        if (entries == null || entries.isEmpty()) {
+        if (entries == null) {
             throw new IllegalArgumentException("entries must not be null");
         }
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
@@ -66,7 +66,9 @@ public final class ClasspathProduct extends AbstractProduct {
 
     @Override
     public String toString() {
-        return entries.toString();
+        return "ClasspathProduct{"
+            + "entries=" + entries
+            + '}';
     }
 
 }

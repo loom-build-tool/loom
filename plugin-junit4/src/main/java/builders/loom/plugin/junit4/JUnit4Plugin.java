@@ -24,7 +24,7 @@ public class JUnit4Plugin extends AbstractPlugin<PluginSettings> {
     @Override
     public void configure() {
         task("runTest")
-            .impl(JUnit4TestTask::new)
+            .impl(JUnit4TestModuleTask::new)
             .provides("test")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")

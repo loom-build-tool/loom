@@ -100,6 +100,11 @@ public final class FileUtil {
                                          final BasicFileAttributes attrs)
             throws IOException {
 
+            // module-info.class was copied separately
+            if (file.getFileName().toString().equals("module-info.class")) {
+                return FileVisitResult.CONTINUE;
+            }
+
             final JarEntry entry = new JarEntry(sourceDir.relativize(file).toString());
             entry.setTime(attrs.lastModifiedTime().toMillis());
             os.putNextEntry(entry);

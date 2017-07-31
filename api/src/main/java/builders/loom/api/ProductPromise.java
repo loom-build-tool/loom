@@ -21,8 +21,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,22 +31,45 @@ public final class ProductPromise {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
 
-    private static final int FUTURE_WAIT_THRESHOLD = 10;
+    private final String moduleName;
+    private final String productId;
 
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-    private final String productId;
+    private long startTime;
+    private long completedAt;
+    private TaskResult taskResult;
 
-    public ProductPromise(final String productId) {
+    public ProductPromise(final String moduleName, final String productId) {
+        this.moduleName = Objects.requireNonNull(moduleName);
         this.productId = Objects.requireNonNull(productId);
     }
 
-    public void complete(final Product withValue) {
-        final boolean completed = promise.complete(Optional.ofNullable(withValue));
+    public void setStartTime(final long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void complete(final TaskResult result) {
+        Objects.requireNonNull(result, "taskResult required");
+        this.taskResult = result;
+        final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
         }
+
+
+        final long now = System.nanoTime();
+
+        if (now < startTime) {
+            throw new IllegalStateException();
+        }
+
+        completedAt = now;
+    }
+
+    public String getModuleName() {
+        return moduleName;
     }
 
     public String getProductId() {
@@ -59,30 +80,37 @@ public final class ProductPromise {
         return waitAndGet(promise);
     }
 
+    public Optional<Product> getWithoutWait() {
+        return promise.getNow(Optional.empty());
+    }
+
     private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
         throws InterruptedException {
 
         LOG.debug("Requesting product <{}> ...", productId);
 
         try {
-            final Optional<Product> product = future.get(FUTURE_WAIT_THRESHOLD, TimeUnit.SECONDS);
-
-            LOG.debug("Return product <{}> with value: {}", productId, product);
-
+            final Optional<Product> product = future.get();
+            LOG.debug("Return product <{}> with value: {}", productId, product.orElse(null));
             return product;
         } catch (final ExecutionException e) {
             throw new IllegalStateException(e);
-        } catch (final TimeoutException e) {
-
-            LOG.warn("Blocked for {} seconds waiting for product <{}> - continue",
-                FUTURE_WAIT_THRESHOLD, productId);
-
-            try {
-                return future.get();
-            } catch (final ExecutionException e1) {
-                throw new IllegalStateException(e1);
-            }
         }
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public long getCompletedAt() {
+        return completedAt;
+    }
+
+    public TaskStatus getTaskStatus() {
+        if (taskResult == null) {
+            throw new IllegalStateException("taskResult is null");
+        }
+        return taskResult.getStatus();
     }
 
 }

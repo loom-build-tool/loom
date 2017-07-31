@@ -30,4 +30,11 @@ public final class ProcessedResourceProduct extends AbstractProduct {
         return resourcesDir;
     }
 
+    @Override
+    public String toString() {
+        return "ProcessedResourceProduct{"
+            + "resourcesDir=" + resourcesDir
+            + '}';
+    }
+
 }

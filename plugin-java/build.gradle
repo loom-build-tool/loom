@@ -5,6 +5,10 @@ dependencies {
     compileOnly project(':util')
 }
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs = [ '--add-exports', 'java.base/jdk.internal.module=ALL-UNNAMED' ]
+}
+
 jar {
     manifest {
         attributes(

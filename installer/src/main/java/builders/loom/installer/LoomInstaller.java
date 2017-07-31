@@ -206,7 +206,7 @@ public class LoomInstaller {
         return Files.createDirectories(baseDir.resolve("library"));
     }
 
-    private static Path determineBaseDir() throws IOException {
+    private static Path determineBaseDir() {
         final String loomUserHome = System.getenv("LOOM_USER_HOME");
         if (loomUserHome != null) {
             return Paths.get(loomUserHome);
@@ -311,9 +311,9 @@ public class LoomInstaller {
             StandardCopyOption.REPLACE_EXISTING);
         chmod(loomScript, "rwxr-xr-x");
 
-        if (Files.notExists(projectRoot.resolve("build.yml"))) {
-            System.out.println("Create initial build.yml");
-            Files.copy(scriptsRoot.resolve("build.yml"), projectRoot.resolve("build.yml"));
+        if (Files.notExists(projectRoot.resolve("module.yml"))) {
+            System.out.println("Create initial module.yml");
+            Files.copy(scriptsRoot.resolve("module.yml"), projectRoot.resolve("module.yml"));
         }
     }
 

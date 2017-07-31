@@ -25,17 +25,27 @@ import builders.loom.api.service.ServiceLocator;
 public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
 
-    private ProvidedProduct providedProduct;
+    private RuntimeConfiguration runtimeConfiguration;
+    private BuildContext buildContext;
     private UsedProducts usedProducts;
     private ServiceLocator serviceLocator;
 
-    @Override
-    public void setProvidedProduct(final ProvidedProduct providedProduct) {
-        this.providedProduct = providedProduct;
+    public RuntimeConfiguration getRuntimeConfiguration() {
+        return runtimeConfiguration;
     }
 
-    public ProvidedProduct getProvidedProduct() {
-        return providedProduct;
+    @Override
+    public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+        this.runtimeConfiguration = runtimeConfiguration;
+    }
+
+    public BuildContext getBuildContext() {
+        return buildContext;
+    }
+
+    @Override
+    public void setBuildContext(final BuildContext buildContext) {
+        this.buildContext = buildContext;
     }
 
     @Override
@@ -51,16 +61,36 @@ public abstract class AbstractTask implements Task,
         throws InterruptedException {
 
         return useProduct(productId, productClass)
-            .orElseThrow(() -> new IllegalStateException("Requested product <"
-                + productId + "> is not present"));
+            .orElseThrow(() -> new IllegalStateException(
+                String.format("Requested product <%s> is not present", productId)));
+    }
+
+    public <P extends Product> P requireProduct(
+        final String moduleName, final String productId, final Class<P> productClass)
+        throws InterruptedException {
+
+        return useProduct(moduleName, productId, productClass)
+            .orElseThrow(() -> new IllegalStateException(
+                String.format(
+                    "Requested product <%s> of module <%s> is not present",
+                    productId, moduleName)));
     }
 
     public <P extends Product> Optional<P> useProduct(final String productId,
-                                                      final Class<P> productClass)
+                                                       final Class<P> productClass)
         throws InterruptedException {
         Objects.requireNonNull(productId, "productId required");
         Objects.requireNonNull(productClass, "productClass required");
         return usedProducts.readProduct(productId, productClass);
+    }
+
+    public <P extends Product> Optional<P> useProduct(
+        final String moduleName, final String productId, final Class<P> productClass)
+        throws InterruptedException {
+        Objects.requireNonNull(moduleName, "moduleName required");
+        Objects.requireNonNull(productId, "productId required");
+        Objects.requireNonNull(productClass, "productClass required");
+        return usedProducts.readProduct(moduleName, productId, productClass);
     }
 
     @Override

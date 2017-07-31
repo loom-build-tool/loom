@@ -25,15 +25,15 @@ import java.util.stream.Collectors;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.plugin.ConfiguredTask;
-import builders.loom.plugin.TaskRegistryLookup;
+import builders.loom.plugin.GoalInfo;
+import builders.loom.plugin.TaskInfo;
 
 public final class TextOutput {
 
     private TextOutput() {
     }
 
-    public static void generate(final TaskRegistryLookup taskRegistry) {
+    public static void generate(final ModuleRunner moduleRunner) {
         AnsiConsole.out().println(
             Ansi.ansi()
                 .newline()
@@ -42,17 +42,14 @@ public final class TextOutput {
                 .reset()
                 .newline());
 
-        final Collection<ConfiguredTask> configuredTasks = taskRegistry.configuredTasks();
-
-        final List<String> pluginNames = configuredTasks.stream()
-            .filter(ct -> !ct.isGoal())
-            .map(ConfiguredTask::getPluginName)
-            .distinct()
+        final List<String> pluginNames = moduleRunner.getPluginNames().stream()
             .sorted()
             .collect(Collectors.toList());
 
         for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
+            final Collection<TaskInfo> configuredTasks =
+                moduleRunner.describePluginTasks(pluginName);
 
             AnsiConsole.out().println(
                 Ansi.ansi()
@@ -63,13 +60,12 @@ public final class TextOutput {
                     .a(":")
             );
 
-            final List<ConfiguredTask> productTasks = configuredTasks.stream()
-                .filter(ct -> !ct.isGoal())
+            final List<TaskInfo> productTasks = configuredTasks.stream()
                 .filter(ct -> ct.getPluginName().equals(pluginName))
-                .sorted(Comparator.comparing(ConfiguredTask::getProvidedProduct))
+                .sorted(Comparator.comparing(TaskInfo::getProvidedProduct))
                 .collect(Collectors.toList());
 
-            for (final ConfiguredTask task : productTasks) {
+            for (final TaskInfo task : productTasks) {
                 final Ansi ansi = Ansi.ansi();
 
                 if (task.isIntermediateProduct()) {
@@ -93,10 +89,8 @@ public final class TextOutput {
             }
         }
 
-        final List<ConfiguredTask> goals = configuredTasks.stream()
-            .filter(ConfiguredTask::isGoal)
-            .distinct()
-            .sorted(Comparator.comparing(ConfiguredTask::getProvidedProduct))
+        final List<GoalInfo> goals = moduleRunner.describeGoals().stream()
+            .sorted(Comparator.comparing(GoalInfo::getName))
             .collect(Collectors.toList());
 
         if (!goals.isEmpty()) {
@@ -109,11 +103,11 @@ public final class TextOutput {
                     .reset()
                     .newline());
 
-            for (final ConfiguredTask goal : goals) {
+            for (final GoalInfo goal : goals) {
                 AnsiConsole.out().println(
                     Ansi.ansi()
                         .fgYellow()
-                        .a(goal.getProvidedProduct())
+                        .a(goal.getName())
                         .reset()
                         .a(" - ")
                         .fgCyan()

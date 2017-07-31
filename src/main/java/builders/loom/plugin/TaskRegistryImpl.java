@@ -28,25 +28,37 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import builders.loom.api.BuildContext;
+import builders.loom.api.GoalTask;
 import builders.loom.api.Task;
-import builders.loom.api.WaitForAllProductsTask;
 import builders.loom.util.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 
+    private final BuildContext buildContext;
     private final Map<String, ConfiguredTask> taskMap = new ConcurrentHashMap<>();
 
+    public TaskRegistryImpl(final BuildContext buildContext) {
+        this.buildContext = buildContext;
+    }
+
+    @SuppressWarnings("checkstyle:parameternumber")
     @Override
     public void registerTask(final String pluginName, final String taskName,
                              final Supplier<Task> taskSupplier, final String providedProduct,
                              final boolean intermediateProduct, final Set<String> usedProducts,
-                             final String description) {
+                             final Set<String> importedProducts,
+                             final Set<String> importedAllProducts, final String description) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");
         Objects.requireNonNull(taskSupplier, "taskSupplier missing on task <" + taskName + ">");
         Objects.requireNonNull(providedProduct,
             "providedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(usedProducts, "usedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(importedProducts,
+            "importedProducts missing on task <" + taskName + ">");
+        Objects.requireNonNull(importedAllProducts,
+            "importedProducts missing on task <" + taskName + ">");
         Objects.requireNonNull(description, "description missing on task <" + taskName + ">");
 
         if (usedProducts.contains(null)) {
@@ -54,9 +66,20 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
                 + taskName + ">");
         }
 
+        if (importedProducts.contains(null)) {
+            throw new IllegalArgumentException("importedProducts contains null on task <"
+                + taskName + ">");
+        }
+
+        if (importedAllProducts.contains(null)) {
+            throw new IllegalArgumentException("importedAllProducts contains null on task <"
+                + taskName + ">");
+        }
+
         final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
-        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(taskName, pluginName, taskSupplier,
-            providedProduct, usedProducts, description, type)) != null) {
+        if (taskMap.putIfAbsent(taskName, new ConfiguredTask(buildContext, taskName, pluginName,
+            taskSupplier, providedProduct, usedProducts, importedProducts, importedAllProducts,
+            description, type)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
         }
@@ -78,8 +101,11 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final BiFunction<String, ConfiguredTask, ConfiguredTask> fn = (name, configuredTask) ->
             configuredTask != null
                 ? configuredTask.addUsedProducts(pluginName, usedProducts)
-                : new ConfiguredTask(name, pluginName, WaitForAllProductsTask::new, goalName,
-                usedProducts, null, TaskType.GOAL);
+                : new ConfiguredTask(
+                    buildContext, name, pluginName, () -> new GoalTask(usedProducts),
+                goalName, usedProducts,
+                Collections.emptySet(), Collections.emptySet(), null,
+                TaskType.GOAL);
 
         taskMap.compute(goalName, fn);
     }

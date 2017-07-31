@@ -33,7 +33,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private String pluginName;
     private TaskRegistry taskRegistry;
     private ServiceLocatorRegistration serviceLocator;
-    private BuildConfig buildConfig;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
 
@@ -63,15 +62,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     @Override
     public void setServiceLocator(final ServiceLocatorRegistration serviceLocator) {
         this.serviceLocator = serviceLocator;
-    }
-
-    @Override
-    public void setBuildConfig(final BuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
-    }
-
-    public BuildConfig getBuildConfig() {
-        return buildConfig;
     }
 
     @Override
@@ -111,6 +101,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private String providedProduct;
         private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
+        private Set<String> importedProducts = Collections.emptySet();
+        private Set<String> importedAllProducts = Collections.emptySet();
         private String description;
 
         public TaskBuilder(final String taskName) {
@@ -137,6 +129,16 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
+        public TaskBuilder importFromModules(final String... products) {
+            importedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return this;
+        }
+
+        public TaskBuilder importFromAllModules(final String... products) {
+            importedAllProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return this;
+        }
+
         public TaskBuilder desc(final String taskDescription) {
             this.description = taskDescription;
             return this;
@@ -144,7 +146,8 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, description);
+                intermediateProduct, usedProducts, importedProducts,
+                importedAllProducts, description);
         }
 
     }

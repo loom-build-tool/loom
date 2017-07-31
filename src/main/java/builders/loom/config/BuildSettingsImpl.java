@@ -16,15 +16,24 @@
 
 package builders.loom.config;
 
+import java.util.Objects;
+
 import builders.loom.api.BuildSettings;
 import builders.loom.api.JavaVersion;
 
-class BuildSettingsImpl implements BuildSettings {
+public class BuildSettingsImpl implements BuildSettings {
+
+    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
 
     private final JavaVersion javaPlatformVersion;
 
-    BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
-        this.javaPlatformVersion = javaPlatformVersion;
+    public BuildSettingsImpl() {
+        this(DEFAULT_JAVA_PLATFORM_VERSION);
+    }
+
+    public BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
+        this.javaPlatformVersion = Objects.requireNonNull(javaPlatformVersion,
+            "javaPlatformVersion required");
     }
 
     @Override

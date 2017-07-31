@@ -35,10 +35,10 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public void createProduct(final String productId) {
+    public void createProduct(final String moduleName, final String productId) {
 
         final ProductPromise oldValue =
-            products.putIfAbsent(productId, new ProductPromise(productId));
+            products.putIfAbsent(productId, new ProductPromise(moduleName, productId));
 
         if (oldValue != null) {
             throw new IllegalStateException(

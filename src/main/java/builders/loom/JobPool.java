@@ -102,11 +102,12 @@ public class JobPool {
 
     public void submitAll(final Collection<Job> jobs) {
         Objects.requireNonNull(jobs, "jobs must not be null");
-        for (final Job job : jobs) {
+
+        jobs.forEach(job -> {
             if (!executor.isShutdown()) {
                 submitJob(job);
             }
-        }
+        });
     }
 
     private final class MonitorTask extends TimerTask {

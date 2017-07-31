@@ -48,4 +48,12 @@ public final class AssemblyProduct extends AbstractProduct {
         return Optional.of(outputInfo + ": " + LoomPaths.relativize(assemblyFile));
     }
 
+    @Override
+    public String toString() {
+        return "AssemblyProduct{"
+            + "assemblyFile=" + assemblyFile
+            + ", outputInfo='" + outputInfo + '\''
+            + '}';
+    }
+
 }

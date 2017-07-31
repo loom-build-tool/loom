@@ -21,28 +21,42 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import builders.loom.api.BuildContext;
 import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
+    private final BuildContext buildContext;
     private final String name;
     private final Set<String> pluginNames;
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
     private final Set<String> usedProducts;
+    private final Set<String> importedProducts;
+    private final Set<String> importedAllProducts;
     private final String description;
     private final TaskType type;
 
-    ConfiguredTask(final String name, final String pluginName, final Supplier<Task> taskSupplier,
-                   final String providedProduct, final Set<String> usedProducts,
-                   final String description, final TaskType type) {
+    @SuppressWarnings("checkstyle:parameternumber")
+    ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
+                   final Supplier<Task> taskSupplier, final String providedProduct,
+                   final Set<String> usedProducts, final Set<String> importedProducts,
+                   final Set<String> importedAllProducts, final String description,
+                   final TaskType type) {
+        this.buildContext = buildContext;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
         this.usedProducts = new HashSet<>(usedProducts);
+        this.importedProducts = importedProducts;
+        this.importedAllProducts = importedAllProducts;
         this.description = description;
         this.type = type;
+    }
+
+    public BuildContext getBuildContext() {
+        return buildContext;
     }
 
     public String getName() {
@@ -72,10 +86,18 @@ public class ConfiguredTask {
         return Collections.unmodifiableSet(usedProducts);
     }
 
+    public Set<String> getImportedProducts() {
+        return Collections.unmodifiableSet(importedProducts);
+    }
+
     ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
         pluginNames.add(pluginName);
         this.usedProducts.addAll(additionalProducts);
         return this;
+    }
+
+    public Set<String> getImportedAllProducts() {
+        return Collections.unmodifiableSet(importedAllProducts);
     }
 
     public String getDescription() {
@@ -86,16 +108,13 @@ public class ConfiguredTask {
         return type;
     }
 
-    public boolean isIntermediateProduct() {
-        return type == TaskType.INTERMEDIATE;
-    }
-
     public boolean isGoal() {
         return type == TaskType.GOAL;
     }
 
     @Override
     public String toString() {
-        return name;
+        return buildContext.getModuleName() + " > " + name;
     }
+
 }

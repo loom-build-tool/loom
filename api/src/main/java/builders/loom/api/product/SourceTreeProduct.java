@@ -17,7 +17,6 @@
 package builders.loom.api.product;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +31,7 @@ public final class SourceTreeProduct extends AbstractProduct {
         if (sourceFiles == null || sourceFiles.isEmpty()) {
             throw new IllegalArgumentException("sourceFiles must not be null or empty");
         }
-        this.sourceFiles = Collections.unmodifiableList(new ArrayList<>(sourceFiles));
+        this.sourceFiles = Collections.unmodifiableList(sourceFiles);
     }
 
     public Path getSrcDir() {
@@ -41,6 +40,14 @@ public final class SourceTreeProduct extends AbstractProduct {
 
     public List<Path> getSourceFiles() {
         return sourceFiles;
+    }
+
+    @Override
+    public String toString() {
+        return "SourceTreeProduct{"
+            + "srcDir=" + srcDir
+            + ", sourceFiles=" + sourceFiles
+            + '}';
     }
 
 }

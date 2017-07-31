@@ -33,14 +33,15 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
         }
 
         task("springBootApplication")
-            .impl(() -> new SpringBootTask(pluginSettings))
+            .impl(() -> new SpringBootModuleTask(pluginSettings))
             .provides("springBootApplication")
             .uses("processedResources", "compilation", "compileDependencies")
+            .importFromModules("jar")
             .desc("Builds Spring Boot application.")
             .register();
 
         task("springBootFatJarApplication")
-            .impl(() -> new SpringBootFatJarTask(getBuildConfig(), pluginSettings))
+            .impl(() -> new SpringBootFatJarModuleTask(pluginSettings))
             .provides("springBootFatJarApplication")
             .uses("springBootApplication", "compilation")
             .desc("Builds Spring Boot Fat Jar application.")

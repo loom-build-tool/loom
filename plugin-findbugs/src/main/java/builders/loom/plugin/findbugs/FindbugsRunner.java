@@ -160,6 +160,7 @@ public class FindbugsRunner {
     private static List<String> getClassesToScan(final Path classesDir) throws IOException {
         return Files.walk(classesDir)
             .filter(filterByExtension("class"))
+            .filter(f -> !f.getFileName().toString().equals("module-info.class"))
             .map(FindbugsRunner::pathToString)
             .collect(Collectors.toList());
     }

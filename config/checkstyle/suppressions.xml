@@ -5,4 +5,6 @@
     <suppress files=".*Test\.java" checks="MagicNumber|MultipleStringLiterals|AvoidStaticImport"/>
     <suppress files="LoomInstaller\.java" checks="HideUtilityClassConstructor|UncommentedMain|IllegalCatch|RegexpMultiline"/>
 
+    <suppress files="JavaAssembleModuleTask\.java" checks="ImportControl"/>
+
 </suppressions>

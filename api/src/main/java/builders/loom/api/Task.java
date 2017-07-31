@@ -17,9 +17,13 @@
 package builders.loom.api;
 
 /**
- * @see AbstractTask
+ * @see AbstractModuleTask
  */
 public interface Task {
+
+    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+
+    void setBuildContext(BuildContext buildContext);
 
     TaskResult run() throws Exception;
 

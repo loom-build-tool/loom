@@ -20,4 +20,8 @@ public interface RuntimeConfiguration {
 
     boolean isCacheEnabled();
 
+    String getVersion();
+
+    boolean isModuleBuild();
+
 }

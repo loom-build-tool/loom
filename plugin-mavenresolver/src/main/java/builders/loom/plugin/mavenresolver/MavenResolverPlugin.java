@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractPlugin;
-import builders.loom.api.BuildConfig;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.product.ArtifactProduct;
@@ -33,40 +32,39 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
 
     @Override
     public void configure() {
-        final BuildConfig cfg = getBuildConfig();
         final MavenResolverPluginSettings pluginSettings = getPluginSettings();
         final Path repositoryPath = getRepositoryPath();
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
+            .impl(() -> new MavenResolverModuleTask(DependencyScope.COMPILE, pluginSettings,
                 repositoryPath))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
             .register();
 
         task("resolveCompileArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, cfg, pluginSettings,
+            .impl(() -> new MavenArtifactResolverModuleTask(DependencyScope.COMPILE, pluginSettings,
                 repositoryPath))
             .provides("compileArtifacts", true)
             .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cfg, pluginSettings,
+            .impl(() -> new MavenResolverModuleTask(DependencyScope.TEST, pluginSettings,
                 repositoryPath))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
             .register();
 
         task("resolveTestArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, cfg, pluginSettings,
+            .impl(() -> new MavenArtifactResolverModuleTask(DependencyScope.TEST, pluginSettings,
                 repositoryPath))
             .provides("testArtifacts", true)
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("install")
-            .impl(() -> new MavenInstallTask(getBuildConfig()))
+            .impl(() -> new MavenInstallModuleTask(pluginSettings))
             .provides("mavenArtifact")
             .uses("jar")
             .desc("Installs the jar file to the local Maven repository.")

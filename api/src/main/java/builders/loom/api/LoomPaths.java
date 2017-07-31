@@ -23,9 +23,14 @@ import java.nio.file.Paths;
 public final class LoomPaths {
 
     public static final Path PROJECT_DIR = Paths.get("").toAbsolutePath().normalize();
+    public static final Path MODULES_DIR = LoomPaths.PROJECT_DIR.resolve("modules");
     public static final Path PROJECT_LOOM_PATH = PROJECT_DIR.resolve(".loom");
-    public static final Path BUILD_DIR = PROJECT_DIR.resolve("loombuild");
+    public static final Path BUILD_DIR = PROJECT_DIR.resolve("build");
     public static final Path REPORT_PATH = BUILD_DIR.resolve("reports");
+    public static final Path SRC_MAIN = Paths.get("src", "main", "java");
+    public static final Path RES_MAIN = Paths.get("src", "main", "resources");
+    public static final Path SRC_TEST = Paths.get("src", "test", "java");
+    public static final Path RES_TEST = Paths.get("src", "test", "resources");
 
     static {
         checkState(Files.exists(PROJECT_DIR), "Invalid current directory");
@@ -42,6 +47,14 @@ public final class LoomPaths {
 
     public static Path relativize(final Path path) {
         return PROJECT_DIR.relativize(path.toAbsolutePath().normalize());
+    }
+
+    public static Path buildDir(final String moduleName, final String productId) {
+        return BUILD_DIR.resolve(Paths.get(moduleName, productId));
+    }
+
+    public static Path reportDir(final String moduleName, final String productId) {
+        return REPORT_PATH.resolve(Paths.get(moduleName, productId));
     }
 
 }

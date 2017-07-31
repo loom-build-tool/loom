@@ -21,25 +21,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import builders.loom.api.BuildSettings;
 import builders.loom.api.JavaVersion;
 
 public class BuildConfigDTO {
 
-    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_1_8;
-
-    private ProjectDTO project;
     private Set<String> plugins;
     private Map<String, String> settings;
+    private Set<String> moduleDependencies;
     private Set<String> dependencies;
     private Set<String> testDependencies;
-
-    public ProjectDTO getProject() {
-        return project;
-    }
-
-    public void setProject(final ProjectDTO project) {
-        this.project = project;
-    }
 
     public Set<String> getPlugins() {
         return plugins;
@@ -55,6 +46,14 @@ public class BuildConfigDTO {
 
     public void setSettings(final Map<String, String> settings) {
         this.settings = settings;
+    }
+
+    public Set<String> getModuleDependencies() {
+        return moduleDependencies;
+    }
+
+    public void setModuleDependencies(final Set<String> moduleDependencies) {
+        this.moduleDependencies = moduleDependencies;
     }
 
     public Set<String> getDependencies() {
@@ -77,17 +76,15 @@ public class BuildConfigDTO {
         final Map<String, String> cfg = settings != null ? settings : new HashMap<>();
 
         final String javaPlatformVersionStr = cfg.remove("javaPlatformVersion");
-        final JavaVersion javaPlatformVersion = javaPlatformVersionStr != null
-            ? JavaVersion.ofVersion(javaPlatformVersionStr)
-            : DEFAULT_JAVA_PLATFORM_VERSION;
-
-        final BuildSettingsImpl buildSettings = new BuildSettingsImpl(javaPlatformVersion);
+        final BuildSettings buildSettings = javaPlatformVersionStr != null
+            ? new BuildSettingsImpl(JavaVersion.ofVersion(javaPlatformVersionStr))
+            : new BuildSettingsImpl();
 
         return new BuildConfigImpl(
-            project.build(),
             plugins != null ? plugins : Collections.emptySet(),
             buildSettings,
             cfg,
+            moduleDependencies != null ? moduleDependencies : Collections.emptySet(),
             dependencies != null ? dependencies : Collections.emptySet(),
             testDependencies != null ? testDependencies : Collections.emptySet());
     }

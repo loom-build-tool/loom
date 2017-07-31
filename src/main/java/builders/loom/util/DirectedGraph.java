@@ -17,6 +17,7 @@
 package builders.loom.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -24,11 +25,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class DirectedGraph<T> {
 
     private final Map<T, Vertex<T>> vertices = new HashMap<>();
+
+    public DirectedGraph() {
+    }
+
+    public DirectedGraph(final Collection<T> nodes) {
+        nodes.forEach(this::addNode);
+    }
 
     public void addNode(final T node) {
         if (vertices.putIfAbsent(node, new Vertex<>(node)) != null) {
@@ -50,11 +59,15 @@ public class DirectedGraph<T> {
         startVertex.addOutgoing(destVertex);
     }
 
+    public void addEdges(final T start, final Collection<T> dests) {
+        dests.forEach(dest -> addEdge(start, dest));
+    }
+
     public List<T> resolve(final T dest) {
         return resolve(Collections.singletonList(dest));
     }
 
-    public List<T> resolve(final List<T> destinations) {
+    public List<T> resolve(final Collection<T> destinations) {
         checkCycle();
 
         final Set<Vertex<T>> collect = new LinkedHashSet<>();
@@ -67,6 +80,15 @@ public class DirectedGraph<T> {
             collect.add(destVertex);
         }
         return collect.stream().map(Vertex::getValue).collect(Collectors.toList());
+    }
+
+    public List<T> resolve(final Predicate<T> predicated) {
+        final List<T> requested = vertices.values().stream()
+            .map(Vertex::getValue)
+            .filter(predicated)
+            .collect(Collectors.toList());
+
+        return resolve(requested);
     }
 
     private void doCollect(final Set<Vertex<T>> collect, final List<Vertex<T>> destinations) {
@@ -89,6 +111,11 @@ public class DirectedGraph<T> {
         visited.add(vertex);
         vertex.getOutgoing().forEach(n -> checkCycle(n, visited));
         visited.removeLast();
+    }
+
+    @Override
+    public String toString() {
+        return vertices.keySet().stream().map(Object::toString).collect(Collectors.joining(", "));
     }
 
     static final class Vertex<T> {

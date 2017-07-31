@@ -30,14 +30,14 @@ public class FindbugsPlugin extends AbstractPlugin<FindbugsPluginSettings> {
         final FindbugsPluginSettings pluginSettings = getPluginSettings();
 
         task("findbugsMain")
-            .impl(() -> new FindbugsTask(pluginSettings, CompileTarget.MAIN))
+            .impl(() -> new FindbugsModuleTask(pluginSettings, CompileTarget.MAIN))
             .provides("findbugsMainReport")
             .uses("source", "compileDependencies", "compilation")
             .desc("Runs FindBugs against main classes and create report.")
             .register();
 
         task("findbugsTest")
-            .impl(() -> new FindbugsTask(pluginSettings, CompileTarget.TEST))
+            .impl(() -> new FindbugsModuleTask(pluginSettings, CompileTarget.TEST))
             .provides("findbugsTestReport")
             .uses("testSource", "testDependencies", "compilation", "testCompilation")
             .desc("Runs FindBugs against test classes and create report.")

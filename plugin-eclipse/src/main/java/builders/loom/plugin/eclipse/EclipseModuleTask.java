@@ -17,6 +17,7 @@
 package builders.loom.plugin.eclipse;
 
 import java.io.BufferedOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -42,6 +43,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -55,6 +57,8 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
+import builders.loom.util.Preconditions;
+import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlUtil;
 
@@ -111,7 +115,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         final Path projectXml = module.getPath().resolve(".project");
 
-        if (!Files.exists(projectXml)) {
+        // pickup and merge existing .project file or create a new one
+        if (Files.notExists(projectXml)) {
             writeDocumentToFile(projectXml, createProjectFile(module));
         } else {
             final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
@@ -119,23 +124,71 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
                 writeDocumentToFile(projectXml, projectXmlDoc);
             }
         }
+
+        // always create a new .classpath file
         writeDocumentToFile(module.getPath().resolve(".classpath"), createClasspathFile(module));
-        final Path settingsPath = Files.createDirectories(module.getPath().resolve(".settings"));
-        writePropertiesToFile(settingsPath.resolve("org.eclipse.jdt.core.prefs"),
-            createJdtPrefs(module));
+
+        // pickup and merge existing .prefs file or create a new one
+        final Path settingsFile = Files.createDirectories(module.getPath().resolve(".settings"))
+            .resolve("org.eclipse.jdt.core.prefs");
+        if (Files.notExists(settingsFile)) {
+            writePropertiesToFile(settingsFile, createJdtPrefs(module));
+        } else {
+            final Properties props = new Properties();
+            props.load(new FileReader(settingsFile.toFile()));
+            if (mergeJdtPrefs(props, module)) {
+                writePropertiesToFile(settingsFile, props);
+            }
+        }
     }
 
     private Properties createJdtPrefs(final Module module) {
 
-        final Properties prefs = new Properties();
         final String javaLangLevel =
             buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
+
+        final Properties prefs = new Properties();
 
         prefs.setProperty("eclipse.preferences.version", "1");
         prefs.setProperty("org.eclipse.jdt.core.compiler.source", javaLangLevel);
         prefs.setProperty("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
 
+        addJdtPrefDefaults(prefs);
+
         return prefs;
+    }
+
+    private boolean mergeJdtPrefs(final Properties prefs, Module module) {
+
+        Preconditions.checkState(prefs.getProperty("eclipse.preferences.version").equals("1"));
+
+        final String javaLangLevel =
+            buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
+
+        PropertiesMerger merger = new PropertiesMerger(prefs);
+
+        merger.fixup("org.eclipse.jdt.core.compiler.source", javaLangLevel);
+        merger.fixup("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
+        merger.fixup("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
+
+        final boolean changedByDefaults = addJdtPrefDefaults(prefs);
+
+        return merger.isChanged() || changedByDefaults;
+    }
+
+    private boolean addJdtPrefDefaults(Properties prefs) {
+
+        PropertiesMerger merger = new PropertiesMerger(prefs);
+
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode", "enabled");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.unusedLocal", "preserve");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.lineNumber", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.localVariable", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.debug.sourceFile", "generate");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.problem.assertIdentifier", "error");
+        merger.setIfAbsent("org.eclipse.jdt.core.compiler.problem.enumIdentifier", "error");
+
+        return merger.isChanged();
     }
 
     @SuppressWarnings("checkstyle:magicnumber")
@@ -176,16 +229,15 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private boolean mergeProjectBuildSpec(final Document projectXml) {
 
         boolean found = false;
-        final Element buildSpec =
-            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
-        final NodeList buildCommands = projectXml.getElementsByTagName("buildCommand");
 
-        for (int i = 0; i < buildCommands.getLength(); i++) {
+        final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
 
-            final Element item = (Element) buildCommands.item(i);
+        for(final Element item : XmlUtil.iterableElements(projectXml.getElementsByTagName("buildCommand"))) {
+
             found |= XmlUtil.getOnlyElement(
                 item.getElementsByTagName("name")).getTextContent()
                 .equals("org.eclipse.jdt.core.javabuilder");
+
         }
 
         if (!found) {
@@ -204,13 +256,9 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element naturesNode =
-            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
-        final NodeList naturesList = projectXml.getElementsByTagName("nature");
+        final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
 
-        for (int i = 0; i < naturesList.getLength(); i++) {
-
-            final Element item = (Element) naturesList.item(i);
+        for (final Node item : XmlUtil.iterable(projectXml.getElementsByTagName("nature"))) {
 
             found |= item.getTextContent().equals("org.eclipse.jdt.core.javanature");
 

@@ -16,8 +16,14 @@
 
 package builders.loom.util.xml;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import builders.loom.util.Preconditions;
 
 public final class XmlUtil {
 
@@ -29,6 +35,67 @@ public final class XmlUtil {
             return (Element) nodes.item(0);
         }
         throw new IllegalArgumentException("Expected one element, but got " + nodes.getLength());
+    }
+
+    public static Iterable<Node> iterable(final NodeList nodes) {
+        return () ->
+            new Iterator<Node>() {
+
+                int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < nodes.getLength();
+                }
+
+                @Override
+                public Node next() {
+                    if (hasNext()) {
+                        return nodes.item(index++);
+                    } else {
+                        throw new NoSuchElementException();
+                    }
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+         };
+    }
+
+    public static Iterable<Element> iterableElements(final NodeList nodes) {
+
+        return () ->
+            new Iterator<>() {
+
+                final Iterator<Node> it = iterable(nodes).iterator();
+
+                @Override
+                public boolean hasNext() {
+                    return it.hasNext();
+                }
+
+                @Override
+                public Element next() {
+                    if (hasNext()) {
+                        final Node node = it.next();
+                        Preconditions.checkState(
+                            node.getNodeType() == Node.ELEMENT_NODE,
+                            "Cannot cast node type " + node.getNodeType() + " to element"
+                        );
+                        return (Element) node;
+                    } else {
+                        throw new NoSuchElementException();
+                    }
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+
+        };
     }
 
 }

@@ -49,7 +49,7 @@ public final class TextOutput {
         for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
             final Collection<TaskInfo> configuredTasks =
-                moduleRunner.configuredTasksByPluginName(pluginName);
+                moduleRunner.describePluginTasks(pluginName);
 
             AnsiConsole.out().println(
                 Ansi.ansi()
@@ -89,7 +89,7 @@ public final class TextOutput {
             }
         }
 
-        final List<GoalInfo> goals = moduleRunner.configuredGoals().stream()
+        final List<GoalInfo> goals = moduleRunner.describeGoals().stream()
             .sorted(Comparator.comparing(GoalInfo::getName))
             .collect(Collectors.toList());
 

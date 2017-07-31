@@ -17,7 +17,6 @@
 package builders.loom.plugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -41,6 +40,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
 import builders.loom.util.BeanUtil;
+import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.SystemUtil;
 
 @SuppressWarnings({
@@ -162,23 +162,18 @@ public class PluginLoader {
         final String loomVersion = Version.getVersion();
         final Path libraryPath = loomBaseDir.resolve(Paths.get("library", "loom-" + loomVersion));
         final Path pluginDir = libraryPath.resolve("plugin-" + name);
-        return buildUrl(pluginDir.resolve(String.format("plugin-%s-%s.jar", name, loomVersion)));
-    }
+        final Path pluginFile =
+            pluginDir.resolve(String.format("plugin-%s-%s.jar", name, loomVersion));
 
-    private static URL buildUrl(final Path f) {
-        try {
-            return f.toUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new IllegalStateException(e);
-        }
+        return ClassLoaderUtil.toUrl(pluginFile);
     }
 
     private static ClassLoader getPlatformClassLoader() {
         return ClassLoader.getSystemClassLoader().getParent();
     }
 
-    private Set<String> injectPluginSettings(final String plugin, final Plugin regPlugin,
-                                             final BuildConfig moduleConfig) {
+    private static Set<String> injectPluginSettings(final String plugin, final Plugin regPlugin,
+                                                    final BuildConfig moduleConfig) {
 
         final PluginSettings pluginSettings = regPlugin.getPluginSettings();
 

@@ -59,21 +59,21 @@ public final class GraphvizOutput {
         pw.println("    graph [splines=spline, nodesep=1];");
         pw.println("    node [shape=box];");
 
-        for (final TaskInfo task : moduleRunner.configuredTasks()) {
+        for (final TaskInfo task : moduleRunner.describeTasks()) {
             writeLabel(pw, task);
         }
 
-        for (final GoalInfo task : moduleRunner.configuredGoals()) {
+        for (final GoalInfo task : moduleRunner.describeGoals()) {
             writeLabel(pw, task);
         }
 
-        for (final TaskInfo task : moduleRunner.configuredTasks()) {
+        for (final TaskInfo task : moduleRunner.describeTasks()) {
             if (!task.getUsedProducts().isEmpty()) {
                 writeEdge(pw, task);
             }
         }
 
-        for (final GoalInfo task : moduleRunner.configuredGoals()) {
+        for (final GoalInfo task : moduleRunner.describeGoals()) {
             if (!task.getUsedProducts().isEmpty()) {
                 writeEdge(pw, task);
             }

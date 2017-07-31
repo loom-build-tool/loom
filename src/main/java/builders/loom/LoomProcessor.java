@@ -217,7 +217,7 @@ public class LoomProcessor {
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             System.getProperty("os.arch"),
-            System.getProperty("java.version"),
+            Runtime.version().toString(),
             System.getProperty("java.vendor"),
             Runtime.getRuntime().availableProcessors());
     }

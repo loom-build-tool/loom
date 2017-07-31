@@ -375,7 +375,7 @@ public class ModuleRunner {
             .collect(Collectors.toSet());
     }
 
-    public Set<TaskInfo> configuredTasksByPluginName(final String pluginName) {
+    public Set<TaskInfo> describePluginTasks(final String pluginName) {
         return moduleTaskRegistries.values().stream()
             .flatMap(reg -> reg.configuredTasks().stream())
             .filter(ct -> !ct.isGoal())
@@ -384,7 +384,7 @@ public class ModuleRunner {
             .collect(Collectors.toSet());
     }
 
-    public Set<GoalInfo> configuredGoals() {
+    public Set<GoalInfo> describeGoals() {
         final Set<GoalInfo> goalInfos = new HashSet<>();
 
         moduleTaskRegistries.values().stream()
@@ -397,7 +397,7 @@ public class ModuleRunner {
         return goalInfos;
     }
 
-    public Set<TaskInfo> configuredTasks() {
+    public Set<TaskInfo> describeTasks() {
         return moduleTaskRegistries.values().stream()
             .flatMap(reg -> reg.configuredTasks().stream())
             .filter(ct -> !ct.isGoal())

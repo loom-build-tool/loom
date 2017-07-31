@@ -180,15 +180,12 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
 
-        for(final Node itemX : XmlUtil.iterable(projectXml.getElementsByTagName("buildCommand"))) {
-
-            // FIXME
-            Element item = (Element ) itemX;
-
+        for(final Element item : XmlUtil.iterableElements(projectXml.getElementsByTagName("buildCommand"))) {
 
             found |= XmlUtil.getOnlyElement(
                 item.getElementsByTagName("name")).getTextContent()
                 .equals("org.eclipse.jdt.core.javabuilder");
+
         }
 
         if (!found) {
@@ -210,7 +207,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
 
         for (final Node item : XmlUtil.iterable(projectXml.getElementsByTagName("nature"))) {
-            
+
             found |= item.getTextContent().equals("org.eclipse.jdt.core.javanature");
 
         }

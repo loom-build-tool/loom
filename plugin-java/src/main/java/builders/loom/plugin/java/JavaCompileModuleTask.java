@@ -259,12 +259,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
     private static List<String> buildOptions(final String release) {
         final List<String> options = new ArrayList<>();
 
-        options.add("-encoding");
-        options.add("UTF-8");
-
         options.add("-Xlint:all");
-
-        options.add("-Xpkginfo:always");
 
         if (release != null) {
             options.add("--release");

@@ -158,10 +158,10 @@ public class LoomProcessor {
 
     private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
         final Path moduleInfoFile = baseDir.resolve(
-            Paths.get("src", "main", "java", "module-info.java"));
+            LoomPaths.SRC_MAIN.resolve("module-info.java"));
 
         final Path testModuleInfoFile = baseDir.resolve(
-            Paths.get("src", "test", "java", "module-info.java"));
+            LoomPaths.SRC_TEST.resolve("module-info.java"));
 
         if (Files.exists(testModuleInfoFile)) {
             if (Files.exists(moduleInfoFile)) {
@@ -169,10 +169,10 @@ public class LoomProcessor {
                     "module-info.java must not exist in both src/main and src/test");
             }
             if (Files.exists(baseDir.resolve(Paths.get("src", "main")))) {
-                throw new IllegalStateException("No src/main must exist for itest case");
+                throw new IllegalStateException("No src/main must exist for integration test case");
             }
 
-            // sicher ein itest
+            // integration test module
             return readModuleNameFromInfoFile(testModuleInfoFile);
         }
 

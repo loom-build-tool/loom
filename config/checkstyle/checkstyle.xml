@@ -211,6 +211,7 @@
         <!-- Checks for Misc - http://checkstyle.sf.net/config_misc.html -->
         <module name="TodoComment">
             <property name="format" value="(TODO)|(FIXME)"/>
+            <property name="severity" value="warning"/>
         </module>
         <module name="UncommentedMain"/>
         <module name="UpperEll"/>

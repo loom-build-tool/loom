@@ -18,17 +18,14 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ResourcesTreeProduct;
 
 public class JavaProvideResourcesDirModuleTask extends AbstractModuleTask {
-
-    private static final Path SRC_RES_PATH = Paths.get("src", "main", "resources");
-    private static final Path SRC_TESTRES_PATH = Paths.get("src", "test", "resources");
 
     private final CompileTarget compileTarget;
 
@@ -50,9 +47,9 @@ public class JavaProvideResourcesDirModuleTask extends AbstractModuleTask {
     private Path resourcesPath() {
         switch (compileTarget) {
             case MAIN:
-                return SRC_RES_PATH;
+                return LoomPaths.RES_MAIN;
             case TEST:
-                return SRC_TESTRES_PATH;
+                return LoomPaths.RES_TEST;
             default:
                 throw new IllegalStateException();
         }

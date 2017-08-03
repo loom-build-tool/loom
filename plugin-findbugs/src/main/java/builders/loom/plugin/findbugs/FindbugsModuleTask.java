@@ -17,7 +17,6 @@
 package builders.loom.plugin.findbugs;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -154,24 +153,21 @@ public class FindbugsModuleTask extends AbstractModuleTask {
         }
     }
 
-    // FIXME multi-module
     private List<Path> calcClasspath() throws InterruptedException {
         final List<Path> classpath = new ArrayList<>();
 
         switch (compileTarget) {
             case MAIN:
-                useProduct("compileDependencies",
-                    ClasspathProduct.class)
+                useProduct("compileDependencies", ClasspathProduct.class)
                     .map(ClasspathProduct::getEntries)
                     .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                final Path buildPath = LoomPaths.BUILD_DIR.resolve(
-                    Paths.get("compilation", "main", getBuildContext().getModuleName()));
-                classpath.add(buildPath);
+                useProduct("compilation", CompilationProduct.class)
+                    .map(CompilationProduct::getClassesDir)
+                    .ifPresent(classpath::add);
 
-                useProduct("testDependencies",
-                    ClasspathProduct.class)
+                useProduct("testDependencies", ClasspathProduct.class)
                     .map(ClasspathProduct::getEntries)
                     .ifPresent(classpath::addAll);
                 break;

@@ -88,6 +88,16 @@ public class JobPool {
         }, executor);
     }
 
+    public void submitAll(final Collection<Job> jobs) {
+        Objects.requireNonNull(jobs, "jobs must not be null");
+
+        jobs.forEach(job -> {
+            if (!executor.isShutdown()) {
+                submitJob(job);
+            }
+        });
+    }
+
     public void shutdown() throws InterruptedException, BuildException {
         LOG.debug("Shutting down Job Pool");
         executor.shutdown();
@@ -101,16 +111,6 @@ public class JobPool {
         if (firstException.get() != null) {
             throw new BuildException(firstException.get());
         }
-    }
-
-    public void submitAll(final Collection<Job> jobs) {
-        Objects.requireNonNull(jobs, "jobs must not be null");
-
-        jobs.forEach(job -> {
-            if (!executor.isShutdown()) {
-                submitJob(job);
-            }
-        });
     }
 
     private final class MonitorTask extends TimerTask {

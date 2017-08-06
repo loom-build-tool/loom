@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +38,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.misc.DirectedGraph;
 import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.PluginLoader;
@@ -44,7 +46,6 @@ import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
 import builders.loom.plugin.TaskInfo;
 import builders.loom.plugin.TaskRegistryImpl;
-import builders.loom.misc.DirectedGraph;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:classdataabstractioncoupling"})
@@ -134,9 +135,8 @@ public class ModuleRunner {
 
         ProgressMonitor.setTasks(resolvedTasks.size());
 
-        final Map<ConfiguredTask, Job> configuredTaskJobMap =
-            resolvedTasks.stream()
-                .collect(Collectors.toMap(ct -> ct, this::buildJob));
+        final Map<ConfiguredTask, Job> configuredTaskJobMap = new LinkedHashMap<>();
+        resolvedTasks.forEach(ct -> configuredTaskJobMap.put(ct, buildJob(ct)));
 
         final JobPool jobPool = new JobPool();
         jobPool.submitAll(configuredTaskJobMap.values());

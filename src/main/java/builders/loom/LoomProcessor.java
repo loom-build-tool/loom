@@ -23,36 +23,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
-import builders.loom.api.product.Product;
 import builders.loom.config.BuildConfigImpl;
 import builders.loom.config.ConfigReader;
-import builders.loom.plugin.ConfiguredTask;
 import builders.loom.plugin.PluginLoader;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class LoomProcessor {
+class LoomProcessor {
 
     private ModuleRunner moduleRunner;
 
@@ -61,7 +52,6 @@ public class LoomProcessor {
     }
 
     public void init(final RuntimeConfigurationImpl runtimeConfiguration) {
-
         final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
 
         final Stopwatch sw = new Stopwatch();
@@ -77,7 +67,11 @@ public class LoomProcessor {
         moduleRunner.init();
     }
 
-    public List<Module> listModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+    public ModuleRunner getModuleRunner() {
+        return moduleRunner;
+    }
+
+    private List<Module> listModules(final RuntimeConfigurationImpl runtimeConfiguration) {
         final List<Module> modules = new ArrayList<>();
 
         if (runtimeConfiguration.isModuleBuild()) {
@@ -118,8 +112,7 @@ public class LoomProcessor {
         }
     }
 
-    public List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
-
+    private List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
         final List<Module> modules = new ArrayList<>();
 
         try {
@@ -243,104 +236,9 @@ public class LoomProcessor {
         GraphvizOutput.generateDot(moduleRunner);
     }
 
-    public void printProductInfos(final Collection<ConfiguredTask> resolvedTasks)
-        throws InterruptedException {
-
-        // aggregate plugin -> products
-        final Map<String, List<ProductInfo>> aggProducts = aggregateProducts(resolvedTasks);
-
-        if (!aggProducts.isEmpty()) {
-            outputProductInfos(aggProducts);
-        }
-    }
-
-    private Map<String, List<ProductInfo>> aggregateProducts(
-        final Collection<ConfiguredTask> resolvedTasks) {
-
-        // plugin -> products
-        final Map<String, List<ProductInfo>> aggProducts = new HashMap<>();
-
-        for (final ConfiguredTask configuredTask : resolvedTasks) {
-            final String productId = configuredTask.getProvidedProduct();
-
-            final Optional<Product> product = moduleRunner
-                .lookupProduct(configuredTask.getBuildContext(), productId)
-                .getWithoutWait();
-
-            if (product.isPresent() && product.get().outputInfo().isPresent()) {
-                final String outputInfo = product.get().outputInfo().get();
-                final String pluginName = configuredTask.getPluginName();
-                aggProducts.putIfAbsent(pluginName, new ArrayList<>());
-                aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
-            }
-        }
-        return aggProducts;
-    }
-
-    private void outputProductInfos(final Map<String, List<ProductInfo>> aggProducts) {
-        AnsiConsole.out().println();
-
-        final List<String> pluginNames = new ArrayList<>(aggProducts.keySet());
-        Collections.sort(pluginNames);
-
-        for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
-            final String pluginName = iterator.next();
-
-            final List<ProductInfo> productInfos = aggProducts.get(pluginName);
-
-            final Ansi ansi = Ansi.ansi()
-                .a("Products of ")
-                .bold()
-                .a(pluginName)
-                .reset()
-                .a(":")
-                .newline();
-
-            for (final ProductInfo productInfo : productInfos) {
-                ansi
-                    .fgBrightYellow()
-                    .a("> ")
-                    .fgBrightGreen()
-                    .a(productInfo.getOutputInfo())
-                    .reset()
-                    .fgBlack().bold()
-                    .format(" [%s]", productInfo.getProductId())
-                    .newline();
-            }
-
-            ansi.reset();
-
-            if (iterator.hasNext()) {
-                ansi.newline();
-            }
-
-            AnsiConsole.out().print(ansi);
-        }
-    }
-
     public boolean isModuleBuild() {
         checkForInconsistentSrcModuleStruct();
         return Files.exists(LoomPaths.MODULES_DIR);
-    }
-
-    private static final class ProductInfo {
-
-        private final String productId;
-        private final String outputInfo;
-
-        ProductInfo(final String productId, final String outputInfo) {
-            this.productId = productId;
-            this.outputInfo = outputInfo;
-        }
-
-        public String getProductId() {
-            return productId;
-        }
-
-        public String getOutputInfo() {
-            return outputInfo;
-        }
-
     }
 
 }

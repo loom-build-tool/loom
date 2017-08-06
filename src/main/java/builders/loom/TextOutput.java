@@ -104,24 +104,28 @@ public final class TextOutput {
                     .newline());
 
             for (final GoalInfo goal : goals) {
-                AnsiConsole.out().println(
-                    Ansi.ansi()
-                        .fgYellow()
-                        .a(goal.getName())
-                        .reset()
-                        .a(" - ")
-                        .fgCyan()
-                        .a("Depends on: ")
+                final Ansi a = Ansi.ansi();
+                a.fgYellow()
+                    .a(goal.getName())
+                    .reset()
+                    .a(" - ")
+                    .fgCyan();
+
+                if (goal.getUsedProducts().isEmpty()) {
+                    a.a("No plugin registered a dependency");
+                } else {
+                    a.a("Depends on: ")
                         .fgYellow()
                         .a(goal.getUsedProducts().stream()
                             .sorted()
-                            .collect(Collectors.joining(", ")))
-                        .reset()
-                );
+                            .collect(Collectors.joining(", ")));
+                }
+
+                a.reset();
+
+                AnsiConsole.out().println(a);
             }
         }
-
-        AnsiConsole.out().println();
     }
 
 }

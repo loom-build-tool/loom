@@ -55,7 +55,8 @@ public final class ThreadFactoryBuilder {
         return uncaughtExceptionHandler;
     }
 
-    public void setUncaughtExceptionHandler(final Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+    public void setUncaughtExceptionHandler(
+        final Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         this.uncaughtExceptionHandler = uncaughtExceptionHandler;
     }
 
@@ -76,9 +77,8 @@ public final class ThreadFactoryBuilder {
         private final Integer priority;
         private final Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 
-        public CustomThreadFactory(final String nameFormat, final Boolean daemon,
-                                   final Integer priority,
-                                   final Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+        CustomThreadFactory(final String nameFormat, final Boolean daemon, final Integer priority,
+                            final Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
             this.nameFormat = nameFormat;
             this.daemon = daemon;
             this.priority = priority;

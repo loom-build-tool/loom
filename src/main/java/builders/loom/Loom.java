@@ -38,18 +38,22 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-@SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:hideutilityclassconstructor",
-    "checkstyle:regexpmultiline", "checkstyle:illegalcatch"})
+@SuppressWarnings({"checkstyle:hideutilityclassconstructor",
+    "checkstyle:classdataabstractioncoupling"})
 public class Loom {
 
     private static final Path LOCK_FILE = Paths.get(".loom.lock");
 
+    @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
+        "checkstyle:regexpmultiline"})
     public static void main(final String[] args) {
         final long startTime = System.nanoTime();
 
         final Thread ctrlCHook = new Thread(() ->
-            AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightMagenta()
+            AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightMagenta()
                 .a("Interrupt received - stopping").reset()));
+
+        boolean buildExecuted = false;
 
         try {
             init();
@@ -61,7 +65,7 @@ public class Loom {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
                 try (FileLock ignored = lock()) {
-                    run(cmd);
+                    buildExecuted = run(cmd);
                 }
 
                 Runtime.getRuntime().removeShutdownHook(ctrlCHook);
@@ -74,22 +78,24 @@ public class Loom {
             }
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
                 .format("BUILD FAILED - see %s for details", LogConfiguration.LOOM_BUILD_LOG)
-                .newline()
-                .reset());
+                .reset()
+                .newline());
             System.exit(1);
         }
 
-        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
-            .truncatedTo(ChronoUnit.MILLIS);
+        if (buildExecuted) {
+            final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
+                .truncatedTo(ChronoUnit.MILLIS);
 
-        AnsiConsole.out().println(Ansi.ansi().reset().fgBrightGreen()
-            .a("BUILD SUCCESSFUL").reset()
-            .a(" in ")
-            .a(duration.toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase())
-            .newline());
+            AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightGreen()
+                .a("BUILD SUCCESSFUL").reset()
+                .a(" in ")
+                .a(duration.toString()
+                    .substring(2)
+                    .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                    .toLowerCase())
+                .newline());
+        }
 
         System.exit(0);
     }
@@ -188,7 +194,7 @@ public class Loom {
         return fileLock;
     }
 
-    public static void run(final CommandLine cmd) throws Exception {
+    public static boolean run(final CommandLine cmd) throws Exception {
         final LoomProcessor loomProcessor = new LoomProcessor();
 
         if (cmd.hasOption("clean")) {
@@ -197,7 +203,7 @@ public class Loom {
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
             if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
-                return;
+                return false;
             }
         }
 
@@ -226,23 +232,30 @@ public class Loom {
             printProducts(loomProcessor, format);
         }
 
+        boolean buildExecuted = false;
+
         if (!cmd.getArgList().isEmpty()) {
+            buildExecuted = true;
+
             ProgressMonitor.start();
 
-            final Optional<ExecutionReport> executionReport;
+            final Optional<ExecutionReport> optExecutionReport;
             try {
-                executionReport = loomProcessor.execute(cmd.getArgList());
+                optExecutionReport = loomProcessor.execute(cmd.getArgList());
             } finally {
                 ProgressMonitor.stop();
             }
 
-            if (executionReport.isPresent()) {
-                loomProcessor.printProductInfos(executionReport.get().getResolvedTasks());
-                executionReport.get().print();
+            if (optExecutionReport.isPresent()) {
+                final ExecutionReport executionReport = optExecutionReport.get();
+                new ProductReportPrinter(loomProcessor.getModuleRunner()).print(executionReport);
+                new ExecutionReportPrinter().print(executionReport);
             }
         }
 
         loomProcessor.logMemoryUsage();
+
+        return buildExecuted;
     }
 
     private static void printRuntimeConfiguration(final RuntimeConfigurationImpl rtConfig) {

@@ -25,6 +25,9 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
+
 import builders.loom.plugin.GoalInfo;
 import builders.loom.plugin.TaskInfo;
 
@@ -43,9 +46,10 @@ public final class GraphvizOutput {
                 writeTasks(moduleRunner, pw);
             }
 
-            System.out.println("Products overview written to " + dotFile);
-            System.out.println("Use Graphviz to visualize: `dot -Tpng " + dotFile
-                + " > loom-products.png`");
+            AnsiConsole.out().println(Ansi.ansi().a("Products overview written to ")
+                .bold().a(dotFile).boldOff());
+            AnsiConsole.out().println(Ansi.ansi().a("Use Graphviz to visualize: ").bold()
+                .format("`dot -Tpng %s > loom-products.png`", dotFile).boldOff().newline());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

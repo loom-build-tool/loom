@@ -44,7 +44,7 @@ import builders.loom.plugin.ProductRepositoryImpl;
 import builders.loom.plugin.ServiceLocatorImpl;
 import builders.loom.plugin.TaskInfo;
 import builders.loom.plugin.TaskRegistryImpl;
-import builders.loom.util.DirectedGraph;
+import builders.loom.misc.DirectedGraph;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classfanoutcomplexity", "checkstyle:classdataabstractioncoupling"})
@@ -78,7 +78,7 @@ public class ModuleRunner {
         registerGlobalPlugins();
         registerModulePlugins();
 
-        LOG.debug("Initialized all plugins in {} ms", sw.duration());
+        LOG.debug("Initialized all plugins in {}", sw);
     }
 
     private void registerGlobalPlugins() {
@@ -118,13 +118,13 @@ public class ModuleRunner {
         final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds).resolve(
             configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
 
-        LOG.debug("Analyzed task dependency graph in {} ms", sw.duration());
+        LOG.debug("Analyzed task dependency graph in {}", sw);
 
         if (resolvedTasks.isEmpty()) {
             return Optional.empty();
         }
 
-        final Stopwatch sw2 = new Stopwatch();
+        sw.reset();
 
         LOG.info("Execute {}", resolvedTasks.stream()
             .map(ConfiguredTask::toString)
@@ -142,7 +142,7 @@ public class ModuleRunner {
         jobPool.submitAll(configuredTaskJobMap.values());
         jobPool.shutdown();
 
-        LOG.debug("Executed {} tasks in {} ms", resolvedTasks.size(), sw2.duration());
+        LOG.debug("Executed {} tasks in {}", resolvedTasks.size(), sw);
 
         final ExecutionReport executionReport = new ExecutionReport(resolvedTasks);
 

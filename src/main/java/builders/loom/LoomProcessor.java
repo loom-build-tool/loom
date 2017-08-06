@@ -70,7 +70,7 @@ public class LoomProcessor {
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
         listModules(runtimeConfiguration).forEach(moduleRegistry::register);
 
-        log.debug("Initialized modules in {} ms", sw.duration());
+        log.debug("Initialized modules in {}", sw);
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
         moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry);

@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.util.ThreadUtil;
+import builders.loom.misc.ThreadFactoryBuilder;
 
 public class JobPool {
 
@@ -38,14 +38,17 @@ public class JobPool {
     private static final int MONITOR_INTERVAL = 5_000;
 
     private final AtomicReference<Throwable> firstException = new AtomicReference<>();
-    private final ExecutorService executor = Executors.newCachedThreadPool(
-        ThreadUtil.newThreadFactory("job-pool"));
+    private final ExecutorService executor;
 
     private final Timer timer;
     private final ConcurrentHashMap<String, Job> currentJobs = new ConcurrentHashMap<>();
     private final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
     public JobPool() {
+        final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
+        threadFactoryBuilder.setDaemon(true);
+        executor = Executors.newCachedThreadPool(threadFactoryBuilder.build());
+
         timer = new Timer("JobPoolMonitor", true);
         timer.schedule(new MonitorTask(), MONITOR_INTERVAL, MONITOR_INTERVAL);
     }

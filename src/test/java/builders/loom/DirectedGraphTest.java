@@ -21,7 +21,7 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-import builders.loom.util.DirectedGraph;
+import builders.loom.misc.DirectedGraph;
 
 public class DirectedGraphTest {
 

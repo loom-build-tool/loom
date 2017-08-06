@@ -92,11 +92,7 @@ public final class SystemUtil {
             return null;
         }
         final int index = indexOfExtension(filename);
-        if (index == -1) {
-            return "";
-        } else {
-            return filename.substring(index + 1);
-        }
+        return index == -1 ? "" : filename.substring(index + 1);
     }
 
     private static int indexOfExtension(final String filename) {

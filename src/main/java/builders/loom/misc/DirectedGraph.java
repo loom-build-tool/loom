@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.util;
+package builders.loom.misc;
 
 import java.util.ArrayList;
 import java.util.Collection;

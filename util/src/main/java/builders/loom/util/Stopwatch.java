@@ -18,11 +18,27 @@ package builders.loom.util;
 
 public final class Stopwatch {
 
-    private final long start = System.nanoTime();
+    private long start;
 
-    public String duration() {
-        final double duration = (System.nanoTime() - start) / 1_000_000D;
-        return String.format("%.2f", duration);
+    public Stopwatch() {
+        this(System.nanoTime());
+    }
+
+    public Stopwatch(final long start) {
+        this.start = start;
+    }
+
+    public long elapsedNanos() {
+        return System.nanoTime() - start;
+    }
+
+    public void reset() {
+        start = System.nanoTime();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%d ms", elapsedNanos() / 1_000_000);
     }
 
 }

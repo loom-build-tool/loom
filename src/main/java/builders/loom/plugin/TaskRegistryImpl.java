@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import builders.loom.api.BuildContext;
 import builders.loom.api.GoalTask;
 import builders.loom.api.Task;
-import builders.loom.util.DirectedGraph;
+import builders.loom.misc.DirectedGraph;
 
 public class TaskRegistryImpl implements TaskRegistryLookup {
 

@@ -39,7 +39,7 @@ import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
-import builders.loom.util.BeanUtil;
+import builders.loom.misc.BeanUtil;
 import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.SystemUtil;
 

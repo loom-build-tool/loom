@@ -16,8 +16,7 @@
 
 package builders.loom.plugin;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +29,8 @@ public final class BiSectFilteringClassLoader extends ClassLoader {
     private static final Logger LOG = LoggerFactory.getLogger(BiSectFilteringClassLoader.class);
 
     // please add DOTs
-    private static final List<String> WHITELISTED_PACKAGES =
-        Arrays.asList("org.slf4j.", "builders.loom.api.", "builders.loom.util.");
+    private static final Set<String> WHITELISTED_PACKAGES =
+        Set.of("org.slf4j.", "builders.loom.api.", "builders.loom.util.");
 
     private final ClassLoader appClassLoader;
 

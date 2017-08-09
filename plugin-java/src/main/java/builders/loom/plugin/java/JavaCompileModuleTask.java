@@ -143,10 +143,6 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
 //            .collect(Collectors.toList());
 
 
-        // Wait until other modules have delivered their compilations to module path
-        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
-            getUsedProducts().getAndWaitProduct(moduleName, "compilation");
-        }
 
         compile(classpath, srcFiles);
 
@@ -178,62 +174,151 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
     }
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
-    private void compile(final List<Path> classpath, final List<Path> srcFiles) throws IOException {
+    private void compile(final List<Path> classpath, final List<Path> srcFiles)
+        throws IOException, InterruptedException {
+
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        final DiagnosticListener<JavaFileObject> diagnosticListener =
-            new DiagnosticLogListener(LOG);
+        final DiagnosticListener<JavaFileObject> diag = new DiagnosticLogListener(LOG);
 
-        final Optional<String> javaVersion = configuredPlatformVersion(getModuleConfig()
-            .getBuildSettings().getJavaPlatformVersion());
+        final Optional<JavaVersion> crossCompileVersion =
+            configuredPlatformVersion(getModuleConfig().getBuildSettings().getJavaPlatformVersion())
+            .map(JavaVersion::ofVersion)
+            .filter(v -> !JavaVersion.current().equals(v));
 
-        try (final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
-            diagnosticListener, null, StandardCharsets.UTF_8)) {
+        final Optional<Path> moduleInfoOpt = srcFiles.stream()
+            .filter(f -> f.getFileName().toString().equals("module-info.java"))
+            .findFirst();
 
-            fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-                Collections.singletonList(getBuildDir()));
+        // Handle these cases:
+        // Case 1 -- pure Java 9 compile with module-info.java --> MODULE_PATH
+        // Case 2 -- pure Java 9 compile without module-info.java --> CLASS_PATH
+        // Case 3 -- Cross-Compile without a module-info.java --> CLASS_PATH
+        // Case 4 -- Cross-Compile with a module-info.java --> 1st run with MODULE_PATH,
+        //           2nd run with CLASS_PATH, cross compile and without module-info.java
 
-            // TODO doesn't work
-//            fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
-//                xxx, xxx);
+        if (moduleInfoOpt.isPresent()) {
+            // Case 1 or 4
 
-            // workaround
-            final List<Path> modulePath = buildModulePath(classpath);
-            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, modulePath);
-            LOG.debug("Modulepath: {}", modulePath);
+            if (crossCompileVersion.isPresent()) {
+                // Case 4 - 1st step
 
-            if (javaVersion.isPresent()) {
                 // Unfortunately JDK doesn't support cross-compile for module-info.java
+                // First, compile everything with Java 9 (TODO what to do with Java 10?)
 
-                // First, compile module-info.java with current JDK version
-                final Optional<Path> moduleInfoOpt = srcFiles.stream()
-                    .filter(f -> f.getFileName().toString().equals("module-info.java"))
-                    .findFirst();
+                LOG.debug("Compile {} java files (with module path)", srcFiles.size());
+                compileSources(classpath, srcFiles, compiler, diag, true, JavaVersion.JAVA_9);
 
-                final List<Path> srcFilesWithoutModuleInfo;
-                if (moduleInfoOpt.isPresent()) {
-                    final Path moduleInfo = moduleInfoOpt.get();
+                // Case 4 - 2nd step
+                // Then, compile everything but the module-info with requested Version
+                final Path moduleInfo = moduleInfoOpt.get();
+                final List<Path> srcFilesWithoutModuleInfo = srcFiles.stream()
+                    .filter(f -> f != moduleInfo)
+                    .collect(Collectors.toList());
 
-                    LOG.debug("Compile {}", moduleInfo);
-                    compile(compiler, diagnosticListener, fileManager, buildOptions(null),
-                        fileManager.getJavaFileObjects(moduleInfo));
-
-                    // Then, compile everything else with requested Version
-                    srcFilesWithoutModuleInfo = srcFiles.stream()
-                        .filter(f -> f != moduleInfo)
-                        .collect(Collectors.toList());
-                } else {
-                    srcFilesWithoutModuleInfo = srcFiles;
-                }
-
-                LOG.debug("Compile {} java files", srcFilesWithoutModuleInfo.size());
-                compile(compiler, diagnosticListener, fileManager, buildOptions(javaVersion.get()),
-                    fileManager.getJavaFileObjectsFromPaths(srcFilesWithoutModuleInfo));
+                LOG.debug("Compile {} java files (Cross Compile for Java {})",
+                    srcFilesWithoutModuleInfo.size(), crossCompileVersion.get());
+                compileSources(classpath, srcFilesWithoutModuleInfo, compiler, diag, false,
+                    crossCompileVersion.get());
             } else {
-                LOG.debug("Compile {} java files", srcFiles.size());
-                compile(compiler, diagnosticListener, fileManager, buildOptions(null),
-                    fileManager.getJavaFileObjectsFromPaths(srcFiles));
+                // Case 1
+                LOG.debug("Compile {} java files (with module path)", srcFiles.size());
+                compileSources(classpath, srcFiles, compiler, diag, true, null);
+            }
+        } else {
+            // Case 2 or 3
+            if (crossCompileVersion.isPresent()) {
+                // Case 3
+                LOG.debug("Compile {} java files (Cross Compile for Java {})",
+                    srcFiles.size(), crossCompileVersion.get());
+                compileSources(classpath, srcFiles, compiler, diag, false,
+                    crossCompileVersion.get());
+            } else {
+                // Case 2
+                LOG.debug("Compile {} java files (with classpath)", srcFiles.size());
+                compileSources(classpath, srcFiles, compiler, diag, false, null);
             }
         }
+    }
+
+    private StandardJavaFileManager newFileManager(
+        final JavaCompiler compiler, final DiagnosticListener<JavaFileObject> diagnosticListener,
+        final boolean useModulePath, final List<Path> classpath)
+        throws IOException, InterruptedException {
+
+        final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+            diagnosticListener, null, StandardCharsets.UTF_8);
+
+        fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
+            Collections.singletonList(getBuildDir()));
+
+        if (useModulePath) {
+            buildModulePath(classpath, fileManager);
+        } else {
+            buildClassPath(classpath, fileManager);
+        }
+
+        return fileManager;
+    }
+
+    private void compileSources(final List<Path> classpath, final List<Path> srcFiles,
+                                final JavaCompiler compiler,
+                                final DiagnosticListener<JavaFileObject> diag,
+                                final boolean useModulePath, final JavaVersion release)
+        throws IOException, InterruptedException {
+
+        try (final StandardJavaFileManager fileManager =
+                 newFileManager(compiler, diag, useModulePath, classpath)) {
+            compile(compiler, diag, fileManager, buildOptions(release),
+                fileManager.getJavaFileObjectsFromPaths(srcFiles));
+        }
+    }
+
+    private void buildModulePath(final List<Path> classpath,
+                                 final StandardJavaFileManager fileManager)
+        throws InterruptedException, IOException {
+
+        // Wait until other modules have delivered their compilations to module path
+        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+            // TODO doesn't work
+/*
+            final Optional<CompilationProduct> compilation =
+                useProduct(moduleName, "compilation", CompilationProduct.class);
+            if (compilation.isPresent()) {
+                final Path moduleCompilePath = compilation.get().getClassesDir();
+                LOG.debug("Modulepath for module {}: {}", moduleName, moduleCompilePath);
+                fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
+                    moduleName, List.of(moduleCompilePath));
+            }
+*/
+
+            // workaround - step 1/2
+            getUsedProducts().getAndWaitProduct(moduleName, "compilation");
+        }
+
+        // workaround - step 2/2
+        final List<Path> modulePath = new ArrayList<>();
+        modulePath.add(getBuildDir().getParent());
+        modulePath.addAll(classpath);
+        fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, modulePath);
+        LOG.debug("Modulepath: {}", modulePath);
+    }
+
+    private void buildClassPath(final List<Path> classpath,
+                                final StandardJavaFileManager fileManager)
+        throws InterruptedException, IOException {
+
+        final List<Path> classPath = new ArrayList<>();
+
+        // Wait until other modules have delivered their compilations to module path
+        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+            useProduct(moduleName, "compilation", CompilationProduct.class)
+                .ifPresent(product -> classPath.add(product.getClassesDir()));
+        }
+
+        classPath.addAll(classpath);
+
+        fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, classPath);
+        LOG.debug("Classpath: {}", classPath);
     }
 
     private void compile(final JavaCompiler compiler,
@@ -249,21 +334,14 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         }
     }
 
-    private List<Path> buildModulePath(final List<Path> classpath) {
-        final List<Path> modulePath = new ArrayList<>();
-        modulePath.add(getBuildDir().getParent());
-        modulePath.addAll(classpath);
-        return modulePath;
-    }
-
-    private static List<String> buildOptions(final String release) {
+    private static List<String> buildOptions(final JavaVersion release) {
         final List<String> options = new ArrayList<>();
 
         options.add("-Xlint:all");
 
         if (release != null) {
             options.add("--release");
-            options.add(release);
+            options.add(Integer.toString(release.getNumericVersion()));
         }
 
         return options;

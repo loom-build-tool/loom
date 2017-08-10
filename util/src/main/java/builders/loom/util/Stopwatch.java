@@ -18,6 +18,7 @@ package builders.loom.util;
 
 public final class Stopwatch {
 
+    private static final int MS_IN_NANOS = 1_000_000;
     private long start;
 
     public Stopwatch() {
@@ -38,7 +39,7 @@ public final class Stopwatch {
 
     @Override
     public String toString() {
-        return String.format("%d ms", elapsedNanos() / 1_000_000);
+        return String.format("%d ms", elapsedNanos() / MS_IN_NANOS);
     }
 
 }

@@ -22,15 +22,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import builders.loom.api.LoomPaths;
-
 public final class TempFile implements Closeable {
 
     private final Path file;
 
     public TempFile(final String prefix, final String suffix) {
         try {
-            file = Files.createTempFile(LoomPaths.PROJECT_LOOM_PATH, prefix, suffix);
+            file = Files.createTempFile(prefix, suffix);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

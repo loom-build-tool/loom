@@ -39,63 +39,76 @@ public final class XmlUtil {
 
     public static Iterable<Node> iterable(final NodeList nodes) {
         return () ->
-            new Iterator<Node>() {
-
-                int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < nodes.getLength();
-                }
-
-                @Override
-                public Node next() {
-                    if (hasNext()) {
-                        return nodes.item(index++);
-                    } else {
-                        throw new NoSuchElementException();
-                    }
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-         };
+            new NodeListIterator(nodes);
     }
 
     public static Iterable<Element> iterableElements(final NodeList nodes) {
 
         return () ->
-            new Iterator<>() {
+            new NodeListElementIterator(nodes);
+    }
 
-                final Iterator<Node> it = iterable(nodes).iterator();
+    private static final class NodeListElementIterator implements Iterator<Element> {
 
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
+        private final Iterator<Node> it;
 
-                @Override
-                public Element next() {
-                    if (hasNext()) {
-                        final Node node = it.next();
-                        Preconditions.checkState(
-                            node.getNodeType() == Node.ELEMENT_NODE,
-                            "Cannot cast node type " + node.getNodeType() + " to element"
-                        );
-                        return (Element) node;
-                    } else {
-                        throw new NoSuchElementException();
-                    }
-                }
+        private NodeListElementIterator(final NodeList nodes) {
+            it = iterable(nodes).iterator();
+        }
 
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
+        @Override
+        public boolean hasNext() {
+            return it.hasNext();
+        }
 
-        };
+        @Override
+        public Element next() {
+            if (hasNext()) {
+                final Node node = it.next();
+                Preconditions.checkState(
+                    node.getNodeType() == Node.ELEMENT_NODE,
+                    "Cannot cast node type " + node.getNodeType() + " to element"
+                );
+                return (Element) node;
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private static final class NodeListIterator implements Iterator<Node> {
+
+        private final NodeList nodes;
+
+        private int index;
+
+        private NodeListIterator(final NodeList nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index < nodes.getLength();
+        }
+
+        @Override
+        public Node next() {
+            if (hasNext()) {
+                return nodes.item(index++);
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

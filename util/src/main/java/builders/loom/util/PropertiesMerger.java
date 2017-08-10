@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package builders.loom.util;
 
 import java.util.Objects;
@@ -8,7 +24,7 @@ public class PropertiesMerger {
     private final Properties wrapper;
     private boolean changed;
 
-    public PropertiesMerger(Properties properties) {
+    public PropertiesMerger(final Properties properties) {
         Objects.requireNonNull(properties);
         this.wrapper = properties;
     }
@@ -16,7 +32,7 @@ public class PropertiesMerger {
     /**
      * Replace value with new value only if it exists.
      */
-    public void fixup(String key, String newValue) {
+    public void fixup(final String key, final String newValue) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(newValue);
         if (wrapper.containsKey(key)) {
@@ -28,7 +44,7 @@ public class PropertiesMerger {
     /**
      * Set value if not defined.
      */
-    public void setIfAbsent(String key, String value) {
+    public void setIfAbsent(final String key, final String value) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
         if (!wrapper.containsKey(key)) {

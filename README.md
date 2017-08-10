@@ -14,7 +14,7 @@ What is Loom **not**?
 
 # Prerequisites
 
-- JDK 8
+- JDK 9
 
 
 # Documentation

@@ -16,14 +16,12 @@
 
 package builders.loom.plugin.eclipse;
 
-import java.io.BufferedOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +42,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
@@ -61,6 +58,7 @@ import builders.loom.util.Preconditions;
 import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlUtil;
+import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
@@ -158,14 +156,14 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return prefs;
     }
 
-    private boolean mergeJdtPrefs(final Properties prefs, Module module) {
+    private boolean mergeJdtPrefs(final Properties prefs, final Module module) {
 
         Preconditions.checkState(prefs.getProperty("eclipse.preferences.version").equals("1"));
 
         final String javaLangLevel =
             buildProjectJdkName(module.getConfig().getBuildSettings().getJavaPlatformVersion());
 
-        PropertiesMerger merger = new PropertiesMerger(prefs);
+        final PropertiesMerger merger = new PropertiesMerger(prefs);
 
         merger.fixup("org.eclipse.jdt.core.compiler.source", javaLangLevel);
         merger.fixup("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
@@ -176,9 +174,9 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         return merger.isChanged() || changedByDefaults;
     }
 
-    private boolean addJdtPrefDefaults(Properties prefs) {
+    private boolean addJdtPrefDefaults(final Properties prefs) {
 
-        PropertiesMerger merger = new PropertiesMerger(prefs);
+        final PropertiesMerger merger = new PropertiesMerger(prefs);
 
         merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode", "enabled");
         merger.setIfAbsent("org.eclipse.jdt.core.compiler.codegen.unusedLocal", "preserve");
@@ -230,9 +228,11 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element buildSpec = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
+        final Element buildSpec =
+            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("buildSpec"));
 
-        for(final Element item : XmlUtil.iterableElements(projectXml.getElementsByTagName("buildCommand"))) {
+        for (final Element item
+            : XmlUtil.iterableElements(projectXml.getElementsByTagName("buildCommand"))) {
 
             found |= XmlUtil.getOnlyElement(
                 item.getElementsByTagName("name")).getTextContent()
@@ -256,7 +256,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         boolean found = false;
 
-        final Element naturesNode = XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
+        final Element naturesNode =
+            XmlUtil.getOnlyElement(projectXml.getElementsByTagName("natures"));
 
         for (final Node item : XmlUtil.iterable(projectXml.getElementsByTagName("nature"))) {
 
@@ -277,7 +278,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private void writeDocumentToFile(final Path file, final Document doc)
         throws IOException, TransformerException {
 
-        try (final OutputStream outputStream = newOut(file)) {
+        try (final OutputStream outputStream = XmlWriter.newOut(file)) {
             doc.setXmlStandalone(true);
 
             transformer.transform(new DOMSource(doc), new StreamResult(outputStream));
@@ -287,16 +288,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     private void writePropertiesToFile(final Path file, final Properties properties)
         throws IOException {
 
-        try (final OutputStream outputStream = newOut(file)) {
+        try (final OutputStream outputStream = XmlWriter.newOut(file)) {
             properties.store(outputStream, "Loom Eclipse Plugin");
         }
 
-    }
-    // TODO use XmlWriter
-
-    private OutputStream newOut(final Path file) throws IOException {
-        return new BufferedOutputStream(Files.newOutputStream(file,
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
     }
 
     @SuppressWarnings("checkstyle:magicnumber")

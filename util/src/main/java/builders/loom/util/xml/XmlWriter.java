@@ -62,7 +62,7 @@ public class XmlWriter {
         }
     }
 
-    private OutputStream newOut(final Path file) throws IOException {
+    public static OutputStream newOut(final Path file) throws IOException {
         return new BufferedOutputStream(Files.newOutputStream(file,
             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
     }

@@ -260,19 +260,6 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         return fileManager;
     }
 
-    private void compileSources(final List<Path> classpath, final List<Path> srcFiles,
-                                final JavaCompiler compiler,
-                                final DiagnosticListener<JavaFileObject> diag,
-                                final boolean useModulePath, final JavaVersion release)
-        throws IOException, InterruptedException {
-
-        try (final StandardJavaFileManager fileManager =
-                 newFileManager(compiler, diag, useModulePath, classpath)) {
-            compile(compiler, diag, fileManager, buildOptions(release),
-                fileManager.getJavaFileObjectsFromPaths(srcFiles));
-        }
-    }
-
     private void buildModulePath(final List<Path> classpath,
                                  final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
@@ -321,7 +308,20 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         LOG.debug("Classpath: {}", classPath);
     }
 
-    private void compile(final JavaCompiler compiler,
+    private void compileSources(final List<Path> classpath, final List<Path> srcFiles,
+                                final JavaCompiler compiler,
+                                final DiagnosticListener<JavaFileObject> diag,
+                                final boolean useModulePath, final JavaVersion release)
+        throws IOException, InterruptedException {
+
+        try (final StandardJavaFileManager fileManager =
+                 newFileManager(compiler, diag, useModulePath, classpath)) {
+            compileSources(compiler, diag, fileManager, buildOptions(release),
+                fileManager.getJavaFileObjectsFromPaths(srcFiles));
+        }
+    }
+
+    private void compileSources(final JavaCompiler compiler,
                          final DiagnosticListener<JavaFileObject> diagnosticListener,
                          final StandardJavaFileManager fileManager, final List<String> options,
                          final Iterable<? extends JavaFileObject> compUnits) {

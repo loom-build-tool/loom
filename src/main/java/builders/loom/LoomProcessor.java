@@ -92,10 +92,10 @@ public class LoomProcessor {
             buildConfig = new BuildConfigImpl();
         }
 
-        final Optional<String> moduleName =
-            findModuleName(LoomPaths.PROJECT_DIR, buildConfig, null);
+        final String moduleName = findModuleName(LoomPaths.PROJECT_DIR, buildConfig, null)
+            .orElse(Module.UNNAMED_MODULE);
 
-        return new Module(moduleName.orElse("unnamed"), LoomPaths.PROJECT_DIR, buildConfig);
+        return new Module(moduleName, LoomPaths.PROJECT_DIR, buildConfig);
     }
 
     @SuppressWarnings("checkstyle:returncount")

@@ -21,6 +21,8 @@ import java.util.Objects;
 
 public class Module implements BuildContext {
 
+    public static final String UNNAMED_MODULE = "unnamed";
+
     private final String moduleName;
     private final Path path;
     private final ModuleBuildConfig config;

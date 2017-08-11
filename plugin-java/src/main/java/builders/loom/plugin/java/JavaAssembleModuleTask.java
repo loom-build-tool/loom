@@ -29,6 +29,7 @@ import java.util.jar.Manifest;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
+import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -138,8 +139,10 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
             .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
 
         if (addAutomaticModuleName) {
-            manifestBuilder.put("Automatic-Module-Name",
-                getModuleConfig().getBuildSettings().getModuleName());
+            final String moduleName = getBuildContext().getModuleName();
+            if (!Module.UNNAMED_MODULE.equals(moduleName)) {
+                manifestBuilder.put("Automatic-Module-Name", moduleName);
+            }
         }
 
         return newManifest;

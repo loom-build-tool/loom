@@ -38,13 +38,13 @@ public class BuildSettingsImpl implements BuildSettings {
     }
 
     @Override
-    public JavaVersion getJavaPlatformVersion() {
-        return javaPlatformVersion;
+    public String getModuleName() {
+        return moduleName;
     }
 
     @Override
-    public String getModuleName() {
-        return moduleName;
+    public JavaVersion getJavaPlatformVersion() {
+        return javaPlatformVersion;
     }
 
     @Override

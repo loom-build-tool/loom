@@ -323,7 +323,11 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
             rootBuilder.element("classpathentry")
                 .attr("combineaccessrules", "false")
                 .attr("kind", "src")
-                .attr("path", "/" + depModule.getModuleName());
+                .attr("path", "/" + depModule.getModuleName())
+                .element("attributes")
+                    .element("attribute")
+                        .attr("name", "module")
+                        .attr("value", "true");
         }
 
         final Optional<ArtifactListProduct> testArtifacts =

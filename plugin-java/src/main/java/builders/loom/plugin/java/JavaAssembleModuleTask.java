@@ -45,13 +45,11 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<CompilationProduct> compilation = useProduct(
-            "compilation", CompilationProduct.class);
-
-        compilation.ifPresent(this::validateModuleName);
-
         final Optional<ProcessedResourceProduct> resourcesTreeProduct = useProduct(
             "processedResources", ProcessedResourceProduct.class);
+
+        final Optional<CompilationProduct> compilation = useProduct(
+            "compilation", CompilationProduct.class);
 
         if (!resourcesTreeProduct.isPresent() && !compilation.isPresent()) {
             return completeSkip();
@@ -63,15 +61,25 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         final Path jarFile = buildDir.resolve(String.format("%s.jar",
             getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = buildJarOutput(jarFile)) {
-            // compilation & module-info.class first !
-            if (compilation.isPresent()) {
-                final Path resolve = compilation.get().getClassesDir();
+        final Optional<Path> compilationDir = compilation
+            .map(CompilationProduct::getClassesDir)
+            .filter(c -> Files.exists(c));
 
-                // TODO cleanup
-                // TODO move module-info.class related stuff to LoomPaths
-                final Path modulesInfoClassFile = resolve.resolve("module-info.class");
-                if (Files.exists(modulesInfoClassFile)) {
+        // TODO cleanup
+        // TODO move module-info.class related stuff to LoomPaths
+        final Optional<Path> modulesInfoClassFileOpt = compilationDir
+            .map(c -> c.resolve("module-info.class"))
+            .filter(c -> Files.exists(c));
+
+        final boolean addAutomaticModuleName = !modulesInfoClassFileOpt.isPresent();
+
+        try (final JarOutputStream os = buildJarOutput(jarFile, addAutomaticModuleName)) {
+            // compilation & module-info.class first !
+            if (compilationDir.isPresent()) {
+                final Path resolve = compilationDir.get();
+
+                if (modulesInfoClassFileOpt.isPresent()) {
+                    final Path modulesInfoClassFile = modulesInfoClassFileOpt.get();
                     final JarEntry entry =
                         new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
                     entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
@@ -91,15 +99,6 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
-    private void validateModuleName(final CompilationProduct compilation) {
-        final Path classFile = compilation.getClassesDir().resolve("module-info.class");
-
-        if (Files.notExists(classFile) && pluginSettings.getAutomaticModuleName() == null) {
-            throw new IllegalStateException("To build a JAR file, either create a "
-                + "module-info.java file or specify setting java.automaticModuleName");
-        }
-    }
-
     private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) {
 
         // TODO replace JDK ModuleInfoExtender by something similar, then remove
@@ -117,11 +116,14 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         }
     }
 
-    private JarOutputStream buildJarOutput(final Path jarFile) throws IOException {
-        return new JarOutputStream(Files.newOutputStream(jarFile), prepareManifest());
+    private JarOutputStream buildJarOutput(final Path jarFile, final boolean addAutomaticModuleName)
+        throws IOException {
+
+        return new JarOutputStream(Files.newOutputStream(jarFile),
+            prepareManifest(addAutomaticModuleName));
     }
 
-    private Manifest prepareManifest() {
+    private Manifest prepareManifest(final boolean addAutomaticModuleName) {
         final Manifest newManifest = new Manifest();
 
         final ManifestBuilder manifestBuilder = new ManifestBuilder(newManifest);
@@ -135,8 +137,10 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         Optional.ofNullable(pluginSettings.getMainClassName())
             .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
 
-        Optional.ofNullable(pluginSettings.getAutomaticModuleName())
-            .ifPresent(s -> manifestBuilder.put("Automatic-Module-Name", s));
+        if (addAutomaticModuleName) {
+            manifestBuilder.put("Automatic-Module-Name",
+                getModuleConfig().getBuildSettings().getModuleName());
+        }
 
         return newManifest;
     }

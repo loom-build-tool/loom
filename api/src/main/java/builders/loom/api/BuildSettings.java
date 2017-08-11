@@ -20,6 +20,8 @@ import java.io.Serializable;
 
 public interface BuildSettings extends Serializable {
 
+    String getModuleName();
+
     JavaVersion getJavaPlatformVersion();
 
 }

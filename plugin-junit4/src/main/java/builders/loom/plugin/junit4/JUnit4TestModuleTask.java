@@ -81,7 +81,7 @@ public class JUnit4TestModuleTask extends AbstractModuleTask {
         final Class<?> wrapperClass =
             wrappedClassLoader.loadClass("builders.loom.plugin.junit4.wrapper.JUnit4Wrapper");
 
-        final Object wrapper = wrapperClass.newInstance();
+        final Object wrapper = wrapperClass.getConstructor().newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, List.class);
 
         final TestResult result = (TestResult) wrapperRun.invoke(

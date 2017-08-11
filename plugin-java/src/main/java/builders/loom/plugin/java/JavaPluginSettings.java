@@ -21,6 +21,7 @@ import builders.loom.api.PluginSettings;
 public class JavaPluginSettings implements PluginSettings {
 
     private String mainClassName;
+    private String automaticModuleName;
     private String resourceFilterGlob;
 
     public String getMainClassName() {
@@ -29,6 +30,14 @@ public class JavaPluginSettings implements PluginSettings {
 
     public void setMainClassName(final String mainClassName) {
         this.mainClassName = mainClassName;
+    }
+
+    public String getAutomaticModuleName() {
+        return automaticModuleName;
+    }
+
+    public void setAutomaticModuleName(final String automaticModuleName) {
+        this.automaticModuleName = automaticModuleName;
     }
 
     public String getResourceFilterGlob() {

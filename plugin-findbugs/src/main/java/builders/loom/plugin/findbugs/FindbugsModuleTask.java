@@ -34,6 +34,7 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.Preconditions;
 import edu.umd.cs.findbugs.Priorities;
 
 public class FindbugsModuleTask extends AbstractModuleTask {

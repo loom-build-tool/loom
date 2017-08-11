@@ -30,7 +30,7 @@ public class BuildConfigDTO {
     private Set<String> plugins;
     private Map<String, String> settings;
     private Set<String> moduleDependencies;
-    private Set<String> dependencies;
+    private Set<String> compileDependencies;
     private Set<String> testDependencies;
 
     public Set<String> getPlugins() {
@@ -57,12 +57,12 @@ public class BuildConfigDTO {
         this.moduleDependencies = moduleDependencies;
     }
 
-    public Set<String> getDependencies() {
-        return dependencies;
+    public Set<String> getCompileDependencies() {
+        return compileDependencies;
     }
 
-    public void setDependencies(final Set<String> dependencies) {
-        this.dependencies = dependencies;
+    public void setCompileDependencies(final Set<String> compileDependencies) {
+        this.compileDependencies = compileDependencies;
     }
 
     public Set<String> getTestDependencies() {
@@ -90,7 +90,7 @@ public class BuildConfigDTO {
             buildSettings,
             cfg,
             moduleDependencies != null ? moduleDependencies : Collections.emptySet(),
-            dependencies != null ? dependencies : Collections.emptySet(),
+            compileDependencies != null ? compileDependencies : Collections.emptySet(),
             testDependencies != null ? testDependencies : Collections.emptySet());
     }
 

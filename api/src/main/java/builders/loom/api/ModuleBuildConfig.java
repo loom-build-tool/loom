@@ -24,7 +24,7 @@ public interface ModuleBuildConfig extends BuildConfig, BuildConfigWithSettings 
 
     Set<String> getModuleDependencies();
 
-    Set<String> getDependencies();
+    Set<String> getCompileDependencies();
 
     Set<String> getTestDependencies();
 

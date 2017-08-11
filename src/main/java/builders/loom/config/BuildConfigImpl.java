@@ -36,7 +36,7 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     private final BuildSettings buildSettings;
     private final Map<String, String> settings;
     private final Set<String> moduleDependencies;
-    private final Set<String> dependencies;
+    private final Set<String> compileDependencies;
     private final Set<String> testDependencies;
 
     public BuildConfigImpl() {
@@ -47,14 +47,15 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     public BuildConfigImpl(final Set<String> plugins,
                     final BuildSettings buildSettings,
                     final Map<String, String> settings,
-                    final Set<String> moduleDependencies, final Set<String> dependencies,
+                    final Set<String> moduleDependencies, final Set<String> compileDependencies,
                     final Set<String> testDependencies) {
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
         this.moduleDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
-        this.dependencies = Collections.unmodifiableSet(Objects.requireNonNull(dependencies));
+        this.compileDependencies =
+            Collections.unmodifiableSet(Objects.requireNonNull(compileDependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));
     }
@@ -80,8 +81,8 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     }
 
     @Override
-    public Set<String> getDependencies() {
-        return dependencies;
+    public Set<String> getCompileDependencies() {
+        return compileDependencies;
     }
 
     @Override
@@ -96,7 +97,7 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
             + ", buildSettings=" + buildSettings
             + ", settings=" + settings
             + ", moduleDependencies=" + moduleDependencies
-            + ", dependencies=" + dependencies
+            + ", compileDependencies=" + compileDependencies
             + ", testDependencies=" + testDependencies
             + '}';
     }

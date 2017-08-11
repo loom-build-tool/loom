@@ -55,16 +55,16 @@ public class MavenArtifactResolverModuleTask extends AbstractModuleTask {
     }
 
     private ArtifactListProduct productCompile() {
-        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
-        return new ArtifactListProduct(mavenResolver.resolve(dependencies, DependencyScope.COMPILE,
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.COMPILE,
             "sources"));
     }
 
     private ArtifactListProduct productTest() {
-        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
-        dependencies.addAll(getModuleConfig().getTestDependencies());
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+        deps.addAll(getModuleConfig().getTestDependencies());
 
-        return new ArtifactListProduct(mavenResolver.resolve(dependencies, DependencyScope.TEST,
+        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.TEST,
             "sources"));
     }
 

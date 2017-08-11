@@ -129,7 +129,7 @@ public class MavenInstallModuleTask extends AbstractModuleTask {
         pom.setArtifactId(artifact.getArtifactId());
         pom.setVersion(artifact.getVersion());
 
-        for (final String compileDependency : getModuleConfig().getDependencies()) {
+        for (final String compileDependency : getModuleConfig().getCompileDependencies()) {
             pom.addDependency(mapDependency(compileDependency, null));
         }
 

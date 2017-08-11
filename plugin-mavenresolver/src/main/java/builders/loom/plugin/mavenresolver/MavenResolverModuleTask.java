@@ -61,8 +61,8 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
     }
 
     private ClasspathProduct compileScope() {
-        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
             DependencyScope.COMPILE, null);
 
         final List<Path> collect = artifactProducts.stream()
@@ -72,10 +72,10 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
     }
 
     private ClasspathProduct testScope() {
-        final List<String> dependencies = new ArrayList<>(getModuleConfig().getDependencies());
-        dependencies.addAll(getModuleConfig().getTestDependencies());
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+        deps.addAll(getModuleConfig().getTestDependencies());
 
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(dependencies,
+        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
             DependencyScope.TEST, null);
 
         final List<Path> collect = artifactProducts.stream()

@@ -300,7 +300,7 @@ public class LoomInstaller {
     private static void copyScripts(final Path loomRootDirectory, final Path projectRoot)
         throws IOException {
 
-        System.out.println("Create Loom build scripts");
+        System.out.println("Create Loom Launcher scripts");
         final Path scriptsRoot = loomRootDirectory.resolve("scripts");
 
         Files.copy(scriptsRoot.resolve("loom.cmd"), projectRoot.resolve("loom.cmd"),
@@ -310,11 +310,6 @@ public class LoomInstaller {
         Files.copy(scriptsRoot.resolve("loom"), loomScript,
             StandardCopyOption.REPLACE_EXISTING);
         chmod(loomScript, "rwxr-xr-x");
-
-        if (Files.notExists(projectRoot.resolve("module.yml"))) {
-            System.out.println("Create initial module.yml");
-            Files.copy(scriptsRoot.resolve("module.yml"), projectRoot.resolve("module.yml"));
-        }
     }
 
     private static void chmod(final Path file, final String perms) throws IOException {

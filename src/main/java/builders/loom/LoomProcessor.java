@@ -103,21 +103,23 @@ class LoomProcessor {
     private String findModuleName(final Path projectDir, final ModuleBuildConfig buildConfig,
                                   final String pathName) {
 
-        final Optional<String> moduleName = readModuleNameFromModuleInfo(projectDir);
-        final String automaticModuleName = buildConfig.getBuildSettings().getModuleName();
+        final Optional<String> moduleNameFromModuleInfo = readModuleNameFromModuleInfo(projectDir);
 
-        if (moduleName.isPresent()) {
-            if (automaticModuleName != null) {
+        final Optional<String> moduelNameFromYml =
+            Optional.ofNullable(buildConfig.getBuildSettings().getModuleName());
+
+        if (moduleNameFromModuleInfo.isPresent()) {
+            if (moduelNameFromYml.isPresent()) {
                 throw new IllegalStateException("Name of module must not be configured twice. "
-                    + "Name in module-info.java: " + moduleName.get() + " - "
-                    + "Name in module.yml: " + automaticModuleName);
+                    + "Name in module-info.java: " + moduleNameFromModuleInfo.get() + " - "
+                    + "Name in module.yml: " + moduelNameFromYml.get());
             }
 
-            return moduleName.get();
+            return moduleNameFromModuleInfo.get();
         }
 
-        if (automaticModuleName != null) {
-            return automaticModuleName;
+        if (moduelNameFromYml.isPresent()) {
+            return moduelNameFromYml.get();
         }
 
         if (pathName != null) {
@@ -126,7 +128,7 @@ class LoomProcessor {
 
         throw new IllegalStateException("Name of a module must be specified via "
             + "module-info.java "
-            + "or setting automaticModuleName "
+            + "or setting moduelNameFromYml "
             + "or implicitly via modules subdirectory name");
     }
 

@@ -36,13 +36,15 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
+import builders.loom.config.BuildConfigImpl;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.PluginLoader;
-import builders.loom.util.FileUtils;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-class LoomProcessor {
+public class LoomProcessor {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LoomProcessor.class);
 
     private ModuleRunner moduleRunner;
 
@@ -51,15 +53,13 @@ class LoomProcessor {
     }
 
     public void init(final RuntimeConfigurationImpl runtimeConfiguration) {
-        final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
-
         final Stopwatch sw = new Stopwatch();
 
         // Init Modules / Plugins for Modules
         final ModuleRegistry moduleRegistry = new ModuleRegistry();
         listModules(runtimeConfiguration).forEach(moduleRegistry::register);
 
-        log.debug("Initialized modules in {}", sw);
+        LOG.debug("Initialized modules in {}", sw);
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration);
         moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry);
@@ -84,52 +84,52 @@ class LoomProcessor {
 
     private Module singleModule(final RuntimeConfigurationImpl rtConfig) {
         final Path configFile = LoomPaths.PROJECT_DIR.resolve("module.yml");
-        if (Files.notExists(configFile)) {
-            throw new IllegalStateException("Missing module.yml in project root");
+
+        final ModuleBuildConfig buildConfig;
+        if (Files.exists(configFile)) {
+            buildConfig = ConfigReader.readConfig(rtConfig, configFile, "base");
+        } else {
+            buildConfig = new BuildConfigImpl();
         }
 
-        try {
-            final ModuleBuildConfig buildConfig =
-                ConfigReader.readConfig(rtConfig, configFile, "base");
+        final Optional<String> moduleName =
+            findModuleName(LoomPaths.PROJECT_DIR, buildConfig, null);
 
-            final String moduleName = findModuleName(LoomPaths.PROJECT_DIR, buildConfig, null);
-
-            return new Module(moduleName, LoomPaths.PROJECT_DIR, buildConfig);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return new Module(moduleName.orElse("unnamed"), LoomPaths.PROJECT_DIR, buildConfig);
     }
 
-    private String findModuleName(final Path projectDir, final ModuleBuildConfig buildConfig,
-                                  final String pathName) {
+    @SuppressWarnings("checkstyle:returncount")
+    private Optional<String> findModuleName(final Path projectDir,
+                                            final ModuleBuildConfig buildConfig,
+                                            final String pathName) {
 
         final Optional<String> moduleNameFromModuleInfo = readModuleNameFromModuleInfo(projectDir);
 
-        final Optional<String> moduelNameFromYml =
+        final Optional<String> moduleNameFromYml =
             Optional.ofNullable(buildConfig.getBuildSettings().getModuleName());
 
         if (moduleNameFromModuleInfo.isPresent()) {
-            if (moduelNameFromYml.isPresent()) {
+            if (moduleNameFromYml.isPresent()) {
                 throw new IllegalStateException("Name of module must not be configured twice. "
                     + "Name in module-info.java: " + moduleNameFromModuleInfo.get() + " - "
-                    + "Name in module.yml: " + moduelNameFromYml.get());
+                    + "Name in module.yml: " + moduleNameFromYml.get());
             }
 
-            return moduleNameFromModuleInfo.get();
+            LOG.debug("Extracted module name {} from module-info", moduleNameFromModuleInfo.get());
+            return moduleNameFromModuleInfo;
         }
 
-        if (moduelNameFromYml.isPresent()) {
-            return moduelNameFromYml.get();
+        if (moduleNameFromYml.isPresent()) {
+            LOG.debug("Extracted module name {} from module.yml", moduleNameFromYml.get());
+            return moduleNameFromYml;
         }
 
         if (pathName != null) {
-            return pathName;
+            LOG.debug("Extracted module name {} from module path", pathName);
+            return Optional.of(pathName);
         }
 
-        throw new IllegalStateException("Name of a module must be specified via "
-            + "module-info.java "
-            + "or setting moduelNameFromYml "
-            + "or implicitly via modules subdirectory name");
+        return Optional.empty();
     }
 
     private List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
@@ -141,16 +141,20 @@ class LoomProcessor {
 
             for (final Path module : modulePaths) {
                 final Path moduleBuildConfig = module.resolve("module.yml");
-                if (Files.notExists(moduleBuildConfig)) {
-                    throw new IllegalStateException("Missing module.yml in module " + module);
+                final String modulePathName = module.getFileName().toString();
+
+                final ModuleBuildConfig buildConfig;
+
+                if (Files.exists(moduleBuildConfig)) {
+                    buildConfig = ConfigReader.readConfig(
+                        runtimeConfiguration, moduleBuildConfig, modulePathName);
+                } else {
+                    buildConfig = new BuildConfigImpl();
                 }
 
-                final String modulePathName = module.getFileName().toString();
-                final ModuleBuildConfig buildConfig = ConfigReader.readConfig(
-                    runtimeConfiguration, moduleBuildConfig, modulePathName);
-
                 final String moduleName = findModuleName(module, buildConfig,
-                    module.getFileName().toString());
+                    module.getFileName().toString()).orElseThrow(() ->
+                    new IllegalStateException("No module name could be determined"));
 
                 modules.add(new Module(moduleName, module, buildConfig));
             }
@@ -218,14 +222,8 @@ class LoomProcessor {
         return moduleRunner.execute(new HashSet<>(productIds));
     }
 
-    public void clean() {
-        FileUtils.cleanDir(LoomPaths.BUILD_DIR);
-        FileUtils.cleanDir(LoomPaths.PROJECT_LOOM_PATH);
-    }
-
     public void logSystemEnvironment() {
-        final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
-        log.debug("Running Loom {} on {} {} {}, Java {} ({}) with {} cores",
+        LOG.debug("Running Loom {} on {} {} {}, Java {} ({}) with {} cores",
             Version.getVersion(),
             System.getProperty("os.name"),
             System.getProperty("os.version"),
@@ -236,15 +234,13 @@ class LoomProcessor {
     }
 
     public void logMemoryUsage() {
-        final Logger log = LoggerFactory.getLogger(LoomProcessor.class);
-
         final Runtime rt = Runtime.getRuntime();
         final long maxMemory = rt.maxMemory();
         final long totalMemory = rt.totalMemory();
         final long freeMemory = rt.freeMemory();
         final long memUsed = totalMemory - freeMemory;
 
-        log.debug("Memory max={}, total={}, free={}, used={}",
+        LOG.debug("Memory max={}, total={}, free={}, used={}",
             maxMemory, totalMemory, freeMemory, memUsed);
     }
 

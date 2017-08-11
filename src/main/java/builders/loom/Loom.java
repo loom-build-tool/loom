@@ -38,6 +38,9 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.api.LoomPaths;
+import builders.loom.util.FileUtils;
+
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
@@ -194,18 +197,22 @@ public class Loom {
         return fileLock;
     }
 
-    public static boolean run(final CommandLine cmd) throws Exception {
-        final LoomProcessor loomProcessor = new LoomProcessor();
-
+    private static boolean run(final CommandLine cmd) throws Exception {
         if (cmd.hasOption("clean")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
-            loomProcessor.clean();
+            clean();
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
             if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
                 return false;
             }
         }
+
+        configureLogging();
+
+        final LoomProcessor loomProcessor = new LoomProcessor();
+        loomProcessor.logSystemEnvironment();
+        loomProcessor.logMemoryUsage();
 
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
@@ -219,11 +226,6 @@ public class Loom {
             AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
                 .reset());
         }
-
-        configureLogging();
-
-        loomProcessor.logSystemEnvironment();
-        loomProcessor.logMemoryUsage();
 
         loomProcessor.init(runtimeConfiguration);
 
@@ -258,6 +260,16 @@ public class Loom {
         return buildExecuted;
     }
 
+    private static void clean() {
+        FileUtils.cleanDir(LoomPaths.BUILD_DIR);
+        FileUtils.cleanDir(LoomPaths.PROJECT_LOOM_PATH);
+    }
+
+    private static void configureLogging() {
+        LogConfiguration.configureLogger();
+        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
+    }
+
     private static void printRuntimeConfiguration(final RuntimeConfigurationImpl rtConfig) {
         final Ansi a = Ansi.ansi()
             .a("Initialized runtime configuration");
@@ -270,11 +282,6 @@ public class Loom {
         }
 
         AnsiConsole.out.println(a);
-    }
-
-    private static void configureLogging() {
-        LogConfiguration.configureLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
     }
 
     private static void printProducts(final LoomProcessor loomProcessor, final String format) {

@@ -46,25 +46,28 @@ public final class ConfigReader {
     }
 
     public static ModuleBuildConfig readConfig(final RuntimeConfigurationImpl runtimeConfig,
-                                               final Path buildFile, final String cacheName)
-        throws IOException {
+                                               final Path buildFile, final String cacheName) {
 
         if (!Files.isRegularFile(buildFile)) {
-            throw new IOException("No module.yml found");
+            throw new IllegalArgumentException("No module.yml found");
         }
 
-        final byte[] configData = Files.readAllBytes(buildFile);
+        try {
+            final byte[] configData = Files.readAllBytes(buildFile);
 
-        final BuildConfigImpl buildConfig;
-        if (!runtimeConfig.isCacheEnabled()) {
-            buildConfig = parseConfig(configData);
-            LOG.debug("Working with parsed config: {}", buildConfig);
-        } else {
-            buildConfig = parseAndCacheConfig(configData, cacheName);
-            LOG.debug("Working with cached config: {}", buildConfig);
+            final BuildConfigImpl buildConfig;
+            if (!runtimeConfig.isCacheEnabled()) {
+                buildConfig = parseConfig(configData);
+                LOG.debug("Working with parsed config: {}", buildConfig);
+            } else {
+                buildConfig = parseAndCacheConfig(configData, cacheName);
+                LOG.debug("Working with cached config: {}", buildConfig);
+            }
+
+            return buildConfig;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        return buildConfig;
     }
 
     private static BuildConfigImpl parseAndCacheConfig(final byte[] configData,

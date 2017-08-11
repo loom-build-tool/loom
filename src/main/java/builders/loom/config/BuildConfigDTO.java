@@ -27,8 +27,6 @@ import builders.loom.api.JavaVersion;
 
 public class BuildConfigDTO {
 
-    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
-
     private Set<String> plugins;
     private Map<String, String> settings;
     private Set<String> moduleDependencies;
@@ -83,7 +81,7 @@ public class BuildConfigDTO {
         final JavaVersion javaPlatformVersion =
             Optional.ofNullable(cfg.remove("javaPlatformVersion"))
                 .map(JavaVersion::ofVersion)
-                .orElse(DEFAULT_JAVA_PLATFORM_VERSION);
+                .orElse(BuildConfigImpl.DEFAULT_JAVA_PLATFORM_VERSION);
 
         final BuildSettings buildSettings = new BuildSettingsImpl(moduleName, javaPlatformVersion);
 

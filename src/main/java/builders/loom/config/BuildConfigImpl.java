@@ -23,9 +23,12 @@ import java.util.Objects;
 import java.util.Set;
 
 import builders.loom.api.BuildSettings;
+import builders.loom.api.JavaVersion;
 import builders.loom.api.ModuleBuildConfig;
 
 public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
+
+    static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
 
     private static final long serialVersionUID = 1L;
 
@@ -35,6 +38,11 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     private final Set<String> moduleDependencies;
     private final Set<String> dependencies;
     private final Set<String> testDependencies;
+
+    public BuildConfigImpl() {
+        this(Set.of(), new BuildSettingsImpl(null, DEFAULT_JAVA_PLATFORM_VERSION),
+            Map.of(), Set.of(), Set.of(), Set.of());
+    }
 
     public BuildConfigImpl(final Set<String> plugins,
                     final BuildSettings buildSettings,

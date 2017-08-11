@@ -16,6 +16,7 @@
 
 package builders.loom.config;
 
+import java.lang.module.ModuleDescriptor;
 import java.util.Objects;
 
 import builders.loom.api.BuildSettings;
@@ -23,15 +24,15 @@ import builders.loom.api.JavaVersion;
 
 public class BuildSettingsImpl implements BuildSettings {
 
-    private static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
-
+    private final String moduleName;
     private final JavaVersion javaPlatformVersion;
 
-    public BuildSettingsImpl() {
-        this(DEFAULT_JAVA_PLATFORM_VERSION);
-    }
-
-    public BuildSettingsImpl(final JavaVersion javaPlatformVersion) {
+    public BuildSettingsImpl(final String moduleName, final JavaVersion javaPlatformVersion) {
+        if (moduleName != null) {
+            // Validate module name
+            ModuleDescriptor.newModule(moduleName);
+        }
+        this.moduleName = moduleName;
         this.javaPlatformVersion = Objects.requireNonNull(javaPlatformVersion,
             "javaPlatformVersion required");
     }
@@ -42,9 +43,15 @@ public class BuildSettingsImpl implements BuildSettings {
     }
 
     @Override
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    @Override
     public String toString() {
         return "BuildSettingsImpl{"
-            + "javaPlatformVersion=" + javaPlatformVersion
+            + "moduleName='" + moduleName + '\''
+            + ", javaPlatformVersion=" + javaPlatformVersion
             + '}';
     }
 

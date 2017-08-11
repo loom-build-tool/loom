@@ -19,6 +19,7 @@ package builders.loom.config;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import builders.loom.api.BuildSettings;
@@ -75,10 +76,14 @@ public class BuildConfigDTO {
     public BuildConfigImpl build() {
         final Map<String, String> cfg = settings != null ? settings : new HashMap<>();
 
-        final String javaPlatformVersionStr = cfg.remove("javaPlatformVersion");
-        final BuildSettings buildSettings = javaPlatformVersionStr != null
-            ? new BuildSettingsImpl(JavaVersion.ofVersion(javaPlatformVersionStr))
-            : new BuildSettingsImpl();
+        final String moduleName = cfg.remove("moduleName");
+
+        final JavaVersion javaPlatformVersion =
+            Optional.ofNullable(cfg.remove("javaPlatformVersion"))
+                .map(JavaVersion::ofVersion)
+                .orElse(BuildConfigImpl.DEFAULT_JAVA_PLATFORM_VERSION);
+
+        final BuildSettings buildSettings = new BuildSettingsImpl(moduleName, javaPlatformVersion);
 
         return new BuildConfigImpl(
             plugins != null ? plugins : Collections.emptySet(),

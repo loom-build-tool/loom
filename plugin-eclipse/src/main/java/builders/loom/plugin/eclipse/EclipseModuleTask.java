@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -88,10 +87,8 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     @Override
     public TaskResult run() throws Exception {
-
-        final Path currentDir = Paths.get("");
-
-        final Path currentWorkDirName = currentDir.toAbsolutePath().getFileName();
+        final Path currentWorkDirName = getBuildContext().getPath()
+            .toAbsolutePath().normalize().getFileName();
 
         if (currentWorkDirName == null) {
             throw new IllegalStateException("Can't get current working directory");

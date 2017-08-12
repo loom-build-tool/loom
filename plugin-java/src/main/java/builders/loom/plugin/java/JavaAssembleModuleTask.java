@@ -27,6 +27,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
@@ -37,6 +40,8 @@ import builders.loom.api.product.ProcessedResourceProduct;
 import jdk.internal.module.ModuleInfoExtender;
 
 public class JavaAssembleModuleTask extends AbstractModuleTask {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleModuleTask.class);
 
     private final JavaPluginSettings pluginSettings;
 
@@ -73,9 +78,10 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
             .map(c -> c.resolve("module-info.class"))
             .filter(c -> Files.exists(c));
 
-        final boolean addAutomaticModuleName = !modulesInfoClassFileOpt.isPresent();
+        final String automaticModuleName = modulesInfoClassFileOpt.isPresent() ? null
+            : buildAutomaticModuleName();
 
-        try (final JarOutputStream os = buildJarOutput(jarFile, addAutomaticModuleName)) {
+        try (final JarOutputStream os = buildJarOutput(jarFile, automaticModuleName)) {
             // compilation & module-info.class first !
             if (compilationDir.isPresent()) {
                 final Path resolve = compilationDir.get();
@@ -101,6 +107,19 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
+    private String buildAutomaticModuleName() {
+        if (!Module.UNNAMED_MODULE.equals(getBuildContext().getModuleName())) {
+            // Use configured module name
+            return getBuildContext().getModuleName();
+        }
+
+        // Unnamed module -- better use default name
+        LOG.warn("Building jar file without module name is discouraged! Configure a "
+            + "module name by either adding a module-info.java, using the module/ "
+            + "directory structure or add moduleName to module.yml");
+        return null;
+    }
+
     private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) {
 
         // TODO replace JDK ModuleInfoExtender by something similar, then remove
@@ -118,14 +137,14 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         }
     }
 
-    private JarOutputStream buildJarOutput(final Path jarFile, final boolean addAutomaticModuleName)
+    private JarOutputStream buildJarOutput(final Path jarFile, final String automaticModuleName)
         throws IOException {
 
         return new JarOutputStream(Files.newOutputStream(jarFile),
-            prepareManifest(addAutomaticModuleName));
+            prepareManifest(automaticModuleName));
     }
 
-    private Manifest prepareManifest(final boolean addAutomaticModuleName) {
+    private Manifest prepareManifest(final String automaticModuleName) {
         final Manifest newManifest = new Manifest();
 
         final ManifestBuilder manifestBuilder = new ManifestBuilder(newManifest);
@@ -139,12 +158,8 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         Optional.ofNullable(pluginSettings.getMainClassName())
             .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
 
-        if (addAutomaticModuleName) {
-            final String moduleName = getBuildContext().getModuleName();
-            if (!Module.UNNAMED_MODULE.equals(moduleName)) {
-                manifestBuilder.put("Automatic-Module-Name", moduleName);
-            }
-        }
+        Optional.ofNullable(automaticModuleName)
+            .ifPresent(s -> manifestBuilder.put("Automatic-Module-Name", s));
 
         return newManifest;
     }

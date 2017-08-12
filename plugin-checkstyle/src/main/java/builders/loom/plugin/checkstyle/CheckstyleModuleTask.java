@@ -187,7 +187,7 @@ public class CheckstyleModuleTask extends AbstractModuleTask {
 
         properties.setProperty("cacheFile", cacheDir
             .resolve(getBuildContext().getModuleName())
-            .resolve(compileTarget.name().toLowerCase()+ ".cache")
+            .resolve(compileTarget.name().toLowerCase() + ".cache")
             .toAbsolutePath().normalize().toString());
 
         // Set the same variables as the checkstyle plugin for eclipse

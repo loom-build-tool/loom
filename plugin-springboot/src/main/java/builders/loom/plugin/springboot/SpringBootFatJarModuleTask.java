@@ -17,12 +17,14 @@
 package builders.loom.plugin.springboot;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.DirectoryProduct;
 
 public class SpringBootFatJarModuleTask extends AbstractModuleTask {
 
@@ -37,13 +39,13 @@ public class SpringBootFatJarModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final CompilationProduct springBootApplication =
-            requireProduct("springBootApplication", CompilationProduct.class);
+        final DirectoryProduct springBootApplication =
+            requireProduct("springBootApplication", DirectoryProduct.class);
 
-        final Path baseDir = springBootApplication.getClassesDir();
-        final Path buildDir = baseDir.resolve("build");
+        final Path baseDir = springBootApplication.getDir();
+        final Path buildDir = Files.createDirectories(baseDir.getParent().resolve("fatjar"));
 
-        final Path jarFile = baseDir.resolve(String.format("%s-fatjar.jar",
+        final Path jarFile = buildDir.resolve(String.format("%s-fatjar.jar",
             getBuildContext().getModuleName()));
 
         // scan for @SpringBootApplication
@@ -52,7 +54,7 @@ public class SpringBootFatJarModuleTask extends AbstractModuleTask {
         final String applicationClassname = scanForApplicationStarter(compilationProduct);
 
         // assemble jar
-        new JarAssembler(pluginSettings).assemble(buildDir, jarFile, applicationClassname);
+        new JarAssembler(pluginSettings).assemble(baseDir, jarFile, applicationClassname);
 
         return completeOk(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
     }

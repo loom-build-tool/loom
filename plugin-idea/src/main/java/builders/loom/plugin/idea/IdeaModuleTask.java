@@ -28,7 +28,6 @@ import org.w3c.dom.Document;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.JavaVersion;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
@@ -50,7 +49,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path ideaDirectory = Files.createDirectories(LoomPaths.PROJECT_DIR.resolve(".idea"));
+        final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
+        final Path ideaDirectory = Files.createDirectories(projectBaseDir.resolve(".idea"));
 
         final XmlWriter xmlWriter = new XmlWriter();
         final JavaVersion projectJavaVersion = determineModulesHighestJavaVersion();
@@ -65,16 +65,15 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
         // 1-n module (.iml) files
         for (final Module module : moduleGraph.keySet()) {
             final String moduleName = ideaModuleName(module.getPath());
-            final Path imlFile = module.getPath()
-                .resolve(imlFileFromPath(module.getPath(), moduleName));
+            final Path imlFile = imlFileFromPath(module.getPath(), moduleName);
             xmlWriter.write(createModuleImlFile(imlFile, module, projectJavaVersion), imlFile);
             ideaModules.add(new IdeaModule(imlFile, moduleName));
         }
 
         if (getRuntimeConfiguration().isModuleBuild()) {
             // create separate umbrella .iml for multi-module projects
-            final String moduleName = ideaModuleName(LoomPaths.PROJECT_DIR);
-            final Path rootImlFile = imlFileFromPath(LoomPaths.PROJECT_DIR, moduleName);
+            final String moduleName = ideaModuleName(projectBaseDir);
+            final Path rootImlFile = imlFileFromPath(projectBaseDir, moduleName);
             xmlWriter.write(createUmbrellaImlFile(), rootImlFile);
             ideaModules.add(new IdeaModule(rootImlFile, moduleName));
         }
@@ -86,7 +85,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private String ideaModuleName(final Path path) {
-        final Path currentWorkDirName = path.getFileName();
+        final Path currentWorkDirName = path.toAbsolutePath().normalize().getFileName();
 
         if (currentWorkDirName == null) {
             throw new IllegalStateException("Can't get current working directory");
@@ -149,7 +148,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
         for (final IdeaModule ideaModule : ideaModules) {
             final String relativeImlFilename =
-                LoomPaths.PROJECT_DIR.relativize(ideaModule.getImlFile()).toString();
+                getRuntimeConfiguration().getProjectBaseDir()
+                    .relativize(ideaModule.getImlFile()).toString();
 
             element
                 .element("module")
@@ -221,8 +221,7 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .attr("url", testSrcRoot + "/resources")
             .attr("type", "java-test-resource");
 
-
-        if (module.getPath().equals(LoomPaths.PROJECT_DIR)) {
+        if (module.getPath().equals(getRuntimeConfiguration().getProjectBaseDir())) {
             content
                 .element("excludeFolder").attr("url", "file://$MODULE_DIR$/.loom").and()
                 .element("excludeFolder").attr("url", "file://$MODULE_DIR$/build");

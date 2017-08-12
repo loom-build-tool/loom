@@ -16,19 +16,28 @@
 
 package builders.loom;
 
+import java.nio.file.Path;
+
 import builders.loom.api.RuntimeConfiguration;
 
 public class RuntimeConfigurationImpl implements RuntimeConfiguration {
 
+    private final Path projectBaseDir;
     private final boolean cacheEnabled;
     private final String version;
     private final boolean moduleBuild;
 
-    public RuntimeConfigurationImpl(final boolean cacheEnabled, final String version,
-                                    final boolean moduleBuild) {
+    public RuntimeConfigurationImpl(final Path projectBaseDir, final boolean cacheEnabled,
+                                    final String version, final boolean moduleBuild) {
+        this.projectBaseDir = projectBaseDir;
         this.cacheEnabled = cacheEnabled;
         this.version = version;
         this.moduleBuild = moduleBuild;
+    }
+
+    @Override
+    public Path getProjectBaseDir() {
+        return projectBaseDir;
     }
 
     @Override
@@ -41,6 +50,7 @@ public class RuntimeConfigurationImpl implements RuntimeConfiguration {
         return version;
     }
 
+    @Override
     public boolean isModuleBuild() {
         return moduleBuild;
     }

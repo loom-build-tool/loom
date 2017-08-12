@@ -104,8 +104,8 @@ public class PluginLoader {
         plugin.setTaskRegistry(taskRegistry);
         plugin.setServiceLocator(serviceLocator);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
-        plugin.setRepositoryPath(LoomPaths.PROJECT_LOOM_PATH.resolve(
-            Paths.get(Version.getVersion(), pluginName)));
+        plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+            .resolve(Paths.get(Version.getVersion(), pluginName)));
 
         final Set<String> acceptedSettings = injectPluginSettings(pluginName, plugin, config);
 

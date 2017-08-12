@@ -84,7 +84,8 @@ public class ModuleRunner {
 
     private void registerGlobalPlugins() {
         LOG.info("Initialize Plugins for global build context");
-        registerModule(Set.of("eclipse", "idea"), new GlobalBuildContext());
+        registerModule(Set.of("eclipse", "idea"),
+            new GlobalBuildContext(runtimeConfiguration.getProjectBaseDir()));
     }
 
     private void registerModule(final Set<String> defaultPlugins, final BuildContext buildContext) {

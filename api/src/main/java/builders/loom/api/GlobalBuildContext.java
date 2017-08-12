@@ -17,10 +17,17 @@
 package builders.loom.api;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class GlobalBuildContext implements BuildContext {
 
     public static final String GLOBAL_MODULE_NAME = "global";
+
+    private final Path projectBaseDir;
+
+    public GlobalBuildContext(final Path projectBaseDir) {
+        this.projectBaseDir = Objects.requireNonNull(projectBaseDir);
+    }
 
     @Override
     public String getModuleName() {
@@ -29,7 +36,7 @@ public class GlobalBuildContext implements BuildContext {
 
     @Override
     public Path getPath() {
-        return LoomPaths.PROJECT_DIR;
+        return projectBaseDir;
     }
 
     @Override

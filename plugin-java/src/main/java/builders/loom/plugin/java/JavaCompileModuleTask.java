@@ -73,8 +73,10 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
     }
 
     private Path getBuildDir() {
-        return LoomPaths.BUILD_DIR.resolve(Paths.get("compilation",
-            compileTarget.name().toLowerCase(), getBuildContext().getModuleName()));
+        // TODO another workaround for non-functional MODULE_PATH
+        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
+            .resolve(Paths.get("compilation", compileTarget.name().toLowerCase(),
+                getBuildContext().getModuleName()));
     }
 
     private static Optional<String> configuredPlatformVersion(final JavaVersion version) {

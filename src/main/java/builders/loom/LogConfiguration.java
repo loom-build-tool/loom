@@ -16,9 +16,10 @@
 
 package builders.loom;
 
+import java.nio.file.Path;
+
 import org.slf4j.LoggerFactory;
 
-import builders.loom.api.LoomPaths;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -30,14 +31,11 @@ import ch.qos.logback.core.FileAppender;
 
 public final class LogConfiguration {
 
-    public static final String LOOM_BUILD_LOG =
-        LoomPaths.PROJECT_LOOM_PATH.resolve("build.log").toAbsolutePath().toString();
-
     private LogConfiguration() {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public static void configureLogger() {
+    public static void configureLogger(final Path logFile) {
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         lc.start();
 
@@ -69,7 +67,7 @@ public final class LogConfiguration {
         final FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
         fileAppender.setContext(lc);
         fileAppender.setName("Loom File Appender");
-        fileAppender.setFile(LOOM_BUILD_LOG);
+        fileAppender.setFile(logFile.toAbsolutePath().toString());
         fileAppender.setAppend(false);
         fileAppender.setEncoder(encoder);
         fileAppender.start();

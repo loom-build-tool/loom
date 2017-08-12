@@ -19,8 +19,6 @@ package builders.loom.api.product;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import builders.loom.api.LoomPaths;
-
 public class ReportProduct extends AbstractProduct {
 
     private final Path reportBaseDir;
@@ -41,7 +39,7 @@ public class ReportProduct extends AbstractProduct {
             return Optional.empty();
         }
 
-        return Optional.of(outputInfo + ": " + LoomPaths.relativize(reportBaseDir));
+        return Optional.of(outputInfo + ": " + reportBaseDir);
     }
 
     @Override

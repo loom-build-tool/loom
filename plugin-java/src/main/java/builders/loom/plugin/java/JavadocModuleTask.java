@@ -60,7 +60,8 @@ public class JavadocModuleTask extends AbstractModuleTask {
             .map(ClasspathProduct::getEntries)
             .ifPresent(classpath::addAll);
 
-        final Path dstDir = Files.createDirectories(LoomPaths.buildDir(
+        final Path dstDir = Files.createDirectories(
+            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
             getBuildContext().getModuleName(), "javadoc"));
 
         final DocumentationTool docTool = ToolProvider.getSystemDocumentationTool();

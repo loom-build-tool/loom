@@ -60,7 +60,10 @@ public final class ConfigReader {
                 buildConfig = parseConfig(configData);
                 LOG.debug("Working with parsed config: {}", buildConfig);
             } else {
-                buildConfig = parseAndCacheConfig(configData, cacheName);
+                final Path cachePath = LoomPaths.loomDir(runtimeConfig.getProjectBaseDir())
+                    .resolve(Paths.get(Version.getVersion(), cacheName));
+
+                buildConfig = parseAndCacheConfig(configData, cachePath);
                 LOG.debug("Working with cached config: {}", buildConfig);
             }
 
@@ -71,11 +74,8 @@ public final class ConfigReader {
     }
 
     private static BuildConfigImpl parseAndCacheConfig(final byte[] configData,
-                                                       final String cacheName) throws IOException {
+                                                       final Path cachePath) throws IOException {
         final byte[] configHash = Hasher.hash(configData);
-
-        final Path cachePath =
-            LoomPaths.PROJECT_LOOM_PATH.resolve(Paths.get(Version.getVersion(), cacheName));
 
         Files.createDirectories(cachePath);
 

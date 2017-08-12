@@ -45,7 +45,9 @@ import builders.loom.util.FileUtils;
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
 
-    private static final Path LOCK_FILE = Paths.get(".loom.lock");
+    private static final Path PROJECT_BASE_DIR = Paths.get("");
+    private static final Path LOCK_FILE = PROJECT_BASE_DIR.resolve(".loom.lock");
+    private static final Path LOG_FILE = LoomPaths.loomDir(PROJECT_BASE_DIR).resolve("build.log");
 
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})
@@ -80,7 +82,7 @@ public class Loom {
                 e.printStackTrace(System.err);
             }
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
-                .format("BUILD FAILED - see %s for details", LogConfiguration.LOOM_BUILD_LOG)
+                .format("BUILD FAILED - see %s for details", LOG_FILE)
                 .reset()
                 .newline());
             System.exit(1);
@@ -200,7 +202,7 @@ public class Loom {
     private static boolean run(final CommandLine cmd) throws Exception {
         if (cmd.hasOption("clean")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
-            clean();
+            clean(PROJECT_BASE_DIR);
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
             if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
@@ -208,7 +210,7 @@ public class Loom {
             }
         }
 
-        configureLogging();
+        configureLogging(LOG_FILE);
 
         final LoomProcessor loomProcessor = new LoomProcessor();
         loomProcessor.logSystemEnvironment();
@@ -217,8 +219,9 @@ public class Loom {
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(!noCacheMode, cmd.getOptionValue("artifact-version"),
-                loomProcessor.isModuleBuild());
+            new RuntimeConfigurationImpl(PROJECT_BASE_DIR, !noCacheMode,
+                cmd.getOptionValue("artifact-version"),
+                loomProcessor.isModuleBuild(PROJECT_BASE_DIR));
 
         printRuntimeConfiguration(runtimeConfiguration);
 
@@ -231,7 +234,7 @@ public class Loom {
 
         if (cmd.hasOption("products")) {
             final String format = cmd.getOptionValue("products");
-            printProducts(loomProcessor, format);
+            printProducts(runtimeConfiguration, loomProcessor, format);
         }
 
         boolean buildExecuted = false;
@@ -260,13 +263,13 @@ public class Loom {
         return buildExecuted;
     }
 
-    private static void clean() {
-        FileUtils.cleanDir(LoomPaths.BUILD_DIR);
-        FileUtils.cleanDir(LoomPaths.PROJECT_LOOM_PATH);
+    private static void clean(final Path projectBaseDir) {
+        FileUtils.cleanDir(LoomPaths.loomDir(projectBaseDir));
+        FileUtils.cleanDir(LoomPaths.buildDir(projectBaseDir));
     }
 
-    private static void configureLogging() {
-        LogConfiguration.configureLogger();
+    private static void configureLogging(final Path logFile) {
+        LogConfiguration.configureLogger(logFile);
         Runtime.getRuntime().addShutdownHook(new Thread(LogConfiguration::stop));
     }
 
@@ -284,11 +287,12 @@ public class Loom {
         AnsiConsole.out.println(a);
     }
 
-    private static void printProducts(final LoomProcessor loomProcessor, final String format) {
+    private static void printProducts(final RuntimeConfigurationImpl runtimeConfiguration,
+                                      final LoomProcessor loomProcessor, final String format) {
         if (format == null || "text".equals(format)) {
             loomProcessor.generateTextProductOverview();
         } else if ("dot".equals(format)) {
-            loomProcessor.generateDotProductOverview();
+            loomProcessor.generateDotProductOverview(runtimeConfiguration);
         } else {
             throw new IllegalStateException("Unknown format: " + format);
         }

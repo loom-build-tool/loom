@@ -79,7 +79,8 @@ public class CheckstyleModuleTask extends AbstractModuleTask {
             .filter(f -> !f.getName().equals("module-info.java"))
             .collect(Collectors.toList());
 
-        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "checkstyle")
+        final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), "checkstyle")
             .resolve(compileTarget.name().toLowerCase());
 
         final RootModule checker = createRootModule();

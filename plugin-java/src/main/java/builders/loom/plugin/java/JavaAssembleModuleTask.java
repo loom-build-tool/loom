@@ -57,7 +57,8 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         }
 
         final Path buildDir = Files.createDirectories(
-            LoomPaths.buildDir(getBuildContext().getModuleName(), "jar"));
+            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
+                getBuildContext().getModuleName(), "jar"));
 
         final Path jarFile = buildDir.resolve(String.format("%s.jar",
             getBuildContext().getModuleName()));

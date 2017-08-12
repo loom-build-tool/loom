@@ -19,8 +19,6 @@ package builders.loom.api.product;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import builders.loom.api.LoomPaths;
-
 /**
  * E.g. a "jar" file.
  *
@@ -45,7 +43,7 @@ public final class AssemblyProduct extends AbstractProduct {
             return Optional.empty();
         }
 
-        return Optional.of(outputInfo + ": " + LoomPaths.relativize(assemblyFile));
+        return Optional.of(outputInfo + ": " + assemblyFile);
     }
 
     @Override

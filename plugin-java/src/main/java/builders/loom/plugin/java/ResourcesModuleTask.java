@@ -18,13 +18,13 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
@@ -33,7 +33,6 @@ import builders.loom.api.product.ResourcesTreeProduct;
 public class ResourcesModuleTask extends AbstractModuleTask {
 
     private final JavaPluginSettings pluginSettings;
-    private final Path destPath;
     private final CompileTarget compileTarget;
     private final Path cacheDir;
 
@@ -42,15 +41,17 @@ public class ResourcesModuleTask extends AbstractModuleTask {
 
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
-
-        destPath = Paths.get("build", "resources", compileTarget.name().toLowerCase());
-
         this.cacheDir = cacheDir;
     }
 
     @Override
     public TaskResult run() throws Exception {
         final Optional<ResourcesTreeProduct> resourcesProduct = getResourcesTreeProduct();
+
+        final Path destPath = LoomPaths.buildDir(
+            getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), "resources")
+            .resolve(compileTarget.name().toLowerCase());
 
         if (!resourcesProduct.isPresent()) {
             if (Files.exists(destPath)) {

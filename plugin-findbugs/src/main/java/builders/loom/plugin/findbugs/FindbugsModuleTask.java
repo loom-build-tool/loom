@@ -111,7 +111,8 @@ public class FindbugsModuleTask extends AbstractModuleTask {
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
 
-        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "findbugs")
+        final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), "findbugs")
             .resolve(compileTarget.name().toLowerCase());
 
         new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
+import builders.loom.api.RuntimeConfiguration;
 import builders.loom.config.BuildConfigImpl;
 import builders.loom.config.ConfigReader;
 import builders.loom.plugin.PluginLoader;
@@ -83,7 +84,7 @@ public class LoomProcessor {
     }
 
     private Module singleModule(final RuntimeConfigurationImpl rtConfig) {
-        final Path configFile = LoomPaths.PROJECT_DIR.resolve("module.yml");
+        final Path configFile = rtConfig.getProjectBaseDir().resolve("module.yml");
 
         final ModuleBuildConfig buildConfig;
         if (Files.exists(configFile)) {
@@ -92,10 +93,10 @@ public class LoomProcessor {
             buildConfig = new BuildConfigImpl();
         }
 
-        final String moduleName = findModuleName(LoomPaths.PROJECT_DIR, buildConfig, null)
+        final String moduleName = findModuleName(rtConfig.getProjectBaseDir(), buildConfig, null)
             .orElse(Module.UNNAMED_MODULE);
 
-        return new Module(moduleName, LoomPaths.PROJECT_DIR, buildConfig);
+        return new Module(moduleName, rtConfig.getProjectBaseDir(), buildConfig);
     }
 
     @SuppressWarnings("checkstyle:returncount")
@@ -132,11 +133,12 @@ public class LoomProcessor {
         return Optional.empty();
     }
 
-    private List<Module> scanForModules(final RuntimeConfigurationImpl runtimeConfiguration) {
+    private List<Module> scanForModules(final RuntimeConfigurationImpl rtConfig) {
         final List<Module> modules = new ArrayList<>();
 
         try {
-            final List<Path> modulePaths = Files.list(LoomPaths.MODULES_DIR)
+            final List<Path> modulePaths = Files
+                .list(LoomPaths.modulesDir(rtConfig.getProjectBaseDir()))
                 .collect(Collectors.toList());
 
             for (final Path module : modulePaths) {
@@ -147,7 +149,7 @@ public class LoomProcessor {
 
                 if (Files.exists(moduleBuildConfig)) {
                     buildConfig = ConfigReader.readConfig(
-                        runtimeConfiguration, moduleBuildConfig, modulePathName);
+                        rtConfig, moduleBuildConfig, modulePathName);
                 } else {
                     buildConfig = new BuildConfigImpl();
                 }
@@ -164,9 +166,9 @@ public class LoomProcessor {
         }
     }
 
-    private void checkForInconsistentSrcModuleStruct() {
-        final boolean hasSrc = Files.exists(LoomPaths.PROJECT_DIR.resolve("src"));
-        final boolean hasModules = Files.exists(LoomPaths.MODULES_DIR);
+    private void checkForInconsistentSrcModuleStruct(final Path projectBaseDir) {
+        final boolean hasSrc = Files.exists(projectBaseDir.resolve("src"));
+        final boolean hasModules = Files.exists(LoomPaths.modulesDir(projectBaseDir));
 
         if (hasSrc && hasModules) {
             throw new IllegalStateException("Directories src/ and modules/ are mutually exclusive");
@@ -248,13 +250,21 @@ public class LoomProcessor {
         TextOutput.generate(moduleRunner);
     }
 
-    public void generateDotProductOverview() {
-        GraphvizOutput.generateDot(moduleRunner);
+    public void generateDotProductOverview(final RuntimeConfiguration rtConfig) {
+        try {
+            final Path reportDir = Files.createDirectories(LoomPaths.reportDir(
+                rtConfig.getProjectBaseDir(), "graphviz"));
+            final Path dotFile = reportDir.resolve(Paths.get("loom-products.dot"));
+
+            GraphvizOutput.generateDot(moduleRunner, dotFile);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    public boolean isModuleBuild() {
-        checkForInconsistentSrcModuleStruct();
-        return Files.exists(LoomPaths.MODULES_DIR);
+    public boolean isModuleBuild(final Path projectBaseDir) {
+        checkForInconsistentSrcModuleStruct(projectBaseDir);
+        return Files.exists(LoomPaths.modulesDir(projectBaseDir));
     }
 
 }

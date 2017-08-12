@@ -32,10 +32,12 @@ import java.util.jar.JarFile;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.DirectoryProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
@@ -51,10 +53,12 @@ public class SpringBootModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path baseDir = Paths.get("build", "springboot");
+        final Path baseDir = LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), "springboot");
+
         FileUtils.cleanDir(baseDir);
 
-        final Path buildDir = baseDir.resolve("build");
+        final Path buildDir = baseDir.resolve("boot-bundle");
 
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
@@ -89,7 +93,7 @@ public class SpringBootModuleTask extends AbstractModuleTask {
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
 
-        return completeOk(new CompilationProduct(baseDir));
+        return completeOk(new DirectoryProduct(buildDir, "Spring Boot application"));
     }
 
     private Path resolveSpringBootLoaderJar() {

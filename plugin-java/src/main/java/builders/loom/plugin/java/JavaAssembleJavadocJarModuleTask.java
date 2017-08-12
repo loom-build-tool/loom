@@ -18,11 +18,11 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
@@ -38,7 +38,10 @@ public class JavaAssembleJavadocJarModuleTask extends AbstractModuleTask {
             return completeSkip();
         }
 
-        final Path buildDir = Files.createDirectories(Paths.get("build", "libs"));
+        final Path buildDir = Files.createDirectories(LoomPaths.buildDir(
+            getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(),
+            "javadoc-jar"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
             getBuildContext().getModuleName()));

@@ -19,9 +19,7 @@ package builders.loom;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -37,11 +35,8 @@ public final class GraphvizOutput {
     private GraphvizOutput() {
     }
 
-    public static void generateDot(final ModuleRunner moduleRunner) {
+    public static void generateDot(final ModuleRunner moduleRunner, final Path dotFile) {
         try {
-            final Path reportDir = Files.createDirectories(Paths.get("build", "reports"));
-            final Path dotFile = reportDir.resolve(Paths.get("loom-products.dot"));
-
             try (PrintWriter pw = new PrintWriter(dotFile.toFile(), "UTF-8")) {
                 writeTasks(moduleRunner, pw);
             }

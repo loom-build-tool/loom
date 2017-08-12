@@ -144,7 +144,8 @@ public class PmdModuleTask extends AbstractModuleTask {
         final String inputPaths = srcDir.toString();
         configuration.setInputPaths(inputPaths);
 
-        final Path reportPath = LoomPaths.reportDir(getBuildContext().getModuleName(), "pmd")
+        final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), "pmd")
             .resolve(compileTarget.name().toLowerCase());
 
         final HTMLRenderer htmlRenderer = buildHtmlRenderer(reportPath);

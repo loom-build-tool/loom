@@ -18,11 +18,11 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
@@ -42,7 +42,9 @@ public class JavaAssembleSourcesJarModuleTask extends AbstractModuleTask {
             return completeSkip();
         }
 
-        final Path buildDir = Files.createDirectories(Paths.get("build", "libs"));
+        final Path buildDir = Files.createDirectories(
+            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
+                getBuildContext().getModuleName(), "sources-jar"));
 
         final Path sourceJarFile = buildDir.resolve(String.format("%s-sources.jar",
             getBuildContext().getModuleName()));

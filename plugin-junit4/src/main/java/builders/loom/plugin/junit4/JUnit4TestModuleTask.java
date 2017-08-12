@@ -93,7 +93,8 @@ public class JUnit4TestModuleTask extends AbstractModuleTask {
 
         // note: junit reports are not yet supported, but product expects the folder
         final Path reportPath = Files.createDirectories(
-            LoomPaths.reportDir(getBuildContext().getModuleName(), "test"));
+            LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
+                getBuildContext().getModuleName(), "test"));
 
         return completeOk(new ReportProduct(reportPath, "Junit4 report"));
     }

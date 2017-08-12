@@ -16,7 +16,11 @@
 
 package builders.loom.api;
 
+import java.nio.file.Path;
+
 public interface RuntimeConfiguration {
+
+    Path getProjectBaseDir();
 
     boolean isCacheEnabled();
 

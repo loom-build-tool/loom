@@ -19,6 +19,7 @@ package builders.loom.plugin.idea;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,6 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
-import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.DummyProduct;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
@@ -146,16 +146,20 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
             .element("component").attr("name", "ProjectModuleManager")
             .element("modules");
 
-        for (final IdeaModule ideaModule : ideaModules) {
-            final String relativeImlFilename =
-                getRuntimeConfiguration().getProjectBaseDir()
-                    .relativize(ideaModule.getImlFile()).toString();
+        // integration test friendly predictable order
+        ideaModules.stream()
+            .sorted(Comparator.comparing(IdeaModule::getModuleName))
+            .forEach(ideaModule -> {
 
-            element
-                .element("module")
-                .attr("fileurl", "file://$PROJECT_DIR$/" + relativeImlFilename)
-                .attr("filepath", "$PROJECT_DIR$/" + relativeImlFilename);
-        }
+                final String relativeImlFilename =
+                    getRuntimeConfiguration().getProjectBaseDir()
+                        .relativize(ideaModule.getImlFile()).toString();
+
+                element
+                    .element("module")
+                    .attr("fileurl", "file://$PROJECT_DIR$/" + relativeImlFilename)
+                    .attr("filepath", "$PROJECT_DIR$/" + relativeImlFilename);
+            });
 
         return element.getDocument();
     }
@@ -197,8 +201,8 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
 
         component.element("exclude-output");
 
-        final String relativeModuleDir =
-            buildRelativeModuleDir(imlFile.getParent().relativize(module.getPath()));
+        final String relativeModuleDir = buildRelativeModuleDir(
+            imlFile.toAbsolutePath().getParent().relativize(module.getPath().toAbsolutePath()));
 
         final String mainSrcRoot = relativeModuleDir + "/src/main";
         final String testSrcRoot = relativeModuleDir + "/src/test";
@@ -243,23 +247,32 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
                 .attr("jdkType", "JavaSDK");
         }
 
+        final OrderEntries orderEntries = new OrderEntries();
+
         // dependent modules
         for (final Module depModule : moduleGraph.get(module)) {
             component.element("orderEntry")
                 .attr("type", "module")
                 .attr("module-name", ideaModuleName(depModule.getPath()))
-                .attr("scope", "PROVIDED");
+                .attr("scope", "COMPILE");
+
+            // add compile artifacts of dependent module
+            useProduct(depModule.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
+                .map(ArtifactListProduct::getArtifacts)
+                .ifPresent(artifacts -> orderEntries.append(artifacts, "COMPILE"));
         }
 
         // add compile artifacts
         useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
             .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "COMPILE"));
+            .ifPresent(artifacts -> orderEntries.append(artifacts, "COMPILE"));
 
         // add test artifacts
         useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
             .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> buildOrderEntries(component, artifacts, "TEST"));
+            .ifPresent(artifacts -> orderEntries.append(artifacts, "TEST"));
+
+        buildOrderEntries(component, orderEntries.getEntryList());
 
         component.element("orderEntry")
             .attr("type", "sourceFolder")
@@ -277,14 +290,15 @@ public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private void buildOrderEntries(final XmlBuilder.Element component,
-                                   final List<ArtifactProduct> mainArtifacts, final String scope) {
-        for (final ArtifactProduct artifact : mainArtifacts) {
-            final String mainJar = artifact.getMainArtifact().toAbsolutePath().toString();
-            final Path sourceArtifact = artifact.getSourceArtifact();
+                                   final Collection<OrderEntry> orderEntries) {
+        for (final OrderEntry orderEntry : orderEntries) {
+            final String mainJar = orderEntry.getMainArtifact().toAbsolutePath().toString();
+            final Path sourceArtifact = orderEntry.getSourceArtifact();
             final String sourceJar = sourceArtifact != null
                 ? sourceArtifact.toAbsolutePath().toString() : null;
 
-            buildOrderEntry(component.element("orderEntry"), scope, mainJar, sourceJar);
+            buildOrderEntry(component.element("orderEntry"),
+                orderEntry.getScope(), mainJar, sourceJar);
         }
     }
 

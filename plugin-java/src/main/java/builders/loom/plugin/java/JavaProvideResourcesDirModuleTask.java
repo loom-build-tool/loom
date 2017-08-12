@@ -37,7 +37,7 @@ public class JavaProvideResourcesDirModuleTask extends AbstractModuleTask {
     public TaskResult run() throws Exception {
         final Path path = resourcesPath();
 
-        if (!Files.isDirectory(path)) {
+        if (!Files.isDirectory(path) || Files.list(path).count() == 0) {
             return completeSkip();
         }
 

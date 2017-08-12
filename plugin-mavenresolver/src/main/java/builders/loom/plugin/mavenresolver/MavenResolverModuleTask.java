@@ -32,7 +32,6 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
     private final DependencyScope dependencyScope;
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
-    private MavenResolver mavenResolver;
 
     public MavenResolverModuleTask(final DependencyScope dependencyScope,
                                    final MavenResolverPluginSettings pluginSettings,
@@ -45,38 +44,31 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
-        return completeOk(product());
-    }
+        final List<String> dependencies = listDependencies();
 
-    private ClasspathProduct product() {
-        switch (dependencyScope) {
-            case COMPILE:
-                return compileScope();
-            case TEST:
-                return testScope();
-            default:
-                throw new IllegalStateException("Unknown scope: " + dependencyScope);
+        if (dependencies.isEmpty()) {
+            return completeSkip();
         }
+
+        return completeOk(resolve(dependencies));
     }
 
-    private ClasspathProduct compileScope() {
+    private List<String> listDependencies() {
         final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
-            DependencyScope.COMPILE, null);
 
-        final List<Path> collect = artifactProducts.stream()
-            .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
+        if (dependencyScope == DependencyScope.TEST) {
+            deps.addAll(getModuleConfig().getTestDependencies());
+        }
 
-        return new ClasspathProduct(collect);
+        return deps;
     }
 
-    private ClasspathProduct testScope() {
-        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-        deps.addAll(getModuleConfig().getTestDependencies());
+    private ClasspathProduct resolve(final List<String> deps) {
+        final MavenResolver mavenResolver =
+            MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
 
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
-            DependencyScope.TEST, null);
+            dependencyScope, null);
 
         final List<Path> collect = artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());

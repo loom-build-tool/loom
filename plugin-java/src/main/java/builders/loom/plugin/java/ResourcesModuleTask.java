@@ -72,8 +72,6 @@ public class ResourcesModuleTask extends AbstractModuleTask {
             : new NullKeyValueCache();
 
         final Map<String, String> variables = new HashMap<>();
-        //variables.put("project.groupId", buildConfig.getProject().getGroupId());
-        //variables.put("project.artifactId", buildConfig.getProject().getArtifactId());
         variables.put("project.version", runtimeConfiguration.getVersion());
 
         Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache,

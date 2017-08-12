@@ -47,6 +47,10 @@ public class JavaProvideSourceDirModuleTask extends AbstractModuleTask {
             .filter(Files::isRegularFile)
             .collect(Collectors.toList());
 
+        if (sourceFiles.isEmpty()) {
+            return completeSkip();
+        }
+
         final List<Path> illegalFiles = sourceFiles.stream()
             .filter(f -> !f.toString().endsWith(".java"))
             .collect(Collectors.toList());

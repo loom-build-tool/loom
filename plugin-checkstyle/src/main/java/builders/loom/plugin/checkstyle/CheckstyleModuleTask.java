@@ -27,6 +27,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
@@ -47,6 +50,8 @@ import builders.loom.api.product.SourceTreeProduct;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleModuleTask extends AbstractModuleTask {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CheckstyleModuleTask.class);
 
     private final CompileTarget compileTarget;
 
@@ -129,10 +134,16 @@ public class CheckstyleModuleTask extends AbstractModuleTask {
     }
 
     private RootModule createRootModule() throws InterruptedException {
+        final String configLocation = determineConfigLocation();
+        LOG.debug("Read config from {}", configLocation);
+
         try {
-            final Properties props = createOverridingProperties();
+            final Properties props = createOverridingProperties(configLocation);
+
+            LOG.debug("Checkstyle properties: {}", props);
+
             final Configuration config =
-                ConfigurationLoader.loadConfiguration(pluginSettings.getConfigLocation(),
+                ConfigurationLoader.loadConfiguration(configLocation,
                     new PropertiesExpander(props));
 
             final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
@@ -156,26 +167,41 @@ public class CheckstyleModuleTask extends AbstractModuleTask {
             return rootModule;
         } catch (final CheckstyleException e) {
             throw new IllegalStateException("Unable to create Root Module with configuration: "
-                + pluginSettings.getConfigLocation(), e);
+                + configLocation, e);
         }
     }
 
-    private Properties createOverridingProperties() {
+    private String determineConfigLocation() {
+        final String configLocation = pluginSettings.getConfigLocation();
+        if (configLocation.startsWith("/")) {
+            // embedded configuration
+            return configLocation;
+        }
+
+        return getBuildContext().getPath().resolve(configLocation)
+            .toAbsolutePath().normalize().toString();
+    }
+
+    private Properties createOverridingProperties(final String configLocation) {
         final Properties properties = new Properties();
 
-        final Path baseDir = Paths.get("").toAbsolutePath();
-        final Path checkstyleConfigDir =
-            baseDir.resolve(Paths.get("config", "checkstyle"));
-
-        properties.setProperty("cacheFile", cacheDir.resolve(compileTarget.name().toLowerCase()
-             + ".cache").toString());
+        properties.setProperty("cacheFile", cacheDir
+            .resolve(getBuildContext().getModuleName())
+            .resolve(compileTarget.name().toLowerCase()+ ".cache")
+            .toAbsolutePath().normalize().toString());
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties
+        final Path baseDir = getRuntimeConfiguration().getProjectBaseDir()
+            .toAbsolutePath().normalize();
         properties.setProperty("basedir", baseDir.toString());
         properties.setProperty("project_loc", baseDir.toString());
-        properties.setProperty("samedir", checkstyleConfigDir.toString());
-        properties.setProperty("config_loc", checkstyleConfigDir.toString());
+
+        if (!pluginSettings.getConfigLocation().startsWith("/")) {
+            final Path checkstyleConfigDir = Paths.get(configLocation).getParent();
+            properties.setProperty("samedir", checkstyleConfigDir.toString());
+            properties.setProperty("config_loc", checkstyleConfigDir.toString());
+        }
 
         return properties;
     }

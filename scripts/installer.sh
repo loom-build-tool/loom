@@ -68,6 +68,6 @@ fi
 # Launch Loom Installer
 loom_versioned_base="$LOOM_USER_HOME/library/loom-$loom_version"
 
-"$javacmd" -jar loom-installer/loom-installer.jar
+"$javacmd" -jar loom-installer/loom-installer.jar .
 
 echo "Done. Run \`./loom build\` to start your build."

@@ -45,9 +45,26 @@ import builders.loom.util.FileUtils;
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
 
-    private static final Path PROJECT_BASE_DIR = Paths.get("");
-    private static final Path LOCK_FILE = PROJECT_BASE_DIR.resolve(".loom.lock");
-    private static final Path LOG_FILE = LoomPaths.loomDir(PROJECT_BASE_DIR).resolve("build.log");
+    private static final Path PROJECT_BASE_DIR;
+    private static final Path LOCK_FILE;
+    private static final Path LOG_FILE;
+
+    static {
+        final String projectHome = System.getProperty("loom.project_dir");
+
+        if (projectHome == null) {
+            throw new IllegalStateException("No loom.project_dir set");
+        }
+
+        PROJECT_BASE_DIR = Paths.get(projectHome);
+
+        if (!Files.isDirectory(PROJECT_BASE_DIR)) {
+            throw new IllegalStateException("Directory doesn't exist: " + PROJECT_BASE_DIR);
+        }
+
+        LOCK_FILE = PROJECT_BASE_DIR.resolve(".loom.lock");
+        LOG_FILE = LoomPaths.loomDir(PROJECT_BASE_DIR).resolve("build.log");
+    }
 
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})

@@ -66,7 +66,7 @@ public final class SystemUtil {
         }
 
         try {
-            return Files.createDirectories(baseDir.resolve("Loom"));
+            return Files.createDirectories(baseDir.resolve(Paths.get("Loom", "Loom")));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

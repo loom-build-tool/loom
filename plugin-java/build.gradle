@@ -3,10 +3,7 @@ apply plugin: 'java'
 dependencies {
     compileOnly project(':api')
     compileOnly project(':util')
-}
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs = [ '--add-exports', 'java.base/jdk.internal.module=ALL-UNNAMED' ]
+    compile('org.ow2.asm:asm:6.0_BETA')
 }
 
 jar {

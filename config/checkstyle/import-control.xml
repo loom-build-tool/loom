@@ -34,6 +34,10 @@
         <allow pkg="org.sonatype.aether"/>
     </subpackage>
 
+    <subpackage name="plugin.java">
+        <allow pkg="org.objectweb.asm"/>
+    </subpackage>
+
     <subpackage name="plugin.checkstyle">
         <allow pkg="com.puppycrawl.tools"/>
     </subpackage>

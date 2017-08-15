@@ -4,6 +4,11 @@ setlocal
 
 set VERSION=1.0.0
 
+rem Find project directory of executed loom script
+set DIRNAME=%~dp0
+if "%DIRNAME%" == "" set DIRNAME=.
+set PROJECT_DIR=%DIRNAME%
+
 rem Find the java executable
 if defined JAVA_HOME goto configure_via_java_home
 
@@ -38,12 +43,12 @@ set LIB=%LOOM_USER_HOME%\library\loom-%VERSION%\lib\loom-%VERSION%.jar
 if exist %LIB% %JAVA_CMD% goto launch
 
 rem download Loom Installer
-"%JAVACMD%" -jar loom-installer\loom-installer.jar
+"%JAVACMD%" -jar %PROJECT_DIR%\loom-installer\loom-installer.jar %PROJECT_DIR%
 if ERRORLEVEL 1 goto error
 
 :launch
 rem run Loom
-"%JAVACMD%" %LOOM_OPTS% -jar %LIB% %*
+"%JAVACMD%" %LOOM_OPTS% -Dloom.project_dir=%PROJECT_DIR% -jar %LIB% %*
 if ERRORLEVEL 1 goto error
 goto end
 

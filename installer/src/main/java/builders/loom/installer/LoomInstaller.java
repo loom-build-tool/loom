@@ -47,14 +47,28 @@ public class LoomInstaller {
 
     public static void main(final String[] args) {
         try {
+            if (args.length != 1) {
+                throw new IllegalArgumentException("Usage: LoomInstaller target_dir");
+            }
+
+            final Path targetDir = determineTargetDir(args[0]);
+
             System.out.println("Starting Loom Installer v" + readVersion());
 
-            final Path installDir = extract(download(), determineLibBaseDir());
-            copyScripts(installDir, Paths.get(""));
+            final Path installDir = extract(download(targetDir), determineLibBaseDir());
+            copyScripts(installDir, targetDir);
         } catch (final Throwable e) {
             e.printStackTrace(System.err);
             System.exit(1);
         }
+    }
+
+    private static Path determineTargetDir(final String targetDirStr) {
+        final Path targetDir = Paths.get(targetDirStr);
+        if (!Files.isDirectory(targetDir)) {
+            throw new IllegalArgumentException("Directory doesn't exist: " + targetDir);
+        }
+        return targetDir;
     }
 
     private static String readVersion() {
@@ -67,8 +81,8 @@ public class LoomInstaller {
         }
     }
 
-    private static Path download() throws IOException {
-        final String downloadUrl = determineDownloadUrl();
+    private static Path download(final Path targetDir) throws IOException {
+        final String downloadUrl = determineDownloadUrl(targetDir);
         final Path zipDir = Files.createDirectories(determineBaseDir()
             .resolve(Paths.get("zip", sha1(downloadUrl))));
         final Path downloadFile = zipDir.resolve(extractFilenameFromUrl(downloadUrl));
@@ -83,8 +97,9 @@ public class LoomInstaller {
         return downloadFile;
     }
 
-    private static String determineDownloadUrl() throws IOException {
-        final Path propertiesFile = Paths.get("loom-installer", "loom-installer.properties");
+    private static String determineDownloadUrl(final Path targetDir) throws IOException {
+        final Path propertiesFile = targetDir.resolve(
+            Paths.get("loom-installer", "loom-installer.properties"));
 
         if (Files.notExists(propertiesFile)) {
             throw new IllegalStateException("Missing configuration of Loom Installer: "

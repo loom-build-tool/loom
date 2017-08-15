@@ -90,7 +90,7 @@ final class ModuleInfoExtender {
 
     }
 
-    public static class ModuleMainClassAttribute extends Attribute {
+    private static class ModuleMainClassAttribute extends Attribute {
 
         private final String mainClass;
 

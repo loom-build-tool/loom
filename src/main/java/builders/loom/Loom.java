@@ -45,14 +45,14 @@ import builders.loom.util.FileUtils;
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
 
-    private static final Path PROJECT_BASE_DIR = Paths.get("");
-    private static final Path LOCK_FILE = PROJECT_BASE_DIR.resolve(".loom.lock");
-    private static final Path LOG_FILE = LoomPaths.loomDir(PROJECT_BASE_DIR).resolve("build.log");
-
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})
     public static void main(final String[] args) {
         final long startTime = System.nanoTime();
+
+        final Path projectBaseDir = determineProjectBaseDir();
+        final Path lockFile = projectBaseDir.resolve(".loom.lock");
+        final Path logFile = LoomPaths.loomDir(projectBaseDir).resolve("build.log");
 
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightMagenta()
@@ -69,8 +69,8 @@ public class Loom {
             if (validate(cmd, options)) {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
-                try (FileLock ignored = lock()) {
-                    buildExecuted = run(cmd);
+                try (FileLock ignored = lock(lockFile)) {
+                    buildExecuted = run(projectBaseDir, logFile, cmd);
                 }
 
                 Runtime.getRuntime().removeShutdownHook(ctrlCHook);
@@ -82,7 +82,7 @@ public class Loom {
                 e.printStackTrace(System.err);
             }
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
-                .format("BUILD FAILED - see %s for details", LOG_FILE)
+                .format("BUILD FAILED - see %s for details", logFile)
                 .reset()
                 .newline());
             System.exit(1);
@@ -103,6 +103,22 @@ public class Loom {
         }
 
         System.exit(0);
+    }
+
+    private static Path determineProjectBaseDir() {
+        final String projectHome = System.getProperty("loom.project_dir");
+
+        if (projectHome == null) {
+            throw new IllegalStateException("No loom.project_dir set");
+        }
+
+        final Path projectBaseDir = Paths.get(projectHome);
+
+        if (!Files.isDirectory(projectBaseDir)) {
+            throw new IllegalStateException("Directory doesn't exist: " + projectBaseDir);
+        }
+
+        return projectBaseDir;
     }
 
     private static void init() {
@@ -175,22 +191,22 @@ public class Loom {
         formatter.printHelp("loom [option...] [product...]", options);
     }
 
-    private static FileLock lock() throws IOException {
-        if (Files.notExists(LOCK_FILE)) {
-            Files.createFile(LOCK_FILE);
+    private static FileLock lock(final Path lockFile) throws IOException {
+        if (Files.notExists(lockFile)) {
+            Files.createFile(lockFile);
         }
 
-        final FileChannel fileChannel = FileChannel.open(LOCK_FILE,
+        final FileChannel fileChannel = FileChannel.open(lockFile,
             StandardOpenOption.READ, StandardOpenOption.WRITE);
         final FileLock fileLock = fileChannel.tryLock();
 
         if (fileLock == null) {
-            throw new IllegalStateException("Loom already running - locked by " + LOCK_FILE);
+            throw new IllegalStateException("Loom already running - locked by " + lockFile);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                Files.deleteIfExists(LOCK_FILE);
+                Files.deleteIfExists(lockFile);
             } catch (final IOException ignored) {
                 // ignored
             }
@@ -199,10 +215,11 @@ public class Loom {
         return fileLock;
     }
 
-    private static boolean run(final CommandLine cmd) throws Exception {
+    private static boolean run(final Path projectBaseDir, final Path logFile,
+                               final CommandLine cmd) throws Exception {
         if (cmd.hasOption("clean")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
-            clean(PROJECT_BASE_DIR);
+            clean(projectBaseDir);
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
             if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
@@ -210,7 +227,7 @@ public class Loom {
             }
         }
 
-        configureLogging(LOG_FILE);
+        configureLogging(logFile);
 
         final LoomProcessor loomProcessor = new LoomProcessor();
         loomProcessor.logSystemEnvironment();
@@ -219,9 +236,9 @@ public class Loom {
         final boolean noCacheMode = cmd.hasOption("no-cache");
 
         final RuntimeConfigurationImpl runtimeConfiguration =
-            new RuntimeConfigurationImpl(PROJECT_BASE_DIR, !noCacheMode,
+            new RuntimeConfigurationImpl(projectBaseDir, !noCacheMode,
                 cmd.getOptionValue("artifact-version"),
-                loomProcessor.isModuleBuild(PROJECT_BASE_DIR));
+                loomProcessor.isModuleBuild(projectBaseDir));
 
         printRuntimeConfiguration(runtimeConfiguration);
 

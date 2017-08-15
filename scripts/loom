@@ -4,17 +4,24 @@ set -e
 
 loom_version=1.0.0
 
+# Find project directory of executed loom script
+project_dir="$(cd "$(dirname "$0")" && pwd)"
+
 # Detect environment for special handling
-cygwin=false
+env_cygwin=false
+env_mingw=false
 case "$(uname -s)" in
     CYGWIN*)
-        cygwin=true
+        env_cygwin=true
+        ;;
+    MINGW*)
+        env_mingw=true
         ;;
 esac
 
 # Define location for Loom Library
 if [ -z "$LOOM_USER_HOME" ]; then
-    if $cygwin; then
+    if $env_cygwin || $env_mingw; then
         LOOM_USER_HOME="$LOCALAPPDATA/Loom/Loom"
     else
         LOOM_USER_HOME=~/.loom
@@ -40,13 +47,14 @@ else
 fi
 
 # Adjust paths for Cygwin
-if $cygwin; then
+if $env_cygwin; then
     javacmd=$(cygpath --unix "$javacmd")
+    project_dir=$(cygpath --path --mixed "$project_dir")
 fi
 
 
 loom_lib="$LOOM_USER_HOME/library/loom-$loom_version/lib/loom-$loom_version.jar"
 
-test -e "$loom_lib" || "$javacmd" -jar loom-installer/loom-installer.jar
+test -e "$loom_lib" || "$javacmd" -jar "$project_dir/loom-installer/loom-installer.jar" "$project_dir"
 
-exec "$javacmd" $LOOM_OPTS --add-exports=java.base/jdk.internal.module=ALL-UNNAMED -jar "$loom_lib" "$@"
+exec "$javacmd" $LOOM_OPTS -Dloom.project_dir="$project_dir" --add-exports=java.base/jdk.internal.module=ALL-UNNAMED -jar "$loom_lib" "$@"

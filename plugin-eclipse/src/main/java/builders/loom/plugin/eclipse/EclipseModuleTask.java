@@ -27,21 +27,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 import builders.loom.api.AbstractTask;
 import builders.loom.api.JavaVersion;
@@ -56,6 +44,7 @@ import builders.loom.api.product.DummyProduct;
 import builders.loom.util.Preconditions;
 import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
+import builders.loom.util.xml.XmlParser;
 import builders.loom.util.xml.XmlUtil;
 import builders.loom.util.xml.XmlWriter;
 
@@ -64,23 +53,10 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
     // clean-create all eclipse files
     private final boolean cleanEclipse;
-    private final DocumentBuilder docBuilder;
-    private final Transformer transformer;
     private Map<Module, Set<Module>> moduleGraph;
 
     public EclipseModuleTask(final boolean cleanEclipse) {
         this.cleanEclipse = cleanEclipse;
-        try {
-            final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            docBuilder = dbFactory.newDocumentBuilder();
-
-            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-        } catch (final ParserConfigurationException | TransformerConfigurationException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     @Override
@@ -109,24 +85,27 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
     }
 
     private void createModuleProject(final Module module)
-        throws IOException, SAXException, TransformerException, InterruptedException {
+        throws IOException, InterruptedException {
+
+        final XmlWriter xmlWriter = new XmlWriter();
 
         final Path projectXml = module.getPath().resolve(".project");
 
         // pickup and merge existing .project file or create a new one
         if (Files.notExists(projectXml) || cleanEclipse) {
-            writeDocumentToFile(projectXml, createProjectFile(module));
+            xmlWriter.write(createProjectFile(module), projectXml);
         } else {
-            final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
+            final XmlParser xmlParser = XmlParser.createXmlParser();
+            final Document projectXmlDoc = xmlParser.parse(projectXml);
             final boolean changedBuildSpec = mergeProjectBuildSpec(projectXmlDoc);
             final boolean changedNature = mergeProjectNature(projectXmlDoc);
             if (changedBuildSpec || changedNature) {
-                writeDocumentToFile(projectXml, projectXmlDoc);
+                xmlWriter.write(projectXmlDoc, projectXml);
             }
         }
 
         // always create a new .classpath file
-        writeDocumentToFile(module.getPath().resolve(".classpath"), createClasspathFile(module));
+        xmlWriter.write(createClasspathFile(module), module.getPath().resolve(".classpath"));
 
         // pickup and merge existing .prefs file or create a new one
         final Path settingsFile = Files.createDirectories(module.getPath().resolve(".settings"))
@@ -276,16 +255,6 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         }
 
         return false;
-    }
-
-    private void writeDocumentToFile(final Path file, final Document doc)
-        throws IOException, TransformerException {
-
-        try (final OutputStream outputStream = XmlWriter.newOut(file)) {
-            doc.setXmlStandalone(true);
-
-            transformer.transform(new DOMSource(doc), new StreamResult(outputStream));
-        }
     }
 
     private void writePropertiesToFile(final Path file, final Properties properties)

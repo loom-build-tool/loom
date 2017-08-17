@@ -30,6 +30,24 @@ public class PropertiesMerger {
     }
 
     /**
+     * Set value.
+     */
+    public void set(final String key, final String value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
+        if (!wrapper.containsKey(key)) {
+            wrapper.setProperty(key, value);
+            changed = true;
+        } else {
+            final String oldValue = wrapper.getProperty(key);
+            if (!oldValue.equals(value)) {
+                wrapper.setProperty(key, value);
+                changed = true;
+            }
+        }
+    }
+
+    /**
      * Replace value with new value only if it exists.
      */
     public void fixup(final String key, final String newValue) {

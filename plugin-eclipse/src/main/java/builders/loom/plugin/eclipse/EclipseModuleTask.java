@@ -61,12 +61,15 @@ import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
-    private final DocumentBuilder docBuilder;
 
+    // clean-create all eclipse files
+    private final boolean cleanEclipse;
+    private final DocumentBuilder docBuilder;
     private final Transformer transformer;
     private Map<Module, Set<Module>> moduleGraph;
 
-    public EclipseModuleTask() {
+    public EclipseModuleTask(final boolean cleanEclipse) {
+        this.cleanEclipse = cleanEclipse;
         try {
             final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             docBuilder = dbFactory.newDocumentBuilder();
@@ -111,7 +114,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         final Path projectXml = module.getPath().resolve(".project");
 
         // pickup and merge existing .project file or create a new one
-        if (Files.notExists(projectXml)) {
+        if (Files.notExists(projectXml) || cleanEclipse) {
             writeDocumentToFile(projectXml, createProjectFile(module));
         } else {
             final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
@@ -126,7 +129,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         // pickup and merge existing .prefs file or create a new one
         final Path settingsFile = Files.createDirectories(module.getPath().resolve(".settings"))
             .resolve("org.eclipse.jdt.core.prefs");
-        if (Files.notExists(settingsFile)) {
+        if (Files.notExists(settingsFile) || cleanEclipse) {
             writePropertiesToFile(settingsFile, createJdtPrefs(module));
         } else {
             final Properties props = new Properties();
@@ -147,6 +150,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         prefs.setProperty("eclipse.preferences.version", "1");
         prefs.setProperty("org.eclipse.jdt.core.compiler.source", javaLangLevel);
         prefs.setProperty("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
+        prefs.setProperty("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
 
         addJdtPrefDefaults(prefs);
 
@@ -162,9 +166,9 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
 
         final PropertiesMerger merger = new PropertiesMerger(prefs);
 
-        merger.fixup("org.eclipse.jdt.core.compiler.source", javaLangLevel);
-        merger.fixup("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
-        merger.fixup("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
+        merger.set("org.eclipse.jdt.core.compiler.source", javaLangLevel);
+        merger.set("org.eclipse.jdt.core.compiler.compliance", javaLangLevel);
+        merger.set("org.eclipse.jdt.core.compiler.codegen.targetPlatform", javaLangLevel);
 
         final boolean changedByDefaults = addJdtPrefDefaults(prefs);
 

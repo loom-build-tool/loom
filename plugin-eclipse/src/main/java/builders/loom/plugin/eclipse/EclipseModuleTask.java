@@ -118,7 +118,9 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
             writeDocumentToFile(projectXml, createProjectFile(module));
         } else {
             final Document projectXmlDoc = docBuilder.parse(projectXml.toFile());
-            if (mergeProjectBuildSpec(projectXmlDoc) || mergeProjectNature(projectXmlDoc)) {
+            final boolean changedBuildSpec = mergeProjectBuildSpec(projectXmlDoc);
+            final boolean changedNature = mergeProjectNature(projectXmlDoc);
+            if (changedBuildSpec || changedNature) {
                 writeDocumentToFile(projectXml, projectXmlDoc);
             }
         }

@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-package builders.loom;
+package builders.loom.log;
 
-import java.nio.file.Path;
+import java.io.Closeable;
 
-import org.slf4j.LoggerFactory;
+public interface LogAppender extends Closeable {
 
-import builders.loom.log.LoomLoggerFactory;
-
-public final class LogConfiguration {
-
-    private LogConfiguration() {
-    }
-
-    @SuppressWarnings("checkstyle:executablestatementcount")
-    public static void configureLogger(final Path logFile) {
-        final LoomLoggerFactory lc = (LoomLoggerFactory) LoggerFactory.getILoggerFactory();
-        lc.setLogFile(logFile);
-        lc.start();
-    }
-
-    public static void stop() {
-        ((LoomLoggerFactory) LoggerFactory.getILoggerFactory()).stop();
-    }
+    void append(LogEvent logEvent);
 
 }

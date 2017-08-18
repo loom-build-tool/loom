@@ -45,7 +45,6 @@ dependencies {
     runtimeOnly project(':plugin-springboot')
     runtimeOnly project(':plugin-idea')
     runtimeOnly project(':plugin-eclipse')
-    compile('ch.qos.logback:logback-classic:1.1.7')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('org.fusesource.jansi:jansi:1.14')

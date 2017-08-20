@@ -38,8 +38,8 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
     private Map<Module, Set<Module>> moduleGraph;
 
     @Override
-    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> moduleGraph) {
-        this.moduleGraph = moduleGraph;
+    public void setTransitiveModuleGraph(final Map<Module, Set<Module>> transitiveModuleGraph) {
+        this.moduleGraph = transitiveModuleGraph;
     }
 
     @Override

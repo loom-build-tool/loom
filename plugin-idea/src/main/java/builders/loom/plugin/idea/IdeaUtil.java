@@ -18,7 +18,7 @@ package builders.loom.plugin.idea;
 
 import java.nio.file.Path;
 
-class IdeaUtil {
+final class IdeaUtil {
 
     private IdeaUtil() {
     }

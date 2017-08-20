@@ -21,12 +21,14 @@ import org.slf4j.event.Level;
 
 public class LogFilter {
 
+    private static final String PACKAGE_PREFIX = "builders.loom.";
+
     boolean isEnabled(final String name, final Level level) {
-        if (level.toInt() >= Level.ERROR.toInt()) {
+        if (level.toInt() >= Level.WARN.toInt()) {
             return true;
         }
 
-        return name.startsWith("builders.loom.") && level.toInt() > Level.TRACE.toInt();
+        return level.toInt() > Level.TRACE.toInt() && name.startsWith(PACKAGE_PREFIX);
     }
 
     public boolean isEnabled(final String name, final Level level, final Marker marker) {

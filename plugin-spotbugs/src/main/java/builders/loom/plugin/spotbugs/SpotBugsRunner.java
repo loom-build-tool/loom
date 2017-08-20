@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -40,9 +40,9 @@ import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class FindbugsRunner {
+public class SpotBugsRunner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsRunner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpotBugsRunner.class);
 
     private static final String EFFORT_DEFAULT = "default";
 
@@ -53,7 +53,7 @@ public class FindbugsRunner {
     private final int priorityThreshold;
     private final Path reportPath;
 
-    FindbugsRunner(final Path reportPath, final List<Path> sourceFiles, final Path classesDir,
+    SpotBugsRunner(final Path reportPath, final List<Path> sourceFiles, final Path classesDir,
                    final List<Path> classpath, final int priorityThreshold) {
         this.reportPath = reportPath;
         this.sourceFiles = sourceFiles;
@@ -63,7 +63,7 @@ public class FindbugsRunner {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public void executeFindbugs() throws IOException, InterruptedException {
+    public void executeSpotBugs() throws IOException, InterruptedException {
         prepareEnvironment();
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
@@ -71,9 +71,9 @@ public class FindbugsRunner {
         final Locale initialLocale = Locale.getDefault();
         Locale.setDefault(Locale.ENGLISH);
 
-        final Project project = createFindbugsProject();
+        final Project project = createSpotBugsProject();
         if (project.getFileCount() == 0) {
-            LOG.info("Findbugs analysis skipped for this project.");
+            LOG.info("SpotBugs analysis skipped for this project.");
             return;
         }
 
@@ -84,12 +84,12 @@ public class FindbugsRunner {
         xmlBugReporter.setPriorityThreshold(priorityThreshold);
         xmlBugReporter.setAddMessages(true);
         xmlBugReporter.setOutputStream(new PrintStream(
-            reportPath.resolve("findbugs-result.xml").toFile(), "UTF-8"));
+            reportPath.resolve("spotbugs-result.xml").toFile(), "UTF-8"));
 
         final HTMLBugReporter htmlBugReporter = new HTMLBugReporter(project, "default.xsl");
         htmlBugReporter.setPriorityThreshold(priorityThreshold);
         htmlBugReporter.setOutputStream(new PrintStream(
-            reportPath.resolve("findbugs-result.html").toFile(), "UTF-8"));
+            reportPath.resolve("spotbugs-result.html").toFile(), "UTF-8"));
 
         final MultiplexingBugReporter multiplexingBugReporter =
             new MultiplexingBugReporter(loggingBugReporter, xmlBugReporter, htmlBugReporter);
@@ -107,7 +107,7 @@ public class FindbugsRunner {
             engine.execute();
 
             if (engine.getErrorCount() + engine.getBugCount() > 0) {
-                throw new IllegalStateException("Findbugs reported bugs!");
+                throw new IllegalStateException("SpotBugs reported bugs!");
             }
         } finally {
             multiplexingBugReporter.finish();
@@ -117,9 +117,9 @@ public class FindbugsRunner {
     }
 
     private void prepareEnvironment() {
-        LOG.debug("Prepare/cleanup findbugs environment...");
+        LOG.debug("Prepare/cleanup SpotBugs environment...");
         try {
-            Files.deleteIfExists(reportPath.resolve("findbugs-result.xml"));
+            Files.deleteIfExists(reportPath.resolve("spotbugs-result.xml"));
             Files.createDirectories(reportPath);
         } catch (final IOException ioe) {
             throw new UncheckedIOException(ioe);
@@ -127,28 +127,28 @@ public class FindbugsRunner {
         LOG.debug("...cleanup done");
     }
 
-    private Project createFindbugsProject() throws IOException {
-        final Project findbugsProject = new Project();
+    private Project createSpotBugsProject() throws IOException {
+        final Project spotBugsProject = new Project();
 
         sourceFiles.stream()
             .map(Path::toString)
             .peek(p -> LOG.debug(" +source {}", p))
-            .forEach(findbugsProject::addFile);
+            .forEach(spotBugsProject::addFile);
 
         getClassesToScan(classesDir).stream()
             .peek(p -> LOG.debug(" +class {}", p))
-            .forEach(findbugsProject::addFile);
+            .forEach(spotBugsProject::addFile);
 
         classpath.stream()
-            .map(FindbugsRunner::pathToString)
+            .map(SpotBugsRunner::pathToString)
             .peek(p -> LOG.debug(" +aux {}", p))
-            .forEach(findbugsProject::addAuxClasspathEntry);
+            .forEach(spotBugsProject::addAuxClasspathEntry);
 
-        if (findbugsProject.getFileList().isEmpty()) {
+        if (spotBugsProject.getFileList().isEmpty()) {
             throw new IllegalStateException("no source files");
         }
 
-        return findbugsProject;
+        return spotBugsProject;
     }
 
     private UserPreferences buildUserPreferences() {
@@ -161,7 +161,7 @@ public class FindbugsRunner {
         return Files.walk(classesDir)
             .filter(filterByExtension("class"))
             .filter(f -> !f.getFileName().toString().equals("module-info.class"))
-            .map(FindbugsRunner::pathToString)
+            .map(SpotBugsRunner::pathToString)
             .collect(Collectors.toList());
     }
 

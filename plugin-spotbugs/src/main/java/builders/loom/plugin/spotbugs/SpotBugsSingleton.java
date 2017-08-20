@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -33,27 +33,27 @@ import edu.umd.cs.findbugs.Plugin;
 import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
 
-public final class FindbugsSingleton {
+public final class SpotBugsSingleton {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FindbugsSingleton.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpotBugsSingleton.class);
 
     private static volatile boolean initialized;
 
     private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
 
-    private FindbugsSingleton() {
+    private SpotBugsSingleton() {
     }
 
-    public static void initFindbugs(final boolean loadFbContrib, final boolean loadFindBugsSec) {
+    public static void initSpotBugs(final boolean loadFbContrib, final boolean loadFindBugsSec) {
 
         if (!initialized) {
-            synchronized (FindbugsSingleton.class) {
+            synchronized (SpotBugsSingleton.class) {
                 if (!initialized) {
 
-                    loadFindbugsPlugin(loadFbContrib, loadFindBugsSec);
+                    loadSpotBugsPlugin(loadFbContrib, loadFindBugsSec);
                     disableUpdateChecksOnEveryPlugin();
 
-                    LOG.info("Using findbugs plugins: {}", Plugin.getAllPluginIds());
+                    LOG.info("Using SpotBugs plugins: {}", Plugin.getAllPluginIds());
 
                     initialized = true;
 
@@ -64,17 +64,17 @@ public final class FindbugsSingleton {
     }
 
     /**
-     * Note: findbugs plugins are registered in a static map and thus has many concurrency issues.
+     * Note: spotbugs plugins are registered in a static map and thus has many concurrency issues.
      */
-    private static void loadFindbugsPlugin(
+    private static void loadSpotBugsPlugin(
         final boolean loadFbContrib, final boolean loadFindBugsSec) {
 
-        final ClassLoader contextClassLoader = FindbugsSingleton.class.getClassLoader();
+        final ClassLoader contextClassLoader = SpotBugsSingleton.class.getClassLoader();
 
         try {
 
             Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-                .map(FindbugsSingleton::normalizeUrl)
+                .map(SpotBugsSingleton::normalizeUrl)
                 .filter(Files::exists)
                 .filter(file ->
                     loadFbContrib && file.getFileName().toString().startsWith("fb-contrib")
@@ -89,7 +89,7 @@ public final class FindbugsSingleton {
                     } catch (final DuplicatePluginIdException e) {
                         if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
                             throw new IllegalStateException(
-                                "Duplicate findbugs plugin " + e.getPluginId());
+                                "Duplicate SpotBugs plugin " + e.getPluginId());
                         }
                     }
                 });
@@ -100,8 +100,8 @@ public final class FindbugsSingleton {
     }
 
     /**
-     * jar:file:/C:/Users/leftout/plugin-findbugs/findbugs-3.0.1.jar!/findbugs.xml
-     * will become C:/Users/leftout/plugin-findbugs/findbugs-3.0.1.jar
+     * jar:file:/C:/Users/leftout/plugin-spotbugs/spotbugs-3.0.1.jar!/spotbugs.xml
+     * will become C:/Users/leftout/plugin-spotbugs/spotbugs-3.0.1.jar
      * .
      */
     private static Path normalizeUrl(final URL url) {

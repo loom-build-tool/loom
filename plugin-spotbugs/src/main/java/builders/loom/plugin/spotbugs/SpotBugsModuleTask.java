@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.Preconditions;
 import edu.umd.cs.findbugs.Priorities;
 
-public class FindbugsModuleTask extends AbstractModuleTask {
+public class SpotBugsModuleTask extends AbstractModuleTask {
 
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
@@ -46,7 +46,7 @@ public class FindbugsModuleTask extends AbstractModuleTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public FindbugsModuleTask(final FindbugsPluginSettings pluginSettings,
+    public SpotBugsModuleTask(final SpotBugsPluginSettings pluginSettings,
                               final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
@@ -54,7 +54,7 @@ public class FindbugsModuleTask extends AbstractModuleTask {
         readBuildConfig(Objects.requireNonNull(pluginSettings));
     }
 
-    private void readBuildConfig(final FindbugsPluginSettings pluginSettings) {
+    private void readBuildConfig(final SpotBugsPluginSettings pluginSettings) {
 
         priorityThreshold = Optional.ofNullable(pluginSettings.getPriorityThreshold())
             .map(prio -> resolvePriority(prio.toUpperCase()))
@@ -72,7 +72,7 @@ public class FindbugsModuleTask extends AbstractModuleTask {
 
         Preconditions.checkState(
             customPlugins.isEmpty(),
-            "Unknown findbugs custom plugin(s): " + customPlugins);
+            "Unknown SpotBugs custom plugin(s): " + customPlugins);
 
     }
 
@@ -88,7 +88,7 @@ public class FindbugsModuleTask extends AbstractModuleTask {
                     throw new IllegalStateException(e);
                 }
             })
-            .orElseThrow(() -> new IllegalStateException("Unknown FindBugs priority: " + prio));
+            .orElseThrow(() -> new IllegalStateException("Unknown SpotBugs priority: " + prio));
     }
 
     private List<String> parsePropValue(final String input) {
@@ -109,15 +109,15 @@ public class FindbugsModuleTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);
+        SpotBugsSingleton.initSpotBugs(loadFbContrib, loadFindBugsSec);
 
         final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "findbugs")
+            getBuildContext().getModuleName(), "spotbugs")
             .resolve(compileTarget.name().toLowerCase());
 
-        new FindbugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
+        new SpotBugsRunner(reportPath, getSourceTree().get().getSourceFiles(),
             getClasses().get().getClassesDir(), calcClasspath(), priorityThreshold)
-            .executeFindbugs();
+            .executeSpotBugs();
 
         return completeOk(product(reportPath));
     }
@@ -125,9 +125,9 @@ public class FindbugsModuleTask extends AbstractModuleTask {
     private ReportProduct product(final Path reportPath) {
         switch (compileTarget) {
             case MAIN:
-                return new ReportProduct(reportPath, "Findbugs main report");
+                return new ReportProduct(reportPath, "SpotBugs main report");
             case TEST:
-                return new ReportProduct(reportPath, "Findbugs test report");
+                return new ReportProduct(reportPath, "SpotBugs test report");
             default:
                 throw new IllegalStateException();
         }

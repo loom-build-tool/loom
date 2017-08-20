@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import builders.loom.api.PluginSettings;
 
-public class FindbugsPluginSettings implements PluginSettings {
+public class SpotBugsPluginSettings implements PluginSettings {
 
     private String priorityThreshold;
     private String customPlugins;

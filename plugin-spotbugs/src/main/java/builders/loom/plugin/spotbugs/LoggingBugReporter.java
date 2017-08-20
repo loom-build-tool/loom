@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +31,12 @@ public class LoggingBugReporter extends AbstractBugReporter {
 
     @Override
     protected void doReportBug(final BugInstance bugInstance) {
-        LOG.error("Findbugs bug: {}", bugInstance.getMessage());
+        LOG.error("SpotBugs bug: {}", bugInstance.getMessage());
     }
 
     @Override
     public void reportAnalysisError(final AnalysisError error) {
-        LOG.error("Findbugs analysis error: {}", error);
+        LOG.error("SpotBugs analysis error: {}", error);
     }
 
     @Override

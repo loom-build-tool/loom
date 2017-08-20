@@ -39,7 +39,7 @@ dependencies {
     runtimeOnly project(':plugin-java')
     runtimeOnly project(':plugin-junit4')
     runtimeOnly project(':plugin-checkstyle')
-    runtimeOnly project(':plugin-findbugs')
+    runtimeOnly project(':plugin-spotbugs')
     runtimeOnly project(':plugin-pmd')
     runtimeOnly project(':plugin-mavenresolver')
     runtimeOnly project(':plugin-springboot')
@@ -90,9 +90,9 @@ task zip(type: Zip) {
             from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
             from project(':plugin-checkstyle').configurations.runtime
         }
-        into("plugin-findbugs") {
-            from project(':plugin-findbugs').configurations.runtime.allArtifacts.files
-            from project(':plugin-findbugs').configurations.runtime
+        into("plugin-spotbugs") {
+            from project(':plugin-spotbugs').configurations.runtime.allArtifacts.files
+            from project(':plugin-spotbugs').configurations.runtime
         }
         into("plugin-pmd") {
             from project(':plugin-pmd').configurations.runtime.allArtifacts.files

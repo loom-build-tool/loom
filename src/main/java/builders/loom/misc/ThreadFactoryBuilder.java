@@ -35,12 +35,22 @@ public final class ThreadFactoryBuilder {
         this.nameFormat = nameFormat;
     }
 
+    public ThreadFactoryBuilder withNameFormat(final String val) {
+        this.nameFormat = val;
+        return this;
+    }
+
     public Boolean getDaemon() {
         return daemon;
     }
 
     public void setDaemon(final Boolean daemon) {
         this.daemon = daemon;
+    }
+
+    public ThreadFactoryBuilder withDaemon(final Boolean val) {
+        this.daemon = val;
+        return this;
     }
 
     public Integer getPriority() {
@@ -51,6 +61,11 @@ public final class ThreadFactoryBuilder {
         this.priority = priority;
     }
 
+    public ThreadFactoryBuilder withPriority(final Integer val) {
+        this.priority = val;
+        return this;
+    }
+
     public Thread.UncaughtExceptionHandler getUncaughtExceptionHandler() {
         return uncaughtExceptionHandler;
     }
@@ -58,6 +73,12 @@ public final class ThreadFactoryBuilder {
     public void setUncaughtExceptionHandler(
         final Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         this.uncaughtExceptionHandler = uncaughtExceptionHandler;
+    }
+
+    public ThreadFactoryBuilder withUncaughtExceptionHandler(
+            final Thread.UncaughtExceptionHandler val) {
+        this.uncaughtExceptionHandler = val;
+        return this;
     }
 
     public ThreadFactory build() {

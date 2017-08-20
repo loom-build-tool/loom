@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package builders.loom;
+package builders.loom.log;
 
-import java.nio.file.Path;
+import org.slf4j.Marker;
+import org.slf4j.event.Level;
 
-import org.slf4j.LoggerFactory;
+public class LogFilter {
 
-import builders.loom.log.LoomLoggerFactory;
+    private static final String PACKAGE_PREFIX = "builders.loom.";
 
-public final class LogConfiguration {
+    boolean isEnabled(final String name, final Level level) {
+        if (level.toInt() >= Level.WARN.toInt()) {
+            return true;
+        }
 
-    private LogConfiguration() {
+        return level.toInt() > Level.TRACE.toInt() && name.startsWith(PACKAGE_PREFIX);
     }
 
-    @SuppressWarnings("checkstyle:executablestatementcount")
-    public static void configureLogger(final Path logFile) {
-        final LoomLoggerFactory lc = (LoomLoggerFactory) LoggerFactory.getILoggerFactory();
-        lc.setLogFile(logFile);
-        lc.start();
-    }
-
-    public static void stop() {
-        ((LoomLoggerFactory) LoggerFactory.getILoggerFactory()).stop();
+    public boolean isEnabled(final String name, final Level level, final Marker marker) {
+        return isEnabled(name, level);
     }
 
 }

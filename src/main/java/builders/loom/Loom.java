@@ -82,11 +82,8 @@ public class Loom {
                 try (FileLock ignored = lock(lockFile)) {
                     run(projectBaseDir, logFile, cmd);
                 }
-
-                Runtime.getRuntime().removeShutdownHook(ctrlCHook);
             }
         } catch (final Throwable e) {
-            Runtime.getRuntime().removeShutdownHook(ctrlCHook);
             if (!(e instanceof BuildException)) {
                 // BuildExceptions are already logged
                 e.printStackTrace(System.err);
@@ -95,6 +92,8 @@ public class Loom {
                 printFailed(logFile);
             }
             throw e;
+        } finally {
+            Runtime.getRuntime().removeShutdownHook(ctrlCHook);
         }
 
         if (buildExecuted) {

@@ -81,28 +81,39 @@ public class Loom {
                 // BuildExceptions are already logged
                 e.printStackTrace(System.err);
             }
-            AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightRed()
-                .format("BUILD FAILED - see %s for details", logFile)
-                .reset()
-                .newline());
+            if (buildExecuted) {
+                printFailed(logFile);
+            }
             System.exit(1);
         }
 
         if (buildExecuted) {
-            final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
-                .truncatedTo(ChronoUnit.MILLIS);
-
-            AnsiConsole.out().println(Ansi.ansi().reset().newline().fgBrightGreen()
-                .a("BUILD SUCCESSFUL").reset()
-                .a(" in ")
-                .a(duration.toString()
-                    .substring(2)
-                    .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                    .toLowerCase())
-                .newline());
+            printSuccess(startTime);
         }
 
         System.exit(0);
+    }
+
+    private static void printFailed(final Path logFile) {
+        AnsiConsole.err().println(Ansi.ansi().reset().newline()
+            .fgBrightRed().bold().a("BUILD FAILED").reset()
+            .render(" - see @|bold %s|@ for details", logFile)
+            .reset()
+            .newline());
+    }
+
+    private static void printSuccess(final long startTime) {
+        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
+            .truncatedTo(ChronoUnit.MILLIS);
+
+        AnsiConsole.out().println(Ansi.ansi().reset().newline()
+            .fgBrightGreen().bold().a("BUILD SUCCESSFUL").reset()
+            .a(" in ")
+            .a(duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase())
+            .newline());
     }
 
     private static Path determineProjectBaseDir() {

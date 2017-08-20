@@ -17,8 +17,6 @@
 package builders.loom.plugin.java;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -37,7 +35,6 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-import jdk.internal.module.ModuleInfoExtender;
 
 public class JavaAssembleModuleTask extends AbstractModuleTask {
 
@@ -120,21 +117,14 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
         return null;
     }
 
-    private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) {
+    private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) throws IOException {
+        final byte[] data = Files.readAllBytes(modulesInfoClassFile);
 
-        // TODO replace JDK ModuleInfoExtender by something similar, then remove
-        // --add-exports=java.base/jdk.internal.module=ALL-UNNAMED from build and loom scripts
-
-        try (InputStream classIs = Files.newInputStream(modulesInfoClassFile)) {
-            final ModuleInfoExtender extender = ModuleInfoExtender.newExtender(classIs);
-
-            Optional.ofNullable(pluginSettings.getMainClassName())
-                .ifPresent(extender::mainClass);
-
-            return extender.toByteArray();
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+        if (pluginSettings.getMainClassName() == null) {
+            return data;
         }
+
+        return ModuleInfoExtender.extend(data, pluginSettings.getMainClassName());
     }
 
     private JarOutputStream buildJarOutput(final Path jarFile, final String automaticModuleName)

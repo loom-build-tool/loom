@@ -45,9 +45,21 @@ import builders.loom.util.FileUtils;
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
 
+    private static boolean buildExecuted;
+
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})
     public static void main(final String[] args) {
+        try {
+            mainWithoutExit(args);
+            System.exit(0);
+        } catch (final Throwable e) {
+            System.exit(1);
+        }
+    }
+
+    @SuppressWarnings({"checkstyle:illegalcatch", "checkstyle:illegalthrows"})
+    private static void mainWithoutExit(final String[] args) throws Throwable {
         final long startTime = System.nanoTime();
 
         final Path projectBaseDir = determineProjectBaseDir();
@@ -57,8 +69,6 @@ public class Loom {
         final Thread ctrlCHook = new Thread(() ->
             AnsiConsole.err().println(Ansi.ansi().reset().newline().fgBrightMagenta()
                 .a("Interrupt received - stopping").reset()));
-
-        boolean buildExecuted = false;
 
         try {
             init();
@@ -70,7 +80,7 @@ public class Loom {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
                 try (FileLock ignored = lock(lockFile)) {
-                    buildExecuted = run(projectBaseDir, logFile, cmd);
+                    run(projectBaseDir, logFile, cmd);
                 }
 
                 Runtime.getRuntime().removeShutdownHook(ctrlCHook);
@@ -81,37 +91,15 @@ public class Loom {
                 // BuildExceptions are already logged
                 e.printStackTrace(System.err);
             }
-            printFailed(logFile);
-            System.exit(1);
+            if (buildExecuted) {
+                printFailed(logFile);
+            }
+            throw e;
         }
 
         if (buildExecuted) {
             printSuccess(startTime);
         }
-
-        System.exit(0);
-    }
-
-    private static void printFailed(final Path logFile) {
-        AnsiConsole.err().println(Ansi.ansi().reset().newline()
-            .fgBrightRed().bold().a("BUILD FAILED").reset()
-            .render(" - see @|bold %s|@ for details", logFile)
-            .reset()
-            .newline());
-    }
-
-    private static void printSuccess(final long startTime) {
-        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
-            .truncatedTo(ChronoUnit.MILLIS);
-
-        AnsiConsole.out().println(Ansi.ansi().reset().newline()
-            .fgBrightGreen().bold().a("BUILD SUCCESSFUL").reset()
-            .a(" in ")
-            .a(duration.toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase())
-            .newline());
     }
 
     private static Path determineProjectBaseDir() {
@@ -224,7 +212,7 @@ public class Loom {
         return fileLock;
     }
 
-    private static boolean run(final Path projectBaseDir, final Path logFile,
+    private static void run(final Path projectBaseDir, final Path logFile,
                                final CommandLine cmd) throws Exception {
         if (cmd.hasOption("clean")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
@@ -232,7 +220,7 @@ public class Loom {
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
             if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
-                return false;
+                return;
             }
         }
 
@@ -263,8 +251,6 @@ public class Loom {
             printProducts(runtimeConfiguration, loomProcessor, format);
         }
 
-        boolean buildExecuted = false;
-
         if (!cmd.getArgList().isEmpty()) {
             buildExecuted = true;
 
@@ -285,8 +271,6 @@ public class Loom {
         }
 
         loomProcessor.logMemoryUsage();
-
-        return buildExecuted;
     }
 
     private static void clean(final Path projectBaseDir) {
@@ -322,6 +306,28 @@ public class Loom {
         } else {
             throw new IllegalStateException("Unknown format: " + format);
         }
+    }
+
+    private static void printFailed(final Path logFile) {
+        AnsiConsole.err().println(Ansi.ansi().reset().newline()
+            .fgBrightRed().bold().a("BUILD FAILED").reset()
+            .render(" - see @|bold %s|@ for details", logFile)
+            .reset()
+            .newline());
+    }
+
+    private static void printSuccess(final long startTime) {
+        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
+            .truncatedTo(ChronoUnit.MILLIS);
+
+        AnsiConsole.out().println(Ansi.ansi().reset().newline()
+            .fgBrightGreen().bold().a("BUILD SUCCESSFUL").reset()
+            .a(" in ")
+            .a(duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase())
+            .newline());
     }
 
 }

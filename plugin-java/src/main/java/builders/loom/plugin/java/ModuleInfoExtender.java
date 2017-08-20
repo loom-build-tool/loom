@@ -63,9 +63,8 @@ final class ModuleInfoExtender {
         }
 
         @Override
-        public void visitAttribute(final Attribute oldAttr) {
-            final Attribute newAttr = attrs.get(oldAttr.type);
-            super.visitAttribute(newAttr == null ? oldAttr : newAttr);
+        public void visitAttribute(final Attribute attr) {
+            super.visitAttribute(attrs.getOrDefault(attr.type, attr));
         }
 
     }

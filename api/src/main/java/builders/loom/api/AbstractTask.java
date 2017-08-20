@@ -19,11 +19,17 @@ package builders.loom.api;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import builders.loom.api.product.Product;
 import builders.loom.api.service.ServiceLocator;
 
 public abstract class AbstractTask implements Task,
     ProductDependenciesAware, ServiceLocatorAware {
+
+    @SuppressWarnings("checkstyle:visibilitymodifier")
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private RuntimeConfiguration runtimeConfiguration;
     private BuildContext buildContext;

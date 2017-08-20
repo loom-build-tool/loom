@@ -3,7 +3,6 @@ apply plugin: 'java'
 dependencies {
     compileOnly project(':api')
     compileOnly project(':util')
-    compile('net.sourceforge.pmd:pmd-java8:5.8.1')
 }
 
 jar {

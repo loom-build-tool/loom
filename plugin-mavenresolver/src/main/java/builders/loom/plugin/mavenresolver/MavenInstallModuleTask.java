@@ -46,6 +46,7 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.DirectoryProduct;
@@ -93,7 +94,8 @@ public class MavenInstallModuleTask extends AbstractModuleTask {
             }
         });
 
-        try (final TempFile tmpPomFile = new TempFile("pom", null)) {
+        final Path tmpDir = LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir());
+        try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null)) {
             final Artifact jarArtifact = buildArtifact("jar", jarFile);
             writePom(buildModel(jarArtifact), tmpPomFile.getFile());
 

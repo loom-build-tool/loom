@@ -81,9 +81,7 @@ public class Loom {
                 // BuildExceptions are already logged
                 e.printStackTrace(System.err);
             }
-            if (buildExecuted) {
-                printFailed(logFile);
-            }
+            printFailed(logFile);
             System.exit(1);
         }
 

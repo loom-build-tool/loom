@@ -62,7 +62,7 @@ public class PluginLoader {
         "junit4", "builders.loom.plugin.junit4.JUnit4Plugin",
         "mavenresolver", "builders.loom.plugin.mavenresolver.MavenResolverPlugin",
         "checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin",
-        "findbugs", "builders.loom.plugin.findbugs.FindbugsPlugin",
+        "spotbugs", "builders.loom.plugin.spotbugs.SpotBugsPlugin",
         "pmd", "builders.loom.plugin.pmd.PmdPlugin",
         "springboot", "builders.loom.plugin.springboot.SpringBootPlugin",
         "idea", "builders.loom.plugin.idea.IdeaPlugin",

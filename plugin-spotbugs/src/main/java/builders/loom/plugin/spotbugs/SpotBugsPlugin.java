@@ -14,37 +14,37 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 
-public class FindbugsPlugin extends AbstractPlugin<FindbugsPluginSettings> {
+public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
 
-    public FindbugsPlugin() {
-        super(new FindbugsPluginSettings());
+    public SpotBugsPlugin() {
+        super(new SpotBugsPluginSettings());
     }
 
     @Override
     public void configure() {
-        final FindbugsPluginSettings pluginSettings = getPluginSettings();
+        final SpotBugsPluginSettings pluginSettings = getPluginSettings();
 
-        task("findbugsMain")
-            .impl(() -> new FindbugsModuleTask(pluginSettings, CompileTarget.MAIN))
-            .provides("findbugsMainReport")
+        task("spotbugsMain")
+            .impl(() -> new SpotBugsModuleTask(pluginSettings, CompileTarget.MAIN))
+            .provides("spotbugsMainReport")
             .uses("source", "compileDependencies", "compilation")
-            .desc("Runs FindBugs against main classes and create report.")
+            .desc("Runs SpotBugs against main classes and create report.")
             .register();
 
-        task("findbugsTest")
-            .impl(() -> new FindbugsModuleTask(pluginSettings, CompileTarget.TEST))
-            .provides("findbugsTestReport")
+        task("spotbugsTest")
+            .impl(() -> new SpotBugsModuleTask(pluginSettings, CompileTarget.TEST))
+            .provides("spotbugsTestReport")
             .uses("testSource", "testDependencies", "compilation", "testCompilation")
-            .desc("Runs FindBugs against test classes and create report.")
+            .desc("Runs SpotBugs against test classes and create report.")
             .register();
 
         goal("check")
-            .requires("findbugsMainReport", "findbugsTestReport")
+            .requires("spotbugsMainReport", "spotbugsTestReport")
             .register();
     }
 

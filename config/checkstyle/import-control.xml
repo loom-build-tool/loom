@@ -36,7 +36,7 @@
         <allow pkg="com.puppycrawl.tools"/>
     </subpackage>
 
-    <subpackage name="plugin.findbugs">
+    <subpackage name="plugin.spotbugs">
         <allow pkg="edu.umd.cs.findbugs"/>
     </subpackage>
 

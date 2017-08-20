@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.findbugs;
+package builders.loom.plugin.spotbugs;
 
 import java.util.Arrays;
 import java.util.List;

@@ -239,7 +239,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
         for (final Module depModule : moduleGraph.get(module)) {
             component.element("orderEntry")
                 .attr("type", "module")
-                .attr("module-name", ideaModuleName(depModule.getPath()))
+                .attr("module-name", IdeaUtil.ideaModuleName(depModule.getPath()))
                 .attr("scope", "COMPILE");
 
             // add compile artifacts of dependent module

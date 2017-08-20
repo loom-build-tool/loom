@@ -47,8 +47,10 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
         final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
         final Path ideaDirectory = projectBaseDir.resolve(".idea");
 
-        LOG.info("Remove directory {}", ideaDirectory);
-        FileUtils.cleanDir(ideaDirectory);
+        if (Files.exists(ideaDirectory)) {
+            LOG.info("Remove directory {}", ideaDirectory);
+            FileUtils.cleanDir(ideaDirectory);
+        }
 
         for (final Module module : moduleGraph.keySet()) {
             remove(IdeaUtil.imlFileFromPath(

@@ -64,16 +64,16 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
 
         // 1-n module (.iml) files
         for (final Module module : moduleGraph.keySet()) {
-            final String moduleName = ideaModuleName(module.getPath());
-            final Path imlFile = imlFileFromPath(module.getPath(), moduleName);
+            final String moduleName = IdeaUtil.ideaModuleName(module.getPath());
+            final Path imlFile = IdeaUtil.imlFileFromPath(module.getPath(), moduleName);
             xmlWriter.write(createModuleImlFile(imlFile, module, projectJavaVersion), imlFile);
             ideaModules.add(new IdeaModule(imlFile, moduleName));
         }
 
         if (getRuntimeConfiguration().isModuleBuild()) {
             // create separate umbrella .iml for multi-module projects
-            final String moduleName = ideaModuleName(projectBaseDir);
-            final Path rootImlFile = imlFileFromPath(projectBaseDir, moduleName);
+            final String moduleName = IdeaUtil.ideaModuleName(projectBaseDir);
+            final Path rootImlFile = IdeaUtil.imlFileFromPath(projectBaseDir, moduleName);
             xmlWriter.write(createUmbrellaImlFile(), rootImlFile);
             ideaModules.add(new IdeaModule(rootImlFile, moduleName));
         }
@@ -82,20 +82,6 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
         xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
         return completeOk(new DummyProduct("Idea project files"));
-    }
-
-    private String ideaModuleName(final Path path) {
-        final Path currentWorkDirName = path.toAbsolutePath().normalize().getFileName();
-
-        if (currentWorkDirName == null) {
-            throw new IllegalStateException("Can't get current working directory");
-        }
-
-        return currentWorkDirName.toString();
-    }
-
-    private Path imlFileFromPath(final Path path, final String ideaModuleName) {
-        return path.resolve(ideaModuleName + ".iml");
     }
 
     private JavaVersion determineModulesHighestJavaVersion() {

@@ -38,7 +38,7 @@ import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
-public class IdeaModuleTask extends AbstractTask implements ModuleGraphAware {
+public class IdeaTask extends AbstractTask implements ModuleGraphAware {
 
     private Map<Module, Set<Module>> moduleGraph;
 

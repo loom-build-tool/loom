@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import builders.loom.log.LoomLoggerFactory;
+import builders.loom.log.StdOut2SLF4J;
 
 public final class LogConfiguration {
 
@@ -37,9 +38,14 @@ public final class LogConfiguration {
         // Ensure SLF4J is used (instead of java.util.logging)
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
+
+        // instead of console outputs
+        StdOut2SLF4J.install();
     }
 
     public static void stop() {
+        StdOut2SLF4J.uninstall();
+
         ((LoomLoggerFactory) LoggerFactory.getILoggerFactory()).stop();
     }
 

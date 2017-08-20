@@ -29,6 +29,12 @@ public class IdeaPlugin extends AbstractPlugin<PluginSettings> {
             .importFromAllModules("compileArtifacts", "testArtifacts")
             .desc("Creates .idea directory and .iml file(s) for IntelliJ IDEA.")
             .register();
+
+        task("configureCleanIdea")
+            .impl(IdeaCleanTask::new)
+            .provides("cleanIdea")
+            .desc("Cleans (removes) .idea directory and .iml file(s).")
+            .register();
     }
 
 }

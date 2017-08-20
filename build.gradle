@@ -45,6 +45,7 @@ dependencies {
     runtimeOnly project(':plugin-springboot')
     runtimeOnly project(':plugin-idea')
     runtimeOnly project(':plugin-eclipse')
+    compile('org.slf4j:jul-to-slf4j:1.8.0-alpha2')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('org.fusesource.jansi:jansi:1.14')

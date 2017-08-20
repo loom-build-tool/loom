@@ -19,6 +19,7 @@ package builders.loom;
 import java.nio.file.Path;
 
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import builders.loom.log.LoomLoggerFactory;
 
@@ -32,6 +33,10 @@ public final class LogConfiguration {
         final LoomLoggerFactory lc = (LoomLoggerFactory) LoggerFactory.getILoggerFactory();
         lc.setLogFile(logFile);
         lc.start();
+
+        // Ensure SLF4J is used (instead of java.util.logging)
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
     }
 
     public static void stop() {

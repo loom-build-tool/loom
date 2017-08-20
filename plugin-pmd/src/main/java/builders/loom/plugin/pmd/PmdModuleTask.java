@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
@@ -73,14 +72,8 @@ public class PmdModuleTask extends AbstractModuleTask {
     public PmdModuleTask(final PmdPluginSettings pluginSettings,
                          final CompileTarget compileTarget, final Path cacheDir) {
         this.pluginSettings = pluginSettings;
-
-        // Ensure SLF4J is used (instead of java.util.logging)
-        SLF4JBridgeHandler.removeHandlersForRootLogger();
-        SLF4JBridgeHandler.install();
-
         this.compileTarget = compileTarget;
         this.cacheDir = cacheDir;
-
     }
 
     private PMDConfiguration getConfiguration() {

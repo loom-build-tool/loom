@@ -61,7 +61,7 @@ public class ModuleRunner {
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<BuildContext, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
-    private final Map<Module, Set<Module>> transitiveModuleDependencies = new HashMap<>();
+    private final Map<Module, Set<Module>> transitiveModuleCompileDependencies = new HashMap<>();
 
     public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
                         final PluginLoader pluginLoader,
@@ -197,22 +197,22 @@ public class ModuleRunner {
             new DirectedGraph<>(moduleRegistry.getModules());
 
         for (final Module module : moduleRegistry.getModules()) {
-            final Set<Module> moduleDependencies = module.getConfig().getModuleDependencies()
+            final Set<Module> modCmpDeps = module.getConfig().getModuleCompileDependencies()
                 .stream().map(m -> moduleRegistry.lookup(m)
                     .orElseThrow(() -> new IllegalStateException(
                         "Failed resolving dependent module "
                         + m + " from module " + module.getModuleName())))
                 .collect(Collectors.toSet());
 
-            dependentModules.addEdges(module, moduleDependencies);
+            dependentModules.addEdges(module, modCmpDeps);
         }
 
         for (final Module module : moduleRegistry.getModules()) {
-            final Set<String> moduleDeps = module.getConfig().getModuleDependencies();
-            final List<Module> resolve =
+            final Set<String> moduleDeps = module.getConfig().getModuleCompileDependencies();
+            final List<Module> resolvedModCmpDeps =
                 dependentModules.resolve((m) -> moduleDeps.contains(m.getModuleName()));
 
-            transitiveModuleDependencies.put(module, new HashSet<>(resolve));
+            transitiveModuleCompileDependencies.put(module, new HashSet<>(resolvedModCmpDeps));
         }
     }
 
@@ -279,11 +279,11 @@ public class ModuleRunner {
     // find tasks providing imported products from dependent modules
     private List<ConfiguredTask> collectImportedTasks(final Module module,
                                                       final ConfiguredTask moduleConfiguredTask) {
-        final Set<String> moduleDependencies = module.getConfig().getModuleDependencies();
+        final Set<String> modCmpDeps = module.getConfig().getModuleCompileDependencies();
 
         return moduleConfiguredTask.getImportedProducts().stream()
             .map(importedProductId -> allModules()
-                .filter(m -> moduleDependencies.contains(m.getModuleName()))
+                .filter(m -> modCmpDeps.contains(m.getModuleName()))
                 .map(
                     m -> {
                         final TaskRegistryImpl taskRegistry = moduleTaskRegistries.get(m);
@@ -361,7 +361,7 @@ public class ModuleRunner {
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
-            productRepository, serviceLocator, transitiveModuleDependencies,
+            productRepository, serviceLocator, transitiveModuleCompileDependencies,
             moduleProductRepositories);
     }
 

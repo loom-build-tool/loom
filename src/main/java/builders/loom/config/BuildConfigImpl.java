@@ -35,7 +35,7 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     private final Set<String> plugins;
     private final BuildSettings buildSettings;
     private final Map<String, String> settings;
-    private final Set<String> moduleDependencies;
+    private final Set<String> moduleCompileDependencies;
     private final Set<String> compileDependencies;
     private final Set<String> testDependencies;
 
@@ -45,15 +45,16 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     }
 
     public BuildConfigImpl(final Set<String> plugins,
-                    final BuildSettings buildSettings,
-                    final Map<String, String> settings,
-                    final Set<String> moduleDependencies, final Set<String> compileDependencies,
-                    final Set<String> testDependencies) {
+                           final BuildSettings buildSettings,
+                           final Map<String, String> settings,
+                           final Set<String> moduleCompileDependencies,
+                           final Set<String> compileDependencies,
+                           final Set<String> testDependencies) {
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
-        this.moduleDependencies =
-            Collections.unmodifiableSet(Objects.requireNonNull(moduleDependencies));
+        this.moduleCompileDependencies =
+            Collections.unmodifiableSet(Objects.requireNonNull(moduleCompileDependencies));
         this.compileDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(compileDependencies));
         this.testDependencies =
@@ -76,8 +77,8 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     }
 
     @Override
-    public Set<String> getModuleDependencies() {
-        return moduleDependencies;
+    public Set<String> getModuleCompileDependencies() {
+        return moduleCompileDependencies;
     }
 
     @Override
@@ -96,7 +97,7 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
             + "plugins=" + plugins
             + ", buildSettings=" + buildSettings
             + ", settings=" + settings
-            + ", moduleDependencies=" + moduleDependencies
+            + ", moduleCompileDependencies=" + moduleCompileDependencies
             + ", compileDependencies=" + compileDependencies
             + ", testDependencies=" + testDependencies
             + '}';

@@ -24,7 +24,7 @@ public class LogFilter {
     private static final String PACKAGE_PREFIX = "builders.loom.";
 
     boolean isEnabled(final String name, final Level level) {
-        if (level.toInt() >= Level.WARN.toInt()) {
+        if (level.toInt() >= Level.INFO.toInt()) {
             return true;
         }
 

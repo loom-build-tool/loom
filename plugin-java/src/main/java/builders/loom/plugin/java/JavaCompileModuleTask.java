@@ -103,7 +103,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
                 FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
             }
 
-            return completeSkip();
+            return completeEmpty();
         }
 
         switch (compileTarget) {

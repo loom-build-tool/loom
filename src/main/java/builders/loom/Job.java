@@ -123,7 +123,7 @@ public class Job implements Callable<TaskStatus> {
         if (taskResult.getStatus() == null) {
             throw new IllegalStateException("Task <" + name + "> must not return null status");
         }
-        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.SKIP) {
+        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.EMPTY) {
             throw new IllegalStateException("Task <" + name + "> returned null product with "
                 + "status: " + taskResult.getStatus());
         }

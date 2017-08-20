@@ -106,7 +106,7 @@ public class FindbugsModuleTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         if (!getSourceTree().isPresent() || !getClasses().isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         FindbugsSingleton.initFindbugs(loadFbContrib, loadFindBugsSec);

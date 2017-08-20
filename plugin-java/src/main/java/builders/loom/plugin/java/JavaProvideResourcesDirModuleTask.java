@@ -38,7 +38,7 @@ public class JavaProvideResourcesDirModuleTask extends AbstractModuleTask {
         final Path path = resourcesPath();
 
         if (!Files.isDirectory(path) || Files.list(path).count() == 0) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         return completeOk(new ResourcesTreeProduct(path));

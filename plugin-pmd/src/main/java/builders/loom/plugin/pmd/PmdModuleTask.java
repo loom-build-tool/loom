@@ -131,7 +131,7 @@ public class PmdModuleTask extends AbstractModuleTask {
         final Optional<SourceTreeProduct> sourceTreeProduct = getSource();
 
         if (!sourceTreeProduct.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final Path srcDir = sourceTreeProduct.get().getSrcDir();

@@ -35,7 +35,7 @@ public class JavaAssembleJavadocJarModuleTask extends AbstractModuleTask {
             "javadoc", ResourcesTreeProduct.class);
 
         if (!resourcesTreeProduct.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final Path buildDir = Files.createDirectories(LoomPaths.buildDir(

@@ -75,7 +75,7 @@ public class CheckstyleModuleTask extends AbstractModuleTask {
         final Optional<SourceTreeProduct> sourceTree = getSourceTree();
 
         if (!sourceTree.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         // Checkstyle doesn't support module-info.java, so skip it

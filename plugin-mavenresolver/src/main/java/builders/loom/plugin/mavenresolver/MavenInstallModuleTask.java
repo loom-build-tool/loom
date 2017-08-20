@@ -76,7 +76,7 @@ public class MavenInstallModuleTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         if (pluginSettings.getGroupAndArtifact() == null) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final AssemblyProduct jarProduct = requireProduct("jar", AssemblyProduct.class);

@@ -39,7 +39,7 @@ public class JavaAssembleSourcesJarModuleTask extends AbstractModuleTask {
             "source", SourceTreeProduct.class);
 
         if (!resourcesTreeProduct.isPresent() && !sourceTree.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final Path buildDir = Files.createDirectories(

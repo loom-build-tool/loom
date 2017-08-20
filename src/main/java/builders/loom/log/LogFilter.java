@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.log;
 
-import java.util.Set;
+import org.slf4j.Marker;
+import org.slf4j.event.Level;
 
-public interface ModuleBuildConfig extends BuildConfig, BuildConfigWithSettings {
+public class LogFilter {
 
-    BuildSettings getBuildSettings();
+    private static final String PACKAGE_PREFIX = "builders.loom.";
 
-    Set<String> getModuleCompileDependencies();
+    boolean isEnabled(final String name, final Level level) {
+        if (level.toInt() >= Level.WARN.toInt()) {
+            return true;
+        }
 
-    Set<String> getCompileDependencies();
+        return level.toInt() > Level.TRACE.toInt() && name.startsWith(PACKAGE_PREFIX);
+    }
 
-    Set<String> getTestDependencies();
+    public boolean isEnabled(final String name, final Level level, final Marker marker) {
+        return isEnabled(name, level);
+    }
 
 }

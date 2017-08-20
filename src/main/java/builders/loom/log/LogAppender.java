@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.log;
 
-import java.util.Set;
+import java.io.Closeable;
 
-public interface ModuleBuildConfig extends BuildConfig, BuildConfigWithSettings {
+public interface LogAppender extends Closeable {
 
-    BuildSettings getBuildSettings();
-
-    Set<String> getModuleCompileDependencies();
-
-    Set<String> getCompileDependencies();
-
-    Set<String> getTestDependencies();
+    void append(LogEvent logEvent);
 
 }

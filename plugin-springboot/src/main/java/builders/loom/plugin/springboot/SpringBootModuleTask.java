@@ -83,7 +83,7 @@ public class SpringBootModuleTask extends AbstractModuleTask {
         FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
 
         // copy dep modules
-        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+        for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
             final Path jarFile =
                 requireProduct(moduleName, "jar", AssemblyProduct.class).getAssemblyFile();
 

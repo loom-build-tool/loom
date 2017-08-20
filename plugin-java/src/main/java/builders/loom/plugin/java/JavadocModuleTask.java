@@ -52,7 +52,7 @@ public class JavadocModuleTask extends AbstractModuleTask {
         final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
 
         if (!source.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final List<Path> classpath = new ArrayList<>();

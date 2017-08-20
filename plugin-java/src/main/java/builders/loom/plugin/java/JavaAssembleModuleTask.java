@@ -55,7 +55,7 @@ public class JavaAssembleModuleTask extends AbstractModuleTask {
             "compilation", CompilationProduct.class);
 
         if (!resourcesTreeProduct.isPresent() && !compilation.isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final Path buildDir = Files.createDirectories(

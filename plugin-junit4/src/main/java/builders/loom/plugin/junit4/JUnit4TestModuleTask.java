@@ -55,7 +55,7 @@ public class JUnit4TestModuleTask extends AbstractModuleTask {
     public TaskResult run() throws Exception {
 
         if (!useProduct("testCompilation", CompilationProduct.class).isPresent()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final List<URL> junitClassPath = buildJunitClassPath();
@@ -70,7 +70,7 @@ public class JUnit4TestModuleTask extends AbstractModuleTask {
 
         final List<Class<?>> testClasses = collectClasses(targetClassLoader);
         if (testClasses.isEmpty()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(

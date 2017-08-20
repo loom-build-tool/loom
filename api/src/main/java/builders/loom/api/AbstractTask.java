@@ -110,7 +110,7 @@ public abstract class AbstractTask implements Task,
         return new TaskResult(TaskStatus.UP_TO_DATE, product);
     }
 
-    public TaskResult completeSkip() {
+    public TaskResult completeEmpty() {
         return new TaskResult();
     }
 

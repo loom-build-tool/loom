@@ -26,9 +26,9 @@ public final class TempFile implements Closeable {
 
     private final Path file;
 
-    public TempFile(final String prefix, final String suffix) {
+    public TempFile(final Path tmpPath, final String prefix, final String suffix) {
         try {
-            file = Files.createTempFile(prefix, suffix);
+            file = Files.createTempFile(tmpPath, prefix, suffix);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -103,7 +103,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
                 FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
             }
 
-            return completeSkip();
+            return completeEmpty();
         }
 
         switch (compileTarget) {
@@ -267,7 +267,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         throws InterruptedException, IOException {
 
         // Wait until other modules have delivered their compilations to module path
-        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+        for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
             // TODO doesn't work
 /*
             final Optional<CompilationProduct> compilation =
@@ -299,7 +299,7 @@ public class JavaCompileModuleTask extends AbstractModuleTask {
         final List<Path> classPath = new ArrayList<>();
 
         // Wait until other modules have delivered their compilations to module path
-        for (final String moduleName : getModuleConfig().getModuleDependencies()) {
+        for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
             useProduct(moduleName, "compilation", CompilationProduct.class)
                 .ifPresent(product -> classPath.add(product.getClassesDir()));
         }

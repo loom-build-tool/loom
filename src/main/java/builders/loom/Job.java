@@ -56,7 +56,7 @@ public class Job implements Callable<TaskStatus> {
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final ServiceLocator serviceLocator;
-    private final Map<Module, Set<Module>> transitiveModuleDependencies;
+    private final Map<Module, Set<Module>> transitiveModuleCompileDependencies;
     private UsedProducts usedProducts;
     private final Map<BuildContext, ProductRepository> moduleProductRepositories;
     private final Set<Module> modules;
@@ -68,7 +68,7 @@ public class Job implements Callable<TaskStatus> {
         final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final ServiceLocator serviceLocator,
-        final Map<Module, Set<Module>> transitiveModuleDependencies,
+        final Map<Module, Set<Module>> transitiveModuleCompileDependencies,
         final Map<BuildContext, ProductRepository> moduleProductRepositories) {
 
         this.name = Objects.requireNonNull(name, "name required");
@@ -78,7 +78,7 @@ public class Job implements Callable<TaskStatus> {
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
         this.serviceLocator = serviceLocator;
-        this.transitiveModuleDependencies = transitiveModuleDependencies;
+        this.transitiveModuleCompileDependencies = transitiveModuleCompileDependencies;
         this.moduleProductRepositories = moduleProductRepositories;
         this.modules = moduleProductRepositories.keySet().stream()
             .filter(Module.class::isInstance)
@@ -123,7 +123,7 @@ public class Job implements Callable<TaskStatus> {
         if (taskResult.getStatus() == null) {
             throw new IllegalStateException("Task <" + name + "> must not return null status");
         }
-        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.SKIP) {
+        if (taskResult.getProduct() == null && taskResult.getStatus() != TaskStatus.EMPTY) {
             throw new IllegalStateException("Task <" + name + "> returned null product with "
                 + "status: " + taskResult.getStatus());
         }
@@ -152,7 +152,7 @@ public class Job implements Callable<TaskStatus> {
         }
         if (task instanceof ModuleGraphAware) {
             final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
-            mgaTask.setTransitiveModuleGraph(transitiveModuleDependencies);
+            mgaTask.setTransitiveModuleGraph(transitiveModuleCompileDependencies);
         }
     }
 
@@ -164,7 +164,7 @@ public class Job implements Callable<TaskStatus> {
 
 
         final Stream<ProductPromise> importedProductPromises = modules.stream()
-            .flatMap(m -> m.getConfig().getModuleDependencies().stream())
+            .flatMap(m -> m.getConfig().getModuleCompileDependencies().stream())
             .flatMap(moduleName -> configuredTask.getImportedProducts().stream()
                 .map(p -> buildModuleProduct(moduleName, p)));
 

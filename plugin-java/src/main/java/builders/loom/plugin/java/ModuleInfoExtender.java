@@ -16,9 +16,7 @@
 
 package builders.loom.plugin.java;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import org.objectweb.asm.Attribute;
@@ -30,6 +28,8 @@ import org.objectweb.asm.Opcodes;
 
 final class ModuleInfoExtender {
 
+    private static final String MODULE_MAIN_CLASS = "ModuleMainClass";
+
     private ModuleInfoExtender() {
     }
 
@@ -40,10 +40,16 @@ final class ModuleInfoExtender {
         final ClassWriter cw =
             new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
 
-        final List<Attribute> attributes = List.of(new ModuleMainClassAttribute(mainClassName));
+        final Attribute mainClassAttribute = new ModuleMainClassAttribute(mainClassName);
+        final List<Attribute> attributes = List.of(mainClassAttribute);
 
-        final AttributeAddingClassVisitor cv =
-            new AttributeAddingClassVisitor(Opcodes.ASM6, cw, attributes);
+        final ClassVisitor cv = new ClassVisitor(Opcodes.ASM6, cw) {
+            @Override
+            public void visitAttribute(final Attribute attr) {
+                super.visitAttribute(MODULE_MAIN_CLASS.equals(attr.type)
+                    ? mainClassAttribute : attr);
+            }
+        };
 
         new ClassReader(data).accept(cv, 0);
 
@@ -52,26 +58,7 @@ final class ModuleInfoExtender {
         return cw.toByteArray();
     }
 
-    private static class AttributeAddingClassVisitor extends ClassVisitor {
-
-        private final Map<String, Attribute> attrs = new HashMap<>();
-
-        AttributeAddingClassVisitor(final int api, final ClassVisitor cv,
-                                    final List<Attribute> attributes) {
-            super(api, cv);
-            attributes.forEach(a -> attrs.put(a.type, a));
-        }
-
-        @Override
-        public void visitAttribute(final Attribute attr) {
-            super.visitAttribute(attrs.getOrDefault(attr.type, attr));
-        }
-
-    }
-
     private static class ModuleMainClassAttribute extends Attribute {
-
-        private static final String MODULE_MAIN_CLASS = "ModuleMainClass";
 
         private final String mainClassName;
 

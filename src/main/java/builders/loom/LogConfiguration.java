@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.log.LoomLoggerFactory;
+import builders.loom.log.StdOut2SLF4J;
 
 public final class LogConfiguration {
 
@@ -32,9 +33,13 @@ public final class LogConfiguration {
         final LoomLoggerFactory lc = (LoomLoggerFactory) LoggerFactory.getILoggerFactory();
         lc.setLogFile(logFile);
         lc.start();
+
+        StdOut2SLF4J.install();
     }
 
     public static void stop() {
+        StdOut2SLF4J.uninstall();
+
         ((LoomLoggerFactory) LoggerFactory.getILoggerFactory()).stop();
     }
 

@@ -62,7 +62,7 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
                 projectBaseDir, IdeaUtil.ideaModuleName(projectBaseDir)));
         }
 
-        return completeSkip();
+        return completeEmpty();
     }
 
     private void remove(final Path imlFile) throws IOException {

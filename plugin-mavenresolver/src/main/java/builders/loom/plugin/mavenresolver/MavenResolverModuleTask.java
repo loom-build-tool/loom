@@ -47,7 +47,7 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
         final List<String> dependencies = listDependencies();
 
         if (dependencies.isEmpty()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         return completeOk(resolve(dependencies));

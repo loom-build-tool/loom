@@ -26,15 +26,15 @@ public class TaskResult {
     private final Product product;
 
     public TaskResult(final TaskStatus status, final Product product) {
-        if (status == TaskStatus.SKIP) {
-            throw new IllegalArgumentException("TaskResult with product must not SKIP");
+        if (status == TaskStatus.EMPTY) {
+            throw new IllegalArgumentException("TaskResult with product must not EMPTY");
         }
         this.status = Objects.requireNonNull(status);
         this.product = Objects.requireNonNull(product);
     }
 
     public TaskResult() {
-        this.status = TaskStatus.SKIP;
+        this.status = TaskStatus.EMPTY;
         this.product = null;
     }
 

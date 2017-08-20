@@ -57,7 +57,7 @@ public class ResourcesModuleTask extends AbstractModuleTask {
             if (Files.exists(destPath)) {
                 FileUtil.deleteDirectoryRecursively(destPath, true);
             }
-            return completeSkip();
+            return completeEmpty();
         }
 
         final Path srcPath = resourcesProduct.get().getSrcDir();

@@ -40,7 +40,7 @@ public class JavaProvideSourceDirModuleTask extends AbstractModuleTask {
         final Path path = srcPath();
 
         if (!Files.isDirectory(path)) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final List<Path> sourceFiles = Files.walk(srcPath())
@@ -48,7 +48,7 @@ public class JavaProvideSourceDirModuleTask extends AbstractModuleTask {
             .collect(Collectors.toList());
 
         if (sourceFiles.isEmpty()) {
-            return completeSkip();
+            return completeEmpty();
         }
 
         final List<Path> illegalFiles = sourceFiles.stream()

@@ -35,7 +35,7 @@ import builders.loom.misc.ThreadFactoryBuilder;
 public class DiskLogAppender implements LogAppender {
 
     private static final LogEvent POISON_PILL =
-        new LogEvent(null, null, null, null, null);
+        new LogEvent(null, null, null, null, null, null);
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm:ss,SSS");
     private static final int SHUTDOWN_TIMEOUT_SECS = 5;

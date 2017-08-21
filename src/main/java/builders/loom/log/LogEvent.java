@@ -18,6 +18,7 @@ package builders.loom.log;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.Marker;
 import org.slf4j.event.Level;
 
 public final class LogEvent {
@@ -28,15 +29,17 @@ public final class LogEvent {
     private final String threadName;
     private final String message;
     private final Throwable throwable;
+    private final Marker marker;
 
     public LogEvent(final Level level, final String name,
                     final String threadName, final String message,
-                    final Throwable throwable) {
+                    final Throwable throwable, final Marker marker) {
         this.level = level;
         this.name = name;
         this.threadName = threadName;
         this.message = message;
         this.throwable = throwable;
+        this.marker = marker;
     }
 
     public LocalDateTime getOccurred() {
@@ -61,6 +64,10 @@ public final class LogEvent {
 
     public Throwable getThrowable() {
         return throwable;
+    }
+
+    public Marker getMarker() {
+        return marker;
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.w3c.dom.Document;
 
@@ -277,15 +278,28 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
 
     private void buildOrderEntries(final XmlBuilder.Element component,
                                    final Collection<OrderEntry> orderEntries) {
-        for (final OrderEntry orderEntry : orderEntries) {
+
+        // sort for predictable (testable) result
+        final Stream<OrderEntry> sortedOrderEntries = orderEntries.stream()
+            .sorted(Comparator.comparing(OrderEntry::getScope)
+                .thenComparing(o -> o.getMainArtifact().getFileName().toString()));
+
+        sortedOrderEntries.forEachOrdered(orderEntry -> {
             final String mainJar = orderEntry.getMainArtifact().toAbsolutePath().toString();
             final Path sourceArtifact = orderEntry.getSourceArtifact();
             final String sourceJar = sourceArtifact != null
                 ? sourceArtifact.toAbsolutePath().toString() : null;
 
             buildOrderEntry(component.element("orderEntry"),
-                orderEntry.getScope(), mainJar, sourceJar);
+                orderEntry.getScope(), replaceUserHome(mainJar), replaceUserHome(sourceJar));
+        });
+    }
+
+    private String replaceUserHome(final String path) {
+        if (path == null) {
+            return null;
         }
+        return path.replace(System.getProperty("user.home"), "$USER_HOME$");
     }
 
     private void buildOrderEntry(final XmlBuilder.Element orderEntry,

@@ -29,7 +29,7 @@ public class ConsoleLogAppender implements LogAppender {
 
     @Override
     public void append(final LogEvent logEvent) {
-        if (logEvent.getLevel().toInt() < Level.WARN.toInt()) {
+        if (ignoreLogEvent(logEvent)) {
             return;
         }
 
@@ -53,6 +53,18 @@ public class ConsoleLogAppender implements LogAppender {
             .newline();
 
         out.println(ansi);
+    }
+
+    private boolean ignoreLogEvent(final LogEvent logEvent) {
+        if (logEvent.getLevel().toInt() < Level.WARN.toInt()) {
+            return true;
+        }
+
+        if (logEvent.getMarker() != null && logEvent.getMarker().contains("HIDE_FROM_CONSOLE")) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override

@@ -53,7 +53,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled()) {
             return;
         }
-        append(Level.TRACE, msg);
+        append(Level.TRACE, msg, null);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled()) {
             return;
         }
-        append(Level.TRACE, format, arg);
+        append(Level.TRACE, format, arg, null);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled()) {
             return;
         }
-        append(Level.TRACE, format, arg1, arg2);
+        append(Level.TRACE, format, arg1, arg2, null);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled()) {
             return;
         }
-        append(Level.TRACE, format, arguments);
+        append(Level.TRACE, format, arguments, null);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled()) {
             return;
         }
-        append(Level.TRACE, msg, t);
+        append(Level.TRACE, msg, t, null);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled(marker)) {
             return;
         }
-        append(Level.TRACE, msg);
+        append(Level.TRACE, msg, marker);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled(marker)) {
             return;
         }
-        append(Level.TRACE, format, arg);
+        append(Level.TRACE, format, arg, marker);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled(marker)) {
             return;
         }
-        append(Level.TRACE, format, arg1, arg2);
+        append(Level.TRACE, format, arg1, arg2, marker);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled(marker)) {
             return;
         }
-        append(Level.TRACE, format, argArray);
+        append(Level.TRACE, format, argArray, marker);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class LoomLogger implements Logger {
         if (!isTraceEnabled(marker)) {
             return;
         }
-        append(Level.TRACE, msg, t);
+        append(Level.TRACE, msg, t, marker);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled()) {
             return;
         }
-        append(Level.DEBUG, msg);
+        append(Level.DEBUG, msg, null);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled()) {
             return;
         }
-        append(Level.DEBUG, format, arg);
+        append(Level.DEBUG, format, arg, null);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled()) {
             return;
         }
-        append(Level.DEBUG, format, arg1, arg2);
+        append(Level.DEBUG, format, arg1, arg2, null);
     }
 
     @Override
@@ -168,7 +168,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled()) {
             return;
         }
-        append(Level.DEBUG, format, arguments);
+        append(Level.DEBUG, format, arguments, null);
     }
 
     @Override
@@ -176,7 +176,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled()) {
             return;
         }
-        append(Level.DEBUG, msg, t);
+        append(Level.DEBUG, msg, t, null);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled(marker)) {
             return;
         }
-        append(Level.DEBUG, msg);
+        append(Level.DEBUG, msg, marker);
     }
 
     @Override
@@ -197,7 +197,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled(marker)) {
             return;
         }
-        append(Level.DEBUG, format, arg);
+        append(Level.DEBUG, format, arg, marker);
     }
 
     @Override
@@ -206,7 +206,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled(marker)) {
             return;
         }
-        append(Level.DEBUG, format, arg1, arg2);
+        append(Level.DEBUG, format, arg1, arg2, marker);
     }
 
     @Override
@@ -214,7 +214,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled(marker)) {
             return;
         }
-        append(Level.DEBUG, format, arguments);
+        append(Level.DEBUG, format, arguments, marker);
     }
 
     @Override
@@ -222,7 +222,7 @@ public class LoomLogger implements Logger {
         if (!isDebugEnabled(marker)) {
             return;
         }
-        append(Level.DEBUG, msg, t);
+        append(Level.DEBUG, msg, t, marker);
     }
 
     @Override
@@ -235,7 +235,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled()) {
             return;
         }
-        append(Level.INFO, msg);
+        append(Level.INFO, msg, null);
     }
 
     @Override
@@ -243,7 +243,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled()) {
             return;
         }
-        append(Level.INFO, format, arg);
+        append(Level.INFO, format, arg, null);
     }
 
     @Override
@@ -251,7 +251,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled()) {
             return;
         }
-        append(Level.INFO, format, arg1, arg2);
+        append(Level.INFO, format, arg1, arg2, null);
     }
 
     @Override
@@ -259,7 +259,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled()) {
             return;
         }
-        append(Level.INFO, format, arguments);
+        append(Level.INFO, format, arguments, null);
     }
 
     @Override
@@ -267,7 +267,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled()) {
             return;
         }
-        append(Level.INFO, msg, t);
+        append(Level.INFO, msg, t, null);
     }
 
     @Override
@@ -280,7 +280,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled(marker)) {
             return;
         }
-        append(Level.INFO, msg);
+        append(Level.INFO, msg, marker);
     }
 
     @Override
@@ -288,7 +288,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled(marker)) {
             return;
         }
-        append(Level.INFO, format, arg);
+        append(Level.INFO, format, arg, marker);
     }
 
     @Override
@@ -297,7 +297,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled(marker)) {
             return;
         }
-        append(Level.INFO, format, arg1, arg2);
+        append(Level.INFO, format, arg1, arg2, marker);
     }
 
     @Override
@@ -305,7 +305,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled(marker)) {
             return;
         }
-        append(Level.INFO, format, arguments);
+        append(Level.INFO, format, arguments, marker);
     }
 
     @Override
@@ -313,7 +313,7 @@ public class LoomLogger implements Logger {
         if (!isInfoEnabled(marker)) {
             return;
         }
-        append(Level.INFO, msg, t);
+        append(Level.INFO, msg, t, marker);
     }
 
     @Override
@@ -326,7 +326,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled()) {
             return;
         }
-        append(Level.WARN, msg);
+        append(Level.WARN, msg, null);
     }
 
     @Override
@@ -334,7 +334,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled()) {
             return;
         }
-        append(Level.WARN, format, arg);
+        append(Level.WARN, format, arg, null);
     }
 
     @Override
@@ -342,7 +342,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled()) {
             return;
         }
-        append(Level.WARN, format, arguments);
+        append(Level.WARN, format, arguments, null);
     }
 
     @Override
@@ -350,7 +350,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled()) {
             return;
         }
-        append(Level.WARN, format, arg1, arg2);
+        append(Level.WARN, format, arg1, arg2, null);
     }
 
     @Override
@@ -358,7 +358,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled()) {
             return;
         }
-        append(Level.WARN, msg, t);
+        append(Level.WARN, msg, t, null);
     }
 
     @Override
@@ -371,7 +371,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled(marker)) {
             return;
         }
-        append(Level.WARN, msg);
+        append(Level.WARN, msg, marker);
     }
 
     @Override
@@ -379,7 +379,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled(marker)) {
             return;
         }
-        append(Level.WARN, format, arg);
+        append(Level.WARN, format, arg, marker);
     }
 
     @Override
@@ -388,7 +388,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled(marker)) {
             return;
         }
-        append(Level.WARN, format, arg1, arg2);
+        append(Level.WARN, format, arg1, arg2, marker);
     }
 
     @Override
@@ -396,7 +396,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled(marker)) {
             return;
         }
-        append(Level.WARN, format, arguments);
+        append(Level.WARN, format, arguments, marker);
     }
 
     @Override
@@ -404,7 +404,7 @@ public class LoomLogger implements Logger {
         if (!isWarnEnabled(marker)) {
             return;
         }
-        append(Level.WARN, msg, t);
+        append(Level.WARN, msg, t, marker);
     }
 
     @Override
@@ -417,7 +417,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled()) {
             return;
         }
-        append(Level.ERROR, msg);
+        append(Level.ERROR, msg, null);
     }
 
     @Override
@@ -425,7 +425,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled()) {
             return;
         }
-        append(Level.ERROR, format, arg);
+        append(Level.ERROR, format, arg, null);
     }
 
     @Override
@@ -433,7 +433,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled()) {
             return;
         }
-        append(Level.ERROR, format, arg1, arg2);
+        append(Level.ERROR, format, arg1, arg2, null);
     }
 
     @Override
@@ -441,7 +441,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled()) {
             return;
         }
-        append(Level.ERROR, format, arguments);
+        append(Level.ERROR, format, arguments, null);
     }
 
     @Override
@@ -449,7 +449,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled()) {
             return;
         }
-        append(Level.ERROR, msg, t);
+        append(Level.ERROR, msg, t, null);
     }
 
     @Override
@@ -462,7 +462,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled(marker)) {
             return;
         }
-        append(Level.ERROR, msg);
+        append(Level.ERROR, msg, marker);
     }
 
     @Override
@@ -470,7 +470,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled(marker)) {
             return;
         }
-        append(Level.ERROR, format, arg);
+        append(Level.ERROR, format, arg, marker);
     }
 
     @Override
@@ -479,7 +479,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled(marker)) {
             return;
         }
-        append(Level.ERROR, format, arg1, arg2);
+        append(Level.ERROR, format, arg1, arg2, marker);
     }
 
     @Override
@@ -487,7 +487,7 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled(marker)) {
             return;
         }
-        append(Level.ERROR, format, arguments);
+        append(Level.ERROR, format, arguments, marker);
     }
 
     @Override
@@ -495,30 +495,33 @@ public class LoomLogger implements Logger {
         if (!isErrorEnabled(marker)) {
             return;
         }
-        append(Level.ERROR, msg, t);
+        append(Level.ERROR, msg, t, marker);
     }
 
-    private void append(final Level level, final String msg) {
-        append(new LogEvent(level, name, Thread.currentThread().getName(), msg, null));
+    private void append(final Level level, final String msg, final Marker marker) {
+        append(new LogEvent(level, name, Thread.currentThread().getName(), msg, null, marker));
     }
 
-    private void append(final Level level, final String format, final Object arg) {
+    private void append(final Level level, final String format, final Object arg,
+                        final Marker marker) {
         final FormattingTuple tuple = MessageFormatter.format(format, arg);
         append(new LogEvent(level, name, Thread.currentThread().getName(),
-            tuple.getMessage(), tuple.getThrowable()));
+            tuple.getMessage(), tuple.getThrowable(), marker));
     }
 
     private void append(final Level level, final String format,
-                        final Object arg1, final Object arg2) {
+                        final Object arg1, final Object arg2,
+                        final Marker marker) {
         final FormattingTuple tuple = MessageFormatter.format(format, arg1, arg2);
         append(new LogEvent(level, name, Thread.currentThread().getName(),
-            tuple.getMessage(), tuple.getThrowable()));
+            tuple.getMessage(), tuple.getThrowable(), marker));
     }
 
-    private void append(final Level level, final String format, final Object[] arguments) {
+    private void append(final Level level, final String format, final Object[] arguments,
+                        final Marker marker) {
         final FormattingTuple tuple = MessageFormatter.arrayFormat(format, arguments);
         append(new LogEvent(level, name, Thread.currentThread().getName(),
-            tuple.getMessage(), tuple.getThrowable()));
+            tuple.getMessage(), tuple.getThrowable(), marker));
     }
 
     private void append(final LogEvent message) {

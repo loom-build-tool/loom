@@ -16,8 +16,6 @@
     <allow pkg="javax.tools"/>
     <allow pkg="javax.xml"/>
 
-    <allow pkg="ch.qos.logback"/>
-
     <allow pkg="org.w3c"/>
     <allow pkg="org.xml"/>
     <allow pkg="org.fusesource.jansi"/>
@@ -34,11 +32,15 @@
         <allow pkg="org.sonatype.aether"/>
     </subpackage>
 
+    <subpackage name="plugin.java">
+        <allow pkg="org.objectweb.asm"/>
+    </subpackage>
+
     <subpackage name="plugin.checkstyle">
         <allow pkg="com.puppycrawl.tools"/>
     </subpackage>
 
-    <subpackage name="plugin.findbugs">
+    <subpackage name="plugin.spotbugs">
         <allow pkg="edu.umd.cs.findbugs"/>
     </subpackage>
 

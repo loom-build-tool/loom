@@ -22,7 +22,7 @@ public interface ModuleBuildConfig extends BuildConfig, BuildConfigWithSettings 
 
     BuildSettings getBuildSettings();
 
-    Set<String> getModuleDependencies();
+    Set<String> getModuleCompileDependencies();
 
     Set<String> getCompileDependencies();
 

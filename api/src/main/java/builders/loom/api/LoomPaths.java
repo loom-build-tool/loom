@@ -30,6 +30,7 @@ public final class LoomPaths {
     private static final Path LOOM_DIR = Paths.get(".loom");
     private static final Path BUILD_DIR = Paths.get("build");
     private static final Path REPORT_DIR = Paths.get("reports");
+    private static final Path TMP_DIR = Paths.get("tmp");
 
     private LoomPaths() {
     }
@@ -59,6 +60,10 @@ public final class LoomPaths {
                                  final String moduleName, final String productId) {
         return buildDir(projectBaseDir).resolve(REPORT_DIR)
             .resolve(Paths.get(moduleName, productId));
+    }
+
+    public static Path tmpDir(final Path projectBaseDir) {
+        return loomDir(projectBaseDir).resolve(TMP_DIR);
     }
 
 }

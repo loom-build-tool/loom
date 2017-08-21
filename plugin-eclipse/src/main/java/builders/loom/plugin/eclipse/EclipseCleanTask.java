@@ -49,7 +49,7 @@ public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
             cleanModuleProject(module);
         }
 
-        return completeSkip();
+        return completeEmpty();
     }
 
     private Set<Module> allModules() {

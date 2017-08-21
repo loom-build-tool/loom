@@ -48,7 +48,7 @@ if ERRORLEVEL 1 goto error
 
 :launch
 rem run Loom
-"%JAVACMD%" %LOOM_OPTS% -Dloom.project_dir=%PROJECT_DIR% --add-exports=java.base/jdk.internal.module=ALL-UNNAMED -jar %LIB% %*
+"%JAVACMD%" %LOOM_OPTS% -Dloom.project_dir=%PROJECT_DIR% -jar %LIB% %*
 if ERRORLEVEL 1 goto error
 goto end
 

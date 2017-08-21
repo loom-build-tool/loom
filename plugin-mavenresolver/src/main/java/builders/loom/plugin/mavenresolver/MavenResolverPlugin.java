@@ -36,35 +36,35 @@ public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSetti
         final Path repositoryPath = getRepositoryPath();
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverModuleTask(DependencyScope.COMPILE, pluginSettings,
+            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, pluginSettings,
                 repositoryPath))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
             .register();
 
         task("resolveCompileArtifacts")
-            .impl(() -> new MavenArtifactResolverModuleTask(DependencyScope.COMPILE, pluginSettings,
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE, pluginSettings,
                 repositoryPath))
             .provides("compileArtifacts", true)
             .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverModuleTask(DependencyScope.TEST, pluginSettings,
+            .impl(() -> new MavenResolverTask(DependencyScope.TEST, pluginSettings,
                 repositoryPath))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
             .register();
 
         task("resolveTestArtifacts")
-            .impl(() -> new MavenArtifactResolverModuleTask(DependencyScope.TEST, pluginSettings,
+            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST, pluginSettings,
                 repositoryPath))
             .provides("testArtifacts", true)
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("install")
-            .impl(() -> new MavenInstallModuleTask(pluginSettings))
+            .impl(() -> new MavenInstallTask(pluginSettings))
             .provides("mavenArtifact")
             .uses("jar")
             .desc("Installs the jar file to the local Maven repository.")

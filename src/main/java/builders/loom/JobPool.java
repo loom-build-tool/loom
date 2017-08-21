@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import builders.loom.misc.ThreadFactoryBuilder;
 
@@ -74,9 +75,11 @@ public class JobPool {
                 ProgressMonitor.progress();
             } catch (final Throwable e) {
                 // In case of any Task error we end up here
-                firstException.compareAndSet(null, e);
-                if (!(e instanceof InterruptedException)) {
+                if (firstException.compareAndSet(null, e)) {
                     LOG.error(e.getMessage(), e);
+                } else if (!(e instanceof InterruptedException)) {
+                    LOG.error(MarkerFactory.getMarker("HIDE_FROM_CONSOLE"),
+                        e.getMessage(), e);
                 }
                 executor.shutdownNow();
             } finally {

@@ -29,19 +29,19 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
     @Override
     public void configure() {
         task("provideSource")
-            .impl(() -> new JavaProvideSourceDirModuleTask(CompileTarget.MAIN))
+            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
             .provides("source", true)
             .desc("Provides main sources for other products.")
             .register();
 
         task("provideTestSource")
-            .impl(() -> new JavaProvideSourceDirModuleTask(CompileTarget.TEST))
+            .impl(() -> new JavaProvideSourceDirTask(CompileTarget.TEST))
             .provides("testSource", true)
             .desc("Provides test sources for other products.")
             .register();
 
         task("compileJava")
-            .impl(() -> new JavaCompileModuleTask(CompileTarget.MAIN, getRepositoryPath()))
+            .impl(() -> new JavaCompileTask(CompileTarget.MAIN, getRepositoryPath()))
             .provides("compilation")
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
@@ -49,7 +49,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("compileTestJava")
-            .impl(() -> new JavaCompileModuleTask(CompileTarget.TEST, getRepositoryPath()))
+            .impl(() -> new JavaCompileTask(CompileTarget.TEST, getRepositoryPath()))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
             .importFromModules("compilation")
@@ -57,33 +57,33 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("assembleJar")
-            .impl(() -> new JavaAssembleModuleTask(getPluginSettings()))
+            .impl(() -> new JavaAssembleTask(getPluginSettings()))
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
             .register();
 
         task("assembleSourcesJar")
-            .impl(JavaAssembleSourcesJarModuleTask::new)
+            .impl(JavaAssembleSourcesJarTask::new)
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
             .register();
 
         task("provideResources")
-            .impl(() -> new JavaProvideResourcesDirModuleTask(CompileTarget.MAIN))
+            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.MAIN))
             .provides("resources", true)
             .desc("Provides main resources for other products.")
             .register();
 
         task("provideTestResources")
-            .impl(() -> new JavaProvideResourcesDirModuleTask(CompileTarget.TEST))
+            .impl(() -> new JavaProvideResourcesDirTask(CompileTarget.TEST))
             .provides("testResources", true)
             .desc("Provides test resources for other products.")
             .register();
 
         task("processResources")
-            .impl(() -> new ResourcesModuleTask(getPluginSettings(),
+            .impl(() -> new ResourcesTask(getPluginSettings(),
                 CompileTarget.MAIN, getRepositoryPath()))
             .provides("processedResources")
             .uses("resources")
@@ -91,7 +91,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processTestResources")
-            .impl(() -> new ResourcesModuleTask(getPluginSettings(),
+            .impl(() -> new ResourcesTask(getPluginSettings(),
                 CompileTarget.TEST, getRepositoryPath()))
             .provides("processedTestResources")
             .uses("testResources")
@@ -99,14 +99,15 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("javadoc")
-            .impl(JavadocModuleTask::new)
+            .impl(JavadocTask::new)
             .provides("javadoc")
             .uses("source", "compileDependencies")
+            .importFromModules("compilation")
             .desc("Creates Javadoc pages.")
             .register();
 
         task("assembleJavadocJar")
-            .impl(JavaAssembleJavadocJarModuleTask::new)
+            .impl(JavaAssembleJavadocJarTask::new)
             .provides("javadocJar")
             .uses("javadoc")
             .desc("Assembles .jar file from Javadocs.")

@@ -22,7 +22,6 @@ import java.util.Map;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.api.TaskStatus;
 import builders.loom.plugin.TaskType;
 
 public class ExecutionReportPrinter {
@@ -71,8 +70,6 @@ public class ExecutionReportPrinter {
 
         a.reset()
             .a(' ')
-            .a(statusColor(executionStatus.getTaskStatus()))
-            .a(' ')
             .a(name)
             .a(' ')
             .a(space)
@@ -82,19 +79,6 @@ public class ExecutionReportPrinter {
             .a(durationBar);
 
         AnsiConsole.out().println(a);
-    }
-
-    private static Ansi statusColor(final TaskStatus taskStatus) {
-        switch (taskStatus) {
-            case SKIP:
-                return Ansi.ansi().fgBrightBlack().a("<SK>").fgDefault();
-            case UP_TO_DATE:
-                return Ansi.ansi().fgBrightMagenta().a("<UP>").fgDefault();
-            case OK:
-                return Ansi.ansi().fgBrightGreen().a("<OK>").fgDefault();
-            default:
-                throw new IllegalStateException("Unknown status " + taskStatus);
-        }
     }
 
 }

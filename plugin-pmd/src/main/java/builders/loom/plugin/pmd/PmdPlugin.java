@@ -28,7 +28,7 @@ public class PmdPlugin extends AbstractPlugin<PmdPluginSettings> {
     @Override
     public void configure() {
         task("pmdMain")
-            .impl(() -> new PmdModuleTask(getPluginSettings(), CompileTarget.MAIN,
+            .impl(() -> new PmdTask(getPluginSettings(), CompileTarget.MAIN,
                 getRepositoryPath()))
             .provides("pmdMainReport")
             .uses("source", "compileDependencies")
@@ -36,7 +36,7 @@ public class PmdPlugin extends AbstractPlugin<PmdPluginSettings> {
             .register();
 
         task("pmdTest")
-            .impl(() -> new PmdModuleTask(getPluginSettings(), CompileTarget.TEST,
+            .impl(() -> new PmdTask(getPluginSettings(), CompileTarget.TEST,
                 getRepositoryPath()))
             .provides("pmdTestReport")
             .uses("testSource", "testDependencies")

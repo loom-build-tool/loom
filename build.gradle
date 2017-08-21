@@ -39,13 +39,13 @@ dependencies {
     runtimeOnly project(':plugin-java')
     runtimeOnly project(':plugin-junit4')
     runtimeOnly project(':plugin-checkstyle')
-    runtimeOnly project(':plugin-findbugs')
+    runtimeOnly project(':plugin-spotbugs')
     runtimeOnly project(':plugin-pmd')
     runtimeOnly project(':plugin-mavenresolver')
     runtimeOnly project(':plugin-springboot')
     runtimeOnly project(':plugin-idea')
     runtimeOnly project(':plugin-eclipse')
-    compile('ch.qos.logback:logback-classic:1.1.7')
+    compile('org.slf4j:jul-to-slf4j:1.8.0-alpha2')
     compile('org.yaml:snakeyaml:1.18')
     compile('commons-cli:commons-cli:1.4')
     compile('org.fusesource.jansi:jansi:1.14')
@@ -91,9 +91,9 @@ task zip(type: Zip) {
             from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
             from project(':plugin-checkstyle').configurations.runtime
         }
-        into("plugin-findbugs") {
-            from project(':plugin-findbugs').configurations.runtime.allArtifacts.files
-            from project(':plugin-findbugs').configurations.runtime
+        into("plugin-spotbugs") {
+            from project(':plugin-spotbugs').configurations.runtime.allArtifacts.files
+            from project(':plugin-spotbugs').configurations.runtime
         }
         into("plugin-pmd") {
             from project(':plugin-pmd').configurations.runtime.allArtifacts.files

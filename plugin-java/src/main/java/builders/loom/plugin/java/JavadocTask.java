@@ -93,7 +93,8 @@ public class JavadocTask extends AbstractModuleTask {
             }
 
             // workaround - step 2/2
-            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, List.of(getBuildDir().getParent()));
+            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
+                List.of(getBuildDir().getParent()));
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromPaths(source.get().getSourceFiles());

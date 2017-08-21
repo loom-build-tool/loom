@@ -47,9 +47,9 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     private Path resourcesPath() {
         switch (compileTarget) {
             case MAIN:
-                return LoomPaths.RES_MAIN;
+                return getBuildContext().getPath().resolve(LoomPaths.RES_MAIN);
             case TEST:
-                return LoomPaths.RES_TEST;
+                return getBuildContext().getPath().resolve(LoomPaths.RES_TEST);
             default:
                 throw new IllegalStateException();
         }

@@ -25,14 +25,14 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.DirectoryProduct;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
-            "javadoc", ResourcesTreeProduct.class);
+        final Optional<DirectoryProduct> resourcesTreeProduct = useProduct(
+            "javadoc", DirectoryProduct.class);
 
         if (!resourcesTreeProduct.isPresent()) {
             return completeEmpty();
@@ -47,7 +47,7 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             getBuildContext().getModuleName()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            FileUtil.copy(resourcesTreeProduct.get().getDir(), os);
         }
 
         return completeOk(new AssemblyProduct(jarFile, "Jar of Javadoc"));

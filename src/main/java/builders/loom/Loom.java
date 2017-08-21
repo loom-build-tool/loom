@@ -17,6 +17,7 @@
 package builders.loom;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
@@ -44,6 +45,9 @@ import builders.loom.util.FileUtils;
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
     "checkstyle:classdataabstractioncoupling"})
 public class Loom {
+
+    // hold System.err, because it will be changed by StdOut2SLF4J
+    private static final PrintStream SYSTEM_ERR = System.err;
 
     private static boolean buildExecuted;
 
@@ -86,7 +90,7 @@ public class Loom {
         } catch (final Throwable e) {
             if (!(e instanceof BuildException)) {
                 // BuildExceptions are already logged
-                e.printStackTrace(System.err);
+                e.printStackTrace(SYSTEM_ERR);
             }
             if (buildExecuted) {
                 printFailed(logFile);

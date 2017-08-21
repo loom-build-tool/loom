@@ -21,12 +21,12 @@ import java.util.Properties;
 
 public class PropertiesMerger {
 
-    private final Properties wrapper;
+    private final Properties wrapped;
     private boolean changed;
 
     public PropertiesMerger(final Properties properties) {
         Objects.requireNonNull(properties);
-        this.wrapper = properties;
+        this.wrapped = properties;
     }
 
     /**
@@ -35,15 +35,17 @@ public class PropertiesMerger {
     public void set(final String key, final String value) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
-        if (!wrapper.containsKey(key)) {
-            wrapper.setProperty(key, value);
+        final String oldValue = wrapped.getProperty(key);
+
+        if (oldValue == null) {
+            wrapped.setProperty(key, value);
             changed = true;
-        } else {
-            final String oldValue = wrapper.getProperty(key);
-            if (!oldValue.equals(value)) {
-                wrapper.setProperty(key, value);
-                changed = true;
-            }
+            return;
+        }
+
+        if (!oldValue.equals(value)) {
+            wrapped.setProperty(key, value);
+            changed = true;
         }
     }
 
@@ -53,8 +55,8 @@ public class PropertiesMerger {
     public void fixup(final String key, final String newValue) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(newValue);
-        if (wrapper.containsKey(key)) {
-            final Object prevValue = wrapper.setProperty(key, newValue);
+        if (wrapped.containsKey(key)) {
+            final Object prevValue = wrapped.setProperty(key, newValue);
             changed |= !newValue.equals(prevValue);
         }
     }
@@ -65,8 +67,8 @@ public class PropertiesMerger {
     public void setIfAbsent(final String key, final String value) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
-        if (!wrapper.containsKey(key)) {
-            wrapper.setProperty(key, value);
+        if (!wrapped.containsKey(key)) {
+            wrapped.setProperty(key, value);
             changed = true;
         }
     }

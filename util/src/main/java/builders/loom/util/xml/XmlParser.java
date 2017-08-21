@@ -17,6 +17,7 @@
 package builders.loom.util.xml;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -57,7 +58,9 @@ public final class XmlParser {
         Preconditions.checkState(Files.isRegularFile(xmlFile));
         try {
             return documentBuilder.parse(xmlFile.toFile());
-        } catch (final SAXException | IOException e) {
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Error reading file " + xmlFile, e);
+        } catch (final SAXException e) {
             throw new IllegalStateException("Error parsing file " + xmlFile, e);
         }
     }

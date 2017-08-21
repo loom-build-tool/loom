@@ -23,18 +23,17 @@ public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
 
     @Override
     public void configure() {
-        task("configureEclipse")
+        task("createEclipseFiles")
             .impl(() -> new EclipseModuleTask(false))
             .provides("eclipse")
             .importFromAllModules("compileArtifacts", "testArtifacts")
-            .desc("Generates/updates .classpath/.project/.settings for Eclipse.")
+            .desc("Generates/updates .classpath/.project/.settings for Eclipse IDE.")
             .register();
 
-        task("configureCleanEclipse")
-            .impl(() -> new EclipseModuleTask(true))
+        task("cleanEclipseFiles")
+            .impl(() -> new EclipseCleanTask())
             .provides("cleanEclipse")
-            .importFromAllModules("compileArtifacts", "testArtifacts")
-            .desc("Generates fresh .classpath/.project/.settings file for Eclipse.")
+            .desc("Cleans all Eclipse IDE project files.")
             .register();
     }
 

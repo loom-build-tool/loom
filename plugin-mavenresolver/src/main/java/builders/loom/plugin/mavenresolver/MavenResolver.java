@@ -31,7 +31,6 @@ import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.collection.CollectRequest;
@@ -60,6 +59,7 @@ import org.sonatype.aether.util.artifact.SubArtifact;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import builders.loom.api.DependencyScope;
+import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.util.Hasher;
 import builders.loom.util.SystemUtil;
@@ -72,22 +72,19 @@ public class MavenResolver implements DependencyResolver {
     private final RepositorySystem system;
     private final RemoteRepository mavenRepository;
     private final LocalRepositoryManager localRepositoryManager;
-    private final ProgressIndicator progressIndicator;
     private final Path cacheDir;
+    private final ProgressLoggingTransferListener transferListener;
 
-    MavenResolver(final ProgressIndicator progressIndicator, final String repositoryUrl,
-                  final Path cacheDir) {
+    MavenResolver(final String repositoryUrl, final Path cacheDir,
+                  final DownloadProgressEmitter downloadProgressEmitter) {
 
         LOG.debug("Initialize MavenResolver");
-        this.progressIndicator = progressIndicator;
         final DefaultServiceLocator locator = new DefaultServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
-        locator.setServices(RepositoryListener.class,
-            new ProgressLoggingRepositoryListener(progressIndicator));
         locator.setServices(WagonProvider.class, new WagonProvider() {
             @Override
             public Wagon lookup(final String roleHint) throws Exception {
@@ -114,6 +111,8 @@ public class MavenResolver implements DependencyResolver {
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
 
         this.cacheDir = cacheDir;
+        transferListener = new ProgressLoggingTransferListener(downloadProgressEmitter);
+
         LOG.debug("MavenResolver initialized");
     }
 
@@ -122,8 +121,6 @@ public class MavenResolver implements DependencyResolver {
                                          final String classifier) {
 
         LOG.info("Resolve {} dependencies: {}", scope, deps);
-        progressIndicator.reportProgress("resolving dependencies for scope " + scope);
-
 
         final String cacheName = "maven-" + mavenScope(scope) + "-" + classifier;
         final String cacheSignature = Hasher.hash(deps);
@@ -156,7 +153,7 @@ public class MavenResolver implements DependencyResolver {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
-        session.setTransferListener(new ProgressLoggingTransferListener(progressIndicator));
+        session.setTransferListener(transferListener);
 
         final List<RemoteRepository> repositories = Collections.singletonList(mavenRepository);
 

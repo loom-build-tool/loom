@@ -18,9 +18,11 @@ package builders.loom;
 
 import java.io.PrintStream;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -28,12 +30,15 @@ import org.fusesource.jansi.AnsiConsole;
 public final class ProgressMonitor {
 
     private static final int DELAY = 100;
-    private static final int JANSI_BUF = 80;
+    private static final int JANSI_BUF = 100;
     private static final PrintStream OUT = AnsiConsole.out();
+    private static final String[] UNITS = {"B", "KiB", "MiB"};
 
     private static final AtomicInteger TASKS = new AtomicInteger();
     private static final AtomicInteger COMPLETED_TASKS = new AtomicInteger();
-    private static final AtomicInteger LAST_PROGRESS = new AtomicInteger();
+    private static final AtomicInteger DOWNLOADED_FILES = new AtomicInteger();
+    private static final AtomicLong DOWNLOADED_BYTES = new AtomicLong();
+    private static final AtomicLong LAST_PROGRESS = new AtomicLong();
     private static final Timer TIMER = new Timer("ProgressMonitor", true);
 
     private ProgressMonitor() {
@@ -43,7 +48,7 @@ public final class ProgressMonitor {
         TIMER.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (COMPLETED_TASKS.get() > LAST_PROGRESS.get()) {
+                if (COMPLETED_TASKS.get() + DOWNLOADED_BYTES.get() > LAST_PROGRESS.get()) {
                     update();
                 }
             }
@@ -57,6 +62,14 @@ public final class ProgressMonitor {
 
     public static void progress() {
         COMPLETED_TASKS.incrementAndGet();
+    }
+
+    public static void progressDownloadedFiles() {
+        DOWNLOADED_FILES.incrementAndGet();
+    }
+
+    public static void progressDownloadedBytes(final long bytes) {
+        DOWNLOADED_BYTES.addAndGet(bytes);
     }
 
     public static void stop() {
@@ -82,9 +95,33 @@ public final class ProgressMonitor {
             .a(String.join("", Collections.nCopies(nullProgress, " ")))
             .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
 
+        if (DOWNLOADED_FILES.intValue() > 0) {
+            a.format(" (Downloaded: %d files / %s)",
+                DOWNLOADED_FILES.get(), formatBytes(DOWNLOADED_BYTES.get()))
+                .eraseLine(Ansi.Erase.FORWARD);
+        }
+
         OUT.println(a);
 
-        LAST_PROGRESS.set(cpl);
+        LAST_PROGRESS.set(cpl + DOWNLOADED_BYTES.get());
+    }
+
+    // not in a util class, because of the special handling (stop at MiB, show floating number)
+    @SuppressWarnings("checkstyle:magicnumber")
+    private static String formatBytes(final long size) {
+        int unit = 0;
+
+        float rsize = size;
+        while (rsize > 1024 && unit < UNITS.length - 1) {
+            rsize /= 1024.0;
+            unit++;
+        }
+
+        if (unit == 0) {
+            return rsize + " " + UNITS[unit];
+        }
+
+        return String.format(Locale.ROOT, "%.2f", rsize) + " " + UNITS[unit];
     }
 
 }

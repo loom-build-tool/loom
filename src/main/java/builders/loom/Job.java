@@ -160,7 +160,7 @@ public class Job implements Callable<TaskStatus> {
 
         final Stream<ProductPromise> usedProductsPromises =
             configuredTask.getUsedProducts().stream()
-            .map(moduleProductRepositories.get(buildContext)::lookup);
+                .map(moduleProductRepositories.get(buildContext)::lookup);
 
 
         final Stream<ProductPromise> importedProductPromises = modules.stream()
@@ -178,7 +178,7 @@ public class Job implements Callable<TaskStatus> {
                 Stream.concat(
                     importedAllProductPromises,
                     importedProductPromises))
-            .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
 
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }

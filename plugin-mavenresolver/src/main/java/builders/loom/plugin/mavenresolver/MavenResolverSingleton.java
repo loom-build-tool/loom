@@ -18,6 +18,8 @@ package builders.loom.plugin.mavenresolver;
 
 import java.nio.file.Path;
 
+import builders.loom.api.DownloadProgressEmitter;
+
 public final class MavenResolverSingleton {
 
     private static volatile MavenResolver instance;
@@ -26,17 +28,14 @@ public final class MavenResolverSingleton {
     }
 
     public static MavenResolver getInstance(final MavenResolverPluginSettings pluginSettings,
-                                            final Path cacheDir) {
+                                            final Path cacheDir,
+                                            final DownloadProgressEmitter downloadProgressEmitter) {
 
         if (instance == null) {
             synchronized (MavenResolverSingleton.class) {
                 if (instance == null) {
-
-                    final ProgressIndicator progressIndicator =
-                        new ProgressIndicator("mavenResolver");
-
-                    instance = new MavenResolver(progressIndicator,
-                        pluginSettings.getRepositoryUrl(), cacheDir);
+                    instance = new MavenResolver(
+                        pluginSettings.getRepositoryUrl(), cacheDir, downloadProgressEmitter);
                 }
             }
         }

@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,11 +53,6 @@ public class JavadocTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        final List<Path> classpath = new ArrayList<>();
-        useProduct("compileDependencies", ClasspathProduct.class)
-            .map(ClasspathProduct::getEntries)
-            .ifPresent(classpath::addAll);
-
         final Path dstDir = Files.createDirectories(
             LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
             getBuildContext().getModuleName(), "javadoc"));
@@ -74,7 +68,13 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
                 List.of(dstDir));
 
-            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
+            final Optional<ClasspathProduct> compileDependencies =
+                useProduct("compileDependencies", ClasspathProduct.class);
+
+            if (compileDependencies.isPresent()) {
+                fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
+                    compileDependencies.get().getEntries());
+            }
 
             for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
                 // TODO doesn't work

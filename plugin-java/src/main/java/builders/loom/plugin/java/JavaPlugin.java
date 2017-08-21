@@ -64,7 +64,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("assembleSourcesJar")
-            .impl(JavaAssembleSourcesJarTask::new)
+            .impl(() -> new JavaAssembleSourcesJarTask(getRepositoryPath()))
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")

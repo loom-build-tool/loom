@@ -16,14 +16,20 @@
 
 package builders.loom.plugin.java;
 
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.util.Hasher;
 
 public class JavaProvideResourcesDirTask extends AbstractModuleTask {
 
@@ -37,11 +43,33 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     public TaskResult run() throws Exception {
         final Path path = resourcesPath();
 
-        if (!Files.isDirectory(path) || Files.list(path).count() == 0) {
+        if (!Files.isDirectory(path)) {
             return completeEmpty();
         }
 
-        return completeOk(new ResourcesTreeProduct(path));
+        final List<Path> resourceFiles = new ArrayList<>();
+        final Hasher hasher = new Hasher();
+
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                resourceFiles.add(file);
+                hasher
+                    .putString(file.toString())
+                    .putLong(attrs.size())
+                    .putLong(attrs.lastModifiedTime().toMillis());
+
+                return FileVisitResult.CONTINUE;
+            }
+
+        });
+
+        if (resourceFiles.isEmpty()) {
+            return completeEmpty();
+        }
+
+        return completeOk(new ResourcesTreeProduct(path, resourceFiles, hasher.stringHash()));
     }
 
     private Path resourcesPath() {

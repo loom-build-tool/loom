@@ -17,23 +17,44 @@
 package builders.loom.api.product;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public final class ResourcesTreeProduct extends AbstractProduct {
 
     private final Path srcDir;
+    private final List<Path> sourceFiles;
+    private final String hash;
 
-    public ResourcesTreeProduct(final Path srcDir) {
-        this.srcDir = srcDir;
+    public ResourcesTreeProduct(final Path srcDir, final List<Path> sourceFiles,
+                                final String hash) {
+        this.srcDir = Objects.requireNonNull(srcDir, "srcDir must not be null");
+        if (sourceFiles == null || sourceFiles.isEmpty()) {
+            throw new IllegalArgumentException("sourceFiles must not be null or empty");
+        }
+        this.sourceFiles = Collections.unmodifiableList(sourceFiles);
+        this.hash = hash;
     }
 
     public Path getSrcDir() {
         return srcDir;
     }
 
+    public List<Path> getSourceFiles() {
+        return sourceFiles;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
     @Override
     public String toString() {
         return "ResourcesTreeProduct{"
             + "srcDir=" + srcDir
+            + ", sourceFiles=" + sourceFiles
+            + ", hash=" + hash
             + '}';
     }
 

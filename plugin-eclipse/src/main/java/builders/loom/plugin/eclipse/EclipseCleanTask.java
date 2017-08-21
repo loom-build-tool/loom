@@ -37,9 +37,6 @@ public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
 
     private Map<Module, Set<Module>> moduleGraph;
 
-    public EclipseCleanTask() {
-    }
-
     @Override
     public void setTransitiveModuleGraph(final Map<Module, Set<Module>> transitiveModuleGraph) {
         this.moduleGraph = transitiveModuleGraph;

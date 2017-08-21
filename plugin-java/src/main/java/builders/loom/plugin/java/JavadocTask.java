@@ -16,15 +16,13 @@
 
 package builders.loom.plugin.java;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
 import javax.tools.DocumentationTool;
@@ -37,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
@@ -72,20 +71,34 @@ public class JavadocTask extends AbstractModuleTask {
         try (final StandardJavaFileManager fileManager = docTool.getStandardFileManager(
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 
-            fileManager.setLocation(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
-                Collections.singletonList(dstDir.toFile()));
+            fileManager.setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
+                List.of(dstDir));
 
-            fileManager.setLocation(StandardLocation.CLASS_PATH,
-                classpath.stream().map(Path::toFile).collect(Collectors.toList()));
+            fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
 
-            final List<File> srcFiles = source.get().getSourceFiles().stream()
-                .map(Path::toFile)
-                .collect(Collectors.toList());
+            for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
+                // TODO doesn't work
+/*
+                final Optional<CompilationProduct> compilation =
+                    useProduct(moduleName, "compilation", CompilationProduct.class);
+
+                if (compilation.isPresent()) {
+                    fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
+                        moduleName, List.of(compilation.get().getClassesDir()));
+                }
+*/
+
+                // workaround - step 1/2
+                getUsedProducts().getAndWaitProduct(moduleName, "compilation");
+            }
+
+            // workaround - step 2/2
+            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, List.of(getBuildDir().getParent()));
 
             final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromFiles(srcFiles);
+                fileManager.getJavaFileObjectsFromPaths(source.get().getSourceFiles());
 
-            LOG.info("Create Javadoc for {} files", srcFiles.size());
+            LOG.info("Create Javadoc for {} files", source.get().getSourceFiles().size());
 
             final DocumentationTool.DocumentationTask javaDocTask =
                 docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
@@ -96,6 +109,13 @@ public class JavadocTask extends AbstractModuleTask {
         }
 
         return completeOk(new DirectoryProduct(dstDir, "JavaDoc output"));
+    }
+
+    private Path getBuildDir() {
+        // TODO another workaround for non-functional MODULE_PATH
+        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
+            .resolve(Paths.get("compilation", CompileTarget.MAIN.name().toLowerCase(),
+                getBuildContext().getModuleName()));
     }
 
 }

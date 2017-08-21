@@ -96,7 +96,7 @@ public final class ProgressMonitor {
             .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
 
         if (DOWNLOADED_FILES.intValue() > 0) {
-            a.format(" (Downloaded: %d files / %s)",
+            a.format(" (Downloaded: %d files | %s)",
                 DOWNLOADED_FILES.get(), formatBytes(DOWNLOADED_BYTES.get()))
                 .eraseLine(Ansi.Erase.FORWARD);
         }

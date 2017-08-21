@@ -40,7 +40,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.DirectoryProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
 public class JavadocTask extends AbstractModuleTask {
@@ -95,7 +95,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return completeOk(new ResourcesTreeProduct(dstDir));
+        return completeOk(new DirectoryProduct(dstDir, "JavaDoc output"));
     }
 
 }

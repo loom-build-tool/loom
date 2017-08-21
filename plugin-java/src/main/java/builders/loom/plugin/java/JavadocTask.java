@@ -43,9 +43,9 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavadocModuleTask extends AbstractModuleTask {
+public class JavadocTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavadocModuleTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JavadocTask.class);
 
     @Override
     public TaskResult run() throws Exception {

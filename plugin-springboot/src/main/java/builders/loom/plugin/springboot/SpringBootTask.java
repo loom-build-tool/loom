@@ -43,11 +43,11 @@ import builders.loom.util.FileUtils;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
 
-public class SpringBootModuleTask extends AbstractModuleTask {
+public class SpringBootTask extends AbstractModuleTask {
 
     private final SpringBootPluginSettings pluginSettings;
 
-    public SpringBootModuleTask(final SpringBootPluginSettings pluginSettings) {
+    public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 

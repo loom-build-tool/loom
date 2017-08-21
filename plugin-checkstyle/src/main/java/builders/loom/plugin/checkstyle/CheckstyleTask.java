@@ -49,18 +49,18 @@ import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class CheckstyleModuleTask extends AbstractModuleTask {
+public class CheckstyleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CheckstyleModuleTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CheckstyleTask.class);
 
     private final CompileTarget compileTarget;
 
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
 
-    public CheckstyleModuleTask(final CompileTarget compileTarget,
-                                final CheckstylePluginSettings pluginSettings,
-                                final Path cacheDir) {
+    public CheckstyleTask(final CompileTarget compileTarget,
+                          final CheckstylePluginSettings pluginSettings,
+                          final Path cacheDir) {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;

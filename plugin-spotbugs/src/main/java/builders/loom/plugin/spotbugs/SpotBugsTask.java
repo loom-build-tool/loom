@@ -37,7 +37,7 @@ import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.Preconditions;
 import edu.umd.cs.findbugs.Priorities;
 
-public class SpotBugsModuleTask extends AbstractModuleTask {
+public class SpotBugsTask extends AbstractModuleTask {
 
     private static final int DEFAULT_PRIORITY_THRESHOLD = Priorities.NORMAL_PRIORITY;
 
@@ -46,8 +46,8 @@ public class SpotBugsModuleTask extends AbstractModuleTask {
     private boolean loadFbContrib;
     private boolean loadFindBugsSec;
 
-    public SpotBugsModuleTask(final SpotBugsPluginSettings pluginSettings,
-                              final CompileTarget compileTarget) {
+    public SpotBugsTask(final SpotBugsPluginSettings pluginSettings,
+                        final CompileTarget compileTarget) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
 

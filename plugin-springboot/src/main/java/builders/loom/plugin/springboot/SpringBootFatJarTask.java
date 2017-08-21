@@ -26,14 +26,14 @@ import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.DirectoryProduct;
 
-public class SpringBootFatJarModuleTask extends AbstractModuleTask {
+public class SpringBootFatJarTask extends AbstractModuleTask {
 
     private static final String SPRING_BOOT_APPLICATION_ANNOTATION =
         "org.springframework.boot.autoconfigure.SpringBootApplication";
 
     private final SpringBootPluginSettings pluginSettings;
 
-    public SpringBootFatJarModuleTask(final SpringBootPluginSettings pluginSettings) {
+    public SpringBootFatJarTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 

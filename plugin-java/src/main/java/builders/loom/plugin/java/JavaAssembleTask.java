@@ -36,13 +36,13 @@ import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 
-public class JavaAssembleModuleTask extends AbstractModuleTask {
+public class JavaAssembleTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleModuleTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleTask.class);
 
     private final JavaPluginSettings pluginSettings;
 
-    public JavaAssembleModuleTask(final JavaPluginSettings pluginSettings) {
+    public JavaAssembleTask(final JavaPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
     }
 

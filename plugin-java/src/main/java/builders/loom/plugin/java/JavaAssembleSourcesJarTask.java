@@ -28,7 +28,7 @@ import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavaAssembleSourcesJarModuleTask extends AbstractModuleTask {
+public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {

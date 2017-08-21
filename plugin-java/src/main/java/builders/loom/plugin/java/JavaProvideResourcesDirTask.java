@@ -25,11 +25,11 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ResourcesTreeProduct;
 
-public class JavaProvideResourcesDirModuleTask extends AbstractModuleTask {
+public class JavaProvideResourcesDirTask extends AbstractModuleTask {
 
     private final CompileTarget compileTarget;
 
-    public JavaProvideResourcesDirModuleTask(final CompileTarget compileTarget) {
+    public JavaProvideResourcesDirTask(final CompileTarget compileTarget) {
         this.compileTarget = compileTarget;
     }
 

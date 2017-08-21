@@ -60,13 +60,13 @@ import builders.loom.util.xml.XmlUtil;
 import builders.loom.util.xml.XmlWriter;
 
 @SuppressWarnings("checkstyle:classfanoutcomplexity")
-public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
+public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     private final DocumentBuilder docBuilder;
 
     private final Transformer transformer;
     private Map<Module, Set<Module>> moduleGraph;
 
-    public EclipseModuleTask() {
+    public EclipseTask() {
         try {
             final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             docBuilder = dbFactory.newDocumentBuilder();

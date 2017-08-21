@@ -19,23 +19,22 @@ package builders.loom.plugin.mavenresolver;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactProduct;
-import builders.loom.api.product.ClasspathProduct;
+import builders.loom.api.product.ArtifactListProduct;
 
-public class MavenResolverModuleTask extends AbstractModuleTask {
+public class MavenArtifactResolverTask extends AbstractModuleTask {
 
     private final DependencyScope dependencyScope;
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
+    private MavenResolver mavenResolver;
 
-    public MavenResolverModuleTask(final DependencyScope dependencyScope,
-                                   final MavenResolverPluginSettings pluginSettings,
-                                   final Path cacheDir) {
+    public MavenArtifactResolverTask(final DependencyScope dependencyScope,
+                                     final MavenResolverPluginSettings pluginSettings,
+                                     final Path cacheDir) {
 
         this.dependencyScope = dependencyScope;
         this.pluginSettings = pluginSettings;
@@ -44,36 +43,29 @@ public class MavenResolverModuleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final List<String> dependencies = listDependencies();
-
-        if (dependencies.isEmpty()) {
-            return completeEmpty();
+        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
+        switch (dependencyScope) {
+            case COMPILE:
+                return completeOk(productCompile());
+            case TEST:
+                return completeOk(productTest());
+            default:
+                throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
-
-        return completeOk(resolve(dependencies));
     }
 
-    private List<String> listDependencies() {
+    private ArtifactListProduct productCompile() {
         final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-
-        if (dependencyScope == DependencyScope.TEST) {
-            deps.addAll(getModuleConfig().getTestDependencies());
-        }
-
-        return deps;
+        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.COMPILE,
+            "sources"));
     }
 
-    private ClasspathProduct resolve(final List<String> deps) {
-        final MavenResolver mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
+    private ArtifactListProduct productTest() {
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+        deps.addAll(getModuleConfig().getTestDependencies());
 
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
-            dependencyScope, null);
-
-        final List<Path> collect = artifactProducts.stream()
-            .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
-
-        return new ClasspathProduct(collect);
+        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.TEST,
+            "sources"));
     }
 
 }

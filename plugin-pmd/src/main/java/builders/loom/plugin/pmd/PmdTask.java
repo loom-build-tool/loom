@@ -60,17 +60,17 @@ import net.sourceforge.pmd.util.datasource.DataSource;
 import net.sourceforge.pmd.util.datasource.FileDataSource;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class PmdModuleTask extends AbstractModuleTask {
+public class PmdTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PmdModuleTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
 
     private final CompileTarget compileTarget;
 
     private final Path cacheDir;
     private final PmdPluginSettings pluginSettings;
 
-    public PmdModuleTask(final PmdPluginSettings pluginSettings,
-                         final CompileTarget compileTarget, final Path cacheDir) {
+    public PmdTask(final PmdPluginSettings pluginSettings,
+                   final CompileTarget compileTarget, final Path cacheDir) {
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
         this.cacheDir = cacheDir;

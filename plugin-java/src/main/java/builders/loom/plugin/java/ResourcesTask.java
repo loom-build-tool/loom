@@ -30,14 +30,14 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
-public class ResourcesModuleTask extends AbstractModuleTask {
+public class ResourcesTask extends AbstractModuleTask {
 
     private final JavaPluginSettings pluginSettings;
     private final CompileTarget compileTarget;
     private final Path cacheDir;
 
-    ResourcesModuleTask(final JavaPluginSettings pluginSettings,
-                        final CompileTarget compileTarget, final Path cacheDir) {
+    ResourcesTask(final JavaPluginSettings pluginSettings,
+                  final CompileTarget compileTarget, final Path cacheDir) {
 
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;

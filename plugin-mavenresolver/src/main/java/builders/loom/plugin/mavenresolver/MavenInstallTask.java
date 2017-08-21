@@ -53,13 +53,13 @@ import builders.loom.api.product.DirectoryProduct;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class MavenInstallModuleTask extends AbstractModuleTask {
+public class MavenInstallTask extends AbstractModuleTask {
 
     private final MavenResolverPluginSettings pluginSettings;
     private final LocalRepositoryManager localRepositoryManager;
     private final RepositorySystem system;
 
-    public MavenInstallModuleTask(final MavenResolverPluginSettings pluginSettings) {
+    public MavenInstallTask(final MavenResolverPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();

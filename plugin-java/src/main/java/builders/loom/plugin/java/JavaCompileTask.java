@@ -47,16 +47,16 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.SourceTreeProduct;
 
-public class JavaCompileModuleTask extends AbstractModuleTask {
+public class JavaCompileTask extends AbstractModuleTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileModuleTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
 
     private final CompileTarget compileTarget;
     private final String subdirName;
     private final Path cacheDir;
 
-    public JavaCompileModuleTask(final CompileTarget compileTarget,
-                                 final Path cacheDir) {
+    public JavaCompileTask(final CompileTarget compileTarget,
+                           final Path cacheDir) {
         this.compileTarget = Objects.requireNonNull(compileTarget);
         this.cacheDir = cacheDir;
 

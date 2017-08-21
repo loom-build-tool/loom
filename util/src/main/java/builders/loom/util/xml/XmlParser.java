@@ -18,7 +18,6 @@ package builders.loom.util.xml;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -28,8 +27,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-
-import builders.loom.util.Preconditions;
 
 public final class XmlParser {
 
@@ -53,9 +50,7 @@ public final class XmlParser {
     }
 
     public Document parse(final Path xmlFile) {
-        Objects.nonNull(xmlFile);
-        Preconditions.checkState(Files.exists(xmlFile));
-        Preconditions.checkState(Files.isRegularFile(xmlFile));
+        Objects.requireNonNull(xmlFile);
         try {
             return documentBuilder.parse(xmlFile.toFile());
         } catch (final IOException e) {

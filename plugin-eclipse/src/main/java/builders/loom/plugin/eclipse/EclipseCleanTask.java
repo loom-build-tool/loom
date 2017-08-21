@@ -64,11 +64,13 @@ public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
 
         final Path projectXml = module.getPath().resolve(".project");
         if (Files.exists(projectXml)) {
+            LOG.info("Remove file {}", projectXml);
             Files.delete(projectXml);
         }
 
         final Path classpathFile = module.getPath().resolve(".classpath");
         if (Files.exists(classpathFile)) {
+            LOG.info("Remove file {}", classpathFile);
             Files.delete(classpathFile);
         }
 

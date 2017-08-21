@@ -52,11 +52,9 @@ import builders.loom.util.xml.XmlWriter;
 public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware {
 
     // clean-create all eclipse files
-    private final boolean cleanEclipse;
     private Map<Module, Set<Module>> moduleGraph;
 
-    public EclipseModuleTask(final boolean cleanEclipse) {
-        this.cleanEclipse = cleanEclipse;
+    public EclipseModuleTask() {
     }
 
     @Override
@@ -92,7 +90,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         final Path projectXml = module.getPath().resolve(".project");
 
         // pickup and merge existing .project file or create a new one
-        if (Files.notExists(projectXml) || cleanEclipse) {
+        if (Files.notExists(projectXml)) {
             xmlWriter.write(createProjectFile(module), projectXml);
         } else {
             final XmlParser xmlParser = XmlParser.createXmlParser();
@@ -110,7 +108,7 @@ public class EclipseModuleTask extends AbstractTask implements ModuleGraphAware 
         // pickup and merge existing .prefs file or create a new one
         final Path settingsFile = Files.createDirectories(module.getPath().resolve(".settings"))
             .resolve("org.eclipse.jdt.core.prefs");
-        if (Files.notExists(settingsFile) || cleanEclipse) {
+        if (Files.notExists(settingsFile)) {
             writePropertiesToFile(settingsFile, createJdtPrefs(module));
         } else {
             final Properties props = new Properties();

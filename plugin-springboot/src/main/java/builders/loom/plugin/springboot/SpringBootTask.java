@@ -39,7 +39,7 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.DirectoryProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.util.FileUtils;
+import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
 
@@ -56,7 +56,7 @@ public class SpringBootTask extends AbstractModuleTask {
         final Path baseDir = LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
             getBuildContext().getModuleName(), "springboot");
 
-        FileUtils.cleanDir(baseDir);
+        FileUtil.deleteDirectoryRecursively(baseDir, true);
 
         final Path buildDir = baseDir.resolve("boot-bundle");
 
@@ -70,17 +70,17 @@ public class SpringBootTask extends AbstractModuleTask {
         final Optional<ProcessedResourceProduct> resourcesTreeProduct =
             useProduct("processedResources", ProcessedResourceProduct.class);
         resourcesTreeProduct.ifPresent(processedResourceProduct ->
-            FileUtils.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
+            FileUtil.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
 
         // copy classes
         final CompilationProduct compilationProduct =
             requireProduct("compilation", CompilationProduct.class);
-        FileUtils.copyFiles(compilationProduct.getClassesDir(), classesDir);
+        FileUtil.copyFiles(compilationProduct.getClassesDir(), classesDir);
 
         // copy libs
         final ClasspathProduct compileDependenciesProduct =
             requireProduct("compileDependencies", ClasspathProduct.class);
-        FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
+        FileUtil.copyFiles(compileDependenciesProduct.getEntries(), libDir);
 
         // copy dep modules
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {

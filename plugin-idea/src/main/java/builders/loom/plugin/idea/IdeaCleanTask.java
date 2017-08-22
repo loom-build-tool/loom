@@ -29,7 +29,7 @@ import builders.loom.api.AbstractTask;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.util.FileUtils;
+import builders.loom.util.FileUtil;
 
 public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
 
@@ -45,27 +45,34 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
     @Override
     public TaskResult run() throws Exception {
         final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
-        final Path ideaDirectory = projectBaseDir.resolve(".idea");
 
-        if (Files.exists(ideaDirectory)) {
-            LOG.info("Remove directory {}", ideaDirectory);
-            FileUtils.cleanDir(ideaDirectory);
-        }
+        removeDir(projectBaseDir.resolve(".idea"));
 
-        for (final Module module : moduleGraph.keySet()) {
-            remove(IdeaUtil.imlFileFromPath(
+        for (final Module module : listAllModules()) {
+            removeFile(IdeaUtil.imlFileFromPath(
                 module.getPath(), IdeaUtil.ideaModuleName(module.getPath())));
         }
 
         if (getRuntimeConfiguration().isModuleBuild()) {
-            remove(IdeaUtil.imlFileFromPath(
+            removeFile(IdeaUtil.imlFileFromPath(
                 projectBaseDir, IdeaUtil.ideaModuleName(projectBaseDir)));
         }
 
         return completeEmpty();
     }
 
-    private void remove(final Path imlFile) throws IOException {
+    private Set<Module> listAllModules() {
+        return moduleGraph.keySet();
+    }
+
+    private void removeDir(final Path dir) {
+        if (Files.exists(dir)) {
+            LOG.info("Remove directory {}", dir);
+            FileUtil.deleteDirectoryRecursively(dir, true);
+        }
+    }
+
+    private void removeFile(final Path imlFile) throws IOException {
         if (Files.exists(imlFile)) {
             LOG.info("Remove file {}", imlFile);
             Files.delete(imlFile);

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.FileUtil;
 import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.Report;
@@ -68,12 +67,27 @@ public class PmdTask extends AbstractModuleTask {
 
     private final Path cacheDir;
     private final PmdPluginSettings pluginSettings;
+    private final String sourceProductId;
+    private final String reportOutputDescription;
 
     public PmdTask(final PmdPluginSettings pluginSettings,
                    final CompileTarget compileTarget, final Path cacheDir) {
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
         this.cacheDir = cacheDir;
+
+        switch (compileTarget) {
+            case MAIN:
+                sourceProductId = "source";
+                reportOutputDescription = "PMD main report";
+                break;
+            case TEST:
+                sourceProductId = "testSource";
+                reportOutputDescription = "PMD test report";
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
+        }
     }
 
     private PMDConfiguration getConfiguration() {
@@ -114,6 +128,13 @@ public class PmdTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
+        final Optional<SourceTreeProduct> sourceTreeProduct =
+            useProduct(sourceProductId, SourceTreeProduct.class);
+
+        if (!sourceTreeProduct.isPresent()) {
+            return completeEmpty();
+        }
+
         final PMDConfiguration configuration = getConfiguration();
         final RuleSetFactory ruleSetFactory = buildRuleSetFactory(configuration);
 
@@ -121,27 +142,18 @@ public class PmdTask extends AbstractModuleTask {
         final AtomicInteger ruleViolations = new AtomicInteger(0);
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
-        final Optional<SourceTreeProduct> sourceTreeProduct = getSource();
-
-        if (!sourceTreeProduct.isPresent()) {
-            return completeEmpty();
-        }
-
-        final Path srcDir = sourceTreeProduct.get().getSrcDir();
-
-        final List<DataSource> files = sourceTreeProduct.get().getSourceFiles().stream()
+        final List<DataSource> files = sourceTreeProduct.get().getSrcFiles().stream()
             .map(Path::toFile)
             .map(FileDataSource::new)
             .collect(Collectors.toList());
 
-        final String inputPaths = srcDir.toString();
+        final String inputPaths = sourceTreeProduct.get().getSrcDir().toString();
         configuration.setInputPaths(inputPaths);
 
-        final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "pmd")
-            .resolve(compileTarget.name().toLowerCase());
+        final Path reportDir =
+            FileUtil.createOrCleanDirectory(resolveReportDir("pmd", compileTarget));
 
-        final HTMLRenderer htmlRenderer = buildHtmlRenderer(reportPath);
+        final HTMLRenderer htmlRenderer = buildHtmlRenderer(reportDir);
         final List<Renderer> renderers = Arrays.asList(new LogRenderer(inputPaths), htmlRenderer);
 
         for (final Renderer renderer : renderers) {
@@ -157,14 +169,12 @@ public class PmdTask extends AbstractModuleTask {
 
         final int ruleViolationCnt = ruleViolations.get();
 
-        LOG.debug("{} problems found", ruleViolationCnt);
-
         if (ruleViolationCnt > 0) {
             throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
                 + " rule violations in the code");
         }
 
-        return completeOk(product(reportPath));
+        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
     }
 
     private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {
@@ -173,8 +183,7 @@ public class PmdTask extends AbstractModuleTask {
         final HTMLRenderer htmlRenderer = new HTMLRenderer();
         final String reportFileName = compileTarget.name().toLowerCase() + ".html";
         final Path reportFile = reportDir.resolve(reportFileName);
-        htmlRenderer.setWriter(Files.newBufferedWriter(reportFile,
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+        htmlRenderer.setWriter(Files.newBufferedWriter(reportFile));
         return htmlRenderer;
     }
 
@@ -200,28 +209,6 @@ public class PmdTask extends AbstractModuleTask {
         }
 
         return ruleSetFactory;
-    }
-
-    private Optional<SourceTreeProduct> getSource() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("source", SourceTreeProduct.class);
-            case TEST:
-                return useProduct("testSource", SourceTreeProduct.class);
-            default:
-                throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
-        }
-    }
-
-    private ReportProduct product(final Path reportPath) {
-        switch (compileTarget) {
-            case MAIN:
-                return new ReportProduct(reportPath, "PMD main report");
-            case TEST:
-                return new ReportProduct(reportPath, "PMD test report");
-            default:
-                throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
-        }
     }
 
     private static class LogRenderer extends AbstractRenderer {

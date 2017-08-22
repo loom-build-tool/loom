@@ -24,29 +24,29 @@ import java.util.Objects;
 public final class SourceTreeProduct extends AbstractProduct {
 
     private final Path srcDir;
-    private final List<Path> sourceFiles;
+    private final List<Path> srcFiles;
 
-    public SourceTreeProduct(final Path srcDir, final List<Path> sourceFiles) {
+    public SourceTreeProduct(final Path srcDir, final List<Path> srcFiles) {
         this.srcDir = Objects.requireNonNull(srcDir, "srcDir must not be null");
-        if (sourceFiles == null || sourceFiles.isEmpty()) {
-            throw new IllegalArgumentException("sourceFiles must not be null or empty");
+        if (srcFiles == null || srcFiles.isEmpty()) {
+            throw new IllegalArgumentException("srcFiles must not be null or empty");
         }
-        this.sourceFiles = Collections.unmodifiableList(sourceFiles);
+        this.srcFiles = Collections.unmodifiableList(srcFiles);
     }
 
     public Path getSrcDir() {
         return srcDir;
     }
 
-    public List<Path> getSourceFiles() {
-        return sourceFiles;
+    public List<Path> getSrcFiles() {
+        return srcFiles;
     }
 
     @Override
     public String toString() {
         return "SourceTreeProduct{"
             + "srcDir=" + srcDir
-            + ", sourceFiles=" + sourceFiles
+            + ", srcFiles=" + srcFiles
             + '}';
     }
 

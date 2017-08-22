@@ -18,6 +18,7 @@ package builders.loom.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,9 +26,29 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
-public final class FileUtils {
+public final class FileUtil {
 
-    private FileUtils() {
+    private FileUtil() {
+    }
+
+    public static Path createOrCleanDirectory(final Path directory) throws IOException {
+        if (Files.notExists(directory)) {
+            return Files.createDirectories(directory);
+        }
+
+        deleteDirectoryRecursively(directory, false);
+
+        return directory;
+    }
+
+    public static boolean isDirAbsentOrEmpty(final Path directory) throws IOException {
+        return Files.notExists(directory) || isDirEmpty(directory);
+    }
+
+    public static boolean isDirEmpty(final Path directory) throws IOException {
+        try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
+            return !dirStream.iterator().hasNext();
+        }
     }
 
     public static void copyFiles(final List<Path> sources, final Path dstDir) {
@@ -42,7 +63,7 @@ public final class FileUtils {
 
     public static void copyFiles(final Path srcDir, final Path dstDir) {
         try {
-            Files.walkFileTree(srcDir, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(srcDir, new SimpleFileVisitor<>() {
 
                 @Override
                 public FileVisitResult preVisitDirectory(final Path dir,
@@ -66,13 +87,13 @@ public final class FileUtils {
         }
     }
 
-    public static void cleanDir(final Path rootPath) {
-        if (!Files.isDirectory(rootPath)) {
+    public static void deleteDirectoryRecursively(final Path rootPath, final boolean rootItself) {
+        if (Files.notExists(rootPath)) {
             return;
         }
 
         try {
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
                     throws IOException {
@@ -83,7 +104,9 @@ public final class FileUtils {
                 @Override
                 public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
                     throws IOException {
-                    Files.delete(dir);
+                    if (rootItself || !Files.isSameFile(rootPath, dir)) {
+                        Files.delete(dir);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
             });

@@ -16,43 +16,57 @@
 
 package builders.loom.plugin.java;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.util.FileUtil;
 
 public class JavaProvideResourcesDirTask extends AbstractModuleTask {
 
-    private final CompileTarget compileTarget;
+    private final Path srcFragmentDir;
 
     public JavaProvideResourcesDirTask(final CompileTarget compileTarget) {
-        this.compileTarget = compileTarget;
+        switch (compileTarget) {
+            case MAIN:
+                srcFragmentDir = LoomPaths.RES_MAIN;
+                break;
+            case TEST:
+                srcFragmentDir = LoomPaths.RES_TEST;
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskResult run() throws Exception {
-        final Path path = resourcesPath();
+        final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
+        final List<Path> srcFiles = findSources(srcDir);
 
-        if (!Files.isDirectory(path) || Files.list(path).count() == 0) {
+        if (srcFiles.isEmpty()) {
             return completeEmpty();
         }
 
-        return completeOk(new ResourcesTreeProduct(path));
+        return completeOk(new ResourcesTreeProduct(srcDir, srcFiles));
     }
 
-    private Path resourcesPath() {
-        switch (compileTarget) {
-            case MAIN:
-                return getBuildContext().getPath().resolve(LoomPaths.RES_MAIN);
-            case TEST:
-                return getBuildContext().getPath().resolve(LoomPaths.RES_TEST);
-            default:
-                throw new IllegalStateException();
+    private List<Path> findSources(final Path srcDir) throws IOException {
+        if (FileUtil.isDirAbsentOrEmpty(srcDir)) {
+            return Collections.emptyList();
         }
+
+        return Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .collect(Collectors.toList());
     }
 
 }

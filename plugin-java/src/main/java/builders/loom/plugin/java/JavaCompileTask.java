@@ -46,6 +46,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.FileUtil;
 
 public class JavaCompileTask extends AbstractModuleTask {
 
@@ -54,6 +55,7 @@ public class JavaCompileTask extends AbstractModuleTask {
     private final CompileTarget compileTarget;
     private final String subdirName;
     private final Path cacheDir;
+    private final String sourceProductId;
 
     public JavaCompileTask(final CompileTarget compileTarget,
                            final Path cacheDir) {
@@ -63,9 +65,11 @@ public class JavaCompileTask extends AbstractModuleTask {
         switch (compileTarget) {
             case MAIN:
                 subdirName = "main";
+                sourceProductId = "source";
                 break;
             case TEST:
                 subdirName = "test";
+                sourceProductId = "testSource";
                 break;
             default:
                 throw new IllegalArgumentException("Unknown compileTarget " + compileTarget);
@@ -94,9 +98,8 @@ public class JavaCompileTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final List<Path> classpath = new ArrayList<>();
-
-        final Optional<SourceTreeProduct> sourceTreeProduct = getSourceTreeProduct();
+        final Optional<SourceTreeProduct> sourceTreeProduct =
+            useProduct(sourceProductId, SourceTreeProduct.class);
 
         if (!sourceTreeProduct.isPresent()) {
             if (Files.exists(getBuildDir())) {
@@ -105,6 +108,8 @@ public class JavaCompileTask extends AbstractModuleTask {
 
             return completeEmpty();
         }
+
+        final List<Path> classpath = new ArrayList<>();
 
         switch (compileTarget) {
             case MAIN:
@@ -125,7 +130,7 @@ public class JavaCompileTask extends AbstractModuleTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcFiles = sourceTreeProduct.get().getSourceFiles();
+        final List<Path> srcFiles = sourceTreeProduct.get().getSrcFiles();
 
 //        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
 //            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
@@ -150,29 +155,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
 //        fileCacher.cacheFiles(srcFiles);
 
-        return completeOk(product());
-    }
-
-    private Optional<SourceTreeProduct> getSourceTreeProduct() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("source", SourceTreeProduct.class);
-            case TEST:
-                return useProduct("testSource", SourceTreeProduct.class);
-            default:
-                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
-        }
-    }
-
-    private CompilationProduct product() {
-        switch (compileTarget) {
-            case MAIN:
-                return new CompilationProduct(getBuildDir());
-            case TEST:
-                return new CompilationProduct(getBuildDir());
-            default:
-                throw new IllegalStateException();
-        }
+        return completeOk(new CompilationProduct(getBuildDir()));
     }
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/

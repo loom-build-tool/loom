@@ -16,8 +16,10 @@
 
 package builders.loom.plugin.java;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,51 +28,57 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.FileUtil;
 
 public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
-    private final CompileTarget compileTarget;
+    private final Path srcFragmentDir;
 
     public JavaProvideSourceDirTask(final CompileTarget compileTarget) {
-        this.compileTarget = compileTarget;
+        switch (compileTarget) {
+            case MAIN:
+                srcFragmentDir = LoomPaths.SRC_MAIN;
+                break;
+            case TEST:
+                srcFragmentDir = LoomPaths.SRC_TEST;
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskResult run() throws Exception {
-        final Path path = srcPath();
+        final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
+        final List<Path> srcFiles = findSources(srcDir);
 
-        if (!Files.isDirectory(path)) {
+        if (srcFiles.isEmpty()) {
             return completeEmpty();
         }
 
-        final List<Path> sourceFiles = Files.walk(srcPath())
-            .filter(Files::isRegularFile)
+        validateFiles(srcFiles);
+
+        return completeOk(new SourceTreeProduct(srcDir, srcFiles));
+    }
+
+    private List<Path> findSources(final Path srcDir) throws IOException {
+        if (FileUtil.isDirAbsentOrEmpty(srcDir)) {
+            return Collections.emptyList();
+        }
+
+        return Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
             .collect(Collectors.toList());
+    }
 
-        if (sourceFiles.isEmpty()) {
-            return completeEmpty();
-        }
-
-        final List<Path> illegalFiles = sourceFiles.stream()
+    private void validateFiles(final List<Path> srcFiles) {
+        final List<Path> illegalFiles = srcFiles.stream()
             .filter(f -> !f.toString().endsWith(".java"))
             .collect(Collectors.toList());
 
         if (!illegalFiles.isEmpty()) {
             throw new IllegalStateException("Found files with other suffix than .java: "
                 + illegalFiles);
-        }
-
-        return completeOk(new SourceTreeProduct(path, sourceFiles));
-    }
-
-    private Path srcPath() {
-        switch (compileTarget) {
-            case MAIN:
-                return getBuildContext().getPath().resolve(LoomPaths.SRC_MAIN);
-            case TEST:
-                return getBuildContext().getPath().resolve(LoomPaths.SRC_TEST);
-            default:
-                throw new IllegalStateException();
         }
     }
 

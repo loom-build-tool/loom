@@ -29,7 +29,7 @@ import builders.loom.api.AbstractTask;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.util.FileUtils;
+import builders.loom.util.FileUtil;
 
 public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
 
@@ -44,41 +44,31 @@ public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
-
-        for (final Module module : allModules()) {
-            cleanModuleProject(module);
+        for (final Module module : listAllModules()) {
+            remove(module.getPath().resolve(".project"));
+            remove(module.getPath().resolve(".classpath"));
+            removeDir(module.getPath().resolve(".settings"));
         }
 
         return completeEmpty();
     }
 
-    private Set<Module> allModules() {
+    private Set<Module> listAllModules() {
         return moduleGraph.keySet();
     }
 
-    private void cleanModuleProject(final Module module)
-        throws IOException, InterruptedException {
-
-        final Path projectXml = module.getPath().resolve(".project");
-        if (Files.exists(projectXml)) {
-            LOG.info("Remove file {}", projectXml);
-            Files.delete(projectXml);
+    private void remove(final Path file) throws IOException {
+        if (Files.exists(file)) {
+            LOG.info("Remove file {}", file);
+            Files.delete(file);
         }
+    }
 
-        final Path classpathFile = module.getPath().resolve(".classpath");
-        if (Files.exists(classpathFile)) {
-            LOG.info("Remove file {}", classpathFile);
-            Files.delete(classpathFile);
+    private void removeDir(final Path dir) {
+        if (Files.exists(dir)) {
+            LOG.info("Remove directory {}", dir);
+            FileUtil.deleteDirectoryRecursively(dir, true);
         }
-
-        final Path settingsDir = module.getPath().resolve(".settings");
-        if (Files.exists(settingsDir)) {
-            LOG.info("Remove directory {}", settingsDir);
-            FileUtils.cleanDir(settingsDir);
-
-        }
-
     }
 
 }
-

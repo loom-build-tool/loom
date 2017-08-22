@@ -7,6 +7,7 @@ configurations {
 
 dependencies {
     compileOnly project(':api')
+    compileOnly project(':util')
     compile('com.puppycrawl.tools:checkstyle:8.0')
     compile('org.slf4j:jcl-over-slf4j:1.8.0-alpha2')
 }

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import builders.loom.util.FileUtil;
 import builders.loom.util.ResourceFilteringOutputStream;
 
 class CopyFileVisitor extends SimpleFileVisitor<Path> {

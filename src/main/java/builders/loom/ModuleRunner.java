@@ -17,6 +17,7 @@
 package builders.loom;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -157,7 +158,7 @@ public class ModuleRunner {
                         configuredTask.getProvidedProduct());
                 final Set<ProductPromise> actuallyUsedProducts =
                     configuredTaskJobMap.get(configuredTask)
-                        .getActuallyUsedProducts().orElse(Set.of());
+                        .getActuallyUsedProducts().orElse(Collections.emptySet());
 
                 final Optional<ProductPromise> latest = actuallyUsedProducts.stream()
                     .max(Comparator.comparingLong(ProductPromise::getCompletedAt));

@@ -24,8 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import javax.tools.ToolProvider;
@@ -40,7 +38,7 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.api.LoomPaths;
-import builders.loom.util.FileUtils;
+import builders.loom.util.FileUtil;
 
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
     "checkstyle:classdataabstractioncoupling"})
@@ -277,8 +275,8 @@ public class Loom {
     }
 
     private static void clean(final Path projectBaseDir) {
-        FileUtils.cleanDir(LoomPaths.loomDir(projectBaseDir));
-        FileUtils.cleanDir(LoomPaths.buildDir(projectBaseDir));
+        FileUtil.deleteDirectoryRecursively(LoomPaths.loomDir(projectBaseDir), true);
+        FileUtil.deleteDirectoryRecursively(LoomPaths.buildDir(projectBaseDir), true);
     }
 
     private static void configureLogging(final Path logFile) {
@@ -320,16 +318,12 @@ public class Loom {
     }
 
     private static void printSuccess(final long startTime) {
-        final Duration duration = Duration.ofNanos(System.nanoTime() - startTime)
-            .truncatedTo(ChronoUnit.MILLIS);
+        final double duration = (System.nanoTime() - startTime) / 1_000_000_000D;
 
         AnsiConsole.out().println(Ansi.ansi().reset().newline()
             .fgBrightGreen().bold().a("BUILD SUCCESSFUL").reset()
             .a(" in ")
-            .a(duration.toString()
-                .substring(2)
-                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-                .toLowerCase())
+            .format("%.2fs", duration)
             .newline());
     }
 

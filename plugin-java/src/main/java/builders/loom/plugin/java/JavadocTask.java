@@ -97,9 +97,9 @@ public class JavadocTask extends AbstractModuleTask {
                 List.of(getBuildDir().getParent()));
 
             final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromPaths(source.get().getSourceFiles());
+                fileManager.getJavaFileObjectsFromPaths(source.get().getSrcFiles());
 
-            LOG.info("Create Javadoc for {} files", source.get().getSourceFiles().size());
+            LOG.info("Create Javadoc for {} files", source.get().getSrcFiles().size());
 
             final DocumentationTool.DocumentationTask javaDocTask =
                 docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);

@@ -16,6 +16,8 @@
 
 package builders.loom.api;
 
+import java.nio.file.Path;
+
 public abstract class AbstractModuleTask extends AbstractTask implements ModuleBuildConfigAware {
 
     private ModuleBuildConfig moduleConfig;
@@ -27,6 +29,24 @@ public abstract class AbstractModuleTask extends AbstractTask implements ModuleB
 
     public ModuleBuildConfig getModuleConfig() {
         return moduleConfig;
+    }
+
+    protected Path resolveBuildDir(final String productId, final CompileTarget compileTarget) {
+        return resolveBuildDir(productId).resolve(compileTarget.name().toLowerCase());
+    }
+
+    protected Path resolveBuildDir(final String productId) {
+        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), productId);
+    }
+
+    protected Path resolveReportDir(final String productId, final CompileTarget compileTarget) {
+        return resolveReportDir(productId).resolve(compileTarget.name().toLowerCase());
+    }
+
+    protected Path resolveReportDir(final String productId) {
+        return LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
+            getBuildContext().getModuleName(), productId);
     }
 
 }

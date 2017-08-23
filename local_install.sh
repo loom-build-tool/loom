@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=1.0.0
+VERSION=1.0.0-rolling
 TARGET=~/.loom/library/
 test -d $TARGET || mkdir -p $TARGET
 ./gradlew clean zip &&

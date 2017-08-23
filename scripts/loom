@@ -2,7 +2,7 @@
 
 set -e
 
-loom_version=1.0.0
+loom_version=@LOOM_VERSION@
 
 # Find project directory of executed loom script
 project_dir="$(cd "$(dirname "$0")" && pwd)"

@@ -8,7 +8,6 @@ allprojects {
 //    apply plugin: 'pmd'
 
     group = 'builders.loom'
-    version = '1.0.0'
 
     sourceCompatibility = 9
 
@@ -114,6 +113,10 @@ task zip(type: Zip) {
         into("scripts") {
             from 'scripts/loom'
             from 'scripts/loom.cmd'
+
+            filter{
+                String line -> line.replaceAll("@LOOM_VERSION@", version)
+            }
         }
     }
 }

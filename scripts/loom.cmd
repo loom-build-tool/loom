@@ -2,7 +2,7 @@
 
 setlocal
 
-set VERSION=1.0.0
+set VERSION=@LOOM_VERSION@
 
 rem Find project directory of executed loom script
 set DIRNAME=%~dp0

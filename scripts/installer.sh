@@ -2,7 +2,7 @@
 
 set -e
 
-default_loom_version=1.0.0
+default_loom_version=@LOOM_VERSION@
 
 loom_version=${1:-$default_loom_version}
 installer_url="https://loom.builders/loom-installer-$loom_version.jar"

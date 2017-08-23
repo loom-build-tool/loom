@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
+import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
@@ -32,14 +33,17 @@ public class MavenResolverTask extends AbstractModuleTask {
     private final DependencyScope dependencyScope;
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
+    private final DownloadProgressEmitter downloadProgressEmitter;
 
     public MavenResolverTask(final DependencyScope dependencyScope,
                              final MavenResolverPluginSettings pluginSettings,
-                             final Path cacheDir) {
+                             final Path cacheDir,
+                             final DownloadProgressEmitter downloadProgressEmitter) {
 
         this.dependencyScope = dependencyScope;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
+        this.downloadProgressEmitter = downloadProgressEmitter;
     }
 
     @Override
@@ -65,7 +69,7 @@ public class MavenResolverTask extends AbstractModuleTask {
 
     private ClasspathProduct resolve(final List<String> deps) {
         final MavenResolver mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
+            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
 
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
             dependencyScope, null);
@@ -75,5 +79,4 @@ public class MavenResolverTask extends AbstractModuleTask {
 
         return new ClasspathProduct(collect);
     }
-
 }

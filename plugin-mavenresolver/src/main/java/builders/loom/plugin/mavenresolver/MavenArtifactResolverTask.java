@@ -22,6 +22,7 @@ import java.util.List;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
+import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 
@@ -30,20 +31,24 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
     private final DependencyScope dependencyScope;
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
+    private final DownloadProgressEmitter downloadProgressEmitter;
     private MavenResolver mavenResolver;
 
     public MavenArtifactResolverTask(final DependencyScope dependencyScope,
                                      final MavenResolverPluginSettings pluginSettings,
-                                     final Path cacheDir) {
+                                     final Path cacheDir,
+                                     final DownloadProgressEmitter downloadProgressEmitter) {
 
         this.dependencyScope = dependencyScope;
         this.pluginSettings = pluginSettings;
         this.cacheDir = cacheDir;
+        this.downloadProgressEmitter = downloadProgressEmitter;
     }
 
     @Override
     public TaskResult run() throws Exception {
-        this.mavenResolver = MavenResolverSingleton.getInstance(pluginSettings, cacheDir);
+        this.mavenResolver =
+            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
         switch (dependencyScope) {
             case COMPILE:
                 return completeOk(productCompile());
@@ -67,5 +72,4 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
         return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.TEST,
             "sources"));
     }
-
 }

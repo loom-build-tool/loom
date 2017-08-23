@@ -32,10 +32,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.DownloadProgressEmitterBridge;
 import builders.loom.RuntimeConfigurationImpl;
 import builders.loom.Version;
 import builders.loom.api.BuildConfig;
 import builders.loom.api.BuildConfigWithSettings;
+import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
@@ -50,6 +52,9 @@ import builders.loom.util.SystemUtil;
 public class PluginLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginLoader.class);
+
+    private static final DownloadProgressEmitter DOWNLOAD_PROGRESS_EMITTER =
+        new DownloadProgressEmitterBridge();
 
     // FIXME
     private static final Map<String, String> INTERNAL_GLOBAL_PLUGINS = Map.of(
@@ -106,6 +111,7 @@ public class PluginLoader {
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(Version.getVersion(), pluginName)));
+        plugin.setDownloadProgressEmitter(DOWNLOAD_PROGRESS_EMITTER);
 
         final Set<String> acceptedSettings = injectPluginSettings(pluginName, plugin, config);
 

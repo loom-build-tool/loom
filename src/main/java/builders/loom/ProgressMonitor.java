@@ -112,14 +112,15 @@ public final class ProgressMonitor {
         int unit = 0;
 
         float rsize = size;
-        while (rsize > 1024 && unit < UNITS.length - 1) {
+        for (; rsize >= 1024 && unit < UNITS.length - 1; unit++) {
             rsize /= 1024.0;
-            unit++;
         }
 
         if (unit == 0) {
-            return rsize + " " + UNITS[unit];
+            // no floating points for bytes
+            return size + " " + UNITS[unit];
         }
+
 
         return String.format(Locale.ROOT, "%.2f", rsize) + " " + UNITS[unit];
     }

@@ -50,13 +50,11 @@ public class CachingMavenResolver implements DependencyResolver {
     public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
                                          final String classifier) {
 
-        final Hasher hasher = new Hasher();
-        hasher
-            .putString(scope.name().toLowerCase())
-            .putString(Objects.toString(classifier));
-        deps.forEach(hasher::putString);
-
-        final Path cacheFile = cacheDir.resolve("dependencies-" + hasher.stringHash());
+        final Path cacheFile = cacheDir.resolve(
+            String.format("dependencies-%s-%s-%s",
+                scope.name().toLowerCase(),
+                Objects.toString(classifier, "unclassified"),
+                Hasher.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
         final CachedArtifactProductList cachedArtifacts =

@@ -16,56 +16,30 @@
 
 package builders.loom.util;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 
 public final class Hasher {
 
     private static final int MASK = 0xff;
-    private final MessageDigest digest = getMessageDigest();
-    private boolean closed;
 
-    public Hasher putString(final String value) {
-        putBytes(value.getBytes(StandardCharsets.UTF_8));
-        return this;
+    private Hasher() {
     }
 
-    public Hasher putBytes(final byte[] value) {
-        digest.update(value);
-        return this;
-    }
+    public static String hash(final Collection<String> strings) {
+        final MessageDigest digest = getMessageDigest();
 
-    public Hasher putLong(final long value) {
-        digest.update(ByteBuffer.allocate(Long.BYTES).putLong(value).flip());
-        return this;
-    }
-
-    public byte[] byteHash() {
-        if (closed) {
-            throw new IllegalStateException("Already closed");
+        for (final String string : strings) {
+            digest.update(string.getBytes(StandardCharsets.UTF_8));
         }
-        closed = true;
-        return digest.digest();
-    }
 
-    public String stringHash() {
-        if (closed) {
-            throw new IllegalStateException("Already closed");
-        }
-        closed = true;
         return bytesToHex(digest.digest());
     }
 
-    public static String hash(final Iterable<String> strings) {
-        final Hasher hasher = new Hasher();
-        strings.forEach(hasher::putString);
-        return hasher.stringHash();
-    }
-
     public static byte[] hash(final byte[] data) {
-        return new Hasher().putBytes(data).byteHash();
+        return getMessageDigest().digest(data);
     }
 
     private static MessageDigest getMessageDigest() {

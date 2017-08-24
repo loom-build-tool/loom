@@ -126,7 +126,7 @@ public class Loom {
                 loomVersion, Runtime.version())
             .reset());
 
-        if (!loomVersion.endsWith("GA")) {
+        if (isPreRelease(loomVersion)) {
             AnsiConsole.out().println(Ansi.ansi().reset().fgBrightYellow()
                 .a("You're using an unstable version of Loom -- use it with caution!")
                 .reset());
@@ -135,6 +135,11 @@ public class Loom {
         if (ToolProvider.getSystemJavaCompiler() == null) {
             throw new IllegalStateException("JDK required (running inside of JRE)");
         }
+    }
+
+    private static boolean isPreRelease(final String loomVersion) {
+        // pre-releases are determined by a hyphen (in accordance to semantic versioning)
+        return loomVersion.contains("-");
     }
 
     private static Options buildOptions() {

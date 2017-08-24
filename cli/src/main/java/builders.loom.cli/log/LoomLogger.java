@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.log;
+package builders.loom.cli.log;
 
 import java.util.List;
 

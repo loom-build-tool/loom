@@ -40,7 +40,6 @@ import org.fusesource.jansi.AnsiConsole;
 import builders.loom.BuildException;
 import builders.loom.ExecutionReport;
 import builders.loom.ExecutionReportPrinter;
-import builders.loom.LogConfiguration;
 import builders.loom.LoomProcessor;
 import builders.loom.ProductReportPrinter;
 import builders.loom.ProgressMonitor;

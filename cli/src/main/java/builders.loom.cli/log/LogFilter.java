@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
-package builders.loom.log;
+package builders.loom.cli.log;
 
-import java.io.Closeable;
+import org.slf4j.Marker;
+import org.slf4j.event.Level;
 
-public interface LogAppender extends Closeable {
+public class LogFilter {
 
-    void append(LogEvent logEvent);
+    private static final String PACKAGE_PREFIX = "builders.loom.";
+
+    boolean isEnabled(final String name, final Level level) {
+        if (level.toInt() >= Level.INFO.toInt()) {
+            return true;
+        }
+
+        return level.toInt() > Level.TRACE.toInt() && name.startsWith(PACKAGE_PREFIX);
+    }
+
+    public boolean isEnabled(final String name, final Level level, final Marker marker) {
+        return isEnabled(name, level);
+    }
 
 }

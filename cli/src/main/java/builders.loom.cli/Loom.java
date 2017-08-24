@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom;
+package builders.loom.cli;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -37,6 +37,15 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.BuildException;
+import builders.loom.ExecutionReport;
+import builders.loom.ExecutionReportPrinter;
+import builders.loom.LogConfiguration;
+import builders.loom.LoomProcessor;
+import builders.loom.ProductReportPrinter;
+import builders.loom.ProgressMonitor;
+import builders.loom.RuntimeConfigurationImpl;
+import builders.loom.Version;
 import builders.loom.api.LoomPaths;
 import builders.loom.util.FileUtil;
 

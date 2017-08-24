@@ -53,7 +53,7 @@ if $env_cygwin; then
 fi
 
 
-loom_lib="$LOOM_USER_HOME/library/loom-$loom_version/lib/loom-$loom_version.jar"
+loom_lib="$LOOM_USER_HOME/library/loom-$loom_version/lib/loom-cli-$loom_version.jar"
 
 test -e "$loom_lib" || "$javacmd" -jar "$project_dir/loom-installer/loom-installer.jar" "$project_dir"
 

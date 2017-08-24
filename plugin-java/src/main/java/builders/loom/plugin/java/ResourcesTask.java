@@ -72,11 +72,8 @@ public class ResourcesTask extends AbstractModuleTask {
 
         final KeyValueCache cache = initCache();
 
-        final Map<String, String> variables = new HashMap<>();
-        variables.put("project.version", getRuntimeConfiguration().getVersion());
-
         Files.walkFileTree(srcDir, new CopyFileVisitor(buildDir, cache,
-            pluginSettings.getResourceFilterGlob(), variables));
+            pluginSettings.getResourceFilterGlob(), buildVariablesMap()));
 
         Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(srcDir, cache));
 
@@ -90,10 +87,18 @@ public class ResourcesTask extends AbstractModuleTask {
             return NULL_CACHE;
         }
 
-        final Path cacheFile = cacheDir.resolve(String.format("resource-%s.cache",
-            compileTarget.name().toLowerCase()));
+        final Path cacheFile = cacheDir
+            .resolve(getBuildContext().getModuleName())
+            .resolve(compileTarget.name().toLowerCase())
+            .resolve("resource.cache");
 
         return new DiskKeyValueCache(cacheFile);
+    }
+
+    private Map<String, String> buildVariablesMap() {
+        final Map<String, String> variables = new HashMap<>();
+        variables.put("project.version", getRuntimeConfiguration().getVersion());
+        return variables;
     }
 
 }

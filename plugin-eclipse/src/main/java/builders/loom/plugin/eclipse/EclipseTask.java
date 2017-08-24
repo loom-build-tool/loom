@@ -54,9 +54,6 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     // clean-create all eclipse files
     private Map<Module, Set<Module>> moduleGraph;
 
-    public EclipseTask() {
-    }
-
     @Override
     public void setTransitiveModuleGraph(final Map<Module, Set<Module>> transitiveModuleGraph) {
         this.moduleGraph = transitiveModuleGraph;
@@ -64,13 +61,6 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path currentWorkDirName = getBuildContext().getPath()
-            .toAbsolutePath().normalize().getFileName();
-
-        if (currentWorkDirName == null) {
-            throw new IllegalStateException("Can't get current working directory");
-        }
-
         for (final Module module : allModules()) {
             createModuleProject(module);
         }

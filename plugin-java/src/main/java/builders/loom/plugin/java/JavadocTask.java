@@ -17,7 +17,6 @@
 package builders.loom.plugin.java;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -40,6 +39,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.DirectoryProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.FileUtil;
 
 public class JavadocTask extends AbstractModuleTask {
 
@@ -53,9 +53,7 @@ public class JavadocTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        final Path dstDir = Files.createDirectories(
-            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "javadoc"));
+        final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("javadoc"));
 
         final DocumentationTool docTool = ToolProvider.getSystemDocumentationTool();
 
@@ -66,7 +64,7 @@ public class JavadocTask extends AbstractModuleTask {
             diagnosticListener, null, StandardCharsets.UTF_8)) {
 
             fileManager.setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
-                List.of(dstDir));
+                List.of(buildDir));
 
             final Optional<ClasspathProduct> compileDependencies =
                 useProduct("compileDependencies", ClasspathProduct.class);
@@ -109,7 +107,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return completeOk(new DirectoryProduct(dstDir, "JavaDoc output"));
+        return completeOk(new DirectoryProduct(buildDir, "JavaDoc output"));
     }
 
     private Path getBuildDir() {

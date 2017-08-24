@@ -19,7 +19,6 @@ package builders.loom.plugin.pmd;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -98,7 +97,8 @@ public class PmdTask extends AbstractModuleTask {
         configuration.setSourceEncoding("UTF-8");
         configuration.setThreads(0);
         configuration.setMinimumPriority(RulePriority.valueOf(pluginSettings.getMinimumPriority()));
-        configuration.setAnalysisCacheLocation(resolveCacheFile().toString());
+        configuration.setAnalysisCacheLocation(
+            resolveCacheFile().toAbsolutePath().normalize().toString());
         configuration.setDefaultLanguageVersion(getLanguageVersion(getModuleConfig()));
 
         if (configuration.getSuppressMarker() != null) {
@@ -122,8 +122,10 @@ public class PmdTask extends AbstractModuleTask {
     }
 
     private Path resolveCacheFile() {
-        return cacheDir.resolve(Paths.get("pmd",
-            String.format("%s.cache", compileTarget.name().toLowerCase())));
+        return cacheDir
+            .resolve(getBuildContext().getModuleName())
+            .resolve(compileTarget.name().toLowerCase())
+            .resolve("pmd.cache");
     }
 
     @Override

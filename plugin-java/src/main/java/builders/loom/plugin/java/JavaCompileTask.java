@@ -18,7 +18,6 @@ package builders.loom.plugin.java;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -53,22 +52,16 @@ public class JavaCompileTask extends AbstractModuleTask {
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
 
     private final CompileTarget compileTarget;
-    private final String subdirName;
-    private final Path cacheDir;
     private final String sourceProductId;
 
-    public JavaCompileTask(final CompileTarget compileTarget,
-                           final Path cacheDir) {
+    public JavaCompileTask(final CompileTarget compileTarget) {
         this.compileTarget = Objects.requireNonNull(compileTarget);
-        this.cacheDir = cacheDir;
 
         switch (compileTarget) {
             case MAIN:
-                subdirName = "main";
                 sourceProductId = "source";
                 break;
             case TEST:
-                subdirName = "test";
                 sourceProductId = "testSource";
                 break;
             default:
@@ -76,36 +69,15 @@ public class JavaCompileTask extends AbstractModuleTask {
         }
     }
 
-    private Path getBuildDir() {
-        // TODO another workaround for non-functional MODULE_PATH
-        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
-            .resolve(Paths.get("compilation", compileTarget.name().toLowerCase(),
-                getBuildContext().getModuleName()));
-    }
-
-    private static Optional<String> configuredPlatformVersion(final JavaVersion version) {
-        Objects.requireNonNull(version, "versionString required");
-
-        final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
-        final int platformVersion = version.getNumericVersion();
-
-        if (platformVersion == parsedJavaSpecVersion) {
-            return Optional.empty();
-        }
-
-        return Optional.of(String.valueOf(platformVersion));
-    }
-
     @Override
     public TaskResult run() throws Exception {
         final Optional<SourceTreeProduct> sourceTreeProduct =
             useProduct(sourceProductId, SourceTreeProduct.class);
 
-        if (!sourceTreeProduct.isPresent()) {
-            if (Files.exists(getBuildDir())) {
-                FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
-            }
+        final Path buildDir = resolveBuildDir();
 
+        if (!sourceTreeProduct.isPresent()) {
+            FileUtil.deleteDirectoryRecursively(buildDir, true);
             return completeEmpty();
         }
 
@@ -132,34 +104,24 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         final List<Path> srcFiles = sourceTreeProduct.get().getSrcFiles();
 
-//        final FileCacher fileCacher = runtimeConfiguration.isCacheEnabled()
-//            ? new FileCacherImpl(cacheDir, subdirName) : new NullCacher();
-//
-//        if (fileCacher.filesCached(srcFiles)) {
-//            return completeUpToDate(product());
-//        }
+        FileUtil.createOrCleanDirectory(buildDir);
 
-        if (Files.notExists(getBuildDir())) {
-            Files.createDirectories(getBuildDir());
-        } else {
-            FileUtil.deleteDirectoryRecursively(getBuildDir(), false);
-        }
+        compile(buildDir, classpath, srcFiles);
 
-//        final List<File> srcFiles = srcFiles.stream()
-//            .map(Path::toFile)
-//            .collect(Collectors.toList());
+        return completeOk(new CompilationProduct(buildDir));
+    }
 
-
-
-        compile(classpath, srcFiles);
-
-//        fileCacher.cacheFiles(srcFiles);
-
-        return completeOk(new CompilationProduct(getBuildDir()));
+    private Path resolveBuildDir() {
+        // TODO another workaround for non-functional MODULE_PATH
+        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
+            .resolve(Paths.get("compilation", compileTarget.name().toLowerCase(),
+                getBuildContext().getModuleName()));
     }
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
-    private void compile(final List<Path> classpath, final List<Path> srcFiles)
+
+    private void compile(final Path buildDir, final List<Path> classpath,
+                         final List<Path> srcFiles)
         throws IOException, InterruptedException {
 
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -191,7 +153,7 @@ public class JavaCompileTask extends AbstractModuleTask {
                 // First, compile everything with Java 9 (TODO what to do with Java 10?)
 
                 LOG.debug("Compile {} java files (with module path)", srcFiles.size());
-                compileSources(classpath, srcFiles, compiler, diag, true, JavaVersion.JAVA_9);
+                compileSources(buildDir, classpath, srcFiles, compiler, diag, true, JavaVersion.JAVA_9);
 
                 // Case 4 - 2nd step
                 // Then, compile everything but the module-info with requested Version
@@ -202,12 +164,12 @@ public class JavaCompileTask extends AbstractModuleTask {
 
                 LOG.debug("Compile {} java files (Cross Compile for Java {})",
                     srcFilesWithoutModuleInfo.size(), crossCompileVersion.get());
-                compileSources(classpath, srcFilesWithoutModuleInfo, compiler, diag, false,
+                compileSources(buildDir, classpath, srcFilesWithoutModuleInfo, compiler, diag, false,
                     crossCompileVersion.get());
             } else {
                 // Case 1
                 LOG.debug("Compile {} java files (with module path)", srcFiles.size());
-                compileSources(classpath, srcFiles, compiler, diag, true, null);
+                compileSources(buildDir, classpath, srcFiles, compiler, diag, true, null);
             }
         } else {
             // Case 2 or 3
@@ -215,18 +177,32 @@ public class JavaCompileTask extends AbstractModuleTask {
                 // Case 3
                 LOG.debug("Compile {} java files (Cross Compile for Java {})",
                     srcFiles.size(), crossCompileVersion.get());
-                compileSources(classpath, srcFiles, compiler, diag, false,
+                compileSources(buildDir, classpath, srcFiles, compiler, diag, false,
                     crossCompileVersion.get());
             } else {
                 // Case 2
                 LOG.debug("Compile {} java files (with classpath)", srcFiles.size());
-                compileSources(classpath, srcFiles, compiler, diag, false, null);
+                compileSources(buildDir, classpath, srcFiles, compiler, diag, false, null);
             }
         }
     }
 
+    private static Optional<String> configuredPlatformVersion(final JavaVersion version) {
+        Objects.requireNonNull(version, "versionString required");
+
+        final int parsedJavaSpecVersion = JavaVersion.current().getNumericVersion();
+        final int platformVersion = version.getNumericVersion();
+
+        if (platformVersion == parsedJavaSpecVersion) {
+            return Optional.empty();
+        }
+
+        return Optional.of(String.valueOf(platformVersion));
+    }
+
     private StandardJavaFileManager newFileManager(
-        final JavaCompiler compiler, final DiagnosticListener<JavaFileObject> diagnosticListener,
+        final Path buildDir, final JavaCompiler compiler,
+        final DiagnosticListener<JavaFileObject> diagnosticListener,
         final boolean useModulePath, final List<Path> classpath)
         throws IOException, InterruptedException {
 
@@ -234,10 +210,10 @@ public class JavaCompileTask extends AbstractModuleTask {
             diagnosticListener, null, StandardCharsets.UTF_8);
 
         fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-            Collections.singletonList(getBuildDir()));
+            Collections.singletonList(buildDir));
 
         if (useModulePath) {
-            buildModulePath(classpath, fileManager);
+            buildModulePath(buildDir, classpath, fileManager);
         } else {
             buildClassPath(classpath, fileManager);
         }
@@ -245,7 +221,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         return fileManager;
     }
 
-    private void buildModulePath(final List<Path> classpath,
+    private void buildModulePath(final Path buildDir, final List<Path> classpath,
                                  final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
 
@@ -269,7 +245,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         // workaround - step 2/2
         final List<Path> modulePath = new ArrayList<>();
-        modulePath.add(getBuildDir().getParent());
+        modulePath.add(buildDir.getParent());
         modulePath.addAll(classpath);
         fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, modulePath);
         LOG.debug("Modulepath: {}", modulePath);
@@ -293,14 +269,14 @@ public class JavaCompileTask extends AbstractModuleTask {
         LOG.debug("Classpath: {}", classPath);
     }
 
-    private void compileSources(final List<Path> classpath, final List<Path> srcFiles,
-                                final JavaCompiler compiler,
+    private void compileSources(final Path buildDir, final List<Path> classpath,
+                                final List<Path> srcFiles, final JavaCompiler compiler,
                                 final DiagnosticListener<JavaFileObject> diag,
                                 final boolean useModulePath, final JavaVersion release)
         throws IOException, InterruptedException {
 
         try (final StandardJavaFileManager fileManager =
-                 newFileManager(compiler, diag, useModulePath, classpath)) {
+                 newFileManager(buildDir, compiler, diag, useModulePath, classpath)) {
             compileSources(compiler, diag, fileManager, buildOptions(release),
                 fileManager.getJavaFileObjectsFromPaths(srcFiles));
         }

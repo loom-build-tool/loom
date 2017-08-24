@@ -32,7 +32,6 @@ import java.util.jar.JarFile;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
@@ -53,10 +52,7 @@ public class SpringBootTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path baseDir = LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "springboot");
-
-        FileUtil.deleteDirectoryRecursively(baseDir, true);
+        final Path baseDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
 
         final Path buildDir = baseDir.resolve("boot-bundle");
 

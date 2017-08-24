@@ -17,7 +17,6 @@
 package builders.loom.plugin.springboot;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import builders.loom.api.AbstractModuleTask;
@@ -25,6 +24,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.DirectoryProduct;
+import builders.loom.util.FileUtil;
 
 public class SpringBootFatJarTask extends AbstractModuleTask {
 
@@ -43,7 +43,7 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
             requireProduct("springBootApplication", DirectoryProduct.class);
 
         final Path baseDir = springBootApplication.getDir();
-        final Path buildDir = Files.createDirectories(baseDir.getParent().resolve("fatjar"));
+        final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot-fatjar"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-fatjar.jar",
             getBuildContext().getModuleName()));

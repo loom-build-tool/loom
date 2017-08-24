@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,19 +58,20 @@ public class CachingMavenResolver implements DependencyResolver {
                 Hasher.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
-        final CachedArtifactProductList cachedArtifacts =
-            (CachedArtifactProductList) SerializationUtil.readCache(cacheFile);
+        final Optional<CachedArtifactProductList> cachedArtifacts =
+            SerializationUtil.readCache(CachedArtifactProductList.class, cacheFile);
 
-        if (cachedArtifacts != null) {
-            final List<ArtifactProduct> artifacts = cachedArtifacts.buildArtifactProductList();
+        if (cachedArtifacts.isPresent()) {
+            final List<ArtifactProduct> artifacts =
+                cachedArtifacts.get().buildArtifactProductList();
             LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
             return Collections.unmodifiableList(artifacts);
         }
 
-        final MavenResolver mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, downloadProgressEmitter);
+        final List<ArtifactProduct> artifacts = MavenResolverSingleton
+            .getInstance(pluginSettings, downloadProgressEmitter)
+            .resolve(deps, scope, classifier);
 
-        final List<ArtifactProduct> artifacts = mavenResolver.resolve(deps, scope, classifier);
         LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
 
         SerializationUtil.write(CachedArtifactProductList.build(artifacts), cacheFile);

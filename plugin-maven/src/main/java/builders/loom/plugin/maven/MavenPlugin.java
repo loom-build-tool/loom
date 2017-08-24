@@ -37,31 +37,32 @@ public class MavenPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
         final Path repositoryPath = getRepositoryPath();
         final DownloadProgressEmitter downloadProgressEmitter = getDownloadProgressEmitter();
 
-        final CachingMavenResolver cachingMavenResolver =
-            new CachingMavenResolver(pluginSettings, downloadProgressEmitter, repositoryPath);
+        final DependencyResolver dependencyResolver = getRuntimeConfiguration().isCacheEnabled()
+            ? new CachingMavenResolver(pluginSettings, downloadProgressEmitter, repositoryPath)
+            : new NoCacheMavenResolver(pluginSettings, downloadProgressEmitter);
 
         task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, cachingMavenResolver))
+            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, dependencyResolver))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
             .register();
 
         task("resolveCompileArtifacts")
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE,
-                cachingMavenResolver))
+                dependencyResolver))
             .provides("compileArtifacts", true)
             .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
             .register();
 
         task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, cachingMavenResolver))
+            .impl(() -> new MavenResolverTask(DependencyScope.TEST, dependencyResolver))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
             .register();
 
         task("resolveTestArtifacts")
             .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST,
-                cachingMavenResolver))
+                dependencyResolver))
             .provides("testArtifacts", true)
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
             .register();
@@ -75,7 +76,7 @@ public class MavenPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
 
         service("mavenDependencyResolver")
             .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
-                cachingMavenResolver
+                dependencyResolver
                     .resolve(deps, scope, null).stream()
                     .map(ArtifactProduct::getMainArtifact)
                     .collect(Collectors.toList()))

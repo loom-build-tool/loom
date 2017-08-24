@@ -24,6 +24,9 @@ import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 
 public final class SerializationUtil {
 
@@ -34,9 +37,14 @@ public final class SerializationUtil {
         try {
             Files.createDirectories(file.getParent());
 
-            try (ObjectOutputStream out = newOut(file)) {
+            final Path tmpFile = Paths.get(file.toString() + ".tmp");
+
+            try (ObjectOutputStream out = newOut(tmpFile)) {
                 out.writeObject(data);
             }
+
+            Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -46,13 +54,13 @@ public final class SerializationUtil {
         return new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(cacheFile)));
     }
 
-    public static Object readCache(final Path file) {
+    public static <T> Optional<T> readCache(final Class<T> clazz, final Path file) {
         if (Files.notExists(file)) {
-            return null;
+            return Optional.empty();
         }
 
         try (ObjectInputStream in = newIn(file)) {
-            return in.readObject();
+            return Optional.of(clazz.cast(in.readObject()));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } catch (final ClassNotFoundException e) {

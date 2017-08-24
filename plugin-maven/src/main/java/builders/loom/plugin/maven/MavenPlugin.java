@@ -25,9 +25,9 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.product.ArtifactProduct;
 
-public class MavenResolverPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
+public class MavenPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
 
-    public MavenResolverPlugin() {
+    public MavenPlugin() {
         super(new MavenResolverPluginSettings());
     }
 

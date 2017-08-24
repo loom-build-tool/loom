@@ -16,8 +16,12 @@
 
 package builders.loom.plugin.java;
 
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +30,7 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.Hasher;
 
 public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
@@ -43,24 +48,31 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        final List<Path> sourceFiles = Files.walk(srcPath())
-            .filter(Files::isRegularFile)
-            .collect(Collectors.toList());
+        final List<Path> sourceFiles = new ArrayList<>();
+        final Hasher hasher = new Hasher();
+
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                sourceFiles.add(file);
+                hasher
+                    .putString(file.toString())
+                    .putLong(attrs.size())
+                    .putLong(attrs.lastModifiedTime().toMillis());
+
+                return FileVisitResult.CONTINUE;
+            }
+
+        });
 
         if (sourceFiles.isEmpty()) {
             return completeEmpty();
         }
 
-        final List<Path> illegalFiles = sourceFiles.stream()
-            .filter(f -> !f.toString().endsWith(".java"))
-            .collect(Collectors.toList());
+        validateFiles(sourceFiles);
 
-        if (!illegalFiles.isEmpty()) {
-            throw new IllegalStateException("Found files with other suffix than .java: "
-                + illegalFiles);
-        }
-
-        return completeOk(new SourceTreeProduct(path, sourceFiles));
+        return completeOk(new SourceTreeProduct(path, sourceFiles, hasher.stringHash()));
     }
 
     private Path srcPath() {
@@ -71,6 +83,17 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
                 return getBuildContext().getPath().resolve(LoomPaths.SRC_TEST);
             default:
                 throw new IllegalStateException();
+        }
+    }
+
+    private void validateFiles(final List<Path> sourceFiles) {
+        final List<Path> illegalFiles = sourceFiles.stream()
+            .filter(f -> !f.toString().endsWith(".java"))
+            .collect(Collectors.toList());
+
+        if (!illegalFiles.isEmpty()) {
+            throw new IllegalStateException("Found files with other suffix than .java: "
+                + illegalFiles);
         }
     }
 

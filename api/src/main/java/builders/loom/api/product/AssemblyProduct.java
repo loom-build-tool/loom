@@ -27,14 +27,25 @@ public final class AssemblyProduct extends AbstractProduct {
 
     private final Path assemblyFile;
     private final String outputInfo;
+    private final String hash;
 
     public AssemblyProduct(final Path assemblyFile, final String outputInfo) {
+        this(assemblyFile, outputInfo, null);
+    }
+
+    public AssemblyProduct(final Path assemblyFile, final String outputInfo,
+                           final String hash) {
         this.assemblyFile = assemblyFile;
         this.outputInfo = outputInfo;
+        this.hash = hash;
     }
 
     public Path getAssemblyFile() {
         return assemblyFile;
+    }
+
+    public String getHash() {
+        return hash;
     }
 
     @Override
@@ -51,6 +62,7 @@ public final class AssemblyProduct extends AbstractProduct {
         return "AssemblyProduct{"
             + "assemblyFile=" + assemblyFile
             + ", outputInfo='" + outputInfo + '\''
+            + ", hash='" + hash + '\''
             + '}';
     }
 

@@ -16,11 +16,18 @@
 
 package builders.loom.plugin.maven;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +36,6 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.util.Hasher;
-import builders.loom.util.SerializationUtil;
 
 public class CachingMavenResolver implements DependencyResolver {
 
@@ -58,14 +64,10 @@ public class CachingMavenResolver implements DependencyResolver {
                 Hasher.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
-        final Optional<CachedArtifactProductList> cachedArtifacts =
-            SerializationUtil.readCache(CachedArtifactProductList.class, cacheFile);
-
-        if (cachedArtifacts.isPresent()) {
-            final List<ArtifactProduct> artifacts =
-                cachedArtifacts.get().buildArtifactProductList();
+        if (Files.exists(cacheFile)) {
+            final List<ArtifactProduct> artifacts = readCache(cacheFile);
             LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
-            return Collections.unmodifiableList(artifacts);
+            return artifacts;
         }
 
         final List<ArtifactProduct> artifacts = MavenResolverSingleton
@@ -74,9 +76,58 @@ public class CachingMavenResolver implements DependencyResolver {
 
         LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
 
-        SerializationUtil.write(CachedArtifactProductList.build(artifacts), cacheFile);
+        writeCache(artifacts, cacheFile);
 
         return artifacts;
+    }
+
+    private List<ArtifactProduct> readCache(final Path file) {
+        final List<ArtifactProduct> artifacts = new ArrayList<>();
+
+        try (final ObjectInputStream in = new ObjectInputStream(Files.newInputStream(file))) {
+            while (true) {
+                try {
+                    final Path mainArtifact = Paths.get((String) in.readObject());
+                    final Object o2 = in.readObject();
+                    final Path sourceArtifact = o2 != null ? Paths.get((String) o2) : null;
+                    artifacts.add(new ArtifactProduct(mainArtifact, sourceArtifact));
+                } catch (final EOFException e) {
+                    break;
+                }
+            }
+
+            return artifacts;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (final ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void writeCache(final List<ArtifactProduct> artifacts, final Path file) {
+        try {
+            Files.createDirectories(file.getParent());
+
+            final Path tmpFile = Paths.get(file.toString() + ".tmp");
+
+            try (final ObjectOutputStream out =
+                     new ObjectOutputStream(Files.newOutputStream(tmpFile))) {
+                for (final ArtifactProduct artifact : artifacts) {
+                    out.writeObject(artifact.getMainArtifact().toAbsolutePath().toString());
+
+                    if (artifact.getSourceArtifact() != null) {
+                        out.writeObject(artifact.getSourceArtifact().toAbsolutePath().toString());
+                    } else {
+                        out.writeObject(null);
+                    }
+                }
+            }
+
+            Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

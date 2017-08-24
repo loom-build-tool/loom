@@ -16,14 +16,11 @@
 
 package builders.loom.cli;
 
-import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import javax.tools.ToolProvider;
@@ -37,15 +34,13 @@ import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.BuildException;
-import builders.loom.ExecutionReport;
-import builders.loom.ExecutionReportPrinter;
-import builders.loom.LoomProcessor;
-import builders.loom.ProductReportPrinter;
-import builders.loom.ProgressMonitor;
-import builders.loom.RuntimeConfigurationImpl;
-import builders.loom.Version;
 import builders.loom.api.LoomPaths;
+import builders.loom.core.BuildException;
+import builders.loom.core.ExecutionReport;
+import builders.loom.core.LoomProcessor;
+import builders.loom.core.ProgressMonitor;
+import builders.loom.core.RuntimeConfigurationImpl;
+import builders.loom.core.Version;
 import builders.loom.util.FileUtil;
 
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
@@ -89,7 +84,7 @@ public class Loom {
             if (validate(cmd, options)) {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
-                try (FileLock ignored = lock(lockFile)) {
+                try (FileLock ignored = FileLockUtil.lock(lockFile)) {
                     run(projectBaseDir, logFile, cmd);
                 }
             }
@@ -202,30 +197,6 @@ public class Loom {
         formatter.printHelp("loom [option...] [product...]", options);
     }
 
-    private static FileLock lock(final Path lockFile) throws IOException {
-        if (Files.notExists(lockFile)) {
-            Files.createFile(lockFile);
-        }
-
-        final FileChannel fileChannel = FileChannel.open(lockFile,
-            StandardOpenOption.READ, StandardOpenOption.WRITE);
-        final FileLock fileLock = fileChannel.tryLock();
-
-        if (fileLock == null) {
-            throw new IllegalStateException("Loom already running - locked by " + lockFile);
-        }
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                Files.deleteIfExists(lockFile);
-            } catch (final IOException ignored) {
-                // ignored
-            }
-        }));
-
-        return fileLock;
-    }
-
     private static void run(final Path projectBaseDir, final Path logFile,
                                final CommandLine cmd) throws Exception {
         if (cmd.hasOption("clean")) {
@@ -258,7 +229,9 @@ public class Loom {
                 .reset());
         }
 
-        loomProcessor.init(runtimeConfiguration);
+        final ProgressMonitor progressMonitor = new ConsoleProgressMonitor();
+
+        loomProcessor.init(runtimeConfiguration, progressMonitor);
 
         if (cmd.hasOption("products")) {
             final String format = cmd.getOptionValue("products");
@@ -268,13 +241,13 @@ public class Loom {
         if (!cmd.getArgList().isEmpty()) {
             buildExecuted = true;
 
-            ProgressMonitor.start();
+            progressMonitor.start();
 
             final Optional<ExecutionReport> optExecutionReport;
             try {
                 optExecutionReport = loomProcessor.execute(cmd.getArgList());
             } finally {
-                ProgressMonitor.stop();
+                progressMonitor.stop();
             }
 
             if (optExecutionReport.isPresent()) {
@@ -313,13 +286,31 @@ public class Loom {
 
     private static void printProducts(final RuntimeConfigurationImpl runtimeConfiguration,
                                       final LoomProcessor loomProcessor, final String format) {
+
         if (format == null || "text".equals(format)) {
-            loomProcessor.generateTextProductOverview();
+            TextOutput.generate(loomProcessor.getModuleRunner());
         } else if ("dot".equals(format)) {
-            loomProcessor.generateDotProductOverview(runtimeConfiguration);
+            generateDotProductOverview(runtimeConfiguration, loomProcessor);
         } else {
             throw new IllegalStateException("Unknown format: " + format);
         }
+    }
+
+    private static void generateDotProductOverview(final RuntimeConfigurationImpl rtConfig,
+                                                   final LoomProcessor loomProcessor) {
+
+        final Path dotFile = LoomPaths.reportDir(rtConfig.getProjectBaseDir(), "graphviz")
+            .resolve("loom-products.dot");
+
+        loomProcessor.generateDotProductOverview(dotFile);
+
+        AnsiConsole.out().println(Ansi.ansi()
+            .a("Products overview written to ")
+            .bold().a(dotFile).boldOff()
+            .newline()
+            .a("Use Graphviz to visualize: ")
+            .bold().format("`dot -Tpng %s > loom-products.png`", dotFile).boldOff()
+            .newline());
     }
 
     private static void printFailed(final Path logFile) {

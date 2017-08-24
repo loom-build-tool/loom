@@ -30,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import builders.loom.misc.ThreadFactoryBuilder;
+import builders.loom.core.misc.ThreadFactoryBuilder;
 
 public class DiskLogAppender implements LogAppender {
 

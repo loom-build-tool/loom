@@ -17,33 +17,23 @@
 package builders.loom.plugin.maven;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
 
-public class MavenResolverTask extends AbstractModuleTask {
-
-    private final DependencyScope dependencyScope;
-    private final MavenResolverPluginSettings pluginSettings;
-    private final Path cacheDir;
-    private final DownloadProgressEmitter downloadProgressEmitter;
+public class MavenResolverTask extends MavenArtifactResolverTask {
 
     public MavenResolverTask(final DependencyScope dependencyScope,
                              final MavenResolverPluginSettings pluginSettings,
                              final Path cacheDir,
                              final DownloadProgressEmitter downloadProgressEmitter) {
 
-        this.dependencyScope = dependencyScope;
-        this.pluginSettings = pluginSettings;
-        this.cacheDir = cacheDir;
-        this.downloadProgressEmitter = downloadProgressEmitter;
+        super(dependencyScope, pluginSettings, cacheDir, downloadProgressEmitter);
     }
 
     @Override
@@ -54,34 +44,11 @@ public class MavenResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        return completeOk(new ClasspathProduct(resolve(dependencies)));
-    }
+        final List<Path> artifacts = resolve(dependencies, null).stream()
+            .map(ArtifactProduct::getMainArtifact)
+            .collect(Collectors.toList());
 
-    private List<String> listDependencies() {
-        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-
-        switch (dependencyScope) {
-            case COMPILE:
-                break;
-            case TEST:
-                deps.addAll(getModuleConfig().getTestDependencies());
-                break;
-            default:
-                throw new IllegalStateException("Unknown scope: " + dependencyScope);
-        }
-
-        return deps;
-    }
-
-    private List<Path> resolve(final List<String> deps) {
-        final MavenResolver mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
-
-        final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
-            dependencyScope, null);
-
-        return artifactProducts.stream()
-            .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
+        return completeOk(new ClasspathProduct(artifacts));
     }
 
 }

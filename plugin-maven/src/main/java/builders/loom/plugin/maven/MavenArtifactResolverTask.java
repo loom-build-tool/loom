@@ -53,10 +53,10 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        return completeOk(new ArtifactListProduct(resolve(dependencies)));
+        return completeOk(new ArtifactListProduct(resolve(dependencies, "sources")));
     }
 
-    private List<String> listDependencies() {
+    List<String> listDependencies() {
         final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
 
         switch (dependencyScope) {
@@ -72,11 +72,13 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
         return deps;
     }
 
-    private List<ArtifactProduct> resolve(final List<String> dependencies) {
+    protected List<ArtifactProduct> resolve(final List<String> dependencies,
+                                          final String classifier) {
+
         final MavenResolver mavenResolver =
             MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
 
-        return mavenResolver.resolve(dependencies, dependencyScope, "sources");
+        return mavenResolver.resolve(dependencies, dependencyScope, classifier);
     }
 
 }

@@ -105,8 +105,8 @@ public class MavenInstallTask extends AbstractModuleTask {
             }
         });
 
-        final Path tmpDir =
-            Files.createDirectories(LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir()));
+        final Path tmpDir = Files.createDirectories(
+            LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir()));
         try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null)) {
             final Artifact jarArtifact = buildArtifact(jarFile);
             writePom(buildModel(jarArtifact), tmpPomFile.getFile());

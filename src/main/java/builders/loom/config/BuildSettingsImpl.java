@@ -24,6 +24,8 @@ import builders.loom.api.JavaVersion;
 
 public class BuildSettingsImpl implements BuildSettings {
 
+    private static final long serialVersionUID = 1L;
+
     private final String moduleName;
     private final JavaVersion javaPlatformVersion;
 

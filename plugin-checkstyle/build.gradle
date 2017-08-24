@@ -1,5 +1,7 @@
 apply plugin: 'java'
 
+archivesBaseName = 'loom-plugin-checkstyle'
+
 configurations {
     all*.exclude module: 'commons-cli'
     all*.exclude module: 'commons-logging'

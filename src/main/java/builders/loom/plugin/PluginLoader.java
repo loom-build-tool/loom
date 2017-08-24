@@ -169,7 +169,7 @@ public class PluginLoader {
         final Path libraryPath = loomBaseDir.resolve(Paths.get("library", "loom-" + loomVersion));
         final Path pluginDir = libraryPath.resolve("plugin-" + name);
         final Path pluginFile =
-            pluginDir.resolve(String.format("plugin-%s-%s.jar", name, loomVersion));
+            pluginDir.resolve(String.format("loom-plugin-%s-%s.jar", name, loomVersion));
 
         return ClassLoaderUtil.toUrl(pluginFile);
     }

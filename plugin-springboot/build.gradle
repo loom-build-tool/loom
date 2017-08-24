@@ -1,5 +1,7 @@
 apply plugin: 'java'
 
+archivesBaseName = 'loom-plugin-springboot'
+
 dependencies {
     compileOnly project(':api')
     compileOnly project(':util')

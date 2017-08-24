@@ -1,5 +1,7 @@
 apply plugin: 'java'
 
+archivesBaseName = 'loom-api'
+
 dependencies {
     compile("org.slf4j:slf4j-api:1.8.0-alpha2")
     testCompile('junit:junit:4.12')

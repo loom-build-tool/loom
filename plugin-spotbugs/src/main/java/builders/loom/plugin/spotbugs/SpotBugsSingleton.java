@@ -24,11 +24,14 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import builders.loom.util.Preconditions;
 import edu.umd.cs.findbugs.Plugin;
 import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
@@ -44,13 +47,13 @@ public final class SpotBugsSingleton {
     private SpotBugsSingleton() {
     }
 
-    public static void initSpotBugs(final boolean loadFbContrib, final boolean loadFindBugsSec) {
+    public static void initSpotBugs(final List<String> plugins) {
 
         if (!initialized) {
             synchronized (SpotBugsSingleton.class) {
                 if (!initialized) {
 
-                    loadSpotBugsPlugin(loadFbContrib, loadFindBugsSec);
+                    loadSpotBugsPlugin(plugins);
                     disableUpdateChecksOnEveryPlugin();
 
                     LOG.info("Using SpotBugs plugins: {}", Plugin.getAllPluginIds());
@@ -66,10 +69,17 @@ public final class SpotBugsSingleton {
     /**
      * Note: spotbugs plugins are registered in a static map and thus has many concurrency issues.
      */
-    private static void loadSpotBugsPlugin(
-        final boolean loadFbContrib, final boolean loadFindBugsSec) {
+    private static void loadSpotBugsPlugin(final List<String> plugins) {
 
         final ClassLoader contextClassLoader = SpotBugsSingleton.class.getClassLoader();
+
+        // TODO smells
+        final List<String> pluginsToLoad = new ArrayList<>(plugins);
+        final boolean loadFbContrib = pluginsToLoad.remove("FbContrib");
+        final boolean loadFindBugsSec = pluginsToLoad.remove("FindSecBugs");
+
+        Preconditions.checkState(pluginsToLoad.isEmpty(),
+            "Unknown SpotBugs plugin(s): " + pluginsToLoad);
 
         try {
 

@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -92,11 +91,9 @@ public class JUnit4TestTask extends AbstractModuleTask {
         }
 
         // note: junit reports are not yet supported, but product expects the folder
-        final Path reportPath = Files.createDirectories(
-            LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
-                getBuildContext().getModuleName(), "test"));
+        final Path reportDir = resolveReportDir("test");
 
-        return completeOk(new ReportProduct(reportPath, "Junit4 report"));
+        return completeOk(new ReportProduct(reportDir, "Junit4 report"));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {

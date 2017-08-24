@@ -34,7 +34,7 @@ public class ClassScanner {
     public String scanArchives(final Path dir, final String annotation) throws IOException {
         final AtomicReference<String> atomicReference = new AtomicReference<>();
 
-        final SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+        final SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<>() {
 
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)

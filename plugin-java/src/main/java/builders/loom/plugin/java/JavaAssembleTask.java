@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
@@ -48,30 +47,24 @@ public class JavaAssembleTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
+        final Optional<CompilationProduct> compilationProduct = useProduct(
+            "compilation", CompilationProduct.class);
+
         final Optional<ProcessedResourceProduct> resourcesTreeProduct = useProduct(
             "processedResources", ProcessedResourceProduct.class);
 
-        final Optional<CompilationProduct> compilation = useProduct(
-            "compilation", CompilationProduct.class);
-
-        if (!resourcesTreeProduct.isPresent() && !compilation.isPresent()) {
+        if (!compilationProduct.isPresent() && !resourcesTreeProduct.isPresent()) {
             return completeEmpty();
         }
 
-        final Path buildDir = Files.createDirectories(
-            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
-                getBuildContext().getModuleName(), "jar"));
-
-        final Path jarFile = buildDir.resolve(String.format("%s.jar",
-            getBuildContext().getModuleName()));
-
-        final Optional<Path> compilationDir = compilation
-            .map(CompilationProduct::getClassesDir)
-            .filter(c -> Files.exists(c));
+        final Path jarFile = Files
+            .createDirectories(resolveBuildDir("jar"))
+            .resolve(String.format("%s.jar", getBuildContext().getModuleName()));
 
         // TODO cleanup
         // TODO move module-info.class related stuff to LoomPaths
-        final Optional<Path> modulesInfoClassFileOpt = compilationDir
+        final Optional<Path> modulesInfoClassFileOpt = compilationProduct
+            .map(CompilationProduct::getClassesDir)
             .map(c -> c.resolve("module-info.class"))
             .filter(c -> Files.exists(c));
 
@@ -80,24 +73,25 @@ public class JavaAssembleTask extends AbstractModuleTask {
 
         try (final JarOutputStream os = buildJarOutput(jarFile, automaticModuleName)) {
             // compilation & module-info.class first !
-            if (compilationDir.isPresent()) {
-                final Path resolve = compilationDir.get();
+            if (compilationProduct.isPresent()) {
+                final Path classesDir = compilationProduct.get().getClassesDir();
 
                 if (modulesInfoClassFileOpt.isPresent()) {
                     final Path modulesInfoClassFile = modulesInfoClassFileOpt.get();
                     final JarEntry entry =
-                        new JarEntry(resolve.relativize(modulesInfoClassFile).toString());
+                        new JarEntry(classesDir.relativize(modulesInfoClassFile).toString());
                     entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
                     os.putNextEntry(entry);
                     os.write(extendedModuleInfoClass(modulesInfoClassFile));
                     os.closeEntry();
                 }
 
-                FileUtil.copy(resolve, os);
+                // module-info.class is skipped by this method:
+                JavaFileUtil.copy(classesDir, os);
             }
 
             if (resourcesTreeProduct.isPresent()) {
-                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+                JavaFileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
             }
         }
 
@@ -130,6 +124,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
     private JarOutputStream buildJarOutput(final Path jarFile, final String automaticModuleName)
         throws IOException {
 
+        // TODO this creates META-INF/MANIFEST.MF but no META-INF directory?!
         return new JarOutputStream(Files.newOutputStream(jarFile),
             prepareManifest(automaticModuleName));
     }

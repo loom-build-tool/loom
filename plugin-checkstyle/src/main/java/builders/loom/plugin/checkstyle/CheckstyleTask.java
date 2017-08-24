@@ -16,12 +16,14 @@
 
 package builders.loom.plugin.checkstyle;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.PrintStream;
+import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -42,7 +44,6 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ReportProduct;
@@ -57,6 +58,9 @@ public class CheckstyleTask extends AbstractModuleTask {
 
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
+    private final String sourceProductId;
+    private final String classpathProductId;
+    private final String reportOutputDescription;
 
     public CheckstyleTask(final CompileTarget compileTarget,
                           final CheckstylePluginSettings pluginSettings,
@@ -68,69 +72,67 @@ public class CheckstyleTask extends AbstractModuleTask {
         if (pluginSettings.getConfigLocation() == null) {
             throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
         }
+
+        switch (compileTarget) {
+            case MAIN:
+                sourceProductId = "source";
+                classpathProductId = "compileDependencies";
+                reportOutputDescription = "Checkstyle main report";
+                break;
+            case TEST:
+                sourceProductId = "testSource";
+                classpathProductId = "testDependencies";
+                reportOutputDescription = "Checkstyle test report";
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> sourceTree = getSourceTree();
 
-        if (!sourceTree.isPresent()) {
+        final List<File> files = listSourceFiles();
+
+        if (files.isEmpty()) {
             return completeEmpty();
         }
 
-        // Checkstyle doesn't support module-info.java, so skip it
-        final List<File> files = sourceTree.get().getSourceFiles().stream()
-            .map(Path::toFile)
-            .filter(f -> !f.getName().equals("module-info.java"))
-            .collect(Collectors.toList());
+        LOG.info("Start analyzing {} source files with Checkstyle", files.size());
 
-        final Path reportPath = LoomPaths.reportDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "checkstyle")
-            .resolve(compileTarget.name().toLowerCase());
+        final Path reportDir =
+            Files.createDirectories(resolveReportDir("checkstyle", compileTarget));
 
-        final RootModule checker = createRootModule();
+        final RootModule rootModule = createRootModule();
+        rootModule.addListener(new LoggingAuditListener());
+        rootModule.addListener(newXmlLogger(reportDir.resolve("checkstyle-report.xml")));
 
         try {
-            final LoggingAuditListener listener = new LoggingAuditListener();
-            checker.addListener(listener);
+            final int errors = rootModule.process(files);
 
-            Files.createDirectories(reportPath);
-            final XMLLogger xmlLogger = new XMLLogger(new PrintStream(reportPath
-                .resolve("checkstyle-report.xml").toFile(), "UTF-8"), true);
-            checker.addListener(xmlLogger);
-
-            final int errors = checker.process(files);
-
-            if (errors == 0) {
-                return completeOk(product(reportPath));
+            if (errors > 0) {
+                throw new IllegalStateException("Checkstyle reported " + errors + " errors");
             }
         } finally {
-            checker.destroy();
+            rootModule.destroy();
         }
 
-        throw new IllegalStateException("Checkstyle reported errors!");
+        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
     }
 
-    private ReportProduct product(final Path reportPath) {
-        switch (compileTarget) {
-            case MAIN:
-                return new ReportProduct(reportPath, "Checkstyle main report");
-            case TEST:
-                return new ReportProduct(reportPath, "Checkstyle test report");
-            default:
-                throw new IllegalStateException();
-        }
-    }
+    private List<File> listSourceFiles() throws InterruptedException {
+        final Optional<SourceTreeProduct> sourceTree =
+            useProduct(sourceProductId, SourceTreeProduct.class);
 
-    private Optional<SourceTreeProduct> getSourceTree() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("source", SourceTreeProduct.class);
-            case TEST:
-                return useProduct("testSource", SourceTreeProduct.class);
-            default:
-                throw new IllegalStateException();
+        if (!sourceTree.isPresent()) {
+            return Collections.emptyList();
         }
+
+        // Checkstyle doesn't support module-info.java, so skip it
+        return sourceTree.get().getSrcFiles().stream()
+            .filter(f -> !f.getFileName().toString().equals("module-info.java"))
+            .map(Path::toFile)
+            .collect(Collectors.toList());
     }
 
     private RootModule createRootModule() throws InterruptedException {
@@ -155,8 +157,7 @@ public class CheckstyleTask extends AbstractModuleTask {
             rootModule.setModuleClassLoader(moduleClassLoader);
 
             if (rootModule instanceof Checker) {
-                final Optional<ClasspathProduct> classpathProduct = buildClassLoader();
-                classpathProduct
+                useProduct(classpathProductId, ClasspathProduct.class)
                     .map(ClasspathProduct::getEntriesAsUrlArray)
                     .map(URLClassLoader::new)
                     .ifPresent(((Checker) rootModule)::setClassLoader);
@@ -173,8 +174,7 @@ public class CheckstyleTask extends AbstractModuleTask {
 
     private String determineConfigLocation() {
         final String configLocation = pluginSettings.getConfigLocation();
-        if (configLocation.startsWith("/")) {
-            // embedded configuration
+        if (isEmbeddedConfiguration(configLocation)) {
             return configLocation;
         }
 
@@ -182,12 +182,19 @@ public class CheckstyleTask extends AbstractModuleTask {
             .toAbsolutePath().normalize().toString();
     }
 
+    private boolean isEmbeddedConfiguration(final String configLocation) {
+        return configLocation.startsWith("/");
+    }
+
     private Properties createOverridingProperties(final String configLocation) {
         final Properties properties = new Properties();
 
-        properties.setProperty("cacheFile", cacheDir
+        final Path cacheFile = cacheDir
             .resolve(getBuildContext().getModuleName())
-            .resolve(compileTarget.name().toLowerCase() + ".cache")
+            .resolve(compileTarget.name().toLowerCase())
+            .resolve("checkstyle.cache");
+
+        properties.setProperty("cacheFile", cacheFile
             .toAbsolutePath().normalize().toString());
 
         // Set the same variables as the checkstyle plugin for eclipse
@@ -197,7 +204,7 @@ public class CheckstyleTask extends AbstractModuleTask {
         properties.setProperty("basedir", baseDir.toString());
         properties.setProperty("project_loc", baseDir.toString());
 
-        if (!pluginSettings.getConfigLocation().startsWith("/")) {
+        if (!isEmbeddedConfiguration(pluginSettings.getConfigLocation())) {
             final Path checkstyleConfigDir = Paths.get(configLocation).getParent();
             properties.setProperty("samedir", checkstyleConfigDir.toString());
             properties.setProperty("config_loc", checkstyleConfigDir.toString());
@@ -206,15 +213,8 @@ public class CheckstyleTask extends AbstractModuleTask {
         return properties;
     }
 
-    private Optional<ClasspathProduct> buildClassLoader() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("compileDependencies", ClasspathProduct.class);
-            case TEST:
-                return useProduct("testDependencies", ClasspathProduct.class);
-            default:
-                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
-        }
+    private XMLLogger newXmlLogger(final Path reportFile) throws IOException {
+        return new XMLLogger(new BufferedOutputStream(Files.newOutputStream(reportFile)), true);
     }
 
 }

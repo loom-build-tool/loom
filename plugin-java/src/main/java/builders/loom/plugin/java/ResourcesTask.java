@@ -24,17 +24,18 @@ import java.util.Optional;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.LoomPaths;
-import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
 
 public class ResourcesTask extends AbstractModuleTask {
 
+    private static final NullKeyValueCache NULL_CACHE = new NullKeyValueCache();
+
     private final JavaPluginSettings pluginSettings;
     private final CompileTarget compileTarget;
     private final Path cacheDir;
+    private final String resourcesProductId;
 
     ResourcesTask(final JavaPluginSettings pluginSettings,
                   final CompileTarget compileTarget, final Path cacheDir) {
@@ -42,67 +43,62 @@ public class ResourcesTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
         this.cacheDir = cacheDir;
+
+        switch (compileTarget) {
+            case MAIN:
+                resourcesProductId = "resources";
+                break;
+            case TEST:
+                resourcesProductId = "testResources";
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
     }
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<ResourcesTreeProduct> resourcesProduct = getResourcesTreeProduct();
-
-        final Path destPath = LoomPaths.buildDir(
-            getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "resources")
-            .resolve(compileTarget.name().toLowerCase());
+        final Optional<ResourcesTreeProduct> resourcesProduct =
+            useProduct(resourcesProductId, ResourcesTreeProduct.class);
 
         if (!resourcesProduct.isPresent()) {
-            if (Files.exists(destPath)) {
-                FileUtil.deleteDirectoryRecursively(destPath, true);
-            }
             return completeEmpty();
         }
 
-        final Path srcPath = resourcesProduct.get().getSrcDir();
+        final Path buildDir =
+            Files.createDirectories(resolveBuildDir("resources", compileTarget));
 
-        assertDirectoryOrMissing(srcPath);
-        assertDirectoryOrMissing(destPath);
+        final Path srcDir = resourcesProduct.get().getSrcDir();
 
-        final RuntimeConfiguration runtimeConfiguration = getRuntimeConfiguration();
+        final KeyValueCache cache = initCache();
 
-        final KeyValueCache cache = runtimeConfiguration.isCacheEnabled()
-            ? new DiskKeyValueCache(getCacheFileName())
-            : new NullKeyValueCache();
+        Files.walkFileTree(srcDir, new CopyFileVisitor(buildDir, cache,
+            pluginSettings.getResourceFilterGlob(), buildVariablesMap()));
 
-        final Map<String, String> variables = new HashMap<>();
-        variables.put("project.version", runtimeConfiguration.getVersion());
-
-        Files.walkFileTree(srcPath, new CopyFileVisitor(destPath, cache,
-            pluginSettings.getResourceFilterGlob(), variables));
-
-        Files.walkFileTree(destPath, new DeleteObsoleteFileVisitor(srcPath, cache));
+        Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(srcDir, cache));
 
         cache.saveCache();
 
-        return completeOk(new ProcessedResourceProduct(destPath));
+        return completeOk(new ProcessedResourceProduct(buildDir));
     }
 
-    private Optional<ResourcesTreeProduct> getResourcesTreeProduct() throws InterruptedException {
-        switch (compileTarget) {
-            case MAIN:
-                return useProduct("resources", ResourcesTreeProduct.class);
-            case TEST:
-                return useProduct("testResources", ResourcesTreeProduct.class);
-            default:
-                throw new IllegalStateException();
+    private KeyValueCache initCache() {
+        if (!getRuntimeConfiguration().isCacheEnabled()) {
+            return NULL_CACHE;
         }
+
+        final Path cacheFile = cacheDir
+            .resolve(getBuildContext().getModuleName())
+            .resolve(compileTarget.name().toLowerCase())
+            .resolve("resource.cache");
+
+        return new DiskKeyValueCache(cacheFile);
     }
 
-    private Path getCacheFileName() {
-        return cacheDir.resolve("resource-" + compileTarget.name().toLowerCase() + ".cache");
-    }
-
-    private void assertDirectoryOrMissing(final Path path) {
-        if (Files.exists(path) && !Files.isDirectory(path)) {
-            throw new IllegalStateException("Path '" + path + "' is not a directory");
-        }
+    private Map<String, String> buildVariablesMap() {
+        final Map<String, String> variables = new HashMap<>();
+        variables.put("project.version", getRuntimeConfiguration().getVersion());
+        return variables;
     }
 
 }

@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.DirectoryProduct;
@@ -31,23 +30,19 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<DirectoryProduct> resourcesTreeProduct = useProduct(
-            "javadoc", DirectoryProduct.class);
+        final Optional<DirectoryProduct> resourcesTreeProduct =
+            useProduct("javadoc", DirectoryProduct.class);
 
         if (!resourcesTreeProduct.isPresent()) {
             return completeEmpty();
         }
 
-        final Path buildDir = Files.createDirectories(LoomPaths.buildDir(
-            getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(),
-            "javadoc-jar"));
-
-        final Path jarFile = buildDir.resolve(String.format("%s-javadoc.jar",
-            getBuildContext().getModuleName()));
+        final Path jarFile = Files
+            .createDirectories(resolveBuildDir("javadoc-jar"))
+            .resolve(String.format("%s-javadoc.jar", getBuildContext().getModuleName()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            FileUtil.copy(resourcesTreeProduct.get().getDir(), os);
+            JavaFileUtil.copy(resourcesTreeProduct.get().getDir(), os);
         }
 
         return completeOk(new AssemblyProduct(jarFile, "Jar of Javadoc"));

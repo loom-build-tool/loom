@@ -31,9 +31,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import builders.loom.util.FileUtil;
 import builders.loom.util.ResourceFilteringOutputStream;
 
 class CopyFileVisitor extends SimpleFileVisitor<Path> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CopyFileVisitor.class);
 
     private final Path targetBasePath;
     private final KeyValueCache cache;
@@ -94,10 +100,12 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
         }
 
         if (matcher.matches(relativizedFile)) {
+            LOG.debug("Copy file {} with resource filtering", file);
             try (final ResourceFilteringOutputStream out = newOut(destPath)) {
                 Files.copy(file, out);
             }
         } else {
+            LOG.debug("Copy file {} without resource filtering", file);
             Files.copy(file, destPath, StandardCopyOption.REPLACE_EXISTING);
         }
 

@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import builders.loom.util.FileUtil;
+
 class DeleteObsoleteFileVisitor extends SimpleFileVisitor<Path> {
 
     private final Path sourceBasePath;

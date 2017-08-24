@@ -32,14 +32,13 @@ import java.util.jar.JarFile;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.DirectoryProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.util.FileUtils;
+import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
 
@@ -53,12 +52,7 @@ public class SpringBootTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path baseDir = LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
-            getBuildContext().getModuleName(), "springboot");
-
-        FileUtils.cleanDir(baseDir);
-
-        final Path buildDir = baseDir.resolve("boot-bundle");
+        final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
 
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
@@ -70,17 +64,17 @@ public class SpringBootTask extends AbstractModuleTask {
         final Optional<ProcessedResourceProduct> resourcesTreeProduct =
             useProduct("processedResources", ProcessedResourceProduct.class);
         resourcesTreeProduct.ifPresent(processedResourceProduct ->
-            FileUtils.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
+            FileUtil.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
 
         // copy classes
         final CompilationProduct compilationProduct =
             requireProduct("compilation", CompilationProduct.class);
-        FileUtils.copyFiles(compilationProduct.getClassesDir(), classesDir);
+        FileUtil.copyFiles(compilationProduct.getClassesDir(), classesDir);
 
         // copy libs
         final ClasspathProduct compileDependenciesProduct =
             requireProduct("compileDependencies", ClasspathProduct.class);
-        FileUtils.copyFiles(compileDependenciesProduct.getEntries(), libDir);
+        FileUtil.copyFiles(compileDependenciesProduct.getEntries(), libDir);
 
         // copy dep modules
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {

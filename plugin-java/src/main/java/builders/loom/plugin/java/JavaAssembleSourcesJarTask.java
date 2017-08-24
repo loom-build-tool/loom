@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
@@ -32,30 +31,27 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
-            "resources", ResourcesTreeProduct.class);
-
         final Optional<SourceTreeProduct> sourceTree = useProduct(
             "source", SourceTreeProduct.class);
 
-        if (!resourcesTreeProduct.isPresent() && !sourceTree.isPresent()) {
+        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
+            "resources", ResourcesTreeProduct.class);
+
+        if (!sourceTree.isPresent() && !resourcesTreeProduct.isPresent()) {
             return completeEmpty();
         }
 
-        final Path buildDir = Files.createDirectories(
-            LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir(),
-                getBuildContext().getModuleName(), "sources-jar"));
-
-        final Path sourceJarFile = buildDir.resolve(String.format("%s-sources.jar",
-            getBuildContext().getModuleName()));
+        final Path sourceJarFile = Files
+            .createDirectories(resolveBuildDir("sources-jar"))
+            .resolve(String.format("%s-sources.jar", getBuildContext().getModuleName()));
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
-            if (resourcesTreeProduct.isPresent()) {
-                FileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+            if (sourceTree.isPresent()) {
+                JavaFileUtil.copy(sourceTree.get().getSrcDir(), os);
             }
 
-            if (sourceTree.isPresent()) {
-                FileUtil.copy(sourceTree.get().getSrcDir(), os);
+            if (resourcesTreeProduct.isPresent()) {
+                JavaFileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
             }
         }
 

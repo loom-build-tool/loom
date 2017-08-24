@@ -18,16 +18,23 @@
 
     <allow pkg="org.w3c"/>
     <allow pkg="org.xml"/>
-    <allow pkg="org.fusesource.jansi"/>
-    <allow pkg="org.yaml.snakeyaml"/>
-    <allow pkg="org.apache.commons.cli"/>
     <allow pkg="org.slf4j"/>
     <allow pkg="org.w3c.dom"/>
     <allow pkg="org.xml.sax"/>
     <allow pkg="org.junit"/>
+
     <allow pkg="builders.loom"/>
 
-    <subpackage name="plugin.mavenresolver">
+    <subpackage name="cli">
+        <allow pkg="org.fusesource.jansi"/>
+        <allow pkg="org.apache.commons.cli"/>
+    </subpackage>
+
+    <subpackage name="core">
+        <allow pkg="org.yaml.snakeyaml"/>
+    </subpackage>
+
+    <subpackage name="plugin.maven">
         <allow pkg="org.apache.maven"/>
         <allow pkg="org.sonatype.aether"/>
     </subpackage>

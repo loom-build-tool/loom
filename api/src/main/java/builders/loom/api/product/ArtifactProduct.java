@@ -16,12 +16,9 @@
 
 package builders.loom.api.product;
 
-import java.io.Serializable;
 import java.nio.file.Path;
 
-public final class ArtifactProduct implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public final class ArtifactProduct {
 
     private final Path mainArtifact;
     private final Path sourceArtifact;

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import builders.loom.api.DependencyScope;
-import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
@@ -29,11 +28,8 @@ import builders.loom.api.product.ClasspathProduct;
 public class MavenResolverTask extends MavenArtifactResolverTask {
 
     public MavenResolverTask(final DependencyScope dependencyScope,
-                             final MavenResolverPluginSettings pluginSettings,
-                             final Path cacheDir,
-                             final DownloadProgressEmitter downloadProgressEmitter) {
-
-        super(dependencyScope, pluginSettings, cacheDir, downloadProgressEmitter);
+                             final DependencyResolver dependencyResolver) {
+        super(dependencyScope, dependencyResolver);
     }
 
     @Override

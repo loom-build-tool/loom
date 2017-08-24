@@ -61,9 +61,6 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.product.ArtifactProduct;
-import builders.loom.plugin.maven.cache.CachedArtifactProductList;
-import builders.loom.plugin.maven.cache.Cacher;
-import builders.loom.util.Hasher;
 import builders.loom.util.SystemUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -74,10 +71,9 @@ public class MavenResolver implements DependencyResolver {
     private final RepositorySystem system;
     private final RemoteRepository mavenRepository;
     private final LocalRepositoryManager localRepositoryManager;
-    private final Path cacheDir;
     private final ProgressLoggingTransferListener transferListener;
 
-    MavenResolver(final String repositoryUrl, final Path cacheDir,
+    MavenResolver(final String repositoryUrl,
                   final DownloadProgressEmitter downloadProgressEmitter) {
 
         LOG.debug("Initialize MavenResolver");
@@ -112,7 +108,6 @@ public class MavenResolver implements DependencyResolver {
         final LocalRepository localRepo = new LocalRepository(repository.toFile());
         localRepositoryManager = system.newLocalRepositoryManager(localRepo);
 
-        this.cacheDir = cacheDir;
         transferListener = new ProgressLoggingTransferListener(downloadProgressEmitter);
 
         LOG.debug("MavenResolver initialized");
@@ -121,37 +116,6 @@ public class MavenResolver implements DependencyResolver {
     @Override
     public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
                                          final String classifier) {
-
-        LOG.info("Resolve {} dependencies: {}", scope, deps);
-
-        final String cacheName = "maven-" + mavenScope(scope) + "-" + classifier;
-        final String cacheSignature = Hasher.hash(deps);
-        final Cacher<CachedArtifactProductList> cacher =
-            new Cacher<>(cacheDir, cacheName, cacheSignature);
-
-        // note: caches do not need extra locking, because they get isolated by the scope used
-        final CachedArtifactProductList cachedArtifacts = cacher.readCache();
-
-        if (cachedArtifacts != null) {
-            final List<ArtifactProduct> artifacts = cachedArtifacts.buildArtifactProductList();
-            LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
-            return Collections.unmodifiableList(artifacts);
-        }
-
-        final List<ArtifactProduct> artifacts;
-
-        synchronized (this) {
-            artifacts = resolveRemote(deps, classifier, scope);
-            LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
-        }
-
-        cacher.writeCache(CachedArtifactProductList.build(artifacts));
-
-        return artifacts;
-    }
-
-    private List<ArtifactProduct> resolveRemote(final List<String> deps, final String classifier,
-                                                final DependencyScope scope) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);

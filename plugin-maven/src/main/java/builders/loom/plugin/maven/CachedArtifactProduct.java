@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven.cache;
+package builders.loom.plugin.maven;
 
 import java.io.Serializable;
 import java.nio.file.Path;

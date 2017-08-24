@@ -16,13 +16,11 @@
 
 package builders.loom.plugin.maven;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyScope;
-import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
@@ -30,19 +28,13 @@ import builders.loom.api.product.ArtifactProduct;
 public class MavenArtifactResolverTask extends AbstractModuleTask {
 
     private final DependencyScope dependencyScope;
-    private final MavenResolverPluginSettings pluginSettings;
-    private final Path cacheDir;
-    private final DownloadProgressEmitter downloadProgressEmitter;
+    private final DependencyResolver dependencyResolver;
 
     public MavenArtifactResolverTask(final DependencyScope dependencyScope,
-                                     final MavenResolverPluginSettings pluginSettings,
-                                     final Path cacheDir,
-                                     final DownloadProgressEmitter downloadProgressEmitter) {
+                                     final DependencyResolver dependencyResolver) {
 
         this.dependencyScope = dependencyScope;
-        this.pluginSettings = pluginSettings;
-        this.cacheDir = cacheDir;
-        this.downloadProgressEmitter = downloadProgressEmitter;
+        this.dependencyResolver = dependencyResolver;
     }
 
     @Override
@@ -53,7 +45,8 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        return completeOk(new ArtifactListProduct(resolve(dependencies, "sources")));
+        final List<ArtifactProduct> artifacts = resolve(dependencies, "sources");
+        return completeOk(new ArtifactListProduct(artifacts));
     }
 
     List<String> listDependencies() {
@@ -73,12 +66,8 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
     }
 
     protected List<ArtifactProduct> resolve(final List<String> dependencies,
-                                          final String classifier) {
-
-        final MavenResolver mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
-
-        return mavenResolver.resolve(dependencies, dependencyScope, classifier);
+                                            final String classifier) {
+        return dependencyResolver.resolve(dependencies, dependencyScope, classifier);
     }
 
 }

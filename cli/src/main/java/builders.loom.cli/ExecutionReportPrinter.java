@@ -26,7 +26,7 @@ import builders.loom.core.ExecutionReport;
 import builders.loom.core.ExecutionStatus;
 import builders.loom.core.plugin.TaskType;
 
-class ExecutionReportPrinter {
+final class ExecutionReportPrinter {
 
     void print(final ExecutionReport executionReport) {
         final Map<String, ExecutionStatus> durations = executionReport.getDurations();

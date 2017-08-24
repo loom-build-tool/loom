@@ -29,7 +29,7 @@ import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.core.ProgressMonitor;
 
-public final class ConsoleProgressMonitor implements ProgressMonitor {
+final class ConsoleProgressMonitor implements ProgressMonitor {
 
     private static final int DELAY = 100;
     private static final int JANSI_BUF = 100;

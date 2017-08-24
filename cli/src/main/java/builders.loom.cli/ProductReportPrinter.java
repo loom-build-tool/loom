@@ -33,15 +33,15 @@ import builders.loom.core.ExecutionReport;
 import builders.loom.core.ModuleRunner;
 import builders.loom.core.plugin.ConfiguredTask;
 
-public class ProductReportPrinter {
+final class ProductReportPrinter {
 
     private final ModuleRunner moduleRunner;
 
-    public ProductReportPrinter(final ModuleRunner moduleRunner) {
+    ProductReportPrinter(final ModuleRunner moduleRunner) {
         this.moduleRunner = moduleRunner;
     }
 
-    public void print(final ExecutionReport executionReport) {
+    void print(final ExecutionReport executionReport) {
         // aggregate plugin -> products
         final Map<String, List<ProductInfo>> aggProducts =
             aggregateProducts(executionReport.getResolvedTasks());
@@ -125,11 +125,11 @@ public class ProductReportPrinter {
             this.outputInfo = outputInfo;
         }
 
-        public String getProductId() {
+        String getProductId() {
             return productId;
         }
 
-        public String getOutputInfo() {
+        String getOutputInfo() {
             return outputInfo;
         }
 

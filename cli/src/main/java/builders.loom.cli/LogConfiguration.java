@@ -24,13 +24,13 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import builders.loom.cli.log.LoomLoggerFactory;
 import builders.loom.cli.log.StdOut2SLF4J;
 
-public final class LogConfiguration {
+final class LogConfiguration {
 
     private LogConfiguration() {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    public static void configureLogger(final Path logFile) {
+    static void configureLogger(final Path logFile) {
         final LoomLoggerFactory lc = (LoomLoggerFactory) LoggerFactory.getILoggerFactory();
         lc.setLogFile(logFile);
         lc.start();
@@ -43,7 +43,7 @@ public final class LogConfiguration {
         StdOut2SLF4J.install();
     }
 
-    public static void stop() {
+    static void stop() {
         StdOut2SLF4J.uninstall();
 
         ((LoomLoggerFactory) LoggerFactory.getILoggerFactory()).stop();

@@ -45,7 +45,7 @@ import builders.loom.util.FileUtil;
 
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
     "checkstyle:classdataabstractioncoupling"})
-public class Loom {
+public final class Loom {
 
     // hold System.err, because it will be changed by StdOut2SLF4J
     private static final PrintStream SYSTEM_ERR = System.err;

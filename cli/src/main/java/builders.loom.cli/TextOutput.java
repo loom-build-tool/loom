@@ -29,12 +29,12 @@ import builders.loom.core.ModuleRunner;
 import builders.loom.core.plugin.GoalInfo;
 import builders.loom.core.plugin.TaskInfo;
 
-public final class TextOutput {
+final class TextOutput {
 
     private TextOutput() {
     }
 
-    public static void generate(final ModuleRunner moduleRunner) {
+    static void generate(final ModuleRunner moduleRunner) {
         AnsiConsole.out().println(
             Ansi.ansi()
                 .newline()

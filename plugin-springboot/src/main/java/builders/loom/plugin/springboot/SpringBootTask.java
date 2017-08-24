@@ -52,9 +52,7 @@ public class SpringBootTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Path baseDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
-
-        final Path buildDir = baseDir.resolve("boot-bundle");
+        final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
 
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));

@@ -25,6 +25,7 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
+import builders.loom.api.product.ArtifactProduct;
 
 public class MavenArtifactResolverTask extends AbstractModuleTask {
 
@@ -32,7 +33,6 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
     private final MavenResolverPluginSettings pluginSettings;
     private final Path cacheDir;
     private final DownloadProgressEmitter downloadProgressEmitter;
-    private MavenResolver mavenResolver;
 
     public MavenArtifactResolverTask(final DependencyScope dependencyScope,
                                      final MavenResolverPluginSettings pluginSettings,
@@ -47,29 +47,36 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        this.mavenResolver =
-            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
+        final List<String> dependencies = listDependencies();
+
+        if (dependencies.isEmpty()) {
+            return completeEmpty();
+        }
+
+        return completeOk(new ArtifactListProduct(resolve(dependencies)));
+    }
+
+    private List<String> listDependencies() {
+        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
+
         switch (dependencyScope) {
             case COMPILE:
-                return completeOk(productCompile());
+                break;
             case TEST:
-                return completeOk(productTest());
+                deps.addAll(getModuleConfig().getTestDependencies());
+                break;
             default:
                 throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
+
+        return deps;
     }
 
-    private ArtifactListProduct productCompile() {
-        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.COMPILE,
-            "sources"));
+    private List<ArtifactProduct> resolve(final List<String> dependencies) {
+        final MavenResolver mavenResolver =
+            MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
+
+        return mavenResolver.resolve(dependencies, dependencyScope, "sources");
     }
 
-    private ArtifactListProduct productTest() {
-        final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
-        deps.addAll(getModuleConfig().getTestDependencies());
-
-        return new ArtifactListProduct(mavenResolver.resolve(deps, DependencyScope.TEST,
-            "sources"));
-    }
 }

@@ -40,6 +40,7 @@ import org.sonatype.aether.impl.VersionRangeResolver;
 import org.sonatype.aether.impl.VersionResolver;
 import org.sonatype.aether.impl.internal.DefaultServiceLocator;
 import org.sonatype.aether.installation.InstallRequest;
+import org.sonatype.aether.installation.InstallationException;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
@@ -75,13 +76,23 @@ public class MavenInstallTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
+        if (getRuntimeConfiguration().getVersion() == null) {
+            throw new IllegalStateException("Artifact version required "
+                + "(specify --artifact-version)");
+        }
+
         if (pluginSettings.getGroupAndArtifact() == null) {
+            // Not every module needs to be installed
             return completeEmpty();
         }
 
-        final AssemblyProduct jarProduct = requireProduct("jar", AssemblyProduct.class);
-        final Path jarFile = jarProduct.getAssemblyFile();
+        final Path jarFile = requireProduct("jar", AssemblyProduct.class).getAssemblyFile();
 
+        return completeOk(new DirectoryProduct(install(jarFile),
+            "Directory of installed artifact"));
+    }
+
+    private Path install(final Path jarFile) throws IOException, InstallationException {
         final AtomicReference<Path> installPath = new AtomicReference<>();
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
@@ -94,9 +105,10 @@ public class MavenInstallTask extends AbstractModuleTask {
             }
         });
 
-        final Path tmpDir = LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir());
+        final Path tmpDir =
+            Files.createDirectories(LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir()));
         try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null)) {
-            final Artifact jarArtifact = buildArtifact("jar", jarFile);
+            final Artifact jarArtifact = buildArtifact(jarFile);
             writePom(buildModel(jarArtifact), tmpPomFile.getFile());
 
             final InstallRequest request = new InstallRequest();
@@ -109,8 +121,7 @@ public class MavenInstallTask extends AbstractModuleTask {
             system.install(session, request);
         }
 
-        return completeOk(new DirectoryProduct(installPath.get(),
-            "Directory of installed artifact"));
+        return installPath.get();
     }
 
     private void writePom(final Model model, final Path tmpPomFile) throws IOException {
@@ -152,12 +163,8 @@ public class MavenInstallTask extends AbstractModuleTask {
         return dependency;
     }
 
-    private Artifact buildArtifact(final String extension, final Path assemblyFile) {
+    private Artifact buildArtifact(final Path assemblyFile) {
         final String version = getRuntimeConfiguration().getVersion();
-        if (version == null) {
-            throw new IllegalStateException("Artifact version required "
-                + "(specify --artifact-version)");
-        }
 
         return new DefaultArtifact(
             String.format("%s:%s", pluginSettings.getGroupAndArtifact(), version))

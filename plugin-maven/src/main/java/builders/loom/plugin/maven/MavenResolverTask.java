@@ -54,29 +54,34 @@ public class MavenResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        return completeOk(resolve(dependencies));
+        return completeOk(new ClasspathProduct(resolve(dependencies)));
     }
 
     private List<String> listDependencies() {
         final List<String> deps = new ArrayList<>(getModuleConfig().getCompileDependencies());
 
-        if (dependencyScope == DependencyScope.TEST) {
-            deps.addAll(getModuleConfig().getTestDependencies());
+        switch (dependencyScope) {
+            case COMPILE:
+                break;
+            case TEST:
+                deps.addAll(getModuleConfig().getTestDependencies());
+                break;
+            default:
+                throw new IllegalStateException("Unknown scope: " + dependencyScope);
         }
 
         return deps;
     }
 
-    private ClasspathProduct resolve(final List<String> deps) {
+    private List<Path> resolve(final List<String> deps) {
         final MavenResolver mavenResolver =
             MavenResolverSingleton.getInstance(pluginSettings, cacheDir, downloadProgressEmitter);
 
         final List<ArtifactProduct> artifactProducts = mavenResolver.resolve(deps,
             dependencyScope, null);
 
-        final List<Path> collect = artifactProducts.stream()
+        return artifactProducts.stream()
             .map(ArtifactProduct::getMainArtifact).collect(Collectors.toList());
-
-        return new ClasspathProduct(collect);
     }
+
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.mavenresolver;
+package builders.loom.plugin.maven;
 
 import builders.loom.api.PluginSettings;
 

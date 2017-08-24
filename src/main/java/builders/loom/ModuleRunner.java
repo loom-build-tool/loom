@@ -106,7 +106,7 @@ public class ModuleRunner {
     }
 
     private void registerModulePlugins() {
-        final Set<String> defaultPlugins = Set.of("java", "mavenresolver");
+        final Set<String> defaultPlugins = Set.of("java", "maven");
         for (final Module module : moduleRegistry.getModules()) {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
             registerModule(defaultPlugins, module);

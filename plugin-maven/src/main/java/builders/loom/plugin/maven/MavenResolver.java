@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.mavenresolver;
+package builders.loom.plugin.maven;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -61,6 +61,8 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.product.ArtifactProduct;
+import builders.loom.plugin.maven.cache.CachedArtifactProductList;
+import builders.loom.plugin.maven.cache.Cacher;
 import builders.loom.util.Hasher;
 import builders.loom.util.SystemUtil;
 

@@ -27,7 +27,7 @@
     <allow pkg="org.junit"/>
     <allow pkg="builders.loom"/>
 
-    <subpackage name="plugin.mavenresolver">
+    <subpackage name="plugin.maven">
         <allow pkg="org.apache.maven"/>
         <allow pkg="org.sonatype.aether"/>
     </subpackage>

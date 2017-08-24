@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.mavenresolver;
+package builders.loom.plugin.maven.cache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

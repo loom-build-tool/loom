@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.mavenresolver;
+package builders.loom.plugin.maven.cache;
 
 import java.io.Serializable;
 import java.util.List;
@@ -22,24 +22,16 @@ import java.util.stream.Collectors;
 
 import builders.loom.api.product.ArtifactProduct;
 
-public class CachedArtifactProductList implements Serializable {
+public final class CachedArtifactProductList implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private List<CachedArtifactProduct> artifactProducts;
 
-    public CachedArtifactProductList() {
+    private CachedArtifactProductList() {
     }
 
-    public CachedArtifactProductList(final List<CachedArtifactProduct> artifactProducts) {
-        this.artifactProducts = artifactProducts;
-    }
-
-    public List<CachedArtifactProduct> getArtifactProducts() {
-        return artifactProducts;
-    }
-
-    public void setArtifactProducts(final List<CachedArtifactProduct> artifactProducts) {
+    private void setArtifactProducts(final List<CachedArtifactProduct> artifactProducts) {
         this.artifactProducts = artifactProducts;
     }
 

@@ -14,31 +14,15 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.mavenresolver;
+package builders.loom.plugin.maven;
 
-import java.io.Serializable;
+import java.util.List;
 
-public class CacheWrapper<T extends Serializable> implements Serializable {
+import builders.loom.api.DependencyScope;
+import builders.loom.api.product.ArtifactProduct;
 
-    private static final long serialVersionUID = 1L;
-    private final T data;
-    private String signature;
+public interface DependencyResolver {
 
-    public CacheWrapper(final String signature, final T data) {
-        this.signature = signature;
-        this.data = data;
-    }
-
-    public String getSignature() {
-        return signature;
-    }
-
-    public void setSignature(final String signature) {
-        this.signature = signature;
-    }
-
-    public T getData() {
-        return data;
-    }
+    List<ArtifactProduct> resolve(List<String> deps, DependencyScope scope, String classifier);
 
 }

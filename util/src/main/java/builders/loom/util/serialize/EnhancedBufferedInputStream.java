@@ -45,6 +45,7 @@ class EnhancedBufferedInputStream extends BufferedInputStream {
         return (byte) read;
     }
 
+    @SuppressWarnings("checkstyle:booleanexpressioncomplexity")
     int readInt() throws IOException {
         final byte[] b = read(4);
         return b[0] << 24

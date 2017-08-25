@@ -126,17 +126,19 @@ public final class SimpleSerializer {
 
     }
 
-    private static void validateHeader(final byte[] magic, final byte version, final byte committed) {
+    private static void validateHeader(final byte[] magic, final byte version,
+                                       final byte committed) throws IOException {
+
         if (!Arrays.equals(magic, MAGIC_HEADER)) {
-            throw new IllegalStateException("Invalid magic header");
+            throw new IOException("Invalid magic header");
         }
 
         if (version != VERSION) {
-            throw new IllegalStateException("Invalid version " + version);
+            throw new IOException("Invalid version " + version);
         }
 
         if (committed != COMMITED) {
-            throw new IllegalStateException("Uncommitted file");
+            throw new IOException("Uncommitted file");
         }
     }
 

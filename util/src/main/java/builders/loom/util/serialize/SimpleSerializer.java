@@ -80,7 +80,7 @@ public final class SimpleSerializer {
                         bbs.putInt(field.length());
                         bbs.put(field);
                     } else {
-                        bbs.putInt(0);
+                        bbs.putInt(-1);
                     }
                 }
 
@@ -117,7 +117,7 @@ public final class SimpleSerializer {
                 final String[] fields = new String[recordSize];
                 for (int i = 0; i < recordSize; i++) {
                     final int fieldLength = in.readInt();
-                    fields[i] = fieldLength > 0 ? in.readString(fieldLength) : null;
+                    fields[i] = fieldLength < 0 ? null : in.readString(fieldLength);
                 }
                 consumer.accept(new Record(fields));
             }

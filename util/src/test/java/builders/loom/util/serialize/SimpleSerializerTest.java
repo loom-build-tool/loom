@@ -19,6 +19,8 @@ package builders.loom.util.serialize;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Assert;
@@ -29,8 +31,10 @@ public class SimpleSerializerTest {
     @Test
     public void test() throws Exception {
         final List<List<String>> records = List.of(
-            List.of("foo", "bar"),
-            List.of("faz", "baz")
+            Arrays.asList("foo", "bar"),
+            Arrays.asList(null, ""),
+            Arrays.asList("", null),
+            Arrays.asList(null, null)
         );
 
         final Path file = Files.createTempFile("SimpleSerializerTest", null);
@@ -39,9 +43,13 @@ public class SimpleSerializerTest {
 
         final List<Record> recordList = new ArrayList<>();
         SimpleSerializer.read(file, recordList::add);
-        Assert.assertEquals(2, recordList.size());
-        Assert.assertEquals(List.of("foo", "bar"), recordList.get(0).getFields());
-        Assert.assertEquals(List.of("faz", "baz"), recordList.get(1).getFields());
+
+        Assert.assertEquals(4, recordList.size());
+        final Iterator<Record> it = recordList.iterator();
+        Assert.assertEquals(Arrays.asList("foo", "bar"), it.next().getFields());
+        Assert.assertEquals(Arrays.asList(null, ""), it.next().getFields());
+        Assert.assertEquals(Arrays.asList("", null), it.next().getFields());
+        Assert.assertEquals(Arrays.asList(null, null), it.next().getFields());
     }
 
 }

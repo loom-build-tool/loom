@@ -2,19 +2,9 @@ apply plugin: 'java'
 
 archivesBaseName = 'loom-core'
 
-
 dependencies {
     compile project(':api')
     compile project(':util')
-    runtimeOnly project(':plugin-java')
-    runtimeOnly project(':plugin-junit4')
-    runtimeOnly project(':plugin-checkstyle')
-    runtimeOnly project(':plugin-spotbugs')
-    runtimeOnly project(':plugin-pmd')
-    runtimeOnly project(':plugin-maven')
-    runtimeOnly project(':plugin-springboot')
-    runtimeOnly project(':plugin-idea')
-    runtimeOnly project(':plugin-eclipse')
     compile('org.slf4j:jul-to-slf4j:1.8.0-alpha2')
     compile('org.yaml:snakeyaml:1.18')
     testCompile('junit:junit:4.12')

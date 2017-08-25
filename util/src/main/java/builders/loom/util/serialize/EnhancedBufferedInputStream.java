@@ -17,9 +17,9 @@
 package builders.loom.util.serialize;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("checkstyle:magicnumber")
@@ -32,13 +32,25 @@ class EnhancedBufferedInputStream extends BufferedInputStream {
     byte[] read(final int cnt) throws IOException {
         final byte[] buf = new byte[cnt];
         if (read(buf, 0, cnt) != cnt) {
-            throw new IOException("Can't read " + cnt + " bytes from stream");
+            throw new EOFException();
         }
         return buf;
     }
 
+    byte readByte() throws IOException {
+        final int read = read();
+        if (read < 0) {
+            throw new EOFException();
+        }
+        return (byte) read;
+    }
+
     int readInt() throws IOException {
-        return ByteBuffer.wrap(read(4)).getInt();
+        final byte[] b = read(4);
+        return b[0] << 24
+            | (b[1] & 0xFF) << 16
+            | (b[2] & 0xFF) << 8
+            | (b[3] & 0xFF);
     }
 
     String readString(final int len) throws IOException {

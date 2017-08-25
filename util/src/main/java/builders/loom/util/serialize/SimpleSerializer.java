@@ -106,12 +106,11 @@ public final class SimpleSerializer {
         try (final EnhancedBufferedInputStream in = new EnhancedBufferedInputStream(
             new BufferedInputStream(Files.newInputStream(file, StandardOpenOption.READ)))) {
 
-            final ByteBuffer header = ByteBuffer.wrap(in.read(10));
-            final byte[] magic = extract(header, 0, 3);
-            final byte version = header.get();
-            final int recordCnt = header.getInt();
-            final byte recordSize = header.get();
-            final byte committed = header.get();
+            final byte[] magic = in.read(3);
+            final byte version = in.readByte();
+            final int recordCnt = in.readInt();
+            final byte recordSize = in.readByte();
+            final byte committed = in.readByte();
             validateHeader(magic, version, committed);
 
             for (int r = 0; r < recordCnt; r++) {
@@ -125,12 +124,6 @@ public final class SimpleSerializer {
 
         }
 
-    }
-
-    private static byte[] extract(final ByteBuffer header, final int offset, final int len) {
-        final byte[] magic = new byte[len];
-        header.get(magic, offset, len);
-        return magic;
     }
 
     private static void validateHeader(final byte[] magic, final byte version, final byte committed) {

@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +63,9 @@ public class CachingMavenResolver implements DependencyResolver {
                 Hasher.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
-        if (Files.exists(cacheFile)) {
-            final List<ArtifactProduct> artifacts = readCache(cacheFile);
+        final Optional<List<ArtifactProduct>> cachedArtifacts = readCache(cacheFile);
+        if (cachedArtifacts.isPresent()) {
+            final List<ArtifactProduct> artifacts = cachedArtifacts.get();
             LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
             return artifacts;
         }
@@ -79,7 +81,11 @@ public class CachingMavenResolver implements DependencyResolver {
         return artifacts;
     }
 
-    private List<ArtifactProduct> readCache(final Path file) {
+    private Optional<List<ArtifactProduct>> readCache(final Path file) {
+        if (Files.notExists(file)) {
+            return Optional.empty();
+        }
+
         final List<ArtifactProduct> artifacts = new ArrayList<>();
 
         try {
@@ -91,10 +97,11 @@ public class CachingMavenResolver implements DependencyResolver {
                 artifacts.add(artifact);
             });
         } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+            LOG.debug("Corrupt cache", e);
+            return Optional.empty();
         }
 
-        return artifacts;
+        return Optional.of(artifacts);
     }
 
     private void writeCache(final List<ArtifactProduct> artifacts, final Path file) {

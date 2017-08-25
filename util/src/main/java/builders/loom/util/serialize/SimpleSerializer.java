@@ -41,8 +41,6 @@ public final class SimpleSerializer {
     private SimpleSerializer() {
     }
 
-    // TODO atomic move file? otherwise corrupted file will be read later...
-
     public static <T> void write(final Path file, final Iterable<T> records,
                                  final Function<T, Record> mapper) throws IOException {
         int recordCnt = 0;

@@ -14,27 +14,32 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven.cache;
+package builders.loom.util.serialize;
 
-import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
-public class CacheWrapper<T extends Serializable> implements Serializable {
+public class Record {
 
-    private static final long serialVersionUID = 1L;
-    private final T data;
-    private final String signature;
+    private final List<String> fields;
 
-    public CacheWrapper(final String signature, final T data) {
-        this.signature = signature;
-        this.data = data;
+    public Record(final List<String> fields) {
+        this.fields = fields;
     }
 
-    public String getSignature() {
-        return signature;
+    public Record(final String... fields) {
+        this.fields = Arrays.asList(fields);
     }
 
-    public T getData() {
-        return data;
+    public List<String> getFields() {
+        return fields;
+    }
+
+    @Override
+    public String toString() {
+        return "Record{"
+            + "fields=" + fields
+            + '}';
     }
 
 }

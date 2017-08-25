@@ -33,10 +33,10 @@ public final class SimpleSerializer {
 
     // Loom Simple Serializer
     private static final byte[] MAGIC_HEADER = {'L', 'S', 'S'};
-
     private static final byte VERSION = 1;
     private static final byte UNCOMMITED = 0;
     private static final byte COMMITED = 1;
+    private static final int HEADER_SIZE = MAGIC_HEADER.length + 7;
 
     private SimpleSerializer() {
     }
@@ -55,11 +55,7 @@ public final class SimpleSerializer {
             final ByteBufferChannelStream bbs = new ByteBufferChannelStream(channel);
 
             // write header
-            bbs.put(MAGIC_HEADER);
-            bbs.put(VERSION);
-            bbs.putInt(recordCnt);
-            bbs.put(recordSize);
-            bbs.put(UNCOMMITED);
+            bbs.put(buildHeader(recordCnt, recordSize, UNCOMMITED));
 
             for (final T record : records) {
                 final List<String> fields = mapper.apply(record).getFields();
@@ -92,12 +88,27 @@ public final class SimpleSerializer {
         }
     }
 
+    private static ByteBuffer buildHeader(final int recordCnt, final byte recordSize,
+                                          final byte committed) {
+
+        return ByteBuffer.allocate(HEADER_SIZE)
+            .put(MAGIC_HEADER)
+            .put(VERSION)
+            .putInt(recordCnt)
+            .put(recordSize)
+            .put(committed)
+            .flip();
+    }
+
     // write record count/size and commit status
     private static void commit(final SeekableByteChannel channel,
                                final int recordCnt, final byte recordSize) throws IOException {
-        final ByteBuffer buf = ByteBuffer.allocate(6)
-            .putInt(recordCnt).put(recordSize).put(COMMITED).flip();
-        channel.position(4).write(buf);
+
+        final ByteBuffer buf = buildHeader(recordCnt, recordSize, COMMITED);
+        channel.position(0);
+        do {
+            channel.write(buf);
+        } while (buf.hasRemaining());
     }
 
     public static void read(final Path file, final Consumer<Record> consumer)
@@ -106,12 +117,11 @@ public final class SimpleSerializer {
         try (final EnhancedBufferedInputStream in = new EnhancedBufferedInputStream(
             new BufferedInputStream(Files.newInputStream(file, StandardOpenOption.READ)))) {
 
-            final byte[] magic = in.read(3);
-            final byte version = in.readByte();
+            validateMagic(in.read(MAGIC_HEADER.length));
+            validateVersion(in.readByte());
             final int recordCnt = in.readInt();
             final byte recordSize = in.readByte();
-            final byte committed = in.readByte();
-            validateHeader(magic, version, committed);
+            validateCommitted(in.readByte());
 
             for (int r = 0; r < recordCnt; r++) {
                 final String[] fields = new String[recordSize];
@@ -126,17 +136,19 @@ public final class SimpleSerializer {
 
     }
 
-    private static void validateHeader(final byte[] magic, final byte version,
-                                       final byte committed) throws IOException {
-
+    private static void validateMagic(final byte[] magic) throws IOException {
         if (!Arrays.equals(magic, MAGIC_HEADER)) {
             throw new IOException("Invalid magic header");
         }
+    }
 
+    private static void validateVersion(final byte version) throws IOException {
         if (version != VERSION) {
             throw new IOException("Invalid version " + version);
         }
+    }
 
+    private static void validateCommitted(final byte committed) throws IOException {
         if (committed != COMMITED) {
             throw new IOException("Uncommitted file");
         }

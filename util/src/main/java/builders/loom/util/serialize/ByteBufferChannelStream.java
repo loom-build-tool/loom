@@ -32,6 +32,10 @@ class ByteBufferChannelStream implements Flushable {
         this.channel = channel;
     }
 
+    void put(final ByteBuffer src) throws IOException {
+        ensureCapacity(src.remaining()).put(src);
+    }
+
     void put(final byte b) throws IOException {
         ensureCapacity(1).put(b);
     }

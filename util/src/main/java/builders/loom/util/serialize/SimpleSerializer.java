@@ -23,7 +23,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -46,7 +45,7 @@ public final class SimpleSerializer {
 
     public static <T> void write(final Path file, final Iterable<T> records,
                                  final Function<T, Record> mapper) throws IOException {
-        int recordCnt = -1;
+        int recordCnt = 0;
         byte recordSize = -1;
 
         try (final SeekableByteChannel channel = Files.newByteChannel(file,
@@ -89,51 +88,63 @@ public final class SimpleSerializer {
             }
 
             bbs.flush();
-
-            // write record count/size and commit status
-            final ByteBuffer buf = ByteBuffer.allocate(6)
-                .putInt(recordCnt).put(recordSize).put(COMMITED).flip();
-            channel.position(4).write(buf);
+            commit(channel, recordCnt, recordSize);
         }
     }
 
-    public static void read(final Path file, final Consumer<Record> transformer)
+    // write record count/size and commit status
+    private static void commit(final SeekableByteChannel channel,
+                               final int recordCnt, final byte recordSize) throws IOException {
+        final ByteBuffer buf = ByteBuffer.allocate(6)
+            .putInt(recordCnt).put(recordSize).put(COMMITED).flip();
+        channel.position(4).write(buf);
+    }
+
+    public static void read(final Path file, final Consumer<Record> consumer)
         throws IOException {
 
         try (final EnhancedBufferedInputStream in = new EnhancedBufferedInputStream(
             new BufferedInputStream(Files.newInputStream(file, StandardOpenOption.READ)))) {
 
-            final byte[] headerBytes = in.read(10);
+            final ByteBuffer header = ByteBuffer.wrap(in.read(10));
+            final byte[] magic = extract(header, 0, 3);
+            final byte version = header.get();
+            final int recordCnt = header.getInt();
+            final byte recordSize = header.get();
+            final byte committed = header.get();
+            validateHeader(magic, version, committed);
 
-            if (Arrays.compare(headerBytes, 0, 2, MAGIC_HEADER, 0, 2) != 0) {
-                throw new IllegalStateException("Invalid magic header");
-            }
-
-            if (headerBytes[3] != VERSION) {
-                throw new IllegalStateException("Invalid version " + headerBytes[3]);
-            }
-
-            if (headerBytes[9] != COMMITED) {
-                throw new IllegalStateException("Uncommited file");
-            }
-
-            final ByteBuffer wrap = ByteBuffer.wrap(headerBytes, 4, 4);
-            final int recordCnt = wrap.getInt();
-
-            final byte recordSize = headerBytes[8];
-
-            for (int r = 0; r <= recordCnt; r++) {
-                final List<String> fields = new ArrayList<>();
+            for (int r = 0; r < recordCnt; r++) {
+                final String[] fields = new String[recordSize];
                 for (int i = 0; i < recordSize; i++) {
                     final int fieldLength = in.readInt();
-                    final String fieldVal = fieldLength > 0 ? in.readString(fieldLength) : null;
-                    fields.add(fieldVal);
+                    fields[i] = fieldLength > 0 ? in.readString(fieldLength) : null;
                 }
-                transformer.accept(new Record(fields));
+                consumer.accept(new Record(fields));
             }
 
         }
 
+    }
+
+    private static byte[] extract(final ByteBuffer header, final int offset, final int len) {
+        final byte[] magic = new byte[len];
+        header.get(magic, offset, len);
+        return magic;
+    }
+
+    private static void validateHeader(final byte[] magic, final byte version, final byte committed) {
+        if (!Arrays.equals(magic, MAGIC_HEADER)) {
+            throw new IllegalStateException("Invalid magic header");
+        }
+
+        if (version != VERSION) {
+            throw new IllegalStateException("Invalid version " + version);
+        }
+
+        if (committed != COMMITED) {
+            throw new IllegalStateException("Uncommitted file");
+        }
     }
 
 }

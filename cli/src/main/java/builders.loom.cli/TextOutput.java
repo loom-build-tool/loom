@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fusesource.jansi.Ansi;
@@ -39,13 +40,16 @@ final class TextOutput {
             Ansi.ansi()
                 .newline()
                 .bold()
-                .a("Available products:")
+                .a(Ansi.Attribute.UNDERLINE)
+                .a("Available products")
                 .reset()
                 .newline());
 
         final List<String> pluginNames = moduleRunner.getPluginNames().stream()
             .sorted()
             .collect(Collectors.toList());
+
+
 
         for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
@@ -54,11 +58,10 @@ final class TextOutput {
 
             AnsiConsole.out().println(
                 Ansi.ansi()
-                    .a("Plugin ")
                     .bold()
-                    .a(pluginName)
+                    .a("Plugin ")
+                    .fgBrightBlue().a(pluginName).fgDefault()
                     .reset()
-                    .a(":")
             );
 
             final List<TaskInfo> productTasks = configuredTasks.stream()
@@ -72,13 +75,12 @@ final class TextOutput {
                 if (task.isIntermediateProduct()) {
                     ansi.fgBlack().bold();
                 } else {
-                    ansi.fgYellow();
+                    ansi.fgCyan();
                 }
 
                 ansi.a(task.getProvidedProduct())
                     .reset()
                     .a(" - ")
-                    .fgCyan()
                     .a(task.getDescription())
                     .reset();
 
@@ -98,35 +100,58 @@ final class TextOutput {
             AnsiConsole.out().println(
                 Ansi.ansi()
                     .newline()
-                    .newline()
                     .bold()
-                    .a("Available goals:")
+                    .a(Ansi.Attribute.UNDERLINE)
+                    .a("Available goals")
                     .reset()
                     .newline());
 
             for (final GoalInfo goal : goals) {
-                final Ansi a = Ansi.ansi();
-                a.fgYellow()
+                final Ansi a = Ansi.ansi()
+                    .fgMagenta()
                     .a(goal.getName())
                     .reset()
-                    .a(" - ")
-                    .fgCyan();
+                    .a(" - ");
 
-                if (goal.getUsedProducts().isEmpty()) {
-                    a.a("No plugin registered a dependency");
-                } else {
-                    a.a("Depends on: ")
-                        .fgYellow()
-                        .a(goal.getUsedProducts().stream()
-                            .sorted()
-                            .collect(Collectors.joining(", ")));
-                }
-
-                a.reset();
+                a.a(buildDependsOn(moduleRunner, goal));
 
                 AnsiConsole.out().println(a);
             }
         }
+
+        AnsiConsole.out().println();
+    }
+
+    private static Ansi buildDependsOn(final ModuleRunner moduleRunner, final GoalInfo goal) {
+        final Ansi a = Ansi.ansi();
+
+        final Set<String> usedProducts = goal.getUsedProducts();
+        if (usedProducts.isEmpty()) {
+            a.a("No plugin registered a dependency");
+        } else {
+            a.a("Depends on: ");
+
+            for (final Iterator<String> it = usedProducts.iterator(); it.hasNext();) {
+                final String product = it.next();
+
+                final boolean isGoal = moduleRunner.describeGoals().stream()
+                    .anyMatch(s -> s.getName().equals(product));
+
+                if (isGoal) {
+                    a.fgMagenta();
+                } else {
+                    a.fgCyan();
+                }
+
+                a.a(product);
+
+                if (it.hasNext()) {
+                    a.fgDefault().a(", ");
+                }
+            }
+        }
+
+        return a;
     }
 
 }

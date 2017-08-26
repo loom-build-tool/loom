@@ -43,7 +43,8 @@ final class ExecutionReportPrinter {
         AnsiConsole.out().println(Ansi.ansi()
             .newline()
             .bold()
-            .a("Execution statistics (ordered by product completion time):")
+            .a(Ansi.Attribute.UNDERLINE)
+            .a("Execution statistics (ordered by product completion time)")
             .reset()
             .newline());
 
@@ -65,9 +66,9 @@ final class ExecutionReportPrinter {
         final Ansi a = Ansi.ansi();
 
         if (executionStatus.getType() == TaskType.GOAL) {
-            a.fgBrightYellow().a("Goal");
+            a.fgMagenta().a("Goal");
         } else {
-            a.fgBrightCyan().a("Task");
+            a.fgCyan().a("Task");
         }
 
         a.reset()

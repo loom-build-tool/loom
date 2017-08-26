@@ -16,6 +16,7 @@
 
 package builders.loom.cli;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,26 +87,23 @@ final class ProductReportPrinter {
             final List<ProductInfo> productInfos = aggProducts.get(pluginName);
 
             final Ansi ansi = Ansi.ansi()
-                .a("Products of ")
-                .bold()
-                .a(pluginName)
+                .bold().a("Products of plugin ")
+                .fgBrightBlue().a(pluginName)
                 .reset()
-                .a(":")
                 .newline();
 
             for (final ProductInfo productInfo : productInfos) {
+                final String outputInfo = productInfo.getOutputInfo()
+                    .replace(Paths.get("").toAbsolutePath().toString() + "/", "");
+
                 ansi
-                    .fgBrightYellow()
-                    .a("> ")
-                    .fgBrightGreen()
-                    .a(productInfo.getOutputInfo())
+                    .bold().a("| ").boldOff()
+                    .fgCyan().a(productInfo.getProductId()).fgDefault()
+                    .bold().a(" > ").boldOff()
+                    .fgGreen().a(outputInfo)
                     .reset()
-                    .fgBlack().bold()
-                    .format(" [%s]", productInfo.getProductId())
                     .newline();
             }
-
-            ansi.reset();
 
             if (iterator.hasNext()) {
                 ansi.newline();

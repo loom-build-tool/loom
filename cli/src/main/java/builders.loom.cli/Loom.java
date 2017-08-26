@@ -183,7 +183,9 @@ public final class Loom {
         }
 
         if (!cmd.hasOption("clean") && !cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
-            AnsiConsole.out().println(Ansi.ansi().fgBrightYellow()
+            AnsiConsole.out().println(Ansi.ansi()
+                .newline()
+                .fgBrightRed()
                 .a("No product requested!").reset().newline());
             printHelp(options);
             return false;
@@ -225,8 +227,8 @@ public final class Loom {
         printRuntimeConfiguration(runtimeConfiguration);
 
         if (noCacheMode) {
-            AnsiConsole.out().println(Ansi.ansi().fgBrightYellow().a("Running in no-cache mode")
-                .reset());
+            AnsiConsole.out().println(Ansi.ansi()
+                .fgBrightYellow().a("Running in no-cache mode").reset());
         }
 
         final ProgressMonitor progressMonitor = new ConsoleProgressMonitor();
@@ -271,8 +273,7 @@ public final class Loom {
     }
 
     private static void printRuntimeConfiguration(final RuntimeConfigurationImpl rtConfig) {
-        final Ansi a = Ansi.ansi()
-            .a("Initialized runtime configuration");
+        final Ansi a = Ansi.ansi().a("Initialized runtime configuration");
 
         if (rtConfig.getVersion() != null) {
             a.a(' ')

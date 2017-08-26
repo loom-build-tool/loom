@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
@@ -133,7 +134,7 @@ public class SpotBugsTask extends AbstractModuleTask {
 
         final String fileName = path.getFileName().toString();
 
-        if ("module-info.class".equals(fileName)) {
+        if (LoomPaths.MODULE_INFO_CLASS.equals(fileName)) {
             // remove as soon as SpotBugs supports module-info.class
             return false;
         }

@@ -26,6 +26,9 @@ public final class LoomPaths {
     public static final Path SRC_TEST = Paths.get("src", "test", "java");
     public static final Path RES_TEST = Paths.get("src", "test", "resources");
 
+    public static final String MODULE_INFO_JAVA = "module-info.java";
+    public static final String MODULE_INFO_CLASS = "module-info.class";
+
     private static final Path MODULES_DIR = Paths.get("modules");
     private static final Path LOOM_DIR = Paths.get(".loom");
     private static final Path BUILD_DIR = Paths.get("build");

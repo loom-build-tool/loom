@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
@@ -61,11 +62,9 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("jar"))
             .resolve(String.format("%s.jar", getBuildContext().getModuleName()));
 
-        // TODO cleanup
-        // TODO move module-info.class related stuff to LoomPaths
         final Optional<Path> modulesInfoClassFileOpt = compilationProduct
             .map(CompilationProduct::getClassesDir)
-            .map(c -> c.resolve("module-info.class"))
+            .map(c -> c.resolve(LoomPaths.MODULE_INFO_CLASS))
             .filter(c -> Files.exists(c));
 
         final String automaticModuleName = modulesInfoClassFileOpt.isPresent() ? null

@@ -44,6 +44,7 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.ReportProduct;
@@ -130,7 +131,7 @@ public class CheckstyleTask extends AbstractModuleTask {
 
         // Checkstyle doesn't support module-info.java, so skip it
         return sourceTree.get().getSrcFiles().stream()
-            .filter(f -> !f.getFileName().toString().equals("module-info.java"))
+            .filter(f -> !f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .map(Path::toFile)
             .collect(Collectors.toList());
     }

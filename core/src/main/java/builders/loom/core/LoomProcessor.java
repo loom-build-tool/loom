@@ -179,10 +179,10 @@ public class LoomProcessor {
 
     private Optional<String> readModuleNameFromModuleInfo(final Path baseDir) {
         final Path moduleInfoFile = baseDir.resolve(
-            LoomPaths.SRC_MAIN.resolve("module-info.java"));
+            LoomPaths.SRC_MAIN.resolve(LoomPaths.MODULE_INFO_JAVA));
 
         final Path testModuleInfoFile = baseDir.resolve(
-            LoomPaths.SRC_TEST.resolve("module-info.java"));
+            LoomPaths.SRC_TEST.resolve(LoomPaths.MODULE_INFO_JAVA));
 
         if (Files.exists(testModuleInfoFile)) {
             if (Files.exists(moduleInfoFile)) {

@@ -133,7 +133,7 @@ public class JavaCompileTask extends AbstractModuleTask {
             .filter(v -> !JavaVersion.current().equals(v));
 
         final Optional<Path> moduleInfoOpt = srcFiles.stream()
-            .filter(f -> f.getFileName().toString().equals("module-info.java"))
+            .filter(f -> f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .findFirst();
 
         // Handle these cases:

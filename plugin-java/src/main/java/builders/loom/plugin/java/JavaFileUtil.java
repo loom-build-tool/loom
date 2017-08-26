@@ -25,6 +25,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import builders.loom.api.LoomPaths;
+
 public final class JavaFileUtil {
 
     private JavaFileUtil() {
@@ -69,7 +71,7 @@ public final class JavaFileUtil {
             throws IOException {
 
             // module-info.class was copied separately
-            if (file.getFileName().toString().equals("module-info.class")) {
+            if (file.getFileName().toString().equals(LoomPaths.MODULE_INFO_CLASS)) {
                 return FileVisitResult.CONTINUE;
             }
 

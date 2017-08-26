@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -234,6 +235,8 @@ public class LoomProcessor {
             Runtime.version().toString(),
             System.getProperty("java.vendor"),
             Runtime.getRuntime().availableProcessors());
+
+        LOG.debug("Used locale: {}", Locale.getDefault());
     }
 
     public void logMemoryUsage() {

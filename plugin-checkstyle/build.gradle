@@ -5,6 +5,7 @@ archivesBaseName = 'loom-plugin-checkstyle'
 configurations {
     all*.exclude module: 'commons-cli'
     all*.exclude module: 'commons-logging'
+    runtime.exclude module: 'slf4j-api'
 }
 
 dependencies {

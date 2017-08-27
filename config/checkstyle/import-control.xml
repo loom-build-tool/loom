@@ -30,6 +30,10 @@
         <allow pkg="org.apache.commons.cli"/>
     </subpackage>
 
+    <subpackage name="log">
+        <allow pkg="org.fusesource.jansi"/>
+    </subpackage>
+
     <subpackage name="core">
         <allow pkg="org.yaml.snakeyaml"/>
     </subpackage>

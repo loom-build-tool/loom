@@ -4,6 +4,7 @@ archivesBaseName = 'loom-cli'
 
 dependencies {
     compile project(':core')
+    compile project(':log')
     compile('commons-cli:commons-cli:1.4')
     compile('org.fusesource.jansi:jansi:1.14')
 }

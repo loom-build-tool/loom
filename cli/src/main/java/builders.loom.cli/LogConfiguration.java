@@ -21,8 +21,7 @@ import java.nio.file.Path;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import builders.loom.cli.log.LoomLoggerFactory;
-import builders.loom.cli.log.StdOut2SLF4J;
+import builders.loom.log.LoomLoggerFactory;
 
 final class LogConfiguration {
 

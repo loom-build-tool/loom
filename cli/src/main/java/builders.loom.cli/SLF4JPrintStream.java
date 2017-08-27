@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.cli.log;
+package builders.loom.cli;
 
 import java.io.IOException;
 import java.io.OutputStream;

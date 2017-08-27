@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.cli.log;
+package builders.loom.log;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,8 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import builders.loom.core.misc.ThreadFactoryBuilder;
 
 public class DiskLogAppender implements LogAppender {
 
@@ -57,11 +55,12 @@ public class DiskLogAppender implements LogAppender {
             throw new UncheckedIOException(e);
         }
 
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-            .withDaemon(true)
-            .withNameFormat("DiskLogAppender")
-            .withPriority(Thread.MIN_PRIORITY)
-            .build();
+        final ThreadFactory threadFactory = r -> {
+            final Thread t = new Thread(r, "DiskLogAppender");
+            t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        };
         executorService = Executors.newSingleThreadExecutor(threadFactory);
         executorService.submit(new LogWriter());
     }

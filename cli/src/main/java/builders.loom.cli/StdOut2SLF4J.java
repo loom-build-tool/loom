@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package builders.loom.cli.log;
+package builders.loom.cli;
 
 import java.io.PrintStream;
 
 @SuppressWarnings("checkstyle:regexpmultiline")
-public final class StdOut2SLF4J {
+final class StdOut2SLF4J {
 
     private static final PrintStream SYSTEM_OUT = System.out;
     private static final PrintStream SYSTEM_ERR = System.err;
@@ -30,7 +30,7 @@ public final class StdOut2SLF4J {
     private StdOut2SLF4J() {
     }
 
-    public static void install() {
+    static void install() {
         out = new PrintStream(new SLF4JPrintStream(false));
         System.setOut(out);
 
@@ -38,7 +38,7 @@ public final class StdOut2SLF4J {
         System.setErr(err);
     }
 
-    public static void uninstall() {
+    static void uninstall() {
         out.flush();
         err.flush();
 

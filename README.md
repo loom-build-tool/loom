@@ -1,24 +1,33 @@
-# Loom
+# Loom Build Tool
 
-What is Loom?
+Loom is a modern build tool for Java based projects.
+It focuses on simplicity, convention, ease of use and performance.
+It uses a very simple, declarative configuration (YAML) and
+convention over configuration to reduce the configuration to a bare minimum.
 
-- A modern build tool for Java projects
-- Very fast build execution
-- Very small footprint
-- Configured via YAML build script
-- Dependency management (Maven repository)
-
-What is Loom **not**?
-
-- A feature rich and versatile system like [Gradle](https://gradle.org) or [Maven](http://maven.apache.org)
 
 # Prerequisites
 
-- JDK 9
+Loom requires **Java 9** to build and run but it can build projects
+**targeting Java 6-9** through JDKs cross-compile functionality.
+
+Java 9 can be downloaded from [http://jdk.java.net/9/](http://jdk.java.net/9/).
+Currently the build `jdk-9+181` is used for Loom development.
 
 
-# Documentation
+# Use Loom in your project
 
-[Quickstart guide](https://github.com/osiegmar/loom/wiki/Quickstart)
+Change to your project directory and enter:
 
-See our [Wiki](https://github.com/osiegmar/loom/wiki) for more documentation.
+    curl -s https://loom.builders/installer.sh | sh
+
+After installation succeeded, run your first build by entering:
+
+    ./loom build
+
+This builds sources beneath `src/main/java/` without external dependencies.
+
+
+For more info, visit the
+[Loom website](https://loom.builders) and the
+[Loom documentation](https://loom-build-tool.readthedocs.io).

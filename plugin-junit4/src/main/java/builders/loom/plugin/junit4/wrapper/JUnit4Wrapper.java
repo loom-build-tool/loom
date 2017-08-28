@@ -20,8 +20,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.maven.plugin.surefire.report.LoomRunListener;
@@ -43,6 +46,8 @@ import org.junit.runner.notification.RunListener;
 
 import builders.loom.plugin.junit4.shared.TestResult;
 import builders.loom.plugin.junit4.util.JUnit4RunListener;
+import builders.loom.plugin.junit4.xml.pull.ReportEntryType;
+import builders.loom.plugin.junit4.xml.pull.TestMethodStats;
 
 /**
  * Wrapper gets injected into final classloader.
@@ -93,7 +98,7 @@ public class JUnit4Wrapper {
 	                                      new ConcurrentHashMap<String, Map<String, List<WrappedReportEntry>>>(), XSD );
 		        
 		        
-		        final org.apache.maven.surefire.report.RunListener reporter = new LoomRunListener(fooReporter, false, true);
+		        final LoomRunListener reporter = new LoomRunListener(fooReporter, false, true);
 		        // TODO startCapture
 		        final org.apache.maven.surefire.common.junit4.Notifier notifier = new org.apache.maven.surefire.common.junit4.Notifier(new JUnit4RunListener( reporter ), skipAfterFailureCount);
 		        final Result result = new Result();
@@ -103,7 +108,7 @@ public class JUnit4Wrapper {
 		        final List<Class<?>> testsToRun = testClasses;
 		        
 		        // TODO
-		//        final runResult runResult;
+		        final RunResult runResult;
 		        try {
 			//        notifier.fireTestRunStarted( testsToRun.allowEagerReading()
 			//                ? createTestsDescription( testsToRun )
@@ -114,17 +119,26 @@ public class JUnit4Wrapper {
 			        {
 			            executeTestSet( testToRun, reporter, notifier );
 			        }
+			        
+			        runResult = mergeTestHistoryResult(reporter);
 		        } finally {
 		            notifier.fireTestRunFinished( result );
 		            notifier.removeListeners();
 		        }
 		        
 		        System.out.println("Report dir: " + reportDir);
+		        
+		        System.out.println("completed:" + runResult.getCompletedCount());
+		        System.out.println("failures:" + runResult.getFailures());
+		        System.out.println("errors:" + runResult.getErrors());
+		        System.out.println("skipped:" + runResult.getSkipped());
+		        
 		        try {
 		        		Files.list(reportDir.toPath()).forEach(f -> System.out.println(" -> " + f));
 		        }catch(final IOException e) {
 		        }
 	}
+    
     
     static Description createTestsDescription( final Iterable<Class<?>> classes )
     {
@@ -227,6 +241,85 @@ public class JUnit4Wrapper {
         {
             notifier.removeListener( failureListener );
         }
+    }
+    
+    private RunResult mergeTestHistoryResult(final LoomRunListener listener)
+    {
+//        globalStats = new RunStatistics();
+        final TreeMap<String, List<TestMethodStats>> flakyTests = new TreeMap<String, List<TestMethodStats>>();
+        final TreeMap<String, List<TestMethodStats>> failedTests = new TreeMap<String, List<TestMethodStats>>();
+        final TreeMap<String, List<TestMethodStats>> errorTests = new TreeMap<String, List<TestMethodStats>>();
+
+        final Map<String, List<TestMethodStats>> mergedTestHistoryResult = new HashMap<String, List<TestMethodStats>>();
+        // Merge all the stats for tests from listeners
+//        for ( final LoomRunListener listener : listeners )
+        {
+            final List<TestMethodStats> testMethodStats = listener.getTestMethodStats();
+            for ( final TestMethodStats methodStats : testMethodStats )
+            {
+                List<TestMethodStats> currentMethodStats =
+                    mergedTestHistoryResult.get( methodStats.getTestClassMethodName() );
+                if ( currentMethodStats == null )
+                {
+                    currentMethodStats = new ArrayList<TestMethodStats>();
+                    currentMethodStats.add( methodStats );
+                    mergedTestHistoryResult.put( methodStats.getTestClassMethodName(), currentMethodStats );
+                }
+                else
+                {
+                    currentMethodStats.add( methodStats );
+                }
+            }
+        }
+
+        // Update globalStatistics by iterating through mergedTestHistoryResult
+        int completedCount = 0, skipped = 0;
+
+        for ( final Map.Entry<String, List<TestMethodStats>> entry : mergedTestHistoryResult.entrySet() )
+        {
+            final List<TestMethodStats> testMethodStats = entry.getValue();
+            final String testClassMethodName = entry.getKey();
+            completedCount++;
+
+            final List<ReportEntryType> resultTypes = new ArrayList<ReportEntryType>();
+            for ( final TestMethodStats methodStats : testMethodStats )
+            {
+                resultTypes.add( methodStats.getResultType() );
+            }
+
+            switch ( StatelessXmlReporter.getTestResultType( resultTypes, 10/*rerunFailingTestsCount*/ ) )
+            {
+                case success:
+                    // If there are multiple successful runs of the same test, count all of them
+                    int successCount = 0;
+                    for ( final ReportEntryType type : resultTypes )
+                    {
+                        if ( type == ReportEntryType.SUCCESS )
+                        {
+                            successCount++;
+                        }
+                    }
+                    completedCount += successCount - 1;
+                    break;
+                case skipped:
+                    skipped++;
+                    break;
+                case flake: // TODO remove when no rerun supported
+                    flakyTests.put( testClassMethodName, testMethodStats );
+                    break;
+                case failure:
+                    failedTests.put( testClassMethodName, testMethodStats );
+                    break;
+                case error:
+                    errorTests.put( testClassMethodName, testMethodStats );
+                    break;
+                default:
+                    throw new IllegalStateException( "Get unknown test result type" );
+            }
+        }
+
+        return new RunResult(completedCount, errorTests.size(), failedTests.size(), skipped);
+//        globalStats.set( completedCount, errorTests.size(), failedTests.size(), skipped, flakyTests.size() );
     }
     
     @SuppressWarnings("checkstyle:regexpmultiline")

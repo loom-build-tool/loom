@@ -255,7 +255,7 @@ public class StatelessXmlReporter {
      * @return the type of test result
      */
     // Use default visibility for testing
-    static TestResultType getTestResultType( final List<ReportEntryType> reportEntries, final int rerunFailingTestsCount  )
+    public static TestResultType getTestResultType( final List<ReportEntryType> reportEntries, final int rerunFailingTestsCount  )
     {
         if ( reportEntries == null || reportEntries.isEmpty() )
         {

@@ -2,12 +2,15 @@ package org.apache.maven.plugin.surefire.report;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.maven.surefire.report.ReportEntry;
 import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.TestSetReportEntry;
 
 import builders.loom.plugin.junit4.xml.pull.ReportEntryType;
+import builders.loom.plugin.junit4.xml.pull.TestMethodStats;
 
 public class LoomRunListener implements RunListener, ConsoleOutputReceiver {
 	
@@ -17,6 +20,7 @@ public class LoomRunListener implements RunListener, ConsoleOutputReceiver {
     private Utf8RecodingDeferredFileOutputStream testStdOut = initDeferred( "stdout" );
 
     private Utf8RecodingDeferredFileOutputStream testStdErr = initDeferred( "stderr" );
+	private final List<TestMethodStats> testMethodStats = new ArrayList<>();
 
     private Utf8RecodingDeferredFileOutputStream initDeferred( final String channel )
     {
@@ -27,6 +31,21 @@ public class LoomRunListener implements RunListener, ConsoleOutputReceiver {
             final boolean isPlainFormat) {
 		this.simpleXMLReporter = simpleXMLReporter;
 		detailsForThis = new TestSetStats( trimStackTrace, isPlainFormat );
+	}
+	
+    public void  addTestMethodStats()
+    {
+        for ( final WrappedReportEntry reportEntry : detailsForThis.getReportEntries() )
+        {
+            final TestMethodStats methodStats =
+                new TestMethodStats( reportEntry.getClassMethodName(), reportEntry.getReportEntryType(),
+                                     reportEntry.getStackTraceWriter() );
+            testMethodStats.add( methodStats );
+        }
+    }
+    
+    public List<TestMethodStats> getTestMethodStats() {
+		return testMethodStats;
 	}
 	 
 	@Override
@@ -42,7 +61,7 @@ public class LoomRunListener implements RunListener, ConsoleOutputReceiver {
 				throw new UncheckedIOException(e);
 			}
 
-//        addTestMethodStats();
+        addTestMethodStats();
         detailsForThis.reset();
         clearCapture();
 	}

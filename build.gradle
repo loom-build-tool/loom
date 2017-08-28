@@ -1,9 +1,14 @@
+plugins {
+    id "com.github.jk1.dependency-license-report" version "0.3.12" apply false
+}
+
 apply plugin: 'java'
 archivesBaseName = 'loom'
 
-allprojects {
+subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
+    apply plugin: 'com.github.jk1.dependency-license-report'
 //    apply plugin: 'findbugs'
 //    apply plugin: 'pmd'
 
@@ -29,6 +34,11 @@ allprojects {
 
     repositories {
         jcenter()
+    }
+
+    licenseReport {
+        renderer = new com.github.jk1.license.render.CsvReportRenderer()
+        configurations = ['runtime']
     }
 }
 

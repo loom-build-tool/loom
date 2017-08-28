@@ -1,4 +1,4 @@
-package org.apache.maven.surefire.common.junit4;
+package org.apache.maven.surefire.util;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -30,7 +30,7 @@ public final class ClassMethod
 
     private final String method;
 
-    public ClassMethod( String clazz, String method )
+    public ClassMethod( final String clazz, final String method )
     {
         this.clazz = clazz;
         this.method = method;

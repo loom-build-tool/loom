@@ -3,8 +3,6 @@ package org.apache.maven.surefire.report;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.apache.maven.surefire.util.SmartStackTraceParser;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file

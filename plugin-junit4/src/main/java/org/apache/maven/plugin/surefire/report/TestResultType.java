@@ -5,7 +5,6 @@ public enum TestResultType
 
     error(   "Errors: "   ),
     failure( "Failures: " ),
-    flake(   "Flakes: "   ),
     success( "Success: "  ),
     skipped( "Skipped: "  ),
     unknown( "Unknown: "  );

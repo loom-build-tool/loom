@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.ClassMethod;
-import org.apache.maven.surefire.util.TestSetFailedException;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 

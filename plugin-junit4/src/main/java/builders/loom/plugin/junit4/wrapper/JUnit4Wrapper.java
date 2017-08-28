@@ -34,14 +34,13 @@ import org.apache.maven.plugin.surefire.report.WrappedReportEntry;
 import org.apache.maven.surefire.common.junit4.JUnit4Reflector;
 import org.apache.maven.surefire.common.junit4.Notifier;
 import org.apache.maven.surefire.report.SimpleReportEntry;
-import org.apache.maven.surefire.util.TestSetFailedException;
+import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.junit.runner.Computer;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
 import org.junit.runner.Result;
 import org.junit.runner.Runner;
-import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
@@ -54,40 +53,40 @@ import builders.loom.plugin.junit4.xml.pull.TestMethodStats;
  * Wrapper gets injected into final classloader.
  */
 public class JUnit4Wrapper {
-		
+
 	// TODO
 	int skipAfterFailureCount = 10;
-	
-    private static final String XSD =
-            "https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd";
 
-    public TestResult run(final ClassLoader classLoader, final List<Class<?>> testClasses) {
+	private static final String XSD =
+			"https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd";
 
-        Thread.currentThread().setContextClassLoader(classLoader);
-        
-        final Computer computer = new Computer();
-        final JUnitCore jUnitCore = new JUnitCore();
-        jUnitCore.addListener(new RunListener() {
-            @Override
-            public void testFailure(final Failure failure) throws Exception {
-                log(failure.toString());
-            }
+	public TestResult run(final ClassLoader classLoader, final List<Class<?>> testClasses) {
 
-        });
-        final Result run = jUnitCore.run(computer, testClasses.toArray(new Class[]{}));
+		Thread.currentThread().setContextClassLoader(classLoader);
+
+		final Computer computer = new Computer();
+		final JUnitCore jUnitCore = new JUnitCore();
+		jUnitCore.addListener(new RunListener() {
+			@Override
+			public void testFailure(final Failure failure) throws Exception {
+				log(failure.toString());
+			}
+
+		});
+		final Result run = jUnitCore.run(computer, testClasses.toArray(new Class[]{}));
 
 
-        return new TestResult(
-            run.wasSuccessful(), run.getRunCount(), run.getFailureCount(), run.getIgnoreCount());
+		return new TestResult(
+				run.wasSuccessful(), run.getRunCount(), run.getFailureCount(), run.getIgnoreCount());
 
-    }
+	}
 
 	public RunResult mavenTestRun(final List<Class<?>> testClasses) {
-//		        final StatelessXmlReporter simpleXMLReporter = new StatelessXmlReporter(
-//		        		reportsDirectory, reportNameSuffix, trimStackTrace, rerunFailingTestsCount, testClassMethodRunHistoryMap, xsdSchemaLocation)
-				// see Junit4Provider (maven)
-		
-		
+		//		        final StatelessXmlReporter simpleXMLReporter = new StatelessXmlReporter(
+		//		        		reportsDirectory, reportNameSuffix, trimStackTrace, rerunFailingTestsCount, testClassMethodRunHistoryMap, xsdSchemaLocation)
+		// see Junit4Provider (maven)
+
+
 		final Path reportDir = Paths.get("reports");
 		try {
 			if (!Files.isDirectory(reportDir)) {
@@ -97,238 +96,229 @@ public class JUnit4Wrapper {
 			throw new UncheckedIOException(e);
 		}
 		final StatelessXmlReporter fooReporter =
-	            new StatelessXmlReporter( reportDir.toFile(), null, false, 0,
-	                                      new ConcurrentHashMap<String, Map<String, List<WrappedReportEntry>>>(), XSD );
-		        
-		        
-		        final LoomRunListener reporter = new LoomRunListener(fooReporter, false, true);
-		        // TODO startCapture
-		        final org.apache.maven.surefire.common.junit4.Notifier notifier = new org.apache.maven.surefire.common.junit4.Notifier(new JUnit4RunListener( reporter ), skipAfterFailureCount);
-		        final Result result = new Result();
-		        notifier.addListener(result.createListener());
-		        
-		        // TODO check setTestsToRun
-		        final List<Class<?>> testsToRun = testClasses;
-		        
-		        // TODO
-		        final RunResult runResult;
-		        try {
+				new StatelessXmlReporter( reportDir.toFile(), null, false, 0,
+						new ConcurrentHashMap<String, Map<String, List<WrappedReportEntry>>>(), XSD );
+
+
+		final LoomRunListener reporter = new LoomRunListener(fooReporter, false, true);
+		// TODO startCapture
+		final org.apache.maven.surefire.common.junit4.Notifier notifier = new org.apache.maven.surefire.common.junit4.Notifier(new JUnit4RunListener( reporter ), skipAfterFailureCount);
+		final Result result = new Result();
+		notifier.addListener(result.createListener());
+
+		// TODO check setTestsToRun
+		final List<Class<?>> testsToRun = testClasses;
+
+		// TODO
+		final RunResult runResult;
+		try {
 			//        notifier.fireTestRunStarted( testsToRun.allowEagerReading()
 			//                ? createTestsDescription( testsToRun )
 			//                : createDescription( UNDETERMINED_TESTS_DESCRIPTION ) );
-			        notifier.fireTestRunStarted(createTestsDescription(testClasses));
-			        
-			        for ( final Class<?> testToRun : testsToRun )
-			        {
-			            executeTestSet( testToRun, reporter, notifier );
-			        }
-			        
-			        runResult = mergeTestHistoryResult(reporter);
-		        } finally {
-		            notifier.fireTestRunFinished( result );
-		            notifier.removeListeners();
-		        }
-		        
-		        System.out.println("Report dir: " + reportDir);
-		        
-		        System.out.println("completed:" + runResult.getCompletedCount());
-		        System.out.println("failures:" + runResult.getFailures());
-		        System.out.println("errors:" + runResult.getErrors());
-		        System.out.println("skipped:" + runResult.getSkipped());
-		        
-		        try {
-		        		Files.list(reportDir).forEach(f -> System.out.println(" -> " + f));
-		        }catch(final IOException e) {
-		        }
-		        return runResult;
+			notifier.fireTestRunStarted(createTestsDescription(testClasses));
+
+			for ( final Class<?> testToRun : testsToRun )
+			{
+				executeTestSet( testToRun, reporter, notifier );
+			}
+
+			runResult = mergeTestHistoryResult(reporter);
+		} finally {
+			notifier.fireTestRunFinished( result );
+			//		            notifier.removeListeners();
+		}
+
+		System.out.println("Report dir: " + reportDir);
+
+		System.out.println("completed:" + runResult.getCompletedCount());
+		System.out.println("failures:" + runResult.getFailures());
+		System.out.println("errors:" + runResult.getErrors());
+		System.out.println("skipped:" + runResult.getSkipped());
+
+		try {
+			Files.list(reportDir).forEach(f -> System.out.println(" -> " + f));
+		}catch(final IOException e) {
+		}
+		return runResult;
 	}
-    
-    
-    static Description createTestsDescription( final Iterable<Class<?>> classes )
-    {
-        // "null" string rather than null; otherwise NPE in junit:4.0
-        final Description description = JUnit4Reflector.createDescription( "null" );
-        for ( final Class<?> clazz : classes )
-        {
-            description.addChild( JUnit4Reflector.createDescription( clazz.getName() ) );
-        }
-        return description;
-    }
 
-    private void executeTestSet( final Class<?> clazz, final org.apache.maven.surefire.report.RunListener reporter, final Notifier notifier )
-    {
-        final SimpleReportEntry report = new SimpleReportEntry( getClass().getName(), clazz.getName(), org.apache.maven.surefire.util.internal.ObjectUtils.systemProps() );
-        reporter.testSetStarting( report );
-        try
-        {
-            executeWithRerun( clazz, notifier );
-        }
-        catch ( final Throwable e )
-        {
-        	// TODO remove
-        	e.printStackTrace();
-//            if ( isFailFast() && e instanceof StoppedByUserException )
-//            {
-//                final String reason = e.getClass().getName();
-//                final Description skippedTest = createDescription( clazz.getName(), createIgnored( reason ) );
-//                notifier.fireTestIgnored( skippedTest );
-//            }
-//            else
-            {
-                final String reportName = report.getName();
-                final String reportSourceName = report.getSourceName();
-                final org.apache.maven.surefire.report.PojoStackTraceWriter stackWriter = new org.apache.maven.surefire.report.PojoStackTraceWriter( reportSourceName, reportName, e );
-                reporter.testError( SimpleReportEntry.withException( reportSourceName, reportName, stackWriter ) );
-            }
-        }
-        finally
-        {
-            reporter.testSetCompleted( report );
-        }
-    }
-    
-    private static void execute( final Class<?> testClass, final Notifier notifier, final Filter filter )
-    {
-        final int classModifiers = testClass.getModifiers();
-//        if ( !isAbstract( classModifiers ) && !isInterface( classModifiers ) )
-        {
-            Request request = Request.aClass( testClass );
-            if ( filter != null )
-            {
-                request = request.filterWith( filter );
-            }
-            final Runner runner = request.getRunner();
-//            if ( countTestsInRunner( runner.getDescription() ) != 0 )
-            {
-                runner.run( notifier );
-            }
-        }
-    }
 
-    private void executeWithRerun( final Class<?> clazz, final Notifier notifier )
-        throws TestSetFailedException
-    {
-        final org.apache.maven.surefire.common.junit4.JUnitTestFailureListener failureListener = new org.apache.maven.surefire.common.junit4.JUnitTestFailureListener();
-        notifier.addListener( failureListener );
-//        final boolean hasMethodFilter = testResolver != null && testResolver.hasMethodPatterns();
+	static Description createTestsDescription( final Iterable<Class<?>> classes )
+	{
+		// "null" string rather than null; otherwise NPE in junit:4.0
+		final Description description = JUnit4Reflector.createDescription( "null" );
+		for ( final Class<?> clazz : classes )
+		{
+			description.addChild( JUnit4Reflector.createDescription( clazz.getName() ) );
+		}
+		return description;
+	}
 
-        try
-        {
-            try
-            {
-//                notifier.asFailFast( isFailFast() );
-//                execute( clazz, notifier, hasMethodFilter ? createMethodFilter() : null );
-                execute( clazz, notifier, null/*no filter*/ );
-            }
-            finally
-            {
-                notifier.asFailFast( false );
-            }
+	private void executeTestSet( final Class<?> clazz, final org.apache.maven.surefire.report.RunListener reporter, final Notifier notifier )
+	{
+		final SimpleReportEntry report = new SimpleReportEntry( getClass().getName(), clazz.getName(), org.apache.maven.surefire.util.internal.ObjectUtils.systemProps() );
+		reporter.testSetStarting( report );
+		try
+		{
+			executeWithRerun( clazz, notifier );
+		}
+		catch ( final Throwable e )
+		{
+			// TODO remove
+			e.printStackTrace();
+			//            if ( isFailFast() && e instanceof StoppedByUserException )
+			//            {
+			//                final String reason = e.getClass().getName();
+			//                final Description skippedTest = createDescription( clazz.getName(), createIgnored( reason ) );
+			//                notifier.fireTestIgnored( skippedTest );
+			//            }
+			//            else
+			{
+				final String reportName = report.getName();
+				final String reportSourceName = report.getSourceName();
+				final org.apache.maven.surefire.report.PojoStackTraceWriter stackWriter = new org.apache.maven.surefire.report.PojoStackTraceWriter( reportSourceName, reportName, e );
+				reporter.testError( SimpleReportEntry.withException( reportSourceName, reportName, stackWriter ) );
+			}
+		}
+		finally
+		{
+			reporter.testSetCompleted( report );
+		}
+	}
 
-            // Rerun failing tests if rerunFailingTestsCount is larger than 0
-//            if ( isRerunFailingTests() )
-//            {
-//                final Notifier rerunNotifier = pureNotifier();
-//                notifier.copyListenersTo( rerunNotifier );
-//                for ( int i = 0; i < rerunFailingTestsCount && !failureListener.getAllFailures().isEmpty(); i++ )
-//                {
-//                    final Set<ClassMethod> failedTests = generateFailingTests( failureListener.getAllFailures() );
-//                    failureListener.reset();
-//                    if ( !failedTests.isEmpty() )
-//                    {
-//                        executeFailedMethod( rerunNotifier, failedTests );
-//                    }
-//                }
-//            }
-        }
-        finally
-        {
-            notifier.removeListener( failureListener );
-        }
-    }
-    
-    private RunResult mergeTestHistoryResult(final LoomRunListener listener)
-    {
-//        globalStats = new RunStatistics();
-        final TreeMap<String, List<TestMethodStats>> flakyTests = new TreeMap<String, List<TestMethodStats>>();
-        final TreeMap<String, List<TestMethodStats>> failedTests = new TreeMap<String, List<TestMethodStats>>();
-        final TreeMap<String, List<TestMethodStats>> errorTests = new TreeMap<String, List<TestMethodStats>>();
+	private static void execute( final Class<?> testClass, final Notifier notifier)
+	{
+		final int classModifiers = testClass.getModifiers();
+		//        if ( !isAbstract( classModifiers ) && !isInterface( classModifiers ) )
+		{
+			final Request request = Request.aClass( testClass );
+			final Runner runner = request.getRunner();
+			//            if ( countTestsInRunner( runner.getDescription() ) != 0 )
+			{
+				runner.run( notifier );
+			}
+		}
+	}
 
-        final Map<String, List<TestMethodStats>> mergedTestHistoryResult = new HashMap<String, List<TestMethodStats>>();
-        // Merge all the stats for tests from listeners
-//        for ( final LoomRunListener listener : listeners )
-        {
-            final List<TestMethodStats> testMethodStats = listener.getTestMethodStats();
-            for ( final TestMethodStats methodStats : testMethodStats )
-            {
-                List<TestMethodStats> currentMethodStats =
-                    mergedTestHistoryResult.get( methodStats.getTestClassMethodName() );
-                if ( currentMethodStats == null )
-                {
-                    currentMethodStats = new ArrayList<TestMethodStats>();
-                    currentMethodStats.add( methodStats );
-                    mergedTestHistoryResult.put( methodStats.getTestClassMethodName(), currentMethodStats );
-                }
-                else
-                {
-                    currentMethodStats.add( methodStats );
-                }
-            }
-        }
+	private void executeWithRerun( final Class<?> clazz, final Notifier notifier )
+			throws TestSetFailedException
+	{
+		final org.apache.maven.surefire.common.junit4.JUnitTestFailureListener failureListener = new org.apache.maven.surefire.common.junit4.JUnitTestFailureListener();
+		notifier.addListener( failureListener );
+		//        final boolean hasMethodFilter = testResolver != null && testResolver.hasMethodPatterns();
 
-        // Update globalStatistics by iterating through mergedTestHistoryResult
-        int completedCount = 0, skipped = 0;
+		try
+		{
+			try
+			{
+				//                notifier.asFailFast( isFailFast() );
+				//                execute( clazz, notifier, hasMethodFilter ? createMethodFilter() : null );
+				execute( clazz, notifier);
+			}
+			finally
+			{
+			}
 
-        for ( final Map.Entry<String, List<TestMethodStats>> entry : mergedTestHistoryResult.entrySet() )
-        {
-            final List<TestMethodStats> testMethodStats = entry.getValue();
-            final String testClassMethodName = entry.getKey();
-            completedCount++;
+			// Rerun failing tests if rerunFailingTestsCount is larger than 0
+			//            if ( isRerunFailingTests() )
+			//            {
+			//                final Notifier rerunNotifier = pureNotifier();
+			//                notifier.copyListenersTo( rerunNotifier );
+			//                for ( int i = 0; i < rerunFailingTestsCount && !failureListener.getAllFailures().isEmpty(); i++ )
+			//                {
+			//                    final Set<ClassMethod> failedTests = generateFailingTests( failureListener.getAllFailures() );
+			//                    failureListener.reset();
+			//                    if ( !failedTests.isEmpty() )
+			//                    {
+			//                        executeFailedMethod( rerunNotifier, failedTests );
+			//                    }
+			//                }
+			//            }
+		}
+		finally
+		{
+			notifier.removeListener( failureListener );
+		}
+	}
 
-            final List<ReportEntryType> resultTypes = new ArrayList<ReportEntryType>();
-            for ( final TestMethodStats methodStats : testMethodStats )
-            {
-                resultTypes.add( methodStats.getResultType() );
-            }
+	private RunResult mergeTestHistoryResult(final LoomRunListener listener)
+	{
+		//        globalStats = new RunStatistics();
+		final TreeMap<String, List<TestMethodStats>> failedTests = new TreeMap<String, List<TestMethodStats>>();
+		final TreeMap<String, List<TestMethodStats>> errorTests = new TreeMap<String, List<TestMethodStats>>();
 
-            switch ( StatelessXmlReporter.getTestResultType( resultTypes, 10/*rerunFailingTestsCount*/ ) )
-            {
-                case success:
-                    // If there are multiple successful runs of the same test, count all of them
-                    int successCount = 0;
-                    for ( final ReportEntryType type : resultTypes )
-                    {
-                        if ( type == ReportEntryType.SUCCESS )
-                        {
-                            successCount++;
-                        }
-                    }
-                    completedCount += successCount - 1;
-                    break;
-                case skipped:
-                    skipped++;
-                    break;
-                case flake: // TODO remove when no rerun supported
-                    flakyTests.put( testClassMethodName, testMethodStats );
-                    break;
-                case failure:
-                    failedTests.put( testClassMethodName, testMethodStats );
-                    break;
-                case error:
-                    errorTests.put( testClassMethodName, testMethodStats );
-                    break;
-                default:
-                    throw new IllegalStateException( "Get unknown test result type" );
-            }
-        }
+		final Map<String, List<TestMethodStats>> mergedTestHistoryResult = new HashMap<String, List<TestMethodStats>>();
+		// Merge all the stats for tests from listeners
+		//        for ( final LoomRunListener listener : listeners )
+		{
+			final List<TestMethodStats> testMethodStats = listener.getTestMethodStats();
+			for ( final TestMethodStats methodStats : testMethodStats )
+			{
+				List<TestMethodStats> currentMethodStats =
+						mergedTestHistoryResult.get( methodStats.getTestClassMethodName() );
+				if ( currentMethodStats == null )
+				{
+					currentMethodStats = new ArrayList<TestMethodStats>();
+					currentMethodStats.add( methodStats );
+					mergedTestHistoryResult.put( methodStats.getTestClassMethodName(), currentMethodStats );
+				}
+				else
+				{
+					currentMethodStats.add( methodStats );
+				}
+			}
+		}
 
-        return new RunResult(completedCount, errorTests.size(), failedTests.size(), skipped);
-//        globalStats.set( completedCount, errorTests.size(), failedTests.size(), skipped, flakyTests.size() );
-    }
-    
-    @SuppressWarnings("checkstyle:regexpmultiline")
-    private static void log(final String message) {
-        System.err.println(message);
-    }
+		// Update globalStatistics by iterating through mergedTestHistoryResult
+		int completedCount = 0, skipped = 0;
+
+		for ( final Map.Entry<String, List<TestMethodStats>> entry : mergedTestHistoryResult.entrySet() )
+		{
+			final List<TestMethodStats> testMethodStats = entry.getValue();
+			final String testClassMethodName = entry.getKey();
+			completedCount++;
+
+			final List<ReportEntryType> resultTypes = new ArrayList<ReportEntryType>();
+			for ( final TestMethodStats methodStats : testMethodStats )
+			{
+				resultTypes.add( methodStats.getResultType() );
+			}
+
+			switch ( StatelessXmlReporter.getTestResultType( resultTypes ) )
+			{
+			case success:
+				// If there are multiple successful runs of the same test, count all of them
+				int successCount = 0;
+				for ( final ReportEntryType type : resultTypes )
+				{
+					if ( type == ReportEntryType.SUCCESS )
+					{
+						successCount++;
+					}
+				}
+				completedCount += successCount - 1;
+				break;
+			case skipped:
+				skipped++;
+				break;
+			case failure:
+				failedTests.put( testClassMethodName, testMethodStats );
+				break;
+			case error:
+				errorTests.put( testClassMethodName, testMethodStats );
+				break;
+			default:
+				throw new IllegalStateException( "Get unknown test result type" );
+			}
+		}
+
+		return new RunResult(completedCount, errorTests.size(), failedTests.size(), skipped);
+		//        globalStats.set( completedCount, errorTests.size(), failedTests.size(), skipped, flakyTests.size() );
+	}
+
+	@SuppressWarnings("checkstyle:regexpmultiline")
+	private static void log(final String message) {
+		System.err.println(message);
+	}
 
 }

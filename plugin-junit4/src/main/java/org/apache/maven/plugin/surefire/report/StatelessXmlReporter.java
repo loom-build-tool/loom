@@ -94,8 +94,6 @@ public class StatelessXmlReporter {
 
 	private final boolean trimStackTrace;
 
-	private final int rerunFailingTestsCount;
-
 	private final String xsdSchemaLocation;
 
 	// Map between test class name and a map between test method name
@@ -108,7 +106,6 @@ public class StatelessXmlReporter {
 		this.reportsDirectory = reportsDirectory;
 		this.reportNameSuffix = reportNameSuffix;
 		this.trimStackTrace = trimStackTrace;
-		this.rerunFailingTestsCount = rerunFailingTestsCount;
 		this.testClassMethodRunHistoryMap = testClassMethodRunHistoryMap;
 		this.xsdSchemaLocation = xsdSchemaLocation;
 	}
@@ -141,79 +138,17 @@ public class StatelessXmlReporter {
 				}
 
 				if (!methodEntryList.isEmpty()) {
-					if (rerunFailingTestsCount > 0) {
-						final TestResultType resultType = getTestResultType(methodEntryList);
-						switch (resultType) {
-						case success:
-							for (final WrappedReportEntry methodEntry : methodEntryList) {
-								if (methodEntry.getReportEntryType() == ReportEntryType.SUCCESS) {
-									startTestElement(ppw, methodEntry, reportNameSuffix,
-											methodEntryList.get(0).elapsedTimeAsString());
-									ppw.endElement();
-								}
-							}
-							break;
-						case error:
-						case failure:
-							// When rerunFailingTestsCount is set to larger than 0
-							startTestElement(ppw, methodEntryList.get(0), reportNameSuffix,
-									methodEntryList.get(0).elapsedTimeAsString());
-							boolean firstRun = true;
-							for (final WrappedReportEntry singleRunEntry : methodEntryList) {
-								if (firstRun) {
-									firstRun = false;
-									getTestProblems(fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-											singleRunEntry.getReportEntryType().getXmlTag(), false);
-									createOutErrElements(fw, ppw, singleRunEntry, outputStream);
-								} else {
-									getTestProblems(fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-											singleRunEntry.getReportEntryType().getRerunXmlTag(), true);
-								}
-							}
-							ppw.endElement();
-							break;
-						case flake:
-							String runtime = "";
-							// Get the run time of the first successful run
-							for (final WrappedReportEntry singleRunEntry : methodEntryList) {
-								if (singleRunEntry.getReportEntryType() == ReportEntryType.SUCCESS) {
-									runtime = singleRunEntry.elapsedTimeAsString();
-									break;
-								}
-							}
-							startTestElement(ppw, methodEntryList.get(0), reportNameSuffix, runtime);
-							for (final WrappedReportEntry singleRunEntry : methodEntryList) {
-								if (singleRunEntry.getReportEntryType() != ReportEntryType.SUCCESS) {
-									getTestProblems(fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-											singleRunEntry.getReportEntryType().getFlakyXmlTag(), true);
-								}
-							}
-							ppw.endElement();
-
-							break;
-						case skipped:
-							startTestElement(ppw, methodEntryList.get(0), reportNameSuffix,
-									methodEntryList.get(0).elapsedTimeAsString());
-							getTestProblems(fw, ppw, methodEntryList.get(0), trimStackTrace, outputStream,
-									methodEntryList.get(0).getReportEntryType().getXmlTag(), false);
-							ppw.endElement();
-							break;
-						default:
-							throw new IllegalStateException("Get unknown test result type");
+					// rerunFailingTestsCount is smaller than 1, but for some reasons a test could
+					// be run
+					// for more than once
+					for (final WrappedReportEntry methodEntry : methodEntryList) {
+						startTestElement(ppw, methodEntry, reportNameSuffix, methodEntry.elapsedTimeAsString());
+						if (methodEntry.getReportEntryType() != ReportEntryType.SUCCESS) {
+							getTestProblems(fw, ppw, methodEntry, trimStackTrace, outputStream,
+									methodEntry.getReportEntryType().getXmlTag(), false);
+							createOutErrElements(fw, ppw, methodEntry, outputStream);
 						}
-					} else {
-						// rerunFailingTestsCount is smaller than 1, but for some reasons a test could
-						// be run
-						// for more than once
-						for (final WrappedReportEntry methodEntry : methodEntryList) {
-							startTestElement(ppw, methodEntry, reportNameSuffix, methodEntry.elapsedTimeAsString());
-							if (methodEntry.getReportEntryType() != ReportEntryType.SUCCESS) {
-								getTestProblems(fw, ppw, methodEntry, trimStackTrace, outputStream,
-										methodEntry.getReportEntryType().getXmlTag(), false);
-								createOutErrElements(fw, ppw, methodEntry, outputStream);
-							}
-							ppw.endElement();
-						}
+						ppw.endElement();
 					}
 				}
 			}
@@ -230,21 +165,6 @@ public class StatelessXmlReporter {
 		testClassMethodRunHistoryMap.clear();
 	}
 
-	/**
-	 * Get the result of a test from a list of its runs in WrappedReportEntry
-	 *
-	 * @param methodEntryList
-	 *            the list of runs for a given test
-	 * @return the TestResultType for the given test
-	 */
-	private TestResultType getTestResultType(final List<WrappedReportEntry> methodEntryList) {
-		final List<ReportEntryType> testResultTypeList = new ArrayList<ReportEntryType>();
-		for (final WrappedReportEntry singleRunEntry : methodEntryList) {
-			testResultTypeList.add(singleRunEntry.getReportEntryType());
-		}
-
-		return getTestResultType(testResultTypeList, rerunFailingTestsCount);
-	}
 
 	/**
      * Get the result of a test based on all its runs. If it has success and failures/errors, then it is a flake;
@@ -255,7 +175,7 @@ public class StatelessXmlReporter {
      * @return the type of test result
      */
     // Use default visibility for testing
-    public static TestResultType getTestResultType( final List<ReportEntryType> reportEntries, final int rerunFailingTestsCount  )
+    public static TestResultType getTestResultType( final List<ReportEntryType> reportEntries)
     {
         if ( reportEntries == null || reportEntries.isEmpty() )
         {
@@ -281,20 +201,13 @@ public class StatelessXmlReporter {
 
         if ( seenFailure || seenError )
         {
-            if ( seenSuccess && rerunFailingTestsCount > 0 )
+            if ( seenError )
             {
-                return TestResultType.flake;
+                return TestResultType.error;
             }
             else
             {
-                if ( seenError )
-                {
-                    return TestResultType.error;
-                }
-                else
-                {
-                    return TestResultType.failure;
-                }
+                return TestResultType.failure;
             }
         }
         else if ( seenSuccess )

@@ -31,7 +31,7 @@ import org.apache.maven.surefire.report.ReportEntry;
 import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.SimpleReportEntry;
 import org.apache.maven.surefire.report.StackTraceWriter;
-import org.apache.maven.surefire.util.TestSetFailedException;
+import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.internal.TestClassMethodNameUtils;
 import org.junit.runner.Description;
 import org.junit.runner.Result;

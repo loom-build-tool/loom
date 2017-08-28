@@ -44,6 +44,10 @@ subprojects {
 
 task zip(type: Zip) {
     into(archivesBaseName + "-" + version) {
+        from 'LICENSE'
+        into('licenses') {
+            from 'licenses'
+        }
         into("lib") {
             from project(':cli').configurations.runtime.allArtifacts.files
             from project(':cli').configurations.runtime

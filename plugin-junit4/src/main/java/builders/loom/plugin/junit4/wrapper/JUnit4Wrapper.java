@@ -16,10 +16,11 @@
 
 package builders.loom.plugin.junit4.wrapper;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,20 +82,22 @@ public class JUnit4Wrapper {
 
     }
 
-	public void mavenTestRun(final List<Class<?>> testClasses) {
+	public RunResult mavenTestRun(final List<Class<?>> testClasses) {
 //		        final StatelessXmlReporter simpleXMLReporter = new StatelessXmlReporter(
 //		        		reportsDirectory, reportNameSuffix, trimStackTrace, rerunFailingTestsCount, testClassMethodRunHistoryMap, xsdSchemaLocation)
 				// see Junit4Provider (maven)
 		
 		
-		final File reportDir;
+		final Path reportDir = Paths.get("reports");
 		try {
-			reportDir = Files.createTempDirectory("report").toFile();
+			if (!Files.isDirectory(reportDir)) {
+				Files.createDirectory(reportDir); // FIXME
+			}
 		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 		final StatelessXmlReporter fooReporter =
-	            new StatelessXmlReporter( reportDir, null, false, 0,
+	            new StatelessXmlReporter( reportDir.toFile(), null, false, 0,
 	                                      new ConcurrentHashMap<String, Map<String, List<WrappedReportEntry>>>(), XSD );
 		        
 		        
@@ -134,9 +137,10 @@ public class JUnit4Wrapper {
 		        System.out.println("skipped:" + runResult.getSkipped());
 		        
 		        try {
-		        		Files.list(reportDir.toPath()).forEach(f -> System.out.println(" -> " + f));
+		        		Files.list(reportDir).forEach(f -> System.out.println(" -> " + f));
 		        }catch(final IOException e) {
 		        }
+		        return runResult;
 	}
     
     

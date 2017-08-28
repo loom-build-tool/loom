@@ -1,19 +1,53 @@
 package builders.loom.plugin.junit4.wrapper;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Arrays;
-import java.util.List;
 
 import org.junit.Test;
 
 public class MavenRunnerTest {
 
 	@Test
-	public void test() {
+	public void test1() {
+		
+	        final RunResult result = new JUnit4Wrapper().mavenTestRun(Arrays.asList(sample.SimplePassTest.class));
+	        
+	        assertResult(2, 0, 0, 0, result);
 
-		 final List<Class<?>> testClasses = Arrays.asList(sample.SimpleFailTest.class);
+	}
+
+	@Test
+	public void test2() {
+
+		 final RunResult result = new JUnit4Wrapper().mavenTestRun(Arrays.asList(sample.SimpleFailTest.class));
 		 
-		 new JUnit4Wrapper().mavenTestRun(testClasses);
+		 assertResult(1, 1, 0, 0, result);
+
+	}
+	
+	@Test
+	public void testSuite() {
+		
+		final RunResult result = new JUnit4Wrapper().mavenTestRun(Arrays.asList(sample.UnsupportedTestSuite.class));
 		 
+		 assertResult(2, 1, 0, 0, result);
+		 
+	}
+	
+
+	private void assertResult(
+	        final int completedCount,
+	        final int failureCount,
+	        final int skippedCount,
+	        final int errorCount,
+	        final RunResult result) {
+
+		assertEquals("completed", completedCount, result.getCompletedCount());
+		assertEquals("failures", failureCount, result.getFailures());
+		assertEquals("skipped", skippedCount, result.getSkipped());
+		assertEquals("errors", errorCount, result.getErrors());
+		
 	}
 
 }

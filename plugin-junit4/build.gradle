@@ -3,6 +3,9 @@ apply plugin: 'java'
 dependencies {
     compileOnly project(':api')
     compileOnly project(':util')
+    // FIXME
+    compileOnly('commons-io:commons-io:2.5')
+    compileOnly('org.apache.commons:commons-lang3:3.6')
     compileOnly('junit:junit:4.12')
 }
 

@@ -46,8 +46,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Loom Build Tool'
-copyright = u'2017, Oliver Siegmar, Stephan Ostermayr'
-author = u'Oliver Siegmar, Stephan Ostermayr'
+copyright = u'2017, Oliver Siegmar, Stefan Ostermayr'
+author = u'Oliver Siegmar, Stefan Ostermayr'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -142,7 +142,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'LoomBuildTool.tex', u'Loom Build Tool Documentation',
-     u'Oliver Siegmar, Stephan Ostermayr', 'manual'),
+     u'Oliver Siegmar, Stefan Ostermayr', 'manual'),
 ]
 
 

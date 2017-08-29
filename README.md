@@ -1,12 +1,12 @@
 # Loom Build Tool
 
 Loom is a modern build tool for Java based projects.
-It focuses on simplicity, convention, ease of use and performance.
+It focuses on simplicity, conventions, ease of use and performance.
 It uses a very simple, declarative configuration (YAML) and
 convention over configuration to reduce the configuration to a bare minimum.
 
 
-# Prerequisites
+# Requirements
 
 Loom requires **Java 9** to build and run but it can build projects
 **targeting Java 6-9** through JDKs cross-compile functionality.

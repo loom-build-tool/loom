@@ -1,0 +1,8 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-util'
+
+dependencies {
+	compileOnly project(':modules:api')
+	testCompile('junit:junit:4.12')
+}

@@ -1,0 +1,25 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-plugin-maven'
+
+configurations {
+    runtime.exclude module: 'slf4j-api'
+}
+
+dependencies {
+    compileOnly project(':modules:api')
+    compileOnly project(':modules:util')
+    compile('org.sonatype.aether:aether-impl:1.13.1')
+    compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
+    compile('org.sonatype.aether:aether-connector-file:1.13.1')
+    compile('org.apache.maven.wagon:wagon-http-lightweight:2.12')
+    compile('org.apache.maven:maven-aether-provider:3.0.4')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

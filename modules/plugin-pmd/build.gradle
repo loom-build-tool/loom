@@ -1,0 +1,17 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-plugin-pmd'
+
+dependencies {
+    compileOnly project(':modules:api')
+    compileOnly project(':modules:util')
+    compile('net.sourceforge.pmd:pmd-java8:5.8.1')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

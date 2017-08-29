@@ -1,0 +1,19 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-core'
+
+dependencies {
+    compile project(':modules:api')
+    compile project(':modules:util')
+    compile('org.slf4j:jul-to-slf4j:1.8.0-alpha2')
+    compile('org.yaml:snakeyaml:1.18')
+    testCompile('junit:junit:4.12')
+}
+
+processResources {
+    filesMatching('**/loom.properties') {
+        filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+                "version" : project.version
+        ]
+    }
+}

@@ -10,6 +10,8 @@ Welcome to Loom Build Tool's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started
+
 
 
 Indices and tables

@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-plugin-java'
+
+dependencies {
+    compileOnly project(':modules:api')
+    compileOnly project(':modules:util')
+    compile('org.ow2.asm:asm:6.0_BETA')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}
+

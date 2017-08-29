@@ -16,26 +16,15 @@
 
 package builders.loom.plugin.springboot;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.DirectoryProduct;
 import builders.loom.util.FileUtil;
 
 public class SpringBootFatJarTask extends AbstractModuleTask {
-
-    private static final String SPRING_BOOT_APPLICATION_ANNOTATION =
-        "org.springframework.boot.autoconfigure.SpringBootApplication";
-
-    private final SpringBootPluginSettings pluginSettings;
-
-    public SpringBootFatJarTask(final SpringBootPluginSettings pluginSettings) {
-        this.pluginSettings = pluginSettings;
-    }
 
     @Override
     public TaskResult run() throws Exception {
@@ -48,29 +37,10 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
         final Path jarFile = buildDir.resolve(String.format("%s-fatjar.jar",
             getBuildContext().getModuleName()));
 
-        // scan for @SpringBootApplication
-        final CompilationProduct compilationProduct =
-            requireProduct("compilation", CompilationProduct.class);
-        final String applicationClassname = scanForApplicationStarter(compilationProduct);
-
         // assemble jar
-        new JarAssembler(pluginSettings).assemble(baseDir, jarFile, applicationClassname);
+        new JarAssembler().assemble(baseDir, jarFile);
 
         return completeOk(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
-    }
-
-    private String scanForApplicationStarter(final CompilationProduct compilationProduct)
-        throws IOException {
-
-        final String applicationClassname = new ClassScanner()
-            .scanArchives(compilationProduct.getClassesDir(), SPRING_BOOT_APPLICATION_ANNOTATION);
-
-        if (applicationClassname == null) {
-            throw new IllegalStateException("Couldn't find class with "
-                + SPRING_BOOT_APPLICATION_ANNOTATION + " annotation");
-        }
-
-        return applicationClassname;
     }
 
 }

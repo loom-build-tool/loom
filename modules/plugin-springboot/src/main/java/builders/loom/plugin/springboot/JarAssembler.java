@@ -16,16 +16,15 @@
 
 package builders.loom.plugin.springboot;
 
-import java.io.BufferedOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -35,23 +34,12 @@ import java.util.zip.ZipEntry;
 
 public class JarAssembler {
 
-    private static final String SPRING_BOOT_LAUNCHER =
-        "org.springframework.boot.loader.JarLauncher";
+    public void assemble(final Path buildDir, final Path jarFile) throws IOException {
+        final Manifest manifest = readManifest(buildDir);
 
-    private final SpringBootPluginSettings pluginSettings;
+        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile),
+            manifest)) {
 
-    public JarAssembler(final SpringBootPluginSettings pluginSettings) {
-        this.pluginSettings = pluginSettings;
-    }
-
-    public void assemble(final Path buildDir, final Path assemblyFile,
-                         final String applicationClassname) throws IOException {
-
-        final Manifest manifest = prepareManifest(applicationClassname);
-        writeManifest(buildDir, manifest);
-
-        try (final JarOutputStream os =
-                 new JarOutputStream(Files.newOutputStream(assemblyFile), manifest)) {
             os.setMethod(ZipEntry.STORED);
             os.setLevel(Deflater.NO_COMPRESSION);
 
@@ -59,29 +47,13 @@ public class JarAssembler {
         }
     }
 
-    private Manifest prepareManifest(final String applicationClassname) {
+    private Manifest readManifest(final Path buildDir) throws IOException {
+        final Path manifestFile = buildDir.resolve(Paths.get("META-INF", "MANIFEST.MF"));
         final Manifest manifest = new Manifest();
-
-        new ManifestBuilder(manifest)
-            .put(Attributes.Name.MANIFEST_VERSION, "1.0")
-            .put("Created-By", "Loom " + System.getProperty("loom.version"))
-            .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
-                System.getProperty("java.vendor")))
-            .put("Start-Class", applicationClassname)
-            .put("Spring-Boot-Classes", "BOOT-INF/classes/")
-            .put("Spring-Boot-Lib", "BOOT-INF/lib/")
-            .put("Spring-Boot-Version", pluginSettings.getVersion())
-            .put(Attributes.Name.MAIN_CLASS, SPRING_BOOT_LAUNCHER);
-
-        return manifest;
-    }
-
-    private void writeManifest(final Path buildDir, final Manifest manifest) throws IOException {
-        final Path manifestDir = Files.createDirectories(buildDir.resolve("META-INF"));
-        final Path file = manifestDir.resolve("MANIFEST.MF");
-        try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
-            manifest.write(os);
+        try (InputStream in = new BufferedInputStream(Files.newInputStream(manifestFile))) {
+            manifest.read(in);
         }
+        return manifest;
     }
 
     @SuppressWarnings("checkstyle:magicnumber")

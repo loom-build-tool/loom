@@ -16,8 +16,10 @@
 
 package builders.loom.plugin.springboot;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,8 +28,10 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
@@ -44,6 +48,12 @@ import builders.loom.util.Preconditions;
 
 public class SpringBootTask extends AbstractModuleTask {
 
+    private static final String SPRING_BOOT_APPLICATION_ANNOTATION =
+        "org.springframework.boot.autoconfigure.SpringBootApplication";
+
+    private static final String SPRING_BOOT_LAUNCHER =
+        "org.springframework.boot.loader.JarLauncher";
+
     private final SpringBootPluginSettings pluginSettings;
 
     public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
@@ -53,6 +63,9 @@ public class SpringBootTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
+
+        final Path metaInfDir = Files.createDirectories(
+            buildDir.resolve("META-INF"));
 
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
@@ -86,6 +99,10 @@ public class SpringBootTask extends AbstractModuleTask {
 
         // copy spring boot loader
         copySpringBootLoader(resolveSpringBootLoaderJar(), buildDir);
+
+        // create META-INF/MANIFEST.MF
+        final String applicationStarter = scanForApplicationStarter(compilationProduct);
+        writeManifest(buildDir, prepareManifest(applicationStarter));
 
         return completeOk(new DirectoryProduct(buildDir, "Spring Boot application"));
     }
@@ -125,6 +142,45 @@ public class SpringBootTask extends AbstractModuleTask {
                     }
                 }
             }
+        }
+    }
+
+    private String scanForApplicationStarter(final CompilationProduct compilationProduct)
+        throws IOException {
+
+        final String applicationClassname = new ClassScanner()
+            .scanArchives(compilationProduct.getClassesDir(), SPRING_BOOT_APPLICATION_ANNOTATION);
+
+        if (applicationClassname == null) {
+            throw new IllegalStateException("Couldn't find class with "
+                + SPRING_BOOT_APPLICATION_ANNOTATION + " annotation");
+        }
+
+        return applicationClassname;
+    }
+
+    private Manifest prepareManifest(final String applicationClassname) {
+        final Manifest manifest = new Manifest();
+
+        new ManifestBuilder(manifest)
+            .put(Attributes.Name.MANIFEST_VERSION, "1.0")
+            .put("Created-By", "Loom " + System.getProperty("loom.version"))
+            .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
+                System.getProperty("java.vendor")))
+            .put("Start-Class", applicationClassname)
+            .put("Spring-Boot-Classes", "BOOT-INF/classes/")
+            .put("Spring-Boot-Lib", "BOOT-INF/lib/")
+            .put("Spring-Boot-Version", pluginSettings.getVersion())
+            .put(Attributes.Name.MAIN_CLASS, SPRING_BOOT_LAUNCHER);
+
+        return manifest;
+    }
+
+    private void writeManifest(final Path buildDir, final Manifest manifest) throws IOException {
+        final Path manifestDir = Files.createDirectories(buildDir.resolve("META-INF"));
+        final Path file = manifestDir.resolve("MANIFEST.MF");
+        try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
+            manifest.write(os);
         }
     }
 

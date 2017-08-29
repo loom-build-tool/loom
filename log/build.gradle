@@ -1,8 +1,0 @@
-apply plugin: 'java'
-
-archivesBaseName = 'loom-log'
-
-dependencies {
-    compile('org.slf4j:slf4j-api:1.8.0-alpha2')
-    compile('org.fusesource.jansi:jansi:1.14')
-}

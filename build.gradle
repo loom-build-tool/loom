@@ -45,44 +45,44 @@ subprojects {
 task zip(type: Zip) {
     into(archivesBaseName + "-" + version) {
         into("lib") {
-            from project(':cli').configurations.runtime.allArtifacts.files
-            from project(':cli').configurations.runtime
+            from project(':modules:cli').configurations.runtime.allArtifacts.files
+            from project(':modules:cli').configurations.runtime
         }
         into("plugin-java") {
-            from project(':plugin-java').configurations.runtime.allArtifacts.files
-            from project(':plugin-java').configurations.runtime
+            from project(':modules:plugin-java').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-java').configurations.runtime
         }
         into("plugin-junit4") {
-            from project(':plugin-junit4').configurations.runtime.allArtifacts.files
-            from project(':plugin-junit4').configurations.runtime
+            from project(':modules:plugin-junit4').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-junit4').configurations.runtime
         }
         into("plugin-maven") {
-            from project(':plugin-maven').configurations.runtime.allArtifacts.files
-            from project(':plugin-maven').configurations.runtime
+            from project(':modules:plugin-maven').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-maven').configurations.runtime
         }
         into("plugin-checkstyle") {
-            from project(':plugin-checkstyle').configurations.runtime.allArtifacts.files
-            from project(':plugin-checkstyle').configurations.runtime
+            from project(':modules:plugin-checkstyle').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-checkstyle').configurations.runtime
         }
         into("plugin-spotbugs") {
-            from project(':plugin-spotbugs').configurations.runtime.allArtifacts.files
-            from project(':plugin-spotbugs').configurations.runtime
+            from project(':modules:plugin-spotbugs').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-spotbugs').configurations.runtime
         }
         into("plugin-pmd") {
-            from project(':plugin-pmd').configurations.runtime.allArtifacts.files
-            from project(':plugin-pmd').configurations.runtime
+            from project(':modules:plugin-pmd').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-pmd').configurations.runtime
         }
         into("plugin-springboot") {
-            from project(':plugin-springboot').configurations.runtime.allArtifacts.files
-            from project(':plugin-springboot').configurations.runtime
+            from project(':modules:plugin-springboot').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-springboot').configurations.runtime
         }
         into("plugin-idea") {
-            from project(':plugin-idea').configurations.runtime.allArtifacts.files
-            from project(':plugin-idea').configurations.runtime
+            from project(':modules:plugin-idea').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-idea').configurations.runtime
         }
         into("plugin-eclipse") {
-            from project(':plugin-eclipse').configurations.runtime.allArtifacts.files
-            from project(':plugin-eclipse').configurations.runtime
+            from project(':modules:plugin-eclipse').configurations.runtime.allArtifacts.files
+            from project(':modules:plugin-eclipse').configurations.runtime
         }
         into("scripts") {
             from 'scripts/loom'

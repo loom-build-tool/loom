@@ -35,6 +35,24 @@ public class MavenRunnerTest {
 		 
 	}
 	
+	@Test
+	public void testSkipped() {
+		
+		final RunResult result = new JUnit4Wrapper().mavenTestRun(Arrays.asList(sample.SkippedTest.class));
+		 
+		 assertResult(2, 0, 1, 0, result);
+		 
+	}
+	
+	@Test
+	public void testBrokenSetup() {
+		
+		final RunResult result = new JUnit4Wrapper().mavenTestRun(Arrays.asList(sample.SetupFailedTest.class));
+		 
+		 assertResult(1, 0, 0, 1, result);
+		 
+	}
+	
 
 	private void assertResult(
 	        final int completedCount,

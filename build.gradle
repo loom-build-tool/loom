@@ -45,6 +45,7 @@ subprojects {
 task zip(type: Zip) {
     into(archivesBaseName + "-" + version) {
         from 'LICENSE'
+        from 'NOTICE'
         into('licenses') {
             from 'licenses'
         }

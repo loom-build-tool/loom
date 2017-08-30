@@ -219,15 +219,15 @@ BSD-style licenses
 The following components are provided under a BSD-style license. See project link for details.
 The text of each license is also included at licenses/LICENSE-[project].txt.
 
-    (BSD-style) ANTLR (antlr:antlr:2.7.7 - http://www.antlr.org)
-    (BSD-style) ANTLR (org.antlr:antlr4-runtime:4.7 - http://www.antlr.org)
-    (BSD-style) ASM (asm:asm:3.3.1 - http://asm.ow2.org)
-    (BSD-style) DOM4J (dom4j:dom4j:1.6.1 - https://dom4j.github.io/)
-    (BSD-style) JavaCC (net.java.dev.javacc:javacc:5.0 - https://javacc.org)
-    (BSD-style) Jaxen (jaxen:jaxen:1.1.6 - http://jaxen.codehaus.org)
-    (BSD-style) PMD (net.sourceforge.pmd:pmd-core:5.8.1 - https://pmd.github.io)
-    (BSD-style) PMD (net.sourceforge.pmd:pmd-java8:5.8.1 - https://pmd.github.io)
-    (BSD-style) PMD (net.sourceforge.pmd:pmd-java:5.8.1 - https://pmd.github.io)
+    ANTLR (antlr:antlr:2.7.7 - http://www.antlr.org/)
+    ANTLR (org.antlr:antlr4-runtime:4.7 - http://www.antlr.org/)
+    ASM (asm:asm:3.3.1 - http://asm.ow2.org/)
+    DOM4J (dom4j:dom4j:1.6.1 - https://dom4j.github.io/)
+    JavaCC (net.java.dev.javacc:javacc:5.0 - https://javacc.org/)
+    Jaxen (jaxen:jaxen:1.1.6 - http://jaxen.codehaus.org/)
+    PMD (net.sourceforge.pmd:pmd-core:5.8.1 - https://pmd.github.io/)
+    PMD (net.sourceforge.pmd:pmd-java8:5.8.1 - https://pmd.github.io/)
+    PMD (net.sourceforge.pmd:pmd-java:5.8.1 - https://pmd.github.io/)
 
 
 ========================================================================
@@ -238,14 +238,14 @@ The following components are provided under the Eclipse Public License, Version 
 See project link for details.
 The text of each license is also included at licenses/licenses/LICENSE-epl-v10.txt.
 
-    (EPL) Aether (org.sonatype.aether:aether-api:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Aether (org.sonatype.aether:aether-connector-file:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Aether (org.sonatype.aether:aether-connector-wagon:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Aether (org.sonatype.aether:aether-impl:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Aether (org.sonatype.aether:aether-spi:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Aether (org.sonatype.aether:aether-util:1.13.1 - https://wiki.eclipse.org/Aether)
-    (EPL) Sisu (org.sonatype.sisu:sisu-inject-bean:2.2.3 - http://www.eclipse.org/sisu)
-    (EPL) Sisu (org.sonatype.sisu:sisu-inject-plexus:2.2.3 - http://www.eclipse.org/sisu)
+    Aether (org.sonatype.aether:aether-api:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Aether (org.sonatype.aether:aether-connector-file:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Aether (org.sonatype.aether:aether-connector-wagon:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Aether (org.sonatype.aether:aether-impl:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Aether (org.sonatype.aether:aether-spi:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Aether (org.sonatype.aether:aether-util:1.13.1 - https://wiki.eclipse.org/Aether/)
+    Sisu (org.sonatype.sisu:sisu-inject-bean:2.2.3 - http://www.eclipse.org/sisu/)
+    Sisu (org.sonatype.sisu:sisu-inject-plexus:2.2.3 - http://www.eclipse.org/sisu/)
 
 
 ========================================================================
@@ -256,11 +256,11 @@ The following components are provided under the Lesser General Public License 2.
 See project link for details.
 The text of each license is also included at licenses/LICENSE-lgpl-v21.txt.
 
-    (LGPL) Checkstyle (com.puppycrawl.tools:checkstyle:8.1 - http://checkstyle.sourceforge.net)
-    (LGPL) fb-contrib (com.mebigfatguy.fb-contrib:fb-contrib:7.0.2 - http://fb-contrib.sourceforge.net)
-    (LGPL) jFormatString (com.google.code.findbugs:jFormatString:3.0.0 - http://findbugs.sourceforge.net)
-    (LGPL) SpotBugs (com.github.spotbugs:spotbugs:3.1.0-RC5 - https://spotbugs.github.io)
-    (LGPL) SpotBugs Annotations com.github.spotbugs:spotbugs-annotations:3.1.0-RC5 - https://spotbugs.github.io)
+    Checkstyle (com.puppycrawl.tools:checkstyle:8.1 - http://checkstyle.sourceforge.net/)
+    fb-contrib (com.mebigfatguy.fb-contrib:fb-contrib:7.0.2 - http://fb-contrib.sourceforge.net/)
+    jFormatString (com.google.code.findbugs:jFormatString:3.0.0 - http://findbugs.sourceforge.net/)
+    SpotBugs (com.github.spotbugs:spotbugs:3.1.0-RC5 - https://spotbugs.github.io/)
+    SpotBugs Annotations com.github.spotbugs:spotbugs-annotations:3.1.0-RC5 - https://spotbugs.github.io/)
 
 
 ========================================================================
@@ -271,7 +271,7 @@ The following components are provided under the Lesser General Public License 3.
 See project link for details.
 The text of each license is also included at licenses/LICENSE-lgpl-v30.txt.
 
-    (LGPL) Find Security Bugs (com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0 - http://find-sec-bugs.github.io)
+    Find Security Bugs (com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0 - http://find-sec-bugs.github.io/)
 
 
 ========================================================================
@@ -281,11 +281,11 @@ MIT licenses
 The following components are provided under the MIT license. See project link for details.
 The text of each license is also included at licenses/LICENSE-[project].txt.
 
-    (MIT) Animal Sniffer Annotations (org.codehaus.mojo:animal-sniffer-annotations:1.14 - http://www.mojohaus.org/animal-sniffer/animal-sniffer-annotations)
-    (MIT) JSoup (org.jsoup:jsoup:1.7.2 - http://jsoup.org/)
-    (MIT) SLF4J (org.slf4j:jcl-over-slf4j:1.8.0-alpha2 - https://www.slf4j.org)
-    (MIT) SLF4J (org.slf4j:jul-to-slf4j:1.8.0-alpha2 - https://www.slf4j.org)
-    (MIT) SLF4J (org.slf4j:slf4j-api:1.8.0-alpha2 - https://www.slf4j.org)
+    Animal Sniffer Annotations (org.codehaus.mojo:animal-sniffer-annotations:1.14 - http://www.mojohaus.org/animal-sniffer/animal-sniffer-annotations/)
+    JSoup (org.jsoup:jsoup:1.7.2 - http://jsoup.org/)
+    SLF4J (org.slf4j:jcl-over-slf4j:1.8.0-alpha2 - https://www.slf4j.org/)
+    SLF4J (org.slf4j:jul-to-slf4j:1.8.0-alpha2 - https://www.slf4j.org/)
+    SLF4J (org.slf4j:slf4j-api:1.8.0-alpha2 - https://www.slf4j.org/)
 
 
 ========================================================================
@@ -296,4 +296,4 @@ The following components are provided under the Mozilla Public License Version 1
 See project link for details.
 The text of each license is also included at licenses/LICENSE-mpl-v10.txt.
 
-    (MPL) Saxon (net.sourceforge.saxon:saxon:9.1.0.8 - http://saxon.sourceforge.net)
+    Saxon (net.sourceforge.saxon:saxon:9.1.0.8 - http://saxon.sourceforge.net/)

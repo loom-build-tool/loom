@@ -1,7 +1,6 @@
-include ':modules:installer'
-include ':modules:core'
 include ':modules:api'
 include ':modules:util'
+include ':modules:core'
 include ':modules:log'
 include ':modules:cli'
 include ':modules:plugin-java'

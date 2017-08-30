@@ -154,19 +154,33 @@ public class CheckstyleTask extends AbstractModuleTask {
             final ModuleFactory factory = new PackageObjectFactory(
                 Checker.class.getPackage().getName(), moduleClassLoader);
 
-            final RootModule rootModule = (RootModule) factory.createModule(config.getName());
-            rootModule.setModuleClassLoader(moduleClassLoader);
+            final Checker checker = (Checker) factory.createModule(config.getName());
+            checker.setModuleClassLoader(moduleClassLoader);
 
-            if (rootModule instanceof Checker) {
-                useProduct(classpathProductId, ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntriesAsUrlArray)
-                    .map(URLClassLoader::new)
-                    .ifPresent(((Checker) rootModule)::setClassLoader);
+            useProduct(classpathProductId, ClasspathProduct.class)
+                .map(ClasspathProduct::getEntriesAsUrlArray)
+                .map(URLClassLoader::new)
+                .ifPresent(checker::setClassLoader);
+
+            checker.configure(config);
+
+            // Wait until this is fixed -- https://github.com/checkstyle/checkstyle/issues/5027
+/*
+            if (getRuntimeConfiguration().isCacheEnabled()) {
+                final Path cacheFile = cacheDir
+                    .resolve(getBuildContext().getModuleName())
+                    .resolve(compileTarget.name().toLowerCase())
+                    .resolve("checkstyle.cache");
+
+                try {
+                    checker.setCacheFile(cacheFile
+                        .toAbsolutePath().normalize().toString());
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
             }
-
-            rootModule.configure(config);
-
-            return rootModule;
+*/
+            return checker;
         } catch (final CheckstyleException e) {
             throw new IllegalStateException("Unable to create Root Module with configuration: "
                 + configLocation, e);
@@ -189,14 +203,6 @@ public class CheckstyleTask extends AbstractModuleTask {
 
     private Properties createOverridingProperties(final String configLocation) {
         final Properties properties = new Properties();
-
-        final Path cacheFile = cacheDir
-            .resolve(getBuildContext().getModuleName())
-            .resolve(compileTarget.name().toLowerCase())
-            .resolve("checkstyle.cache");
-
-        properties.setProperty("cacheFile", cacheFile
-            .toAbsolutePath().normalize().toString());
 
         // Set the same variables as the checkstyle plugin for eclipse
         // http://eclipse-cs.sourceforge.net/#!/properties

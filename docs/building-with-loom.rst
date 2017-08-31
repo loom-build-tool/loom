@@ -31,6 +31,11 @@ plugin
     also defines the dependency between products and goals.
 
 
+You may also want to use ``loom -p dot`` to generate a ``.dot`` file, containing
+all the dependencies between the products and goals. This file can be turned into
+a graphical representation (e.g. ``.png``) by using `Graphviz <http://www.graphviz.org>`_.
+
+
 Examples
 --------
 

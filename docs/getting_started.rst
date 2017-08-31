@@ -4,39 +4,24 @@ Getting Started
 Install Loom
 ------------
 
-Change to your project directory (or create a new directory) and enter:
-
-::
+Change to your project directory and enter::
 
     curl -s https://loom.builders/installer.sh | sh
 
 For more details, read the `Installing and Updating`_ section.
 
+
 Adjust build configuration
 --------------------------
 
-Edit the ``module.yml`` file according to your needs. Some quick examples:
+Very basic projects (without any external dependencies) don't need a configuration at all.
 
-This is a very basic project configuration without any dependencies, targeting Java 8 (default):
-
-.. code-block:: yaml
-
-    settings:
-      moduleName: builders.loom
-
-
-This is a more advanced configuration with a few dependencies (compile & test), targeting Java 8,
-checking code with Checkstyle_, SpotBugs_ and running Tests with Junit4_:
+A typical configuration with a few external dependencies might look like this:
 
 .. code-block:: yaml
    :caption: module.yml
 
-    settings:
-      moduleName: builders.loom
-      javaPlatformVersion: 8
     plugins:
-      - checkstyle
-      - spotbugs
       - junit4
     compileDependencies:
       - com.google.guava:guava:21.0
@@ -50,13 +35,23 @@ For more details, read the `Configuration`_ section.
 Run build
 ---------
 
-::
+To start a build using Loom, enter::
 
     ./loom build
+
+For more details, read the `Building with Loom`_ section.
+
+
+More examples
+-------------
+
+If you want to see more examples on how projects are built using Loom, visit our
+`GitHub loom-examples project <https://github.com/loom-build-tool/loom-examples>`_.
 
 
 .. _Installing and Updating: installing-and-updating.html
 .. _Configuration: configuration.html
+.. _Building with Loom: building-with-loom.html
 .. _Checkstyle: http://checkstyle.sourceforge.net
 .. _SpotBugs: https://spotbugs.github.io
 .. _Junit4: http://junit.org/junit4/

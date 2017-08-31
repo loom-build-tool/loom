@@ -12,6 +12,7 @@ This work is licensed under a `Creative Commons Attribution-ShareAlike 4.0 Inter
    getting_started
    installing-and-updating
    configuration
+   building-with-loom
 
 .. toctree::
    :maxdepth: 2
@@ -19,11 +20,3 @@ This work is licensed under a `Creative Commons Attribution-ShareAlike 4.0 Inter
 
    plugin-checkstyle
    plugin-springboot
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

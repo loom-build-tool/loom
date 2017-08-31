@@ -1,35 +1,48 @@
 Installing and Updating
 =======================
 
-
 Automated installation
 ----------------------
 
-To install the most recent version of Loom to your project, change to your project directory and enter:
-
-::
+To install the most recent version of Loom, change to your project directory and enter::
 
     curl -s https://loom.builders/installer.sh | sh
 
-To install a specific version (e.g. 1.0.0), enter:
+*The same command is also used to update an existing installation.*
 
-::
+If no errors were reported, Loom is installed to your system / project.
+
+If you want to install a specific (older) version of loom instead (e.g. 1.0.0), enter::
 
     curl -s https://loom.builders/installer.sh | sh -s 1.0.0
 
-These commands are also used to update an existing project to a different Loom version.
 
-**That's it!**
+Source Control Management
+-------------------------
 
-If no errors were reported, Loom is installed to your system / project.
-Edit the build configuration ``module.yml`` according to your needs (see `Configuration`_) and run the build
-with ``./loom build`` (on Unix) or ``loom build`` (on Windows).
+If you're using a SCM system like Git, you probably want to add the *Loom Launcher*
+and the *Loom Installer* to your repository to ensure reproducible builds for your project::
 
-Read on if you want some more detailed information.
+    git add loom loom.cmd loom-installer
+
+
+Furthermore, you probably want to exclude some directories from being committed.
+Example ``.gitignore`` file::
+
+    .loom
+    /build/
+
+    # In case .jar files are globally ignored
+    !loom-installer.jar
 
 
 Behind the scenes
 -----------------
+
+To guarantee reproducible builds while maintaining the size of files added to your project at
+a minimum, the Loom installation is split into two parts:
+a *project wide* one (the *Loom Installer* and the *Loom Launcher*) and
+a *system wide* one (the *Loom Library*).
 
 After a successful ``installer.sh`` run, the following files were created:
 
@@ -48,23 +61,7 @@ After a successful ``installer.sh`` run, the following files were created:
 ``loom.cmd``
     The *Loom Launcher* for Windows
 
-You can/should check in all these directories/files to your Source Code Management (SCM) system.
-This ensures, that your project will be built with the exact same version of Loom at any time, event
-if another developer is working on that project.
-
-Loom itself will create the directories ``.loom`` and ``build`` on first launch.
-These two directories should **not** be checked in to your SCM system.
-
-Example ``.gitignore`` file::
-
-    .loom
-    /build/
-
-    # In case .jar files are globally ignored
-    !loom-installer.jar
-
-
-**In your user home**
+**In your system:**
 
 The *Loom Library* is installed to a user specific directory on your machine, that is dependent on
 your operating system:
@@ -74,6 +71,7 @@ your operating system:
 
 You can override these operating system specific defaults by setting the ``LOOM_USER_HOME``
 environment variable to a directory of your choice.
+
 
 Manual installation
 -------------------
@@ -87,6 +85,3 @@ If you want to install Loom manually (**discouraged**), follow these steps:
 * Download the *Loom Installer* to a file named ``loom-installer/loom-installer.jar``.
   You can download it from ``https://loom.builders/loom-installer-1.0.0.jar``.
 * Launch the *Loom Installer* by entering ``java -jar loom-installer/loom-installer.jar .``
-
-
-.. _Configuration: configuration.html

@@ -12,7 +12,7 @@ Loom requires **JDK 9** to build and run but it can build projects
 **targeting Java 6-9** through JDKs cross-compile functionality.
 
 Java 9 can be downloaded from [http://jdk.java.net/9/](http://jdk.java.net/9/).
-Currently the build `jdk-9+181` is used for Loom development.
+Loom is excessively tested against build `jdk-9+181`.
 
 
 # Use Loom in your project

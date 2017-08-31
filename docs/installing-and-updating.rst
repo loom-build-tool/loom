@@ -53,8 +53,16 @@ This ensures, that your project will be built with the exact same version of Loo
 if another developer is working on that project.
 
 Loom itself will create the directories ``.loom`` and ``build`` on first launch.
-These two directories should **not** be checked in to your SCM system (e.g. put them
-into ``.gitignore`` for Git).
+These two directories should **not** be checked in to your SCM system.
+
+Example ``.gitignore`` file::
+
+    .loom
+    /build/
+
+    # In case .jar files are globally ignored
+    !loom-installer.jar
+
 
 **In your user home**
 

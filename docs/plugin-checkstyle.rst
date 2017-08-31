@@ -7,6 +7,15 @@ See the Checkstyle website for a comprehensive documentation of how to write cus
 Loom uses Checkstyle version 8.1.
 
 
+Products
+--------
+
+This plugin configures two products: ``checkstyleMainReport`` and ``checkstyleTestReport`` to
+provide reports for sources in ``src/main/java/`` and ``src/test/java/`` respectively.
+
+These products are registered for the ``check`` goal (which is part of the ``build`` goal).
+
+
 Minimum example
 ---------------
 

@@ -20,3 +20,9 @@ This work is licensed under a `Creative Commons Attribution-ShareAlike 4.0 Inter
 
    plugin-checkstyle
    plugin-springboot
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Integration
+
+   continuous-integration

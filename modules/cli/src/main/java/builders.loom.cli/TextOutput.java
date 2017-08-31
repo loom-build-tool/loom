@@ -49,8 +49,6 @@ final class TextOutput {
             .sorted()
             .collect(Collectors.toList());
 
-
-
         for (final Iterator<String> iterator = pluginNames.iterator(); iterator.hasNext();) {
             final String pluginName = iterator.next();
             final Collection<TaskInfo> configuredTasks =
@@ -111,9 +109,8 @@ final class TextOutput {
                     .fgMagenta()
                     .a(goal.getName())
                     .reset()
-                    .a(" - ");
-
-                a.a(buildDependsOn(moduleRunner, goal));
+                    .a(" - ")
+                    .a(buildDependsOn(moduleRunner, goal));
 
                 AnsiConsole.out().println(a);
             }
@@ -151,7 +148,7 @@ final class TextOutput {
             }
         }
 
-        return a;
+        return a.reset();
     }
 
 }

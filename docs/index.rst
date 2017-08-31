@@ -19,6 +19,7 @@ This work is licensed under a `Creative Commons Attribution-ShareAlike 4.0 Inter
    :caption: Plugins
 
    plugin-checkstyle
+   plugin-spotbugs
    plugin-springboot
 
 .. toctree::

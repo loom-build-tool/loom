@@ -18,6 +18,7 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -95,9 +96,9 @@ public class ResourcesTask extends AbstractModuleTask {
     }
 
     private Map<String, String> buildVariablesMap() {
-        return Map.of(
-            "project.version", getRuntimeConfiguration().getVersion()
-        );
+        final Map<String, String> variables = new HashMap<>();
+        variables.put("project.version", getRuntimeConfiguration().getVersion());
+        return variables;
     }
 
 }

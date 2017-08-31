@@ -196,7 +196,7 @@ public final class Loom {
 
     private static void printHelp(final Options options) {
         final HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("loom [option...] [product...]", options);
+        formatter.printHelp("loom [option...] [product|goal...]", options);
     }
 
     private static void run(final Path projectBaseDir, final Path logFile,

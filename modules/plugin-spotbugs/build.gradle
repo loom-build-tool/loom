@@ -10,8 +10,8 @@ dependencies {
     compileOnly project(':modules:api')
     compileOnly project(':modules:util')
     compile('com.github.spotbugs:spotbugs:3.1.0-RC5')
-    compile('com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0')
-    compile('com.mebigfatguy.fb-contrib:fb-contrib:7.0.2')
+    compile('com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1')
+    compile('com.mebigfatguy.fb-contrib:fb-contrib:7.0.3.sb')
     compile('org.slf4j:jcl-over-slf4j:1.8.0-alpha2')
 }
 

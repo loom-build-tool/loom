@@ -50,9 +50,7 @@ First, create a file called ``Dockerfile``:
     CMD ["java", "-cp", "/app", "-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.JarLauncher"]
 
 
-The, build the application, the docker image and launch a container:
-
-::
+Then, build the application, the docker image and launch a container::
 
     ./loom build
     docker build -t my-spring-boot-app .

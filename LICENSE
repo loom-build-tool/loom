@@ -257,7 +257,7 @@ See project link for details.
 The text of each license is also included at licenses/LICENSE-lgpl-v21.txt.
 
     Checkstyle (com.puppycrawl.tools:checkstyle:8.1 - http://checkstyle.sourceforge.net/)
-    fb-contrib (com.mebigfatguy.fb-contrib:fb-contrib:7.0.2 - http://fb-contrib.sourceforge.net/)
+    fb-contrib (com.mebigfatguy.fb-contrib:fb-contrib:7.0.3.sb - http://fb-contrib.sourceforge.net/)
     jFormatString (com.google.code.findbugs:jFormatString:3.0.0 - http://findbugs.sourceforge.net/)
     SpotBugs (com.github.spotbugs:spotbugs:3.1.0-RC5 - https://spotbugs.github.io/)
     SpotBugs Annotations com.github.spotbugs:spotbugs-annotations:3.1.0-RC5 - https://spotbugs.github.io/)
@@ -271,7 +271,7 @@ The following components are provided under the Lesser General Public License 3.
 See project link for details.
 The text of each license is also included at licenses/LICENSE-lgpl-v30.txt.
 
-    Find Security Bugs (com.h3xstream.findsecbugs:findsecbugs-plugin:1.6.0 - http://find-sec-bugs.github.io/)
+    Find Security Bugs (com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1 - http://find-sec-bugs.github.io/)
 
 
 ========================================================================

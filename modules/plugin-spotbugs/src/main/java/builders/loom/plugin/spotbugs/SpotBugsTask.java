@@ -66,7 +66,7 @@ public class SpotBugsTask extends AbstractModuleTask {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
         effort = pluginSettings.getEffort();
-        priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getPriorityThreshold());
+        priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getReportLevel());
         plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
 
         switch (compileTarget) {

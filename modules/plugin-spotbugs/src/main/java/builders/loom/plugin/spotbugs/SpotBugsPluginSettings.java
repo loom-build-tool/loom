@@ -20,9 +20,17 @@ import builders.loom.api.PluginSettings;
 
 public class SpotBugsPluginSettings implements PluginSettings {
 
-    private String effort = "default";
-    private String priorityThreshold = "NORMAL";
     private String customPlugins;
+    private String effort = "default";
+    private String reportLevel = "NORMAL";
+
+    public String getCustomPlugins() {
+        return customPlugins;
+    }
+
+    public void setCustomPlugins(final String customPlugins) {
+        this.customPlugins = customPlugins;
+    }
 
     public String getEffort() {
         return effort;
@@ -32,20 +40,12 @@ public class SpotBugsPluginSettings implements PluginSettings {
         this.effort = effort;
     }
 
-    public String getPriorityThreshold() {
-        return priorityThreshold;
+    public String getReportLevel() {
+        return reportLevel;
     }
 
-    public void setPriorityThreshold(final String priorityThreshold) {
-        this.priorityThreshold = priorityThreshold;
-    }
-
-    public String getCustomPlugins() {
-        return customPlugins;
-    }
-
-    public void setCustomPlugins(final String customPlugins) {
-        this.customPlugins = customPlugins;
+    public void setReportLevel(final String reportLevel) {
+        this.reportLevel = reportLevel;
     }
 
 }

@@ -21,21 +21,21 @@ These products are registered for the ``check`` goal (which is part of the ``bui
 Settings
 --------
 
+customPlugins
+    Additional SpotBugs plugins can be activated by listing them comma separated.
+    Currently available plugins are:
+    ``FbContrib`` (see `FbContrib website <http://fb-contrib.sourceforge.net/>`_) and
+    ``FindSecBugs`` (see `FindSecBugs websie <http://find-sec-bugs.github.io/>`_).
+
 effort
     The effort level SpotBugs should use.
     Possible levels are: ``min``, ``default`` (default), ``max``.
     Higher values may find more bugs, but also have more cpu and memory consumption
     (and thus may take longer).
 
-priorityThreshold
+reportLevel
     Defines the minimum priority a bug has to have to get reported.
     Possible levels are: ``LOW``, ``NORMAL`` (default), ``HIGH``.
-
-customPlugins
-    Additional SpotBugs plugins can be activated by listing them comma separated.
-    Currently available plugins are:
-    ``FbContrib`` (see `FbContrib website <http://fb-contrib.sourceforge.net/>`_) and
-    ``FindSecBugs`` (see `FindSecBugs websie <http://find-sec-bugs.github.io/>`_).
 
 
 .. _SpotBugs: https://spotbugs.github.io

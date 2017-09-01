@@ -26,7 +26,6 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
-import builders.loom.util.StringUtil;
 
 public class ResourcesTask extends AbstractModuleTask {
 
@@ -97,17 +96,12 @@ public class ResourcesTask extends AbstractModuleTask {
 
     private Function<String, Optional<String>> buildVariablesMap() {
         return (placeholder) -> {
-            final String value;
-
             if ("project.version".equals(placeholder)) {
-                value = getRuntimeConfiguration().getVersion();
-            } else if (placeholder.startsWith("env.")) {
-                value = System.getenv(StringUtil.substringAfter(placeholder, "env."));
-            } else {
-                value = System.getProperty(placeholder);
+                return Optional.of(getRuntimeConfiguration().getVersion());
             }
 
-            return Optional.ofNullable(value);
+            return Optional.ofNullable(System.getProperty(placeholder))
+                .or(() -> Optional.ofNullable(System.getenv(placeholder)));
         };
     }
 

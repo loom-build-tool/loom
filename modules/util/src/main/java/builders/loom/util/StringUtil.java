@@ -37,22 +37,4 @@ public final class StringUtil {
             .collect(Collectors.toList());
     }
 
-    @SuppressWarnings("checkstyle:returncount")
-    public static String substringAfter(final String str, final String separator) {
-        if (str == null) {
-            return null;
-        }
-
-        if (separator == null) {
-            return "";
-        }
-
-        final int idx = str.indexOf(separator);
-        if (idx == -1) {
-            return "";
-        }
-
-        return str.substring(idx + separator.length());
-    }
-
 }

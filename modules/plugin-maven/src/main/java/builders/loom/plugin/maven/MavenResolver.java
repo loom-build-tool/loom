@@ -26,9 +26,6 @@ import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.apache.maven.repository.internal.DefaultVersionRangeResolver;
 import org.apache.maven.repository.internal.DefaultVersionResolver;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
-import org.apache.maven.wagon.Wagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositorySystem;
@@ -83,21 +80,7 @@ public class MavenResolver implements DependencyResolver {
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
         locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
-        locator.setServices(WagonProvider.class, new WagonProvider() {
-            @Override
-            public Wagon lookup(final String roleHint) throws Exception {
-                if ("http".equals(roleHint)) {
-                    final LightweightHttpWagon lightweightHttpWagon = new LightweightHttpWagon();
-                    lightweightHttpWagon.setAuthenticator(new LightweightHttpWagonAuthenticator());
-                    return lightweightHttpWagon;
-                }
-                return null;
-            }
-
-            @Override
-            public void release(final Wagon wagon) {
-            }
-        });
+        locator.setServices(WagonProvider.class, new DefaultWagonProvider());
 
         system = locator.getService(RepositorySystem.class);
 

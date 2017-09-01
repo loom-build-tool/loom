@@ -106,9 +106,10 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
         } else {
             LOG.debug("Copy file {} without resource filtering", file);
             Files.copy(file, destPath, StandardCopyOption.REPLACE_EXISTING);
-        }
 
-        cache.put(cacheKey, lastModifiedTime);
+            // don't cache filtered files -- system properties or environment variables may change
+            cache.put(cacheKey, lastModifiedTime);
+        }
 
         return FileVisitResult.CONTINUE;
     }

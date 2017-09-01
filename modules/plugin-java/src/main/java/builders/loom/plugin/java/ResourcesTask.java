@@ -18,6 +18,8 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -26,6 +28,7 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.util.Hasher;
 
 public class ResourcesTask extends AbstractModuleTask {
 
@@ -86,10 +89,14 @@ public class ResourcesTask extends AbstractModuleTask {
             return NULL_CACHE;
         }
 
+        // hash has to change for filter glob changes -- filtered files must not be cached
+        final String hash =
+            Hasher.hash(List.of(Objects.toString(pluginSettings.getResourceFilterGlob())));
+
         final Path cacheFile = cacheDir
             .resolve(getBuildContext().getModuleName())
             .resolve(compileTarget.name().toLowerCase())
-            .resolve("resource.cache");
+            .resolve("resource-" + hash + ".cache");
 
         return new DiskKeyValueCache(cacheFile);
     }

@@ -30,14 +30,14 @@ public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
         final SpotBugsPluginSettings pluginSettings = getPluginSettings();
 
         task("spotbugsMain")
-            .impl(() -> new SpotBugsTask(pluginSettings, CompileTarget.MAIN))
+            .impl(() -> new SpotBugsTask(CompileTarget.MAIN, pluginSettings))
             .provides("spotbugsMainReport")
             .uses("source", "compileDependencies", "compilation")
             .desc("Runs SpotBugs against main classes and create report.")
             .register();
 
         task("spotbugsTest")
-            .impl(() -> new SpotBugsTask(pluginSettings, CompileTarget.TEST))
+            .impl(() -> new SpotBugsTask(CompileTarget.TEST, pluginSettings))
             .provides("spotbugsTestReport")
             .uses("testSource", "testDependencies", "compilation", "testCompilation")
             .desc("Runs SpotBugs against test classes and create report.")

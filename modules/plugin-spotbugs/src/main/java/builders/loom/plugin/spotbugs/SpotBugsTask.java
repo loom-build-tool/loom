@@ -42,7 +42,6 @@ import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
 import builders.loom.util.StringUtil;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
-import edu.umd.cs.findbugs.FindBugs;
 import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.HTMLBugReporter;
 import edu.umd.cs.findbugs.Project;
@@ -53,22 +52,22 @@ import edu.umd.cs.findbugs.config.UserPreferences;
 public class SpotBugsTask extends AbstractModuleTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsTask.class);
-    private static final String EFFORT_DEFAULT = "default";
 
     private final CompileTarget compileTarget;
+    private final String effort;
     private final List<String> plugins;
+    private final int priorityThreshold;
     private final String sourceProductId;
     private final String compilationProductId;
     private final String reportOutputDescription;
-    private final int priorityThreshold;
 
-    public SpotBugsTask(final SpotBugsPluginSettings pluginSettings,
-                        final CompileTarget compileTarget) {
+    public SpotBugsTask(final CompileTarget compileTarget,
+                        final SpotBugsPluginSettings pluginSettings) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
-        plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
-
+        effort = pluginSettings.getEffort();
         priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getPriorityThreshold());
+        plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
 
         switch (compileTarget) {
             case MAIN:
@@ -213,27 +212,30 @@ public class SpotBugsTask extends AbstractModuleTask {
             final FindBugs2 engine = new FindBugs2();
             engine.setProject(project);
             engine.setBugReporter(multiplexingBugReporter);
-            engine.setNoClassOk(true);
-            engine.setUserPreferences(buildUserPreferences());
+            engine.setNoClassOk(false);
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
-            engine.setAnalysisFeatureSettings(FindBugs.DEFAULT_EFFORT);
+
+            final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
+            userPreferences.setEffort(effort);
+            engine.setUserPreferences(userPreferences);
+
+            // this is required, because edu.umd.cs.findbugs.FindBugs2.setUserPreferences()
+            // does not. See comment there...
+            engine.setAnalysisFeatureSettings(userPreferences.getAnalysisFeatureSettings());
+
             engine.finishSettings();
 
             engine.execute();
 
-            if (engine.getErrorCount() + engine.getBugCount() > 0) {
-                throw new IllegalStateException("SpotBugs reported bugs!");
+            if (engine.getBugCount() + engine.getErrorCount() > 0) {
+                throw new IllegalStateException(String.format(
+                    "SpotBugs reported %d bugs and %d errors",
+                    engine.getBugCount(), engine.getErrorCount()));
             }
         } finally {
             multiplexingBugReporter.finish();
             System.setSecurityManager(currentSecurityManager);
         }
-    }
-
-    private UserPreferences buildUserPreferences() {
-        final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
-        userPreferences.setEffort(EFFORT_DEFAULT);
-        return userPreferences;
     }
 
 }

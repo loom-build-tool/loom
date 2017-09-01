@@ -256,7 +256,7 @@ The following components are provided under the Lesser General Public License 2.
 See project link for details.
 The text of each license is also included at licenses/LICENSE-lgpl-v21.txt.
 
-    Checkstyle (com.puppycrawl.tools:checkstyle:8.1 - http://checkstyle.sourceforge.net/)
+    Checkstyle (com.puppycrawl.tools:checkstyle:8.2 - http://checkstyle.sourceforge.net/)
     fb-contrib (com.mebigfatguy.fb-contrib:fb-contrib:7.0.3.sb - http://fb-contrib.sourceforge.net/)
     jFormatString (com.google.code.findbugs:jFormatString:3.0.0 - http://findbugs.sourceforge.net/)
     SpotBugs (com.github.spotbugs:spotbugs:3.1.0-RC5 - https://spotbugs.github.io/)
@@ -297,3 +297,14 @@ See project link for details.
 The text of each license is also included at licenses/LICENSE-mpl-v10.txt.
 
     Saxon (net.sourceforge.saxon:saxon:9.1.0.8 - http://saxon.sourceforge.net/)
+
+
+========================================================================
+Mozilla Public License Version 2.0
+========================================================================
+
+The following components are provided under the Mozilla Public License Version 2.0.
+See project link for details.
+The text of each license is also included at licenses/LICENSE-mpl-v20.txt.
+
+    Saxon (net.sf.saxon:Saxon-HE:9.8.0-4 - http://www.saxonica.com/)

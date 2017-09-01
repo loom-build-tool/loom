@@ -19,6 +19,7 @@ package builders.loom.plugin.checkstyle;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -164,8 +165,6 @@ public class CheckstyleTask extends AbstractModuleTask {
 
             checker.configure(config);
 
-            // Wait until this is fixed -- https://github.com/checkstyle/checkstyle/issues/5027
-/*
             if (getRuntimeConfiguration().isCacheEnabled()) {
                 final Path cacheFile = cacheDir
                     .resolve(getBuildContext().getModuleName())
@@ -179,7 +178,7 @@ public class CheckstyleTask extends AbstractModuleTask {
                     throw new UncheckedIOException(e);
                 }
             }
-*/
+
             return checker;
         } catch (final CheckstyleException e) {
             throw new IllegalStateException("Unable to create Root Module with configuration: "

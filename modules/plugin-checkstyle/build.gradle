@@ -11,7 +11,7 @@ configurations {
 dependencies {
     compileOnly project(':modules:api')
     compileOnly project(':modules:util')
-    compile('com.puppycrawl.tools:checkstyle:8.1')
+    compile('com.puppycrawl.tools:checkstyle:8.2')
     compile('org.slf4j:jcl-over-slf4j:1.8.0-alpha2')
 }
 

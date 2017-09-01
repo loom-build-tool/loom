@@ -20,7 +20,7 @@ import builders.loom.api.PluginSettings;
 
 public class SpotBugsPluginSettings implements PluginSettings {
 
-    private String priorityThreshold;
+    private String priorityThreshold = "NORMAL";
     private String customPlugins;
 
     public String getPriorityThreshold() {

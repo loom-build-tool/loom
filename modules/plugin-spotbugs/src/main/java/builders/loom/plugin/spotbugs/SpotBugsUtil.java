@@ -25,11 +25,7 @@ final class SpotBugsUtil {
     private SpotBugsUtil() {
     }
 
-    static int resolvePriority(final String prio, final int defaultPrio) {
-        if (prio == null || prio.isEmpty()) {
-            return defaultPrio;
-        }
-
+    static int resolvePriority(final String prio) {
         final String ucPrio = prio.toUpperCase();
 
         return Stream.of(Priorities.class.getDeclaredFields())

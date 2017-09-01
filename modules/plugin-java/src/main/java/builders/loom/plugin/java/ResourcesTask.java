@@ -97,16 +97,17 @@ public class ResourcesTask extends AbstractModuleTask {
 
     private Function<String, Optional<String>> buildVariablesMap() {
         return (placeholder) -> {
+            final String value;
+
             if ("project.version".equals(placeholder)) {
-                return Optional.ofNullable(getRuntimeConfiguration().getVersion());
+                value = getRuntimeConfiguration().getVersion();
+            } else if (placeholder.startsWith("env.")) {
+                value = System.getenv(StringUtil.substringAfter(placeholder, "env."));
+            } else {
+                value = System.getProperty(placeholder);
             }
 
-            if (placeholder.startsWith("env.")) {
-                final String envVar = StringUtil.substringAfter(placeholder, "env.");
-                return Optional.ofNullable(System.getenv(envVar));
-            }
-
-            return Optional.ofNullable(System.getProperty(placeholder));
+            return Optional.ofNullable(value);
         };
     }
 

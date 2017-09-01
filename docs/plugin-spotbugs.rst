@@ -25,7 +25,7 @@ customPlugins
     Additional SpotBugs plugins can be activated by listing them comma separated.
     Currently available plugins are:
     ``FbContrib`` (see `FbContrib website <http://fb-contrib.sourceforge.net/>`_) and
-    ``FindSecBugs`` (see `FindSecBugs websie <http://find-sec-bugs.github.io/>`_).
+    ``FindSecBugs`` (see `FindSecBugs website <http://find-sec-bugs.github.io/>`_).
 
 effort
     The effort level SpotBugs should use.

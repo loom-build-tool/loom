@@ -60,11 +60,4 @@ Clean before
 Build without caches
 ~~~~~~~~~~~~~~~~~~~~
 
-``./loom -n build`` requests the ``build`` goal without creating (or reading existing) any caches.
-
-
-CI build
-~~~~~~~~
-
-``./loom -cn build`` is a typical command for Continuous Integration systems --
-requests the ``build`` goal combining "Clean before" and "Build without caches".
+``./loom -n build`` requests the ``build`` goal without writing any caches (or reading existing ones).

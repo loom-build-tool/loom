@@ -4,7 +4,7 @@ Plugin checkstyle
 The Checkstyle plugin provides the functionality of Checkstyle_ to Loom.
 See the Checkstyle website for a comprehensive documentation of how to write custom configurations.
 
-Loom uses Checkstyle version 8.1.
+Loom uses Checkstyle version 8.2.
 
 
 Products
@@ -58,6 +58,14 @@ configLocation
     Loom module directory, so each module requires its own configuration.
     If you want a checkstyle configuration per project, you can set
     ``../config/checkstyle/checkstyle.xml`` for example.
+
+
+Notes
+-----
+
+* This plugin handles the cache configuration of Checkstyle automatically.
+  Do **not** include a ``cacheFile`` property within your ``checkstyle.xml`` -- otherwise
+  Loom's CLI options to disable caching (``--no-cache`` or ``-n``) wouldn't work as expected.
 
 
 .. _Checkstyle: http://checkstyle.sourceforge.net

@@ -97,7 +97,7 @@ public class ResourcesTask extends AbstractModuleTask {
     private Function<String, Optional<String>> buildVariablesMap() {
         return (placeholder) -> {
             if ("project.version".equals(placeholder)) {
-                return Optional.of(getRuntimeConfiguration().getVersion());
+                return Optional.ofNullable(getRuntimeConfiguration().getVersion());
             }
 
             return Optional.ofNullable(System.getProperty(placeholder))

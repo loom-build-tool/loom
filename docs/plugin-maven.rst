@@ -8,10 +8,15 @@ Products
 --------
 
 The only user visible product of this Plugin is ``mavenArtifact``. It installs
-all Jar products of your project into the local maven repository, which is located
-at ``~/.m2/repository/`` by default.
+all Jar products of your project into the local maven repository.
+
 This allows sharing artifacts by Loom for other build tools that can access
 the local Maven repository.
+
+The local mavne repository is located at ``~/.m2/repository/`` by default.
+This default can be changed by the Maven specific ``settings.xml`` file,
+which is located in ``${maven.home}/conf/settings.xml``
+or ``${user.home}/.m2/settings.xml``. See `Maven Settings`_ for more details.
 
 
 Settings
@@ -30,3 +35,4 @@ groupAndArtifact
 
 
 .. _Apache Maven: https://maven.apache.org
+.. _Maven Settings: https://maven.apache.org/settings.html

@@ -9,10 +9,10 @@ Resource filtering
 The java plugin comes with resource filtering functionality. Filtering means, replacing special
 variable placeholders (``${placeholder}``) with dynamic values.
 
-When resolving placeholder, Loom will first try to find a *system property*
+When resolving placeholders, Loom will first try to find a *system property*
 (specified via the ``-D`` switch on the CLI) with the name of the placeholder.
 If no system property with that name could be found, Loom will try to find
-a *environment variable* with that name.
+an *environment variable* with that name.
 
 The Loom build will fail, if a placeholder can't be resolved. If you want to have
 default values instead, use the syntax ``${placeholder:default-value}``.

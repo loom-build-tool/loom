@@ -27,7 +27,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -44,16 +43,16 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
     private final Path targetBasePath;
     private final KeyValueCache cache;
     private final PathMatcher matcher;
-    private final Map<String, String> resourceFilterVariables;
+    private final Function<String, Optional<String>> propertyResolver;
     private Path sourceBasePath;
 
     CopyFileVisitor(final Path targetBasePath, final KeyValueCache cache,
                     final String filterGlob,
-                    final Map<String, String> resourceFilterVariables) throws IOException {
+                    final Function<String, Optional<String>> propertyResolver) throws IOException {
 
         this.targetBasePath = targetBasePath;
         this.cache = cache;
-        this.resourceFilterVariables = resourceFilterVariables;
+        this.propertyResolver = propertyResolver;
         Files.createDirectories(targetBasePath);
 
         matcher = filterGlob != null
@@ -115,9 +114,6 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
     }
 
     private ResourceFilteringOutputStream newOut(final Path destPath) throws IOException {
-        final Function<String, Optional<String>> propertyResolver = (k) ->
-            Optional.ofNullable(resourceFilterVariables.get(k));
-
         return new ResourceFilteringOutputStream(new BufferedOutputStream(Files.newOutputStream(
             destPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)),
             propertyResolver);

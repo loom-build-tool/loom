@@ -18,15 +18,15 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.util.StringUtil;
 
 public class ResourcesTask extends AbstractModuleTask {
 
@@ -95,10 +95,19 @@ public class ResourcesTask extends AbstractModuleTask {
         return new DiskKeyValueCache(cacheFile);
     }
 
-    private Map<String, String> buildVariablesMap() {
-        final Map<String, String> variables = new HashMap<>();
-        variables.put("project.version", getRuntimeConfiguration().getVersion());
-        return variables;
+    private Function<String, Optional<String>> buildVariablesMap() {
+        return (placeholder) -> {
+            if ("project.version".equals(placeholder)) {
+                return Optional.ofNullable(getRuntimeConfiguration().getVersion());
+            }
+
+            if (placeholder.startsWith("env.")) {
+                final String envVar = StringUtil.substringAfter(placeholder, "env.");
+                return Optional.ofNullable(System.getenv(envVar));
+            }
+
+            return Optional.ofNullable(System.getProperty(placeholder));
+        };
     }
 
 }

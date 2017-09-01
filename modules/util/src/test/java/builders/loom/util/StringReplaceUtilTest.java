@@ -18,27 +18,41 @@ package builders.loom.util;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.HashMap;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.junit.Test;
 
 public class StringReplaceUtilTest {
 
     @Test
-    public void test() {
-        final String tpl = "Hello ${name}! You are ${age} years old and have ${cntKids} kids.";
+    public void simple() {
+        assertEquals("Hello foo!",
+            replace("Hello ${name}!"));
+    }
 
-        final Map<String, String> properties = new HashMap<>();
-        properties.put("name", "foo");
-        properties.put("age", "100");
-        final Function<String, Optional<String>> replaceFunction =
-            (k) -> Optional.ofNullable(properties.get(k));
+    @Test
+    public void defaultVal() {
+        assertEquals("Hello foo! You are 21 years old.",
+            replace("Hello ${name}! You are ${age:21} years old."));
+    }
 
-        assertEquals("Hello foo! You are 100 years old and have ${cntKids} kids.",
-            StringReplaceUtil.replaceString(tpl, replaceFunction));
+    @Test
+    public void defaultEmpty() {
+        assertEquals("Hello foo! You are  years old.",
+            replace("Hello ${name}! You are ${age:} years old."));
+    }
+
+    @Test(expected = UncheckedIOException.class)
+    public void missingDefault() {
+        replace("Hello ${name}! You are ${age} years old.");
+    }
+
+    private String replace(final String tpl) {
+        final Map<String, String> properties = Map.of("name", "foo");
+        return StringReplaceUtil.replaceString(tpl,
+            (k) -> Optional.ofNullable(properties.get(k)));
     }
 
 }

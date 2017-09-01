@@ -65,16 +65,25 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
                 final String placeholder = buf.toString("UTF-8")
                     .substring(2, buf.size() - 1);
 
-                final Optional<String> resource = propertyResolver.apply(placeholder);
-                if (resource.isPresent()) {
-                    out.write(resource.get().getBytes(StandardCharsets.UTF_8));
-                } else {
-                    buf.writeTo(out);
-                }
+                final String resource = evaluatePlaceholder(placeholder)
+                    .orElseThrow(() -> new IOException("No value found for placeholder '"
+                        + placeholder + "'"));
+
+                out.write(resource.getBytes(StandardCharsets.UTF_8));
 
                 buf.reset();
             }
         }
+    }
+
+    private Optional<String> evaluatePlaceholder(final String placeholder) {
+        final int idx = placeholder.indexOf(':');
+        if (idx == -1) {
+            return propertyResolver.apply(placeholder);
+        }
+
+        return propertyResolver.apply(placeholder.substring(0, idx))
+            .or(() -> Optional.of(placeholder.substring(idx + 1)));
     }
 
     private void flushBuffer() throws IOException {

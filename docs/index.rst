@@ -21,6 +21,7 @@ This work is licensed under a `Creative Commons Attribution-ShareAlike 4.0 Inter
    plugin-checkstyle
    plugin-idea
    plugin-java
+   plugin-junit
    plugin-maven
    plugin-pmd
    plugin-spotbugs

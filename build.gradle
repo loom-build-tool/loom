@@ -57,10 +57,6 @@ task zip(type: Zip) {
             from project(':modules:plugin-java').configurations.runtime.allArtifacts.files
             from project(':modules:plugin-java').configurations.runtime
         }
-        into("plugin-junit4") {
-            from project(':modules:plugin-junit4').configurations.runtime.allArtifacts.files
-            from project(':modules:plugin-junit4').configurations.runtime
-        }
         into("plugin-junit5") {
             from project(':modules:plugin-junit5').configurations.runtime.allArtifacts.files
             from project(':modules:plugin-junit5').configurations.runtime

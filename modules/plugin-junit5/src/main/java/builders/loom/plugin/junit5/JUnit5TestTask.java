@@ -54,8 +54,13 @@ public class JUnit5TestTask extends AbstractModuleTask {
 
         final TestResult result = runTests(classesDir, junitClassPath);
 
-        if (!result.isSuccessful()) {
-            throw new IllegalStateException("JUnit report: " + result);
+        if (result.getTotalFailureCount() > 0) {
+            throw new IllegalStateException(
+                String.format("tests failed: %d (succeeded: %d; skipped: %d; total: %d)",
+                    result.getTestsFailedCount(),
+                    result.getTestsSucceededCount(),
+                    result.getTestsSkippedCount(),
+                    result.getTestsFoundCount()));
         }
 
         // note: junit reports are not yet supported, but product expects the folder

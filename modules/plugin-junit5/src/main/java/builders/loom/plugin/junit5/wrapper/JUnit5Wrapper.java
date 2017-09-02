@@ -55,12 +55,22 @@ public class JUnit5Wrapper {
 
         final TestExecutionSummary summary = listener.getSummary();
 
-        // TODO check container / test counts
         return new TestResult(
-            summary.getTotalFailureCount() == 0,
-            summary.getTestsStartedCount(),
+            summary.getTimeStarted(),
+            summary.getTimeFinished(),
             summary.getTotalFailureCount(),
-            summary.getTestsSkippedCount());
+            summary.getContainersFoundCount(),
+            summary.getContainersStartedCount(),
+            summary.getContainersSkippedCount(),
+            summary.getContainersAbortedCount(),
+            summary.getContainersSucceededCount(),
+            summary.getContainersFailedCount(),
+            summary.getTestsFoundCount(),
+            summary.getTestsStartedCount(),
+            summary.getTestsSkippedCount(),
+            summary.getTestsAbortedCount(),
+            summary.getTestsSucceededCount(),
+            summary.getTestsFailedCount());
     }
 
     static class LogListener implements TestExecutionListener {

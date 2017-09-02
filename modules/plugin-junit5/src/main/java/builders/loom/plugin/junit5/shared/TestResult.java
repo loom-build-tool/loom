@@ -18,48 +18,127 @@ package builders.loom.plugin.junit5.shared;
 
 public final class TestResult {
 
-    private final boolean successful;
-    private final long runCount;
-    private final long failureCount;
-    private final long ignoreCount;
+    private final long timeStarted;
+    private final long timeFinished;
+    private final long totalFailureCount;
+    private final long containersFoundCount;
+    private final long containersStartedCount;
+    private final long containersSkippedCount;
+    private final long containersAbortedCount;
+    private final long containersSucceededCount;
+    private final long containersFailedCount;
+    private final long testsFoundCount;
+    private final long testsStartedCount;
+    private final long testsSkippedCount;
+    private final long testsAbortedCount;
+    private final long testsSucceededCount;
+    private final long testsFailedCount;
 
-    public TestResult(
-        final boolean successful,
-        final long runCount,
-        final long failureCount,
-        final long ignoreCount) {
-        this.successful = successful;
-        this.runCount = runCount;
-        this.failureCount = failureCount;
-        this.ignoreCount = ignoreCount;
+    @SuppressWarnings("checkstyle:parameternumber")
+    public TestResult(final long timeStarted, final long timeFinished,
+                      final long totalFailureCount, final long containersFoundCount,
+                      final long containersStartedCount, final long containersSkippedCount,
+                      final long containersAbortedCount, final long containersSucceededCount,
+                      final long containersFailedCount, final long testsFoundCount,
+                      final long testsStartedCount, final long testsSkippedCount,
+                      final long testsAbortedCount, final long testsSucceededCount,
+                      final long testsFailedCount) {
+        this.timeStarted = timeStarted;
+        this.timeFinished = timeFinished;
+        this.totalFailureCount = totalFailureCount;
+        this.containersFoundCount = containersFoundCount;
+        this.containersStartedCount = containersStartedCount;
+        this.containersSkippedCount = containersSkippedCount;
+        this.containersAbortedCount = containersAbortedCount;
+        this.containersSucceededCount = containersSucceededCount;
+        this.containersFailedCount = containersFailedCount;
+        this.testsFoundCount = testsFoundCount;
+        this.testsStartedCount = testsStartedCount;
+        this.testsSkippedCount = testsSkippedCount;
+        this.testsAbortedCount = testsAbortedCount;
+        this.testsSucceededCount = testsSucceededCount;
+        this.testsFailedCount = testsFailedCount;
     }
 
-    public boolean isSuccessful() {
-        return successful;
+    public long getTimeStarted() {
+        return timeStarted;
     }
 
-    public long getRunCount() {
-        return runCount;
+    public long getTimeFinished() {
+        return timeFinished;
     }
 
-    public long getFailureCount() {
-        return failureCount;
+    public long getTotalFailureCount() {
+        return totalFailureCount;
     }
 
-    public long getIgnoreCount() {
-        return ignoreCount;
+    public long getContainersFoundCount() {
+        return containersFoundCount;
+    }
+
+    public long getContainersStartedCount() {
+        return containersStartedCount;
+    }
+
+    public long getContainersSkippedCount() {
+        return containersSkippedCount;
+    }
+
+    public long getContainersAbortedCount() {
+        return containersAbortedCount;
+    }
+
+    public long getContainersSucceededCount() {
+        return containersSucceededCount;
+    }
+
+    public long getContainersFailedCount() {
+        return containersFailedCount;
+    }
+
+    public long getTestsFoundCount() {
+        return testsFoundCount;
+    }
+
+    public long getTestsStartedCount() {
+        return testsStartedCount;
+    }
+
+    public long getTestsSkippedCount() {
+        return testsSkippedCount;
+    }
+
+    public long getTestsAbortedCount() {
+        return testsAbortedCount;
+    }
+
+    public long getTestsSucceededCount() {
+        return testsSucceededCount;
+    }
+
+    public long getTestsFailedCount() {
+        return testsFailedCount;
     }
 
     @Override
     public String toString() {
-        if (successful) {
-            return String.format("%d tests were executed successfully", runCount);
-        } else {
-            return String.format(
-                "Failed after running %d tests,"
-                + " where %d tests failed and %d were ignored",
-                runCount, failureCount, ignoreCount);
-
-        }
+        return "TestResult{"
+            + "timeStarted=" + timeStarted
+            + ", timeFinished=" + timeFinished
+            + ", totalFailureCount=" + totalFailureCount
+            + ", containersFoundCount=" + containersFoundCount
+            + ", containersStartedCount=" + containersStartedCount
+            + ", containersSkippedCount=" + containersSkippedCount
+            + ", containersAbortedCount=" + containersAbortedCount
+            + ", containersSucceededCount=" + containersSucceededCount
+            + ", containersFailedCount=" + containersFailedCount
+            + ", testsFoundCount=" + testsFoundCount
+            + ", testsStartedCount=" + testsStartedCount
+            + ", testsSkippedCount=" + testsSkippedCount
+            + ", testsAbortedCount=" + testsAbortedCount
+            + ", testsSucceededCount=" + testsSucceededCount
+            + ", testsFailedCount=" + testsFailedCount
+            + '}';
     }
+
 }

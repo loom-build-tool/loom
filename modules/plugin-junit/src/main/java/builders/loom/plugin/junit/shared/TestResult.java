@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5.shared;
+package builders.loom.plugin.junit.shared;
 
 public final class TestResult {
 

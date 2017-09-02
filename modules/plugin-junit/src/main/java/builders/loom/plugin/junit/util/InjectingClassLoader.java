@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5.util;
+package builders.loom.plugin.junit.util;
 
 import java.io.IOException;
 import java.io.InputStream;

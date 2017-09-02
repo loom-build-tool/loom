@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5;
+package builders.loom.plugin.junit;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.PluginSettings;
 
-public class JUnit5Plugin extends AbstractPlugin<PluginSettings> {
+public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
 
     @Override
     public void configure() {
         task("runTest")
-            .impl(JUnit5TestTask::new)
+            .impl(JUnitTestTask::new)
             .provides("test")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")

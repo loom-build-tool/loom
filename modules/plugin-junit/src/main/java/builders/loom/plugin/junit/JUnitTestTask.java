@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5;
+package builders.loom.plugin.junit;
 
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -32,13 +32,13 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
-import builders.loom.plugin.junit5.shared.TestResult;
-import builders.loom.plugin.junit5.util.InjectingClassLoader;
-import builders.loom.plugin.junit5.util.RestrictedClassLoader;
-import builders.loom.plugin.junit5.util.SharedApiClassLoader;
+import builders.loom.plugin.junit.shared.TestResult;
+import builders.loom.plugin.junit.util.InjectingClassLoader;
+import builders.loom.plugin.junit.util.RestrictedClassLoader;
+import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 
-public class JUnit5TestTask extends AbstractModuleTask {
+public class JUnitTestTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
@@ -122,15 +122,15 @@ public class JUnit5TestTask extends AbstractModuleTask {
 
         final ClassLoader targetClassLoader = ClassLoaderUtil.privileged(
             () -> new SharedApiClassLoader(junitUrlClassLoader,
-            new RestrictedClassLoader(JUnit5TestTask.class.getClassLoader())));
+            new RestrictedClassLoader(JUnitTestTask.class.getClassLoader())));
 
         final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(
             () -> new InjectingClassLoader(
-                targetClassLoader, JUnit5TestTask.class.getClassLoader(),
-                className -> className.startsWith("builders.loom.plugin.junit5.wrapper.")));
+                targetClassLoader, JUnitTestTask.class.getClassLoader(),
+                className -> className.startsWith("builders.loom.plugin.junit.wrapper.")));
 
         final Class<?> wrapperClass =
-            wrappedClassLoader.loadClass("builders.loom.plugin.junit5.wrapper.JUnit5Wrapper");
+            wrappedClassLoader.loadClass("builders.loom.plugin.junit.wrapper.JUnitWrapper");
 
         final Object wrapper = wrapperClass.getConstructor().newInstance();
         final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Path.class);

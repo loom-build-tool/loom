@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5.util;
+package builders.loom.plugin.junit.util;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class RestrictedClassLoader extends ClassLoader {
 
     // please add DOTs
     private static final List<String> WHITELISTED_PACKAGES = List.of(
-        "builders.loom.plugin.junit5.shared."
+        "builders.loom.plugin.junit.shared."
         );
 
     public RestrictedClassLoader(final ClassLoader parent) {

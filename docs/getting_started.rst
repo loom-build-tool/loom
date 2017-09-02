@@ -22,7 +22,7 @@ A typical configuration with a few external dependencies might look like this:
    :caption: module.yml
 
     plugins:
-      - junit5
+      - junit
     compileDependencies:
       - com.google.guava:guava:23.0
     testDependencies:

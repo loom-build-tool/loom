@@ -1,6 +1,6 @@
 apply plugin: 'java'
 
-archivesBaseName = 'loom-plugin-junit5'
+archivesBaseName = 'loom-plugin-junit'
 
 dependencies {
     compileOnly project(':modules:api')

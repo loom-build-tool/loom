@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.junit5.wrapper;
+package builders.loom.plugin.junit.wrapper;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -32,12 +32,12 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
-import builders.loom.plugin.junit5.shared.TestResult;
+import builders.loom.plugin.junit.shared.TestResult;
 
 /**
  * Wrapper gets injected into final classloader.
  */
-public class JUnit5Wrapper {
+public class JUnitWrapper {
 
     public TestResult run(final ClassLoader classLoader, final Path classesDir) {
         Thread.currentThread().setContextClassLoader(classLoader);

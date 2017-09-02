@@ -32,6 +32,21 @@ public class StringReplaceUtilTest {
             replace("Hello ${name}!"));
     }
 
+    @Test(expected = UncheckedIOException.class)
+    public void empty() {
+        replace("Hello ${}!");
+    }
+
+    public void halfOpen() {
+        assertEquals("Hello $",
+            replace("Hello $"));
+    }
+
+    @Test(expected = UncheckedIOException.class)
+    public void open() {
+        replace("Hello ${");
+    }
+
     @Test
     public void defaultVal() {
         assertEquals("Hello foo! You are 21 years old.",

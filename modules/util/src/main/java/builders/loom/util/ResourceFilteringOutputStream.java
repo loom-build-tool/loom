@@ -65,6 +65,10 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
                 final String placeholder = buf.toString("UTF-8")
                     .substring(2, buf.size() - 1);
 
+                if (placeholder.isEmpty()) {
+                    throw new IOException("Empty placeholder not permitted");
+                }
+
                 final String resource = evaluatePlaceholder(placeholder)
                     .orElseThrow(() -> new IOException("No value found for placeholder '"
                         + placeholder + "'"));
@@ -96,6 +100,14 @@ public class ResourceFilteringOutputStream extends FilterOutputStream {
     public void flush() throws IOException {
         flushBuffer();
         super.flush();
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (filtering == 2) {
+            throw new IOException("Filtering is active while closing stream");
+        }
+        super.close();
     }
 
 }

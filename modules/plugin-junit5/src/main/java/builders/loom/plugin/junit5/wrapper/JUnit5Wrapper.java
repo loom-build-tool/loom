@@ -55,9 +55,10 @@ public class JUnit5Wrapper {
 
         final TestExecutionSummary summary = listener.getSummary();
 
+        // TODO check container / test counts
         return new TestResult(
             summary.getTotalFailureCount() == 0,
-            summary.getTestsSucceededCount(),
+            summary.getTestsStartedCount(),
             summary.getTotalFailureCount(),
             summary.getTestsSkippedCount());
     }

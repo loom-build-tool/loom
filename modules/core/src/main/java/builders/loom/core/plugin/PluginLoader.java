@@ -63,6 +63,7 @@ public class PluginLoader {
     private static final Map<String, String> INTERNAL_MODULE_PLUGINS = Map.of(
         "java", "builders.loom.plugin.java.JavaPlugin",
         "junit4", "builders.loom.plugin.junit4.JUnit4Plugin",
+        "junit5", "builders.loom.plugin.junit5.JUnit5Plugin",
         "maven", "builders.loom.plugin.maven.MavenPlugin",
         "checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin",
         "spotbugs", "builders.loom.plugin.spotbugs.SpotBugsPlugin",

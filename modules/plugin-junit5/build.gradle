@@ -1,0 +1,17 @@
+apply plugin: 'java'
+
+archivesBaseName = 'loom-plugin-junit5'
+
+dependencies {
+    compileOnly project(':modules:api')
+    compileOnly project(':modules:util')
+    compileOnly('org.junit.platform:junit-platform-launcher:1.0.0-RC3')
+}
+
+jar {
+    manifest {
+        attributes(
+            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+        )
+    }
+}

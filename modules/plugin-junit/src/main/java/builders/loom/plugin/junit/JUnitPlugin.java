@@ -25,14 +25,14 @@ public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
     public void configure() {
         task("runTest")
             .impl(JUnitTestTask::new)
-            .provides("test")
+            .provides("junitReport")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")
             .desc("Executes tests with JUnit 5 and creates test report.")
             .register();
 
         goal("check")
-            .requires("test")
+            .requires("junitReport")
             .register();
     }
 

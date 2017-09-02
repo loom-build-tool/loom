@@ -84,6 +84,9 @@ public final class Loom {
             if (validate(cmd, options)) {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
+                cmd.getOptionProperties("D").forEach((key, value) ->
+                    System.setProperty((String) key, (String) value));
+
                 try (FileLock ignored = FileLockUtil.lock(lockFile)) {
                     run(projectBaseDir, logFile, cmd);
                 }
@@ -165,6 +168,12 @@ public final class Loom {
                     .optionalArg(true)
                     .argName("format")
                     .desc("Show available products (formats: text [default], dot)")
+                    .build())
+            .addOption(
+                Option.builder("D")
+                    .hasArgs()
+                    .valueSeparator('=')
+                    .desc("Sets a system property")
                     .build());
     }
 

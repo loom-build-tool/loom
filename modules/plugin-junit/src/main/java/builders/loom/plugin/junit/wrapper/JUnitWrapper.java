@@ -39,7 +39,9 @@ import builders.loom.plugin.junit.shared.TestResult;
  */
 public class JUnitWrapper {
 
-    public TestResult run(final ClassLoader classLoader, final Path classesDir) {
+    public TestResult run(final ClassLoader classLoader, final Path classesDir,
+                          final Path reportDir) {
+
         Thread.currentThread().setContextClassLoader(classLoader);
 
         final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
@@ -48,12 +50,13 @@ public class JUnitWrapper {
 
         final Launcher launcher = LauncherFactory.create();
 
-        final SummaryGeneratingListener listener = new SummaryGeneratingListener();
-        launcher.registerTestExecutionListeners(listener, new LogListener());
+        final SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
+        final XmlReportListener xmlReportListener = new XmlReportListener(reportDir);
+        launcher.registerTestExecutionListeners(xmlReportListener, summaryListener, new LogListener());
 
         launcher.execute(request);
 
-        final TestExecutionSummary summary = listener.getSummary();
+        final TestExecutionSummary summary = summaryListener.getSummary();
 
         return new TestResult(
             summary.getTimeStarted(),

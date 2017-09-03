@@ -37,6 +37,7 @@ import builders.loom.plugin.junit.util.InjectingClassLoader;
 import builders.loom.plugin.junit.util.RestrictedClassLoader;
 import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
+import builders.loom.util.FileUtil;
 
 public class JUnitTestTask extends AbstractModuleTask {
 
@@ -51,8 +52,9 @@ public class JUnitTestTask extends AbstractModuleTask {
 
         final Path classesDir = testCompilation.get().getClassesDir();
         final List<URL> junitClassPath = buildJunitClassPath();
+        final Path reportDir = FileUtil.createOrCleanDirectory(resolveReportDir("test"));
 
-        final TestResult result = runTests(classesDir, junitClassPath);
+        final TestResult result = runTests(classesDir, junitClassPath, reportDir);
 
         if (result.getTotalFailureCount() > 0) {
             throw new IllegalStateException(
@@ -62,9 +64,6 @@ public class JUnitTestTask extends AbstractModuleTask {
                     result.getTestsSkippedCount(),
                     result.getTestsFoundCount()));
         }
-
-        // note: junit reports are not yet supported, but product expects the folder
-        final Path reportDir = resolveReportDir("test");
 
         return completeOk(new ReportProduct(reportDir, "JUnit report"));
     }
@@ -113,8 +112,8 @@ public class JUnitTestTask extends AbstractModuleTask {
         return mavenDependencyResolver.resolve(artifacts, DependencyScope.COMPILE, "junit");
     }
 
-    private TestResult runTests(final Path classesDir, final List<URL> junitClassPath)
-        throws Exception {
+    private TestResult runTests(final Path classesDir, final List<URL> junitClassPath,
+                                final Path reportDir) throws Exception {
 
         final URLClassLoader junitUrlClassLoader =
             ClassLoaderUtil.privileged(() ->
@@ -133,9 +132,10 @@ public class JUnitTestTask extends AbstractModuleTask {
             wrappedClassLoader.loadClass("builders.loom.plugin.junit.wrapper.JUnitWrapper");
 
         final Object wrapper = wrapperClass.getConstructor().newInstance();
-        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Path.class);
+        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Path.class,
+            Path.class);
 
-        return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir);
+        return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir, reportDir);
     }
 
 }

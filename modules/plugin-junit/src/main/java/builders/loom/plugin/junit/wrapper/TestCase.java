@@ -62,12 +62,11 @@ class TestCase {
     }
 
     boolean isFailed() {
-        return status == TestStatus.FAILED
-            && throwable instanceof AssertionError;
+        return status == TestStatus.FAILED;
     }
 
     boolean isError() {
-        return status == TestStatus.FAILED && !isFailed();
+        return status == TestStatus.ERROR;
     }
 
     boolean isAborted() {

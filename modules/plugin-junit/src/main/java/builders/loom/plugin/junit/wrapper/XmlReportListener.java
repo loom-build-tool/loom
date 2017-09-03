@@ -16,12 +16,18 @@
 
 package builders.loom.plugin.junit.wrapper;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
@@ -29,8 +35,11 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 
 class XmlReportListener implements TestExecutionListener {
+
+    private static final Logger LOG = Logger.getLogger(XmlReportListener.class.getName());
 
     private final Map<TestIdentifier, TestData> testData = new ConcurrentHashMap<>();
     private final Path reportDir;
@@ -40,30 +49,51 @@ class XmlReportListener implements TestExecutionListener {
     }
 
     @Override
+    public void testPlanExecutionStarted(final TestPlan testPlan) {
+        LOG.info("Started testPlan " + testPlan.getRoots());
+    }
+
+    @Override
+    public void testPlanExecutionFinished(final TestPlan testPlan) {
+        LOG.info("Finished testPlan " + testPlan.getRoots());
+    }
+
+    @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
-        testData.put(testIdentifier, new TestData());
+        testData.put(testIdentifier, new TestData(Instant.now()));
     }
 
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
-        testData.get(testIdentifier).testFinished(
-            mapStatus(testExecutionResult.getStatus()),
-            testExecutionResult.getThrowable().orElse(null));
+        final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
+        testData.get(testIdentifier).testFinished(Instant.now(),
+            mapStatus(testExecutionResult.getStatus(), throwable),
+            throwable);
 
         if (isTestSuite(testIdentifier)) {
-            XmlReport.writeReport(build(testIdentifier), reportDir);
+            try (XmlReport xmlReport = new XmlReport(build(testIdentifier), reportDir)) {
+                xmlReport.writeReport();
+            } catch (final XMLStreamException e) {
+                throw new IllegalStateException(e);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 
-    private static TestStatus mapStatus(final TestExecutionResult.Status status) {
+    @SuppressWarnings("checkstyle:returncount")
+    private static TestStatus mapStatus(final TestExecutionResult.Status status,
+                                        final Throwable throwable) {
         switch (status) {
             case SUCCESSFUL:
                 return TestStatus.SUCCESS;
             case ABORTED:
                 return TestStatus.ABORTED;
             case FAILED:
-                return TestStatus.FAILED;
+                return throwable instanceof AssertionError
+                    ? TestStatus.FAILED
+                    : TestStatus.ERROR;
             default:
                 throw new IllegalStateException("Unknown status: " + status);
         }
@@ -72,7 +102,7 @@ class XmlReportListener implements TestExecutionListener {
     @Override
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
-        testData.get(testIdentifier).testSkipped(reason);
+        testData.get(testIdentifier).testSkipped(Instant.now(), reason);
     }
 
     private TestSuite build(final TestIdentifier testIdentifier) {
@@ -118,8 +148,9 @@ class XmlReportListener implements TestExecutionListener {
                 + testIdentifier));
 
         if (!(testSource instanceof MethodSource)) {
-            throw new IllegalStateException("TestSource of " + testIdentifier + " is "
-                + "of class " + testSource.getClass() + "! Required is " + MethodSource.class);
+            throw new IllegalStateException(String.format(
+                "TestSource of %s is of class %s! Required is %s",
+                testIdentifier, testSource.getClass(), MethodSource.class));
         }
 
         return (MethodSource) testSource;

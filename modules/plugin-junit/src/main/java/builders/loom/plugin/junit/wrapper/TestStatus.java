@@ -21,6 +21,7 @@ public enum TestStatus {
     SUCCESS,
     SKIPPED,
     FAILED,
+    ERROR,
     ABORTED
 
 }

@@ -21,21 +21,26 @@ import java.time.Instant;
 
 class TestData {
 
-    private final Instant startedAt = Instant.now();
+    private final Instant startedAt;
     private Instant endedAt;
     private TestStatus status;
     private Throwable throwable;
     private String skipReason;
 
-    void testFinished(final TestStatus status, final Throwable throwable) {
-        endedAt = Instant.now();
-        this.status = status;
-        this.throwable = throwable;
+    TestData(final Instant startedAt) {
+        this.startedAt = startedAt;
     }
 
-    void testSkipped(final String skipReason) {
-        testFinished(TestStatus.SKIPPED, null);
-        this.skipReason = skipReason;
+    void testFinished(final Instant finishedAt, final TestStatus finishedStatus,
+                      final Throwable finishedThrowable) {
+        endedAt = finishedAt;
+        status = finishedStatus;
+        throwable = finishedThrowable;
+    }
+
+    void testSkipped(final Instant skippedAt, final String reason) {
+        testFinished(skippedAt, TestStatus.SKIPPED, null);
+        skipReason = reason;
     }
 
     Instant getStartedAt() {
@@ -58,7 +63,7 @@ class TestData {
         return throwable;
     }
 
-    public String getSkipReason() {
+    String getSkipReason() {
         return skipReason;
     }
 

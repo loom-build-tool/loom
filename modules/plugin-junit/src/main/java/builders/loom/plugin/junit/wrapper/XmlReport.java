@@ -16,11 +16,11 @@
 
 package builders.loom.plugin.junit.wrapper;
 
+import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,106 +28,141 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-class XmlReport {
+class XmlReport implements Closeable {
 
     private static final XMLOutputFactory OUTPUT_FACTORY = XMLOutputFactory.newFactory();
     private static final double NANO_TO_SEC = 1_000_000_000D;
+    private final TestSuite testSuite;
+    private final BufferedWriter writer;
+    private final XMLStreamWriter xmlWriter;
 
-    private XmlReport() {
-    }
+    XmlReport(final TestSuite testSuite, final Path reportDir)
+        throws IOException, XMLStreamException {
 
-    static void writeReport(final TestSuite testSuite, final Path reportDir) {
+        this.testSuite = testSuite;
         final Path reportFile = reportDir.resolve("TEST-" + testSuite.getName() + ".xml");
-        try (Writer writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8)) {
-            final XMLStreamWriter xmlWriter = OUTPUT_FACTORY.createXMLStreamWriter(writer);
-
-            xmlWriter.writeStartDocument("UTF-8", "1.0");
-            newLine(xmlWriter);
-
-            xmlWriter.writeStartElement("testsuite");
-            xmlWriter.writeAttribute("name", testSuite.getName());
-            xmlWriter.writeAttribute("tests", String.valueOf(testSuite.getTestCount()));
-            xmlWriter.writeAttribute("skipped", String.valueOf(testSuite.getSkipCount()));
-            xmlWriter.writeAttribute("failures", String.valueOf(testSuite.getFailureCount()));
-            xmlWriter.writeAttribute("errors", String.valueOf(testSuite.getErrorCount()));
-            xmlWriter.writeAttribute("time", timeOfDuration(testSuite.getDuration()));
-            newLine(xmlWriter);
-
-            xmlWriter.writeStartElement("properties");
-            newLine(xmlWriter);
-            for (final Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-                xmlWriter.writeEmptyElement("property");
-                xmlWriter.writeAttribute("name", String.valueOf(entry.getKey()));
-                xmlWriter.writeAttribute("value", String.valueOf(entry.getValue()));
-                newLine(xmlWriter);
-            }
-            xmlWriter.writeEndElement();
-            newLine(xmlWriter);
-
-            for (final TestCase testCase : testSuite.getTestCases()) {
-                xmlWriter.writeStartElement("testcase");
-                xmlWriter.writeAttribute("classname", testCase.getClassName());
-                xmlWriter.writeAttribute("name", testCase.getName());
-                xmlWriter.writeAttribute("time", timeOfDuration(testCase.getDuration()));
-                newLine(xmlWriter);
-
-                switch (testCase.getStatus()) {
-                    case SUCCESS:
-                        break;
-                    case SKIPPED:
-                        if (testCase.getSkipReason() != null) {
-                            xmlWriter.writeStartElement("skipped");
-                            xmlWriter.writeCharacters(testCase.getSkipReason());
-                            xmlWriter.writeEndElement();
-                        } else {
-                            xmlWriter.writeEmptyElement("skipped");
-                        }
-                        break;
-                    case FAILED:
-                        final Throwable throwable = testCase.getThrowable();
-                        if (throwable != null) {
-                            xmlWriter.writeStartElement(testCase.isError() ? "error" : "failure");
-                            xmlWriter.writeAttribute("type", throwable.getClass().getName());
-                            if (throwable.getMessage() != null) {
-                                xmlWriter.writeAttribute("message", throwable.getMessage());
-                            }
-                            xmlWriter.writeCharacters(throwableToString(throwable));
-                            xmlWriter.writeEndElement();
-                        } else {
-                            xmlWriter.writeEmptyElement("error");
-                        }
-                        newLine(xmlWriter);
-                        break;
-                    case ABORTED:
-                        // TODO how to handle this?
-                        break;
-                    default:
-                        throw new IllegalStateException("Unknown status: " + testCase.getStatus());
-                }
-
-                xmlWriter.writeEndElement();
-                newLine(xmlWriter);
-            }
-
-            // end testsuite
-            xmlWriter.writeEndElement();
-            newLine(xmlWriter);
-
-            xmlWriter.writeEndDocument();
-            xmlWriter.close();
-        } catch (final XMLStreamException e) {
-            throw new IllegalStateException(e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8);
+        xmlWriter = OUTPUT_FACTORY.createXMLStreamWriter(writer);
     }
 
-    private static void newLine(final XMLStreamWriter xmlWriter) throws XMLStreamException {
+    void writeReport() throws XMLStreamException {
+        xmlWriter.writeStartDocument("UTF-8", "1.0");
+        newLine();
+
+        xmlWriter.writeStartElement("testsuite");
+        xmlWriter.writeAttribute("name", testSuite.getName());
+        xmlWriter.writeAttribute("tests", String.valueOf(testSuite.getTestCount()));
+        xmlWriter.writeAttribute("skipped", String.valueOf(testSuite.getSkipCount()));
+        xmlWriter.writeAttribute("failures", String.valueOf(testSuite.getFailureCount()));
+        xmlWriter.writeAttribute("errors", String.valueOf(testSuite.getErrorCount()));
+        xmlWriter.writeAttribute("time", timeOfDuration(testSuite.getDuration()));
+        newLine();
+
+        xmlWriter.writeStartElement("properties");
+        newLine();
+        for (final Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            xmlWriter.writeEmptyElement("property");
+            xmlWriter.writeAttribute("name", String.valueOf(entry.getKey()));
+            xmlWriter.writeAttribute("value", String.valueOf(entry.getValue()));
+            newLine();
+        }
+        xmlWriter.writeEndElement();
+        newLine();
+
+        for (final TestCase testCase : testSuite.getTestCases()) {
+            writeTestCase(testCase);
+        }
+
+        // end testsuite
+        xmlWriter.writeEndElement();
+        newLine();
+
+        xmlWriter.writeEndDocument();
+        xmlWriter.close();
+    }
+
+    private void writeTestCase(final TestCase testCase) throws XMLStreamException {
+        if (testCase.getStatus() == TestStatus.SUCCESS) {
+            xmlWriter.writeEmptyElement("testcase");
+            writeTestCaseAttributes(testCase);
+            newLine();
+            return;
+        }
+
+        xmlWriter.writeStartElement("testcase");
+        writeTestCaseAttributes(testCase);
+        newLine();
+
+        switch (testCase.getStatus()) {
+            case SKIPPED:
+                writeSkipped(testCase.getSkipReason());
+                break;
+            case ABORTED:
+                writeAborted(testCase);
+                break;
+            case FAILED:
+                writeFailed(testCase.getThrowable(), "failure");
+                break;
+            case ERROR:
+                writeFailed(testCase.getThrowable(), "error");
+                break;
+            default:
+                throw new IllegalStateException("Unknown status: " + testCase.getStatus());
+        }
+
+        // end testcase
+        xmlWriter.writeEndElement();
+        newLine();
+    }
+
+    private void writeTestCaseAttributes(final TestCase testCase) throws XMLStreamException {
+        xmlWriter.writeAttribute("classname", testCase.getClassName());
+        xmlWriter.writeAttribute("name", testCase.getName());
+        xmlWriter.writeAttribute("time", timeOfDuration(testCase.getDuration()));
+    }
+
+    private void writeSkipped(final String skipReason) throws XMLStreamException {
+        if (skipReason == null) {
+            xmlWriter.writeEmptyElement("skipped");
+        } else {
+            xmlWriter.writeStartElement("skipped");
+            xmlWriter.writeCharacters(skipReason);
+            xmlWriter.writeEndElement();
+        }
+
+        newLine();
+    }
+
+    private void writeAborted(final TestCase testCase) throws XMLStreamException {
+        final String reason = completeThrowableToString(testCase.getThrowable())
+            .orElse(null);
+        writeSkipped(reason);
+    }
+
+    private void writeFailed(final Throwable throwable, final String errorType)
+        throws XMLStreamException {
+
+        if (throwable == null) {
+            xmlWriter.writeEmptyElement(errorType);
+        } else {
+            xmlWriter.writeStartElement(errorType);
+            xmlWriter.writeAttribute("type", throwable.getClass().getName());
+            if (throwable.getMessage() != null) {
+                xmlWriter.writeAttribute("message", throwable.getMessage());
+            }
+            xmlWriter.writeCharacters(throwableToString(throwable));
+            xmlWriter.writeEndElement();
+        }
+        newLine();
+    }
+
+    private void newLine() throws XMLStreamException {
         xmlWriter.writeCharacters("\n");
     }
 
@@ -142,6 +177,26 @@ class XmlReport {
             throwable.printStackTrace(printWriter);
         }
         return stringWriter.toString();
+    }
+
+    private static Optional<String> completeThrowableToString(final Throwable throwable) {
+        if (throwable == null) {
+            return Optional.empty();
+        }
+
+        final StringWriter stringWriter = new StringWriter();
+        try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+            if (throwable.getMessage() != null) {
+                printWriter.println(throwable.getMessage());
+            }
+            throwable.printStackTrace(printWriter);
+        }
+        return Optional.of(stringWriter.toString());
+    }
+
+    @Override
+    public void close() throws IOException {
+        writer.close();
     }
 
 }

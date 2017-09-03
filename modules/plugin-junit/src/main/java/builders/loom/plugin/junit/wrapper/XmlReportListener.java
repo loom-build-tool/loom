@@ -41,18 +41,31 @@ class XmlReportListener implements TestExecutionListener {
 
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
-        testData.put(testIdentifier, new TestData(testIdentifier.getLegacyReportingName()));
+        testData.put(testIdentifier, new TestData());
     }
 
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
         testData.get(testIdentifier).testFinished(
-            testExecutionResult.getStatus(),
+            mapStatus(testExecutionResult.getStatus()),
             testExecutionResult.getThrowable().orElse(null));
 
         if (isTestSuite(testIdentifier)) {
             XmlReport.writeReport(build(testIdentifier), reportDir);
+        }
+    }
+
+    private static TestStatus mapStatus(final TestExecutionResult.Status status) {
+        switch (status) {
+            case SUCCESSFUL:
+                return TestStatus.SUCCESS;
+            case ABORTED:
+                return TestStatus.ABORTED;
+            case FAILED:
+                return TestStatus.FAILED;
+            default:
+                throw new IllegalStateException("Unknown status: " + status);
         }
     }
 
@@ -90,8 +103,13 @@ class XmlReportListener implements TestExecutionListener {
 
     private TestCase mapTestCase(final TestIdentifier testIdentifier) {
         final MethodSource methodSource = getMethodSource(testIdentifier);
+        final TestData td = this.testData.get(testIdentifier);
+
         return new TestCase(methodSource.getMethodName(), methodSource.getClassName(),
-            testData.get(testIdentifier).getDuration());
+            td.getDuration(),
+            td.getStatus(),
+            td.getThrowable(),
+            td.getSkipReason());
     }
 
     private static MethodSource getMethodSource(final TestIdentifier testIdentifier) {

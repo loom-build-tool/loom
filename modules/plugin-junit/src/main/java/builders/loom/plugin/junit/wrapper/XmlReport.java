@@ -17,6 +17,8 @@
 package builders.loom.plugin.junit.wrapper;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +27,7 @@ import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -55,18 +58,55 @@ class XmlReport {
             xmlWriter.writeAttribute("time", timeOfDuration(testSuite.getDuration()));
             newLine(xmlWriter);
 
+            xmlWriter.writeStartElement("properties");
+            newLine(xmlWriter);
+            for (final Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                xmlWriter.writeEmptyElement("property");
+                xmlWriter.writeAttribute("name", String.valueOf(entry.getKey()));
+                xmlWriter.writeAttribute("value", String.valueOf(entry.getValue()));
+                newLine(xmlWriter);
+            }
+            xmlWriter.writeEndElement();
+            newLine(xmlWriter);
+
             for (final TestCase testCase : testSuite.getTestCases()) {
                 xmlWriter.writeStartElement("testcase");
                 xmlWriter.writeAttribute("classname", testCase.getClassName());
                 xmlWriter.writeAttribute("name", testCase.getName());
                 xmlWriter.writeAttribute("time", timeOfDuration(testCase.getDuration()));
+                newLine(xmlWriter);
+
+                switch (testCase.getStatus()) {
+                    case SUCCESS:
+                        break;
+                    case SKIPPED:
+                        xmlWriter.writeEmptyElement("skipped");
+                        break;
+                    case FAILED:
+                        final Throwable throwable = testCase.getThrowable();
+                        if (throwable != null) {
+                            xmlWriter.writeStartElement(testCase.isError() ? "error" : "failure");
+                            xmlWriter.writeAttribute("type", throwable.getClass().getName());
+                            if (throwable.getMessage() != null) {
+                                xmlWriter.writeAttribute("message", throwable.getMessage());
+                            }
+                            xmlWriter.writeCharacters(throwableToString(throwable));
+                            xmlWriter.writeEndElement();
+                        } else {
+                            xmlWriter.writeEmptyElement("error");
+                        }
+                        newLine(xmlWriter);
+                        break;
+                    case ABORTED:
+                        // TODO how to handle this?
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown status: " + testCase.getStatus());
+                }
+
                 xmlWriter.writeEndElement();
                 newLine(xmlWriter);
             }
-
-            // TODO add properties (?)
-            xmlWriter.writeEmptyElement("properties");
-            newLine(xmlWriter);
 
             // end testsuite
             xmlWriter.writeEndElement();
@@ -88,6 +128,14 @@ class XmlReport {
     private static String timeOfDuration(final Duration duration) {
         final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
         return nf.format(duration.getNano() / NANO_TO_SEC);
+    }
+
+    private static String throwableToString(final Throwable throwable) {
+        final StringWriter stringWriter = new StringWriter();
+        try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+            throwable.printStackTrace(printWriter);
+        }
+        return stringWriter.toString();
     }
 
 }

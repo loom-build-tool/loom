@@ -19,41 +19,47 @@ package builders.loom.plugin.junit.wrapper;
 import java.time.Duration;
 import java.time.Instant;
 
-import org.junit.platform.engine.TestExecutionResult;
+class TestData {
 
-public class TestData {
-
-    private final String name;
-    private final Instant startedAt;
+    private final Instant startedAt = Instant.now();
     private Instant endedAt;
-    private TestExecutionResult.Status status;
+    private TestStatus status;
     private Throwable throwable;
+    private String skipReason;
 
-    public TestData(final String name) {
-        this.name = name;
-        startedAt = Instant.now();
-    }
-
-    public void testFinished(final TestExecutionResult.Status status, final Throwable throwable) {
+    void testFinished(final TestStatus status, final Throwable throwable) {
         endedAt = Instant.now();
         this.status = status;
         this.throwable = throwable;
     }
 
-    public void testSkipped(final String reason) {
-        endedAt = Instant.now();
+    void testSkipped(final String skipReason) {
+        testFinished(TestStatus.SKIPPED, null);
+        this.skipReason = skipReason;
     }
 
-    public Instant getStartedAt() {
+    Instant getStartedAt() {
         return startedAt;
     }
 
-    public Instant getEndedAt() {
+    Instant getEndedAt() {
         return endedAt;
     }
 
-    public Duration getDuration() {
+    Duration getDuration() {
         return Duration.between(startedAt, endedAt);
+    }
+
+    TestStatus getStatus() {
+        return status;
+    }
+
+    Throwable getThrowable() {
+        return throwable;
+    }
+
+    public String getSkipReason() {
+        return skipReason;
     }
 
 }

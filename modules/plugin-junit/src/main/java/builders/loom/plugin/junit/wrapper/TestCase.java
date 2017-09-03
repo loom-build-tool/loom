@@ -23,12 +23,18 @@ class TestCase {
     private final String name;
     private final String className;
     private final Duration duration;
-    private boolean failed;
+    private final TestStatus status;
+    private final Throwable throwable;
+    private final String skipReason;
 
-    TestCase(final String name, final String className, final Duration duration) {
+    TestCase(final String name, final String className, final Duration duration,
+             final TestStatus status, final Throwable throwable, final String skipReason) {
         this.name = name;
         this.className = className;
         this.duration = duration;
+        this.status = status;
+        this.throwable = throwable;
+        this.skipReason = skipReason;
     }
 
     String getName() {
@@ -43,16 +49,33 @@ class TestCase {
         return duration;
     }
 
+    TestStatus getStatus() {
+        return status;
+    }
+
+    Throwable getThrowable() {
+        return throwable;
+    }
+
+    String getSkipReason() {
+        return skipReason;
+    }
+
     boolean isFailed() {
-        return failed;
+        return status == TestStatus.FAILED
+            && throwable instanceof AssertionError;
     }
 
-    static boolean isError(final TestCase testCase) {
-        return false;
+    boolean isError() {
+        return status == TestStatus.FAILED && !isFailed();
     }
 
-    static boolean isSkipped(final TestCase testCase) {
-        return false;
+    boolean isAborted() {
+        return status == TestStatus.ABORTED;
+    }
+
+    boolean isSkipped() {
+        return status == TestStatus.SKIPPED;
     }
 
 }

@@ -80,7 +80,13 @@ class XmlReport {
                     case SUCCESS:
                         break;
                     case SKIPPED:
-                        xmlWriter.writeEmptyElement("skipped");
+                        if (testCase.getSkipReason() != null) {
+                            xmlWriter.writeStartElement("skipped");
+                            xmlWriter.writeCharacters(testCase.getSkipReason());
+                            xmlWriter.writeEndElement();
+                        } else {
+                            xmlWriter.writeEmptyElement("skipped");
+                        }
                         break;
                     case FAILED:
                         final Throwable throwable = testCase.getThrowable();

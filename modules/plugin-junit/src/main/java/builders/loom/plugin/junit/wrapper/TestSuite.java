@@ -19,53 +19,45 @@ package builders.loom.plugin.junit.wrapper;
 import java.time.Duration;
 import java.util.List;
 
-public class TestSuite {
+class TestSuite {
 
     private final String name;
     private final Duration duration;
     private final List<TestCase> testCases;
 
-    public TestSuite(final String name, final Duration duration,
-                     final List<TestCase> testCases) {
+    TestSuite(final String name, final Duration duration,
+              final List<TestCase> testCases) {
         this.name = name;
         this.duration = duration;
         this.testCases = testCases;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public int getTestCount() {
+    int getTestCount() {
         return testCases.size();
     }
 
-    public long getFailureCount() {
+    long getFailureCount() {
         return testCases.stream().filter(TestCase::isFailed).count();
     }
 
-    public long getErrorCount() {
+    long getErrorCount() {
         return testCases.stream().filter(TestCase::isError).count();
     }
 
-    public long getSkipCount() {
+    long getSkipCount() {
         return testCases.stream().filter(TestCase::isSkipped).count();
     }
 
-    public Duration getDuration() {
+    Duration getDuration() {
         return duration;
     }
 
-    public List<TestCase> getTestCases() {
+    List<TestCase> getTestCases() {
         return testCases;
     }
 
-    @Override
-    public String toString() {
-        return "TestSuite{" +
-            "name='" + name + '\'' +
-            ", duration=" + duration +
-            ", testCases=" + testCases +
-            '}';
-    }
 }

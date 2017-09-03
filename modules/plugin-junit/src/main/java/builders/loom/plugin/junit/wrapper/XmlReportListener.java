@@ -17,24 +17,25 @@
 package builders.loom.plugin.junit.wrapper;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
-public class XmlReportListener implements TestExecutionListener {
+class XmlReportListener implements TestExecutionListener {
 
     private final Map<TestIdentifier, TestData> testData = new ConcurrentHashMap<>();
     private final Path reportDir;
 
-    public XmlReportListener(final Path reportDir) {
+    XmlReportListener(final Path reportDir) {
         this.reportDir = reportDir;
     }
 
@@ -61,22 +62,6 @@ public class XmlReportListener implements TestExecutionListener {
         testData.get(testIdentifier).testSkipped(reason);
     }
 
-    public List<TestSuite> build() {
-        final List<TestSuite> testSuites = new ArrayList<>();
-        for (Map.Entry<TestIdentifier, TestData> entry : testData.entrySet()) {
-            final TestIdentifier testIdentifier = entry.getKey();
-            final TestData testData2 = entry.getValue();
-            if (isTestSuite(testIdentifier)) {
-                final List<TestCase> collect = findTestsOfContainer(testIdentifier);
-
-                testSuites.add(new TestSuite(testIdentifier.getLegacyReportingName(),
-                    testData2.getDuration(), collect));
-            }
-        }
-
-        return testSuites;
-    }
-
     private TestSuite build(final TestIdentifier testIdentifier) {
         return new TestSuite(testIdentifier.getLegacyReportingName(),
             testData.get(testIdentifier).getDuration(),
@@ -85,11 +70,12 @@ public class XmlReportListener implements TestExecutionListener {
 
     // [engine:junit-jupiter]/[class:builders.loom.example.test.ExampleTest]/[method:test()]
     private boolean isTestSuite(final TestIdentifier testIdentifier) {
-        final List<UniqueId.Segment> segments =
-            UniqueId.parse(testIdentifier.getUniqueId()).getSegments();
+        final Set<String> segmentTypes = UniqueId
+            .parse(testIdentifier.getUniqueId()).getSegments().stream()
+            .map(UniqueId.Segment::getType)
+            .collect(Collectors.toSet());
 
-        return segments.stream().anyMatch(s -> s.getType().equals("class"))
-            && segments.stream().noneMatch(s -> s.getType().equals("method"));
+        return segmentTypes.contains("class") && !segmentTypes.contains("method");
     }
 
     private List<TestCase> findTestsOfContainer(final TestIdentifier testIdentifier) {
@@ -102,9 +88,23 @@ public class XmlReportListener implements TestExecutionListener {
             .collect(Collectors.toList());
     }
 
-    private TestCase mapTestCase(TestIdentifier testIdentifier) {
-        final MethodSource methodSource = (MethodSource) testIdentifier.getSource().get();
-        return new TestCase(methodSource.getMethodName(), methodSource.getClassName(), testData.get(testIdentifier).getDuration());
+    private TestCase mapTestCase(final TestIdentifier testIdentifier) {
+        final MethodSource methodSource = getMethodSource(testIdentifier);
+        return new TestCase(methodSource.getMethodName(), methodSource.getClassName(),
+            testData.get(testIdentifier).getDuration());
+    }
+
+    private static MethodSource getMethodSource(final TestIdentifier testIdentifier) {
+        final TestSource testSource = testIdentifier.getSource()
+            .orElseThrow(() -> new IllegalStateException("Found no testSource of "
+                + testIdentifier));
+
+        if (!(testSource instanceof MethodSource)) {
+            throw new IllegalStateException("TestSource of " + testIdentifier + " is "
+                + "of class " + testSource.getClass() + "! Required is " + MethodSource.class);
+        }
+
+        return (MethodSource) testSource;
     }
 
 }

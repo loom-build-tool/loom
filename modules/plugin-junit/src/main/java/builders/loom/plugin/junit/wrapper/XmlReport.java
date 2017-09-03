@@ -30,12 +30,15 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-public class XmlReport {
+class XmlReport {
 
     private static final XMLOutputFactory OUTPUT_FACTORY = XMLOutputFactory.newFactory();
     private static final double NANO_TO_SEC = 1_000_000_000D;
 
-    public static void writeReport(final TestSuite testSuite, final Path reportDir) {
+    private XmlReport() {
+    }
+
+    static void writeReport(final TestSuite testSuite, final Path reportDir) {
         final Path reportFile = reportDir.resolve("TEST-" + testSuite.getName() + ".xml");
         try (Writer writer = Files.newBufferedWriter(reportFile, StandardCharsets.UTF_8)) {
             final XMLStreamWriter xmlWriter = OUTPUT_FACTORY.createXMLStreamWriter(writer);
@@ -84,8 +87,6 @@ public class XmlReport {
 
     private static String timeOfDuration(final Duration duration) {
         final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
-        nf.setMaximumFractionDigits(3);
-
         return nf.format(duration.getNano() / NANO_TO_SEC);
     }
 

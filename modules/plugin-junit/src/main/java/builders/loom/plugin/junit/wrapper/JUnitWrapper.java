@@ -52,7 +52,8 @@ public class JUnitWrapper {
 
         final SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         final XmlReportListener xmlReportListener = new XmlReportListener(reportDir);
-        launcher.registerTestExecutionListeners(xmlReportListener, summaryListener, new LogListener());
+        launcher.registerTestExecutionListeners(xmlReportListener, summaryListener,
+            new LogListener());
 
         launcher.execute(request);
 

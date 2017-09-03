@@ -18,50 +18,41 @@ package builders.loom.plugin.junit.wrapper;
 
 import java.time.Duration;
 
-public class TestCase {
+class TestCase {
 
     private final String name;
     private final String className;
     private final Duration duration;
     private boolean failed;
 
-    public TestCase(final String name, final String className, final Duration duration) {
+    TestCase(final String name, final String className, final Duration duration) {
         this.name = name;
         this.className = className;
         this.duration = duration;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public String getClassName() {
+    String getClassName() {
         return className;
     }
 
-    public Duration getDuration() {
+    Duration getDuration() {
         return duration;
     }
 
-    public boolean isFailed() {
+    boolean isFailed() {
         return failed;
     }
 
-    public static boolean isError(final TestCase testCase) {
+    static boolean isError(final TestCase testCase) {
         return false;
     }
 
-    public static boolean isSkipped(final TestCase testCase) {
+    static boolean isSkipped(final TestCase testCase) {
         return false;
     }
 
-    @Override
-    public String toString() {
-        return "TestCase{" +
-            "name='" + name + '\'' +
-            ", className='" + className + '\'' +
-            ", duration=" + duration +
-            ", failed=" + failed +
-            '}';
-    }
 }

@@ -152,10 +152,10 @@ class XmlReport implements Closeable {
             xmlWriter.writeEmptyElement(errorType);
         } else {
             xmlWriter.writeStartElement(errorType);
-            xmlWriter.writeAttribute("type", throwable.getClass().getName());
             if (throwable.getMessage() != null) {
                 xmlWriter.writeAttribute("message", throwable.getMessage());
             }
+            xmlWriter.writeAttribute("type", throwable.getClass().getName());
             xmlWriter.writeCharacters(throwableToString(throwable));
             xmlWriter.writeEndElement();
         }

@@ -64,9 +64,6 @@ public class SpringBootTask extends AbstractModuleTask {
     public TaskResult run() throws Exception {
         final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
 
-        final Path metaInfDir = Files.createDirectories(
-            buildDir.resolve("META-INF"));
-
         final Path classesDir = Files.createDirectories(
             buildDir.resolve(Paths.get("BOOT-INF", "classes")));
 

@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
@@ -40,6 +43,8 @@ import builders.loom.util.FileUtil;
 
 public class JUnitTestTask extends AbstractModuleTask {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JUnitTestTask.class);
+
     @Override
     public TaskResult run() throws Exception {
         final Optional<CompilationProduct> testCompilation =
@@ -54,6 +59,8 @@ public class JUnitTestTask extends AbstractModuleTask {
         final Path reportDir = FileUtil.createOrCleanDirectory(resolveReportDir("test"));
 
         final TestResult result = runTests(classesDir, junitClassPath, reportDir);
+
+        LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
             throw new IllegalStateException(

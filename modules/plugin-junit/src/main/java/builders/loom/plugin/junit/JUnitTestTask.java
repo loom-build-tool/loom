@@ -34,7 +34,6 @@ import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.plugin.junit.shared.TestResult;
 import builders.loom.plugin.junit.util.InjectingClassLoader;
-import builders.loom.plugin.junit.util.RestrictedClassLoader;
 import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.FileUtil;
@@ -115,27 +114,30 @@ public class JUnitTestTask extends AbstractModuleTask {
     private TestResult runTests(final Path classesDir, final List<URL> junitClassPath,
                                 final Path reportDir) throws Exception {
 
-        final URLClassLoader junitUrlClassLoader =
-            ClassLoaderUtil.privileged(() ->
-            new URLClassLoader(junitClassPath.toArray(new URL[] {}), null));
+        // SpotBugs warns if not using ClassLoaderUtil.privileged
 
-        final ClassLoader targetClassLoader = ClassLoaderUtil.privileged(
-            () -> new SharedApiClassLoader(junitUrlClassLoader,
-            new RestrictedClassLoader(JUnitTestTask.class.getClassLoader())));
+        try (URLClassLoader junitUrlClassLoader = ClassLoaderUtil.privileged(
+            () -> new URLClassLoader(junitClassPath.toArray(new URL[] {}),
+                ClassLoader.getPlatformClassLoader()))) {
 
-        final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(
-            () -> new InjectingClassLoader(
-                targetClassLoader, JUnitTestTask.class.getClassLoader(),
-                className -> className.startsWith("builders.loom.plugin.junit.wrapper.")));
+            final ClassLoader targetClassLoader = ClassLoaderUtil.privileged(
+                () -> new SharedApiClassLoader(junitUrlClassLoader,
+                    JUnitTestTask.class.getClassLoader()));
 
-        final Class<?> wrapperClass =
-            wrappedClassLoader.loadClass("builders.loom.plugin.junit.wrapper.JUnitWrapper");
+            final ClassLoader wrappedClassLoader = ClassLoaderUtil.privileged(
+                () -> new InjectingClassLoader(targetClassLoader,
+                    JUnitTestTask.class.getClassLoader(),
+                    className -> className.startsWith("builders.loom.plugin.junit.wrapper.")));
 
-        final Object wrapper = wrapperClass.getConstructor().newInstance();
-        final Method wrapperRun = wrapperClass.getMethod("run", ClassLoader.class, Path.class,
-            Path.class);
+            final Class<?> wrapperClass =
+                wrappedClassLoader.loadClass("builders.loom.plugin.junit.wrapper.JUnitWrapper");
 
-        return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir, reportDir);
+            final Object wrapper = wrapperClass.getConstructor().newInstance();
+            final Method wrapperRun = wrapperClass.getMethod("run",
+                ClassLoader.class, Path.class, Path.class);
+
+            return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir, reportDir);
+        }
     }
 
 }

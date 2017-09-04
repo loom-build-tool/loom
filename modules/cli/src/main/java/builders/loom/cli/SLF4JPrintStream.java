@@ -61,7 +61,7 @@ public class SLF4JPrintStream extends OutputStream {
         if (error) {
             LOG.error("STDERR (Please replace System.err with Logging!): {}", sb);
         } else {
-            LOG.warn("STDOUT (Please replace System.out with Logging!): {}", sb);
+            LOG.info("STDOUT (Please replace System.out with Logging!): {}", sb);
         }
     }
 

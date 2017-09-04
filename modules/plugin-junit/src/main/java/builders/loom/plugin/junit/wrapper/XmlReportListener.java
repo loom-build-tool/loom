@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -112,13 +111,17 @@ class XmlReportListener implements TestExecutionListener {
     }
 
     // [engine:junit-jupiter]/[class:builders.loom.example.test.ExampleTest]/[method:test()]
+    // [engine:junit-vintage]/[runner:x.y.z.XTest]/[test:initializationError(x.y.z.XTest)]
     private boolean isTestSuite(final TestIdentifier testIdentifier) {
-        final Set<String> segmentTypes = UniqueId
-            .parse(testIdentifier.getUniqueId()).getSegments().stream()
-            .map(UniqueId.Segment::getType)
-            .collect(Collectors.toSet());
+        final UniqueId uniqueId = UniqueId.parse(testIdentifier.getUniqueId());
 
-        return segmentTypes.contains("class") && !segmentTypes.contains("method");
+        if (!uniqueId.getEngineId().isPresent()) {
+            throw new IllegalStateException("Test " + testIdentifier + " has no engine defined");
+        }
+
+        final List<UniqueId.Segment> segments = uniqueId.getSegments();
+
+        return segments.size() == 2;
     }
 
     private List<TestCase> findTestsOfContainer(final TestIdentifier testIdentifier) {

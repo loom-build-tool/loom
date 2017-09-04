@@ -136,7 +136,8 @@ public class JUnitTestTask extends AbstractModuleTask {
             final Method wrapperRun = wrapperClass.getMethod("run",
                 ClassLoader.class, Path.class, Path.class);
 
-            return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir, reportDir);
+            return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
+                reportDir);
         }
     }
 

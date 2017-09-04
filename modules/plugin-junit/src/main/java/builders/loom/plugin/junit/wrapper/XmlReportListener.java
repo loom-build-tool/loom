@@ -16,16 +16,14 @@
 
 package builders.loom.plugin.junit.wrapper;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import javax.xml.stream.XMLStreamException;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
@@ -35,6 +33,8 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
 class XmlReportListener implements TestExecutionListener {
+
+    private static final Logger LOG = Logger.getLogger(XmlReportListener.class.getName());
 
     private final Map<TestIdentifier, TestData> testData = new ConcurrentHashMap<>();
     private final Path reportDir;
@@ -48,6 +48,7 @@ class XmlReportListener implements TestExecutionListener {
         testData.put(testIdentifier, TestData.start(Instant.now()));
     }
 
+    @SuppressWarnings("checkstyle:illegalcatch")
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
@@ -59,13 +60,11 @@ class XmlReportListener implements TestExecutionListener {
             throwable);
 
         if (isTestSuite(testIdentifier)) {
-            final TestSuite testSuite = buildSuite(testIdentifier);
-            try (XmlReport xmlReport = new XmlReport(testSuite, reportDir)) {
-                xmlReport.writeReport();
-            } catch (final XMLStreamException e) {
-                throw new IllegalStateException(e);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+            try {
+                new XmlReport(buildSuite(testIdentifier), reportDir).writeReport();
+            } catch (final Exception e) {
+                LOG.log(Level.SEVERE, "Error writing XmlReport for "
+                    + testIdentifier.getUniqueId(), e);
             }
         }
     }

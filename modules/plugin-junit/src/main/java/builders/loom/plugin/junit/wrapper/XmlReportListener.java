@@ -23,7 +23,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
@@ -34,11 +33,8 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
 
 class XmlReportListener implements TestExecutionListener {
-
-    private static final Logger LOG = Logger.getLogger(XmlReportListener.class.getName());
 
     private final Map<TestIdentifier, TestData> testData = new ConcurrentHashMap<>();
     private final Path reportDir;
@@ -48,27 +44,13 @@ class XmlReportListener implements TestExecutionListener {
     }
 
     @Override
-    public void testPlanExecutionStarted(final TestPlan testPlan) {
-        LOG.info("Started testPlan " + testPlan.getRoots());
-    }
-
-    @Override
-    public void testPlanExecutionFinished(final TestPlan testPlan) {
-        LOG.info("Finished testPlan " + testPlan.getRoots());
-    }
-
-    @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
-        LOG.info("Started test " + testIdentifier.getDisplayName());
-
         testData.put(testIdentifier, TestData.start(Instant.now()));
     }
 
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
-
-        LOG.info("Finished test " + testIdentifier.getDisplayName());
 
         final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
 
@@ -108,9 +90,6 @@ class XmlReportListener implements TestExecutionListener {
     @Override
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
-        LOG.info("Skipped test " + testIdentifier.getDisplayName()
-            + " - reason: " + reason);
-
         testData.put(testIdentifier, TestData.skip(reason));
     }
 

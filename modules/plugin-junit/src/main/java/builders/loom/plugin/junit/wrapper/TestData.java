@@ -33,6 +33,7 @@ final class TestData {
     static TestData skip(final String reason) {
         final TestData testData = new TestData();
         testData.skipReason = reason;
+        testData.status = TestStatus.SKIPPED;
         return testData;
     }
 

@@ -19,16 +19,27 @@ package builders.loom.plugin.junit.wrapper;
 import java.time.Duration;
 import java.time.Instant;
 
-class TestData {
+final class TestData {
 
-    private final Instant startedAt;
+    private Instant startedAt;
     private Instant endedAt;
     private TestStatus status;
     private Throwable throwable;
     private String skipReason;
 
-    TestData(final Instant startedAt) {
-        this.startedAt = startedAt;
+    private TestData() {
+    }
+
+    static TestData skip(final String reason) {
+        final TestData testData = new TestData();
+        testData.skipReason = reason;
+        return testData;
+    }
+
+    static TestData start(final Instant now) {
+        final TestData testData = new TestData();
+        testData.startedAt = now;
+        return testData;
     }
 
     void testFinished(final Instant finishedAt, final TestStatus finishedStatus,
@@ -36,11 +47,6 @@ class TestData {
         endedAt = finishedAt;
         status = finishedStatus;
         throwable = finishedThrowable;
-    }
-
-    void testSkipped(final Instant skippedAt, final String reason) {
-        testFinished(skippedAt, TestStatus.SKIPPED, null);
-        skipReason = reason;
     }
 
     Instant getStartedAt() {
@@ -52,6 +58,10 @@ class TestData {
     }
 
     Duration getDuration() {
+        if (startedAt == null || endedAt == null) {
+            return Duration.ZERO;
+        }
+
         return Duration.between(startedAt, endedAt);
     }
 

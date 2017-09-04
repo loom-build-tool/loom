@@ -59,19 +59,26 @@ class XmlReportListener implements TestExecutionListener {
 
     @Override
     public void executionStarted(final TestIdentifier testIdentifier) {
-        testData.put(testIdentifier, new TestData(Instant.now()));
+        LOG.info("Started test " + testIdentifier.getDisplayName());
+
+        testData.put(testIdentifier, TestData.start(Instant.now()));
     }
 
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
+
+        LOG.info("Finished test " + testIdentifier.getDisplayName());
+
         final Throwable throwable = testExecutionResult.getThrowable().orElse(null);
+
         testData.get(testIdentifier).testFinished(Instant.now(),
             mapStatus(testExecutionResult.getStatus(), throwable),
             throwable);
 
         if (isTestSuite(testIdentifier)) {
-            try (XmlReport xmlReport = new XmlReport(build(testIdentifier), reportDir)) {
+            final TestSuite testSuite = buildSuite(testIdentifier);
+            try (XmlReport xmlReport = new XmlReport(testSuite, reportDir)) {
                 xmlReport.writeReport();
             } catch (final XMLStreamException e) {
                 throw new IllegalStateException(e);
@@ -101,10 +108,13 @@ class XmlReportListener implements TestExecutionListener {
     @Override
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
-        testData.get(testIdentifier).testSkipped(Instant.now(), reason);
+        LOG.info("Skipped test " + testIdentifier.getDisplayName()
+            + " - reason: " + reason);
+
+        testData.put(testIdentifier, TestData.skip(reason));
     }
 
-    private TestSuite build(final TestIdentifier testIdentifier) {
+    private TestSuite buildSuite(final TestIdentifier testIdentifier) {
         return new TestSuite(testIdentifier.getLegacyReportingName(),
             testData.get(testIdentifier).getDuration(),
             findTestsOfContainer(testIdentifier));

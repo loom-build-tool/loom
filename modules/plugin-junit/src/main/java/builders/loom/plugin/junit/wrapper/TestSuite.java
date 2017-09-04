@@ -25,8 +25,7 @@ class TestSuite {
     private final Duration duration;
     private final List<TestCase> testCases;
 
-    TestSuite(final String name, final Duration duration,
-              final List<TestCase> testCases) {
+    TestSuite(final String name, final Duration duration, final List<TestCase> testCases) {
         this.name = name;
         this.duration = duration;
         this.testCases = testCases;

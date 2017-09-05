@@ -21,9 +21,11 @@ package builders.loom.api;
  */
 public interface Task {
 
-    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+    default void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+    }
 
-    void setBuildContext(BuildContext buildContext);
+    default void setBuildContext(final BuildContext buildContext) {
+    }
 
     TaskResult run() throws Exception;
 

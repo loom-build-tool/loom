@@ -29,18 +29,25 @@ public interface Plugin {
 
     void setName(final String pluginName);
 
-    PluginSettings getPluginSettings();
-
     void setTaskRegistry(TaskRegistry taskRegistry);
 
-    void setServiceRegistry(ServiceRegistry serviceRegistry);
+    default PluginSettings getPluginSettings() {
+        return null;
+    }
 
-    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+    default void setServiceRegistry(final ServiceRegistry serviceRegistry) {
+    }
 
-    void setRepositoryPath(Path path);
+    default void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
+    }
 
-    void setDownloadProgressEmitter(DownloadProgressEmitter downloadProgressEmitter);
+    default void setRepositoryPath(final Path path) {
+    }
 
-    void configure();
+    default void setDownloadProgressEmitter(final DownloadProgressEmitter emitter) {
+    }
+
+    default void configure() {
+    }
 
 }

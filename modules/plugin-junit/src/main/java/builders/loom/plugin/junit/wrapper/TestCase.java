@@ -17,6 +17,9 @@
 package builders.loom.plugin.junit.wrapper;
 
 import java.time.Duration;
+import java.util.List;
+
+import org.junit.platform.engine.reporting.ReportEntry;
 
 class TestCase {
 
@@ -26,15 +29,18 @@ class TestCase {
     private final TestStatus status;
     private final Throwable throwable;
     private final String skipReason;
+    private final List<ReportEntry> reportEntries;
 
     TestCase(final String name, final String className, final Duration duration,
-             final TestStatus status, final Throwable throwable, final String skipReason) {
+             final TestStatus status, final Throwable throwable, final String skipReason,
+             final List<ReportEntry> reportEntries) {
         this.name = name;
         this.className = className;
         this.duration = duration;
         this.status = status;
         this.throwable = throwable;
         this.skipReason = skipReason;
+        this.reportEntries = reportEntries;
     }
 
     String getName() {
@@ -59,6 +65,10 @@ class TestCase {
 
     String getSkipReason() {
         return skipReason;
+    }
+
+    public List<ReportEntry> getReportEntries() {
+        return reportEntries;
     }
 
     boolean isFailed() {

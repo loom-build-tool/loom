@@ -18,6 +18,10 @@ package builders.loom.plugin.junit.wrapper;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.platform.engine.reporting.ReportEntry;
 
 final class TestData {
 
@@ -26,6 +30,7 @@ final class TestData {
     private TestStatus status;
     private Throwable throwable;
     private String skipReason;
+    private final List<ReportEntry> reportEntries = new ArrayList<>();
 
     private TestData() {
     }
@@ -76,6 +81,14 @@ final class TestData {
 
     String getSkipReason() {
         return skipReason;
+    }
+
+    public List<ReportEntry> getReportEntries() {
+        return reportEntries;
+    }
+
+    void addReportEntry(final ReportEntry reportEntry) {
+        reportEntries.add(reportEntry);
     }
 
 }

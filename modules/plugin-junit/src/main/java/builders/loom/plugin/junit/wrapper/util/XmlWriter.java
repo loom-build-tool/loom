@@ -45,6 +45,10 @@ public class XmlWriter {
             transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
+            // Write CDATA for system-out and system-err elements
+            transformer.setOutputProperty(OutputKeys.CDATA_SECTION_ELEMENTS,
+                "system-out system-err");
         } catch (final TransformerConfigurationException e) {
             throw new IllegalStateException(e);
         }

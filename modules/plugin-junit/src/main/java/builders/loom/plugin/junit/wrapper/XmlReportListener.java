@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
@@ -48,7 +49,6 @@ class XmlReportListener implements TestExecutionListener {
         testData.put(testIdentifier, TestData.start(Instant.now()));
     }
 
-    @SuppressWarnings("checkstyle:illegalcatch")
     @Override
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
@@ -59,14 +59,7 @@ class XmlReportListener implements TestExecutionListener {
             mapStatus(testExecutionResult.getStatus(), throwable),
             throwable);
 
-        if (isTestSuite(testIdentifier)) {
-            try {
-                new XmlReport(buildSuite(testIdentifier), reportDir).writeReport();
-            } catch (final Exception e) {
-                LOG.log(Level.SEVERE, "Error writing XmlReport for "
-                    + testIdentifier.getUniqueId(), e);
-            }
-        }
+        writeReport(testIdentifier);
     }
 
     @SuppressWarnings("checkstyle:returncount")
@@ -90,12 +83,27 @@ class XmlReportListener implements TestExecutionListener {
     public void executionSkipped(final TestIdentifier testIdentifier,
                                  final String reason) {
         testData.put(testIdentifier, TestData.skip(reason));
+        writeReport(testIdentifier);
     }
 
-    private TestSuite buildSuite(final TestIdentifier testIdentifier) {
-        return new TestSuite(testIdentifier.getLegacyReportingName(),
-            testData.get(testIdentifier).getDuration(),
-            findTestsOfContainer(testIdentifier));
+    @Override
+    public void reportingEntryPublished(final TestIdentifier testIdentifier,
+                                        final ReportEntry entry) {
+        testData.get(testIdentifier).addReportEntry(entry);
+    }
+
+    @SuppressWarnings("checkstyle:illegalcatch")
+    private void writeReport(final TestIdentifier testIdentifier) {
+        if (!isTestSuite(testIdentifier)) {
+            return;
+        }
+
+        try {
+            new XmlReport(buildSuite(testIdentifier), reportDir).writeReport();
+        } catch (final Exception e) {
+            LOG.log(Level.SEVERE, "Error writing XmlReport for "
+                + testIdentifier.getUniqueId(), e);
+        }
     }
 
     // [engine:junit-jupiter]/[class:builders.loom.example.test.ExampleTest]/[method:test()]
@@ -110,6 +118,13 @@ class XmlReportListener implements TestExecutionListener {
         final List<UniqueId.Segment> segments = uniqueId.getSegments();
 
         return segments.size() == 2;
+    }
+
+    private TestSuite buildSuite(final TestIdentifier testIdentifier) {
+        final TestData td = this.testData.get(testIdentifier);
+        return new TestSuite(testIdentifier.getLegacyReportingName(),
+            td.getDuration(),
+            findTestsOfContainer(testIdentifier));
     }
 
     private List<TestCase> findTestsOfContainer(final TestIdentifier testIdentifier) {
@@ -130,7 +145,8 @@ class XmlReportListener implements TestExecutionListener {
             td.getDuration(),
             td.getStatus(),
             td.getThrowable(),
-            td.getSkipReason());
+            td.getSkipReason(),
+            td.getReportEntries());
     }
 
     private static MethodSource getMethodSource(final TestIdentifier testIdentifier) {

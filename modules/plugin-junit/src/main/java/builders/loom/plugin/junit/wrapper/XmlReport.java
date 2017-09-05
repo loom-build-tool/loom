@@ -21,11 +21,15 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.xml.stream.XMLStreamException;
+
+import org.junit.platform.engine.reporting.ReportEntry;
 
 import builders.loom.plugin.junit.wrapper.util.XmlBuilder;
 import builders.loom.plugin.junit.wrapper.util.XmlWriter;
@@ -44,6 +48,16 @@ class XmlReport {
     }
 
     void writeReport() throws XMLStreamException {
+        writeTestSuiteAttributes();
+
+        writeSystemProperties();
+
+        testSuite.getTestCases().forEach(this::writeTestCase);
+
+        new XmlWriter().write(rootElement.getDocument(), reportFile);
+    }
+
+    private void writeTestSuiteAttributes() {
         rootElement
             .attr("name", testSuite.getName())
             .attr("tests", String.valueOf(testSuite.getTestCount()))
@@ -51,19 +65,15 @@ class XmlReport {
             .attr("failures", String.valueOf(testSuite.getFailureCount()))
             .attr("errors", String.valueOf(testSuite.getErrorCount()))
             .attr("time", timeOfDuration(testSuite.getDuration()));
+    }
 
+    private void writeSystemProperties() {
         final XmlBuilder.Element propertiesE = rootElement.element("properties");
         for (final Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             propertiesE.element("property")
                 .attr("name", String.valueOf(entry.getKey()))
                 .attr("value", String.valueOf(entry.getValue()));
         }
-
-        for (final TestCase testCase : testSuite.getTestCases()) {
-            writeTestCase(testCase);
-        }
-
-        new XmlWriter().write(rootElement.getDocument(), reportFile);
     }
 
     private void writeTestCase(final TestCase testCase) {
@@ -92,6 +102,27 @@ class XmlReport {
             default:
                 throw new IllegalStateException("Unknown status: " + testCase.getStatus());
         }
+
+        writeReportEntries(testcaseE, testCase.getReportEntries());
+    }
+
+    private void writeReportEntries(final XmlBuilder.Element parent,
+                                    final List<ReportEntry> reportEntries) {
+
+        if (reportEntries.isEmpty()) {
+            return;
+        }
+
+        final XmlBuilder.Element outE = parent.element("system-out");
+        final StringBuilder sb = new StringBuilder();
+        for (final ReportEntry entry : reportEntries) {
+            sb.append("JUnit ReportEntry ");
+            sb.append(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(entry.getTimestamp()));
+            sb.append(" ");
+            sb.append(entry.getKeyValuePairs().toString());
+            sb.append("\n");
+        }
+        outE.text(sb.toString());
     }
 
     private void writeSkipped(final XmlBuilder.Element testcaseE, final String skipReason) {

@@ -35,6 +35,14 @@ class TestSuite {
         return name;
     }
 
+    Duration getDuration() {
+        return duration;
+    }
+
+    List<TestCase> getTestCases() {
+        return testCases;
+    }
+
     int getTestCount() {
         return testCases.size();
     }
@@ -49,14 +57,6 @@ class TestSuite {
 
     long getSkipCount() {
         return testCases.stream().filter(TestCase::isSkipped).count();
-    }
-
-    Duration getDuration() {
-        return duration;
-    }
-
-    List<TestCase> getTestCases() {
-        return testCases;
     }
 
 }

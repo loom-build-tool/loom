@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.api.service;
 
-import java.util.List;
+import java.nio.file.Path;
 
-import builders.loom.api.DependencyScope;
-import builders.loom.api.product.ArtifactProduct;
+public interface ResolvedArtifact {
 
-public interface DependencyResolver {
+    Path getMainArtifact();
 
-    List<ArtifactProduct> resolve(List<String> deps, DependencyScope scope, String classifier);
+    Path getSourceArtifact();
 
 }

@@ -22,10 +22,6 @@ or ``${user.home}/.m2/settings.xml``. See `Maven Settings`_ for more details.
 Settings
 --------
 
-repositoryUrl
-    The URL of the maven repository to use when downloading artifacts.
-    By default this is: ``https://repo.maven.apache.org/maven2/``.
-
 groupAndArtifact
     The *groupId* and *artifactId* used by the ``mavenArtifact`` product when
     creating a ``pom.xml`` and installing to your local repository.

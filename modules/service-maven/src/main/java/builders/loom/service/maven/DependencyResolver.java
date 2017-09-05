@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package builders.loom.api.service;
+package builders.loom.service.maven;
 
-import java.util.function.Supplier;
+import java.util.List;
 
-import builders.loom.api.Service;
+import builders.loom.api.DependencyScope;
+import builders.loom.api.service.ResolvedArtifact;
 
-public interface ServiceLocatorRegistration {
+public interface DependencyResolver {
 
-    void registerService(String serviceName, Supplier<Service> serviceSupplier);
+    List<ResolvedArtifact> resolve(List<String> deps, DependencyScope scope, boolean withSources);
 
 }

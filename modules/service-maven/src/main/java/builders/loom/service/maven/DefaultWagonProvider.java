@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagon;

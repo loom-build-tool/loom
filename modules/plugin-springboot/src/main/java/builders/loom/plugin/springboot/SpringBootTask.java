@@ -55,9 +55,12 @@ public class SpringBootTask extends AbstractModuleTask {
         "org.springframework.boot.loader.JarLauncher";
 
     private final SpringBootPluginSettings pluginSettings;
+    private final DependencyResolverService dependencyResolverService;
 
-    public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
+    public SpringBootTask(final SpringBootPluginSettings pluginSettings,
+                          final DependencyResolverService dependencyResolverService) {
         this.pluginSettings = pluginSettings;
+        this.dependencyResolverService = dependencyResolverService;
     }
 
     @Override
@@ -105,15 +108,12 @@ public class SpringBootTask extends AbstractModuleTask {
     }
 
     private Path resolveSpringBootLoaderJar() {
-        final DependencyResolverService mavenDependencyResolver = getServiceLocator()
-            .getService("mavenDependencyResolver", DependencyResolverService.class);
-
         final String springBootLoaderArtifact =
             "org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion();
 
-        final List<Path> resolvedArtifacts = mavenDependencyResolver.resolve(
+        final List<Path> resolvedArtifacts = dependencyResolverService.resolveMainArtifacts(
             Collections.singletonList(springBootLoaderArtifact),
-            DependencyScope.COMPILE, "springBootApplication");
+            DependencyScope.COMPILE);
 
         return Iterables.getOnlyElement(resolvedArtifacts);
     }

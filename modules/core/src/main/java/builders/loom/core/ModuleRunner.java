@@ -44,7 +44,6 @@ import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.GoalInfo;
 import builders.loom.core.plugin.PluginLoader;
 import builders.loom.core.plugin.ProductRepositoryImpl;
-import builders.loom.core.plugin.ServiceLocatorImpl;
 import builders.loom.core.plugin.TaskInfo;
 import builders.loom.core.plugin.TaskRegistryImpl;
 import builders.loom.util.Stopwatch;
@@ -61,7 +60,6 @@ public class ModuleRunner {
     private final ModuleRegistry moduleRegistry;
     private final ProgressMonitor progressMonitor;
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
-    private final Map<BuildContext, ServiceLocatorImpl> moduleServiceLocators = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies = new HashMap<>();
 
@@ -76,14 +74,10 @@ public class ModuleRunner {
     }
 
     public void init() {
-        final Stopwatch sw = new Stopwatch();
-
         resolveModuleDependencyGraph();
 
         registerGlobalPlugins();
         registerModulePlugins();
-
-        LOG.debug("Initialized all plugins in {}", sw);
     }
 
     private void registerGlobalPlugins() {
@@ -94,22 +88,19 @@ public class ModuleRunner {
 
     private void registerModule(final Set<String> defaultPlugins, final BuildContext buildContext) {
         final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(buildContext);
-        final ServiceLocatorImpl serviceLocator = new ServiceLocatorImpl();
 
         final Set<String> pluginsToInitialize = new HashSet<>();
         pluginsToInitialize.addAll(defaultPlugins);
         pluginsToInitialize.addAll(buildContext.getConfig().getPlugins());
 
-        pluginLoader.initPlugins(pluginsToInitialize, buildContext.getConfig(), taskRegistry,
-            serviceLocator);
+        pluginLoader.initPlugins(pluginsToInitialize, buildContext.getConfig(), taskRegistry);
 
         moduleTaskRegistries.put(buildContext, taskRegistry);
-        moduleServiceLocators.put(buildContext, serviceLocator);
         moduleProductRepositories.put(buildContext, new ProductRepositoryImpl());
     }
 
     private void registerModulePlugins() {
-        final Set<String> defaultPlugins = Set.of("java", "maven");
+        final Set<String> defaultPlugins = Set.of("java");
         for (final Module module : moduleRegistry.getModules()) {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
             registerModule(defaultPlugins, module);
@@ -360,13 +351,11 @@ public class ModuleRunner {
     private Job buildJob(final ConfiguredTask configuredTask) {
         final BuildContext buildContext = configuredTask.getBuildContext();
         final ProductRepository productRepository = moduleProductRepositories.get(buildContext);
-        final ServiceLocatorImpl serviceLocator = moduleServiceLocators.get(buildContext);
 
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
-            productRepository, serviceLocator, transitiveModuleCompileDependencies,
-            moduleProductRepositories);
+            productRepository, transitiveModuleCompileDependencies, moduleProductRepositories);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

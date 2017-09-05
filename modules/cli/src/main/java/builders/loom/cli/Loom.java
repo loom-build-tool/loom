@@ -208,8 +208,9 @@ public final class Loom {
         formatter.printHelp("loom [option...] [product|goal...]", options);
     }
 
-    private static void run(final Path projectBaseDir, final Path logFile,
-                               final CommandLine cmd) throws Exception {
+    private static void run(final Path projectBaseDir, final Path logFile, final CommandLine cmd)
+        throws Exception {
+
         if (cmd.hasOption("clean")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
             clean(projectBaseDir);

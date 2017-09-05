@@ -45,6 +45,12 @@ public class JUnitTestTask extends AbstractModuleTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(JUnitTestTask.class);
 
+    private final DependencyResolverService dependencyResolverService;
+
+    public JUnitTestTask(final DependencyResolverService dependencyResolverService) {
+        this.dependencyResolverService = dependencyResolverService;
+    }
+
     @Override
     public TaskResult run() throws Exception {
         final Optional<CompilationProduct> testCompilation =
@@ -109,13 +115,10 @@ public class JUnitTestTask extends AbstractModuleTask {
     }
 
     private List<Path> resolveJUnitPlatformLauncher() {
-        final DependencyResolverService mavenDependencyResolver = getServiceLocator()
-            .getService("mavenDependencyResolver", DependencyResolverService.class);
-
         final List<String> artifacts = List.of(
             "org.junit.platform:junit-platform-launcher:1.0.0-RC3");
 
-        return mavenDependencyResolver.resolve(artifacts, DependencyScope.COMPILE, "junit");
+        return dependencyResolverService.resolveMainArtifacts(artifacts, DependencyScope.COMPILE);
     }
 
     private TestResult runTests(final Path classesDir, final List<URL> junitClassPath,

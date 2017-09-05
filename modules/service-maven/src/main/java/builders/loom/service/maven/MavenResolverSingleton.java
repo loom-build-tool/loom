@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import builders.loom.api.DownloadProgressEmitter;
 
@@ -25,14 +25,13 @@ public final class MavenResolverSingleton {
     private MavenResolverSingleton() {
     }
 
-    public static MavenResolver getInstance(final MavenResolverPluginSettings pluginSettings,
+    public static MavenResolver getInstance(final String repositoryUrl,
                                             final DownloadProgressEmitter downloadProgressEmitter) {
 
         if (instance == null) {
             synchronized (MavenResolverSingleton.class) {
                 if (instance == null) {
-                    instance = new MavenResolver(
-                        pluginSettings.getRepositoryUrl(), downloadProgressEmitter);
+                    instance = new MavenResolver(repositoryUrl, downloadProgressEmitter);
                 }
             }
         }

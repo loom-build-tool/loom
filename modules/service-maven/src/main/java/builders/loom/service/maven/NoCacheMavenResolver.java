@@ -14,31 +14,31 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import java.util.List;
 
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
-import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.service.ResolvedArtifact;
 
 public class NoCacheMavenResolver implements DependencyResolver {
 
-    private final MavenResolverPluginSettings pluginSettings;
+    private final String repositoryUrl;
     private final DownloadProgressEmitter downloadProgressEmitter;
 
-    public NoCacheMavenResolver(final MavenResolverPluginSettings pluginSettings,
-                                final DownloadProgressEmitter downloadProgressEmitter) {
-        this.pluginSettings = pluginSettings;
+    NoCacheMavenResolver(final String repositoryUrl,
+                         final DownloadProgressEmitter downloadProgressEmitter) {
+        this.repositoryUrl = repositoryUrl;
         this.downloadProgressEmitter = downloadProgressEmitter;
     }
 
     @Override
-    public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
-                                         final String classifier) {
+    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
+                                          final boolean withSources) {
         return MavenResolverSingleton
-            .getInstance(pluginSettings, downloadProgressEmitter)
-            .resolve(deps, scope, classifier);
+            .getInstance(repositoryUrl, downloadProgressEmitter)
+            .resolve(deps, scope, withSources);
     }
 
 }

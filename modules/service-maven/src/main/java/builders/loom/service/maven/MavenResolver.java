@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
-import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.service.ResolvedArtifact;
 import builders.loom.util.SystemUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -97,8 +97,8 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
-                                         final String classifier) {
+    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
+                                          final boolean withSources) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(localRepositoryManager);
@@ -113,7 +113,7 @@ public class MavenResolver implements DependencyResolver {
             .collect(Collectors.toList())
         );
 
-        final List<ArtifactProduct> ret = new ArrayList<>();
+        final List<ResolvedArtifact> ret = new ArrayList<>();
 
         try {
             final DependencyNode node =
@@ -130,14 +130,14 @@ public class MavenResolver implements DependencyResolver {
 
             final List<ArtifactResult> artifactResults = dependencyResult.getArtifactResults();
 
-            if (classifier == null) {
-                for (final ArtifactResult artifactResult : artifactResults) {
-                    ret.add(resolveArtifact(artifactResult));
-                }
-            } else {
+            if (withSources) {
                 for (final ArtifactResult artifactResult : artifactResults) {
                     ret.add(resolveArtifactWithSource(scope, session, repositories,
                         artifactResult));
+                }
+            } else {
+                for (final ArtifactResult artifactResult : artifactResults) {
+                    ret.add(resolveArtifact(artifactResult));
                 }
             }
 
@@ -149,15 +149,15 @@ public class MavenResolver implements DependencyResolver {
         }
     }
 
-    private ArtifactProduct resolveArtifact(final ArtifactResult artifactResult) {
+    private ResolvedArtifact resolveArtifact(final ArtifactResult artifactResult) {
         final Path mainArtifact = artifactResult.getArtifact().getFile().toPath();
-        return new ArtifactProduct(mainArtifact, null);
+        return new ResolvedArtifactImpl(mainArtifact, null);
     }
 
-    private ArtifactProduct resolveArtifactWithSource(final DependencyScope scope,
-                                                      final MavenRepositorySystemSession session,
-                                                      final List<RemoteRepository> repositories,
-                                                      final ArtifactResult artifactResult) {
+    private ResolvedArtifact resolveArtifactWithSource(final DependencyScope scope,
+                                                       final MavenRepositorySystemSession session,
+                                                       final List<RemoteRepository> repositories,
+                                                       final ArtifactResult artifactResult) {
 
         final Path mainArtifactFile = artifactResult.getArtifact().getFile().toPath();
 
@@ -178,7 +178,7 @@ public class MavenResolver implements DependencyResolver {
             LOG.debug("Couldn't fetch source artifact for {}", sourceArtifact, e);
         }
 
-        return new ArtifactProduct(mainArtifactFile, sourceArtifactFile);
+        return new ResolvedArtifactImpl(mainArtifactFile, sourceArtifactFile);
     }
 
     private static String mavenScope(final DependencyScope scope) {

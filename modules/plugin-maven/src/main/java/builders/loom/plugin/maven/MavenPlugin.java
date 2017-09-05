@@ -16,70 +16,21 @@
 
 package builders.loom.plugin.maven;
 
-import java.nio.file.Path;
-import java.util.stream.Collectors;
-
 import builders.loom.api.AbstractPlugin;
-import builders.loom.api.DependencyResolverService;
-import builders.loom.api.DependencyScope;
-import builders.loom.api.DownloadProgressEmitter;
-import builders.loom.api.product.ArtifactProduct;
 
-public class MavenPlugin extends AbstractPlugin<MavenResolverPluginSettings> {
+public class MavenPlugin extends AbstractPlugin<MavenPluginSettings> {
 
     public MavenPlugin() {
-        super(new MavenResolverPluginSettings());
+        super(new MavenPluginSettings());
     }
 
     @Override
     public void configure() {
-        final MavenResolverPluginSettings pluginSettings = getPluginSettings();
-        final Path repositoryPath = getRepositoryPath();
-        final DownloadProgressEmitter downloadProgressEmitter = getDownloadProgressEmitter();
-
-        final DependencyResolver dependencyResolver = getRuntimeConfiguration().isCacheEnabled()
-            ? new CachingMavenResolver(pluginSettings, downloadProgressEmitter, repositoryPath)
-            : new NoCacheMavenResolver(pluginSettings, downloadProgressEmitter);
-
-        task("resolveCompileDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.COMPILE, dependencyResolver))
-            .provides("compileDependencies", true)
-            .desc("Fetches dependencies needed for main class compilation.")
-            .register();
-
-        task("resolveCompileArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.COMPILE,
-                dependencyResolver))
-            .provides("compileArtifacts", true)
-            .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
-            .register();
-
-        task("resolveTestDependencies")
-            .impl(() -> new MavenResolverTask(DependencyScope.TEST, dependencyResolver))
-            .provides("testDependencies", true)
-            .desc("Fetches dependencies needed for test class compilation.")
-            .register();
-
-        task("resolveTestArtifacts")
-            .impl(() -> new MavenArtifactResolverTask(DependencyScope.TEST,
-                dependencyResolver))
-            .provides("testArtifacts", true)
-            .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
-            .register();
-
         task("install")
-            .impl(() -> new MavenInstallTask(pluginSettings))
+            .impl(() -> new MavenInstallTask(getPluginSettings()))
             .provides("mavenArtifact")
             .uses("jar")
             .desc("Installs the jar file to the local Maven repository.")
-            .register();
-
-        service("mavenDependencyResolver")
-            .impl(() -> (DependencyResolverService) (deps, scope, cacheName) ->
-                dependencyResolver
-                    .resolve(deps, scope, null).stream()
-                    .map(ArtifactProduct::getMainArtifact)
-                    .collect(Collectors.toList()))
             .register();
     }
 

@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package builders.loom.api.service;
+package builders.loom.core.service;
 
-import java.util.Set;
+import builders.loom.api.DependencyResolverService;
+import builders.loom.api.ServiceRegistry;
 
-import builders.loom.api.Service;
+public class ServiceRegistryImpl implements ServiceRegistry {
 
-public interface ServiceLocator {
+    private DependencyResolverService dependencyResolverService;
 
-    <T extends Service> T getService(String name, Class<T> clazz);
+    @Override
+    public DependencyResolverService getDependencyResolverService() {
+        return dependencyResolverService;
+    }
 
-    Set<String> getServiceNames();
+    public void setDependencyResolverService(
+        final DependencyResolverService dependencyResolverService) {
+        this.dependencyResolverService = dependencyResolverService;
+    }
 
 }

@@ -16,11 +16,14 @@
 
 package builders.loom.api;
 
-import builders.loom.api.service.ServiceLocator;
+import java.nio.file.Path;
 
-/**
- * Marker interface for services managed by {@link ServiceLocator}.
- */
 public interface Service {
+
+    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+
+    void setRepositoryPath(Path repositoryPath);
+
+    void init();
 
 }

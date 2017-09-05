@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.plugin.java;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
+import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
 
-public class MavenArtifactResolverTask extends AbstractModuleTask {
+public class ArtifactResolverTask extends AbstractModuleTask {
 
     private final DependencyScope dependencyScope;
-    private final DependencyResolver dependencyResolver;
+    private final DependencyResolverService dependencyResolver;
 
-    public MavenArtifactResolverTask(final DependencyScope dependencyScope,
-                                     final DependencyResolver dependencyResolver) {
+    public ArtifactResolverTask(final DependencyScope dependencyScope,
+                                final DependencyResolverService dependencyResolver) {
 
         this.dependencyScope = dependencyScope;
         this.dependencyResolver = dependencyResolver;
@@ -45,7 +47,7 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        final List<ArtifactProduct> artifacts = resolve(dependencies, "sources");
+        final List<ArtifactProduct> artifacts = resolve(dependencies, true);
         return completeOk(new ArtifactListProduct(artifacts));
     }
 
@@ -66,8 +68,11 @@ public class MavenArtifactResolverTask extends AbstractModuleTask {
     }
 
     protected List<ArtifactProduct> resolve(final List<String> dependencies,
-                                            final String classifier) {
-        return dependencyResolver.resolve(dependencies, dependencyScope, classifier);
+                                            final boolean withSources) {
+        return dependencyResolver
+            .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
+            .map(a -> new ArtifactProduct(a.getMainArtifact(), a.getSourceArtifact()))
+            .collect(Collectors.toList());
     }
 
 }

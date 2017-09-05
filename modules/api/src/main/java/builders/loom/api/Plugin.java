@@ -18,8 +18,6 @@ package builders.loom.api;
 
 import java.nio.file.Path;
 
-import builders.loom.api.service.ServiceLocatorRegistration;
-
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
  * configuration &ndash; even if it isn't used in the build process. Ensure quick initialization and
@@ -35,7 +33,7 @@ public interface Plugin {
 
     void setTaskRegistry(TaskRegistry taskRegistry);
 
-    void setServiceLocator(ServiceLocatorRegistration serviceLocator);
+    void setServiceRegistry(ServiceRegistry serviceRegistry);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
 

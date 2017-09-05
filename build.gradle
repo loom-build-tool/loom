@@ -53,6 +53,10 @@ task zip(type: Zip) {
             from project(':modules:cli').configurations.runtime.allArtifacts.files
             from project(':modules:cli').configurations.runtime
         }
+        into("service-maven") {
+            from project(':modules:service-maven').configurations.runtime.allArtifacts.files
+            from project(':modules:service-maven').configurations.runtime
+        }
         into("plugin-java") {
             from project(':modules:plugin-java').configurations.runtime.allArtifacts.files
             from project(':modules:plugin-java').configurations.runtime

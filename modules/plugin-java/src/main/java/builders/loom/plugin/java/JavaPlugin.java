@@ -18,6 +18,8 @@ package builders.loom.plugin.java;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.DependencyResolverService;
+import builders.loom.api.DependencyScope;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
@@ -28,6 +30,35 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
 
     @Override
     public void configure() {
+        final DependencyResolverService dependencyResolver =
+            getServiceRegistry().getDependencyResolverService();
+
+        task("resolveCompileDependencies")
+            .impl(() -> new DependencyResolverTask(DependencyScope.COMPILE, dependencyResolver))
+            .provides("compileDependencies", true)
+            .desc("Fetches dependencies needed for main class compilation.")
+            .register();
+
+        task("resolveCompileArtifacts")
+            .impl(() -> new ArtifactResolverTask(DependencyScope.COMPILE,
+                dependencyResolver))
+            .provides("compileArtifacts", true)
+            .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
+            .register();
+
+        task("resolveTestDependencies")
+            .impl(() -> new DependencyResolverTask(DependencyScope.TEST, dependencyResolver))
+            .provides("testDependencies", true)
+            .desc("Fetches dependencies needed for test class compilation.")
+            .register();
+
+        task("resolveTestArtifacts")
+            .impl(() -> new ArtifactResolverTask(DependencyScope.TEST,
+                dependencyResolver))
+            .provides("testArtifacts", true)
+            .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
+            .register();
+
         task("provideSource")
             .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
             .provides("source", true)

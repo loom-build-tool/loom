@@ -56,11 +56,11 @@ import builders.loom.util.TempFile;
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class MavenInstallTask extends AbstractModuleTask {
 
-    private final MavenResolverPluginSettings pluginSettings;
+    private final MavenPluginSettings pluginSettings;
     private final LocalRepositoryManager localRepositoryManager;
     private final RepositorySystem system;
 
-    public MavenInstallTask(final MavenResolverPluginSettings pluginSettings) {
+    public MavenInstallTask(final MavenPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

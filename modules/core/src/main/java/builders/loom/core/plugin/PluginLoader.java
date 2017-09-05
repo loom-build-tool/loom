@@ -17,8 +17,6 @@
 package builders.loom.core.plugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -38,18 +36,15 @@ import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.core.DownloadProgressEmitterBridge;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.Version;
 import builders.loom.core.misc.BeanUtil;
-import builders.loom.util.ClassLoaderUtil;
+import builders.loom.core.misc.ExtensionLoader;
 import builders.loom.util.SystemUtil;
 
-@SuppressWarnings({
-    "checkstyle:classfanoutcomplexity",
-    "checkstyle:illegalcatch",
-    "checkstyle:classdataabstractioncoupling"})
 public class PluginLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginLoader.class);
@@ -76,21 +71,23 @@ public class PluginLoader {
     private final Map<String, Class<?>> pluginClasses = new HashMap<>();
     private final RuntimeConfigurationImpl runtimeConfiguration;
     private final DownloadProgressEmitter downloadProgressEmitter;
+    private final ServiceRegistry serviceRegistry;
 
     public PluginLoader(final RuntimeConfigurationImpl runtimeConfiguration,
-                        final ProgressMonitor progressMonitor) {
+                        final ProgressMonitor progressMonitor,
+                        final ServiceRegistry serviceRegistry) {
         this.runtimeConfiguration = runtimeConfiguration;
         downloadProgressEmitter = new DownloadProgressEmitterBridge(progressMonitor);
+        this.serviceRegistry = serviceRegistry;
     }
 
     public void initPlugins(final Set<String> pluginsToInitialize,
                             final BuildConfig moduleConfig,
-                            final TaskRegistryImpl taskRegistry,
-                            final ServiceLocatorImpl serviceLocator) {
+                            final TaskRegistryImpl taskRegistry) {
 
         final Set<String> acceptedSettings = new HashSet<>();
         for (final String plugin : pluginsToInitialize) {
-            acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry, serviceLocator));
+            acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry));
         }
 
         validateConfiguredTasks(taskRegistry);
@@ -101,14 +98,13 @@ public class PluginLoader {
     }
 
     private Set<String> initPlugin(final String pluginName, final BuildConfig config,
-                                   final TaskRegistryImpl taskRegistry,
-                                   final ServiceLocatorImpl serviceLocator) {
+                                   final TaskRegistryImpl taskRegistry) {
 
         final Plugin plugin = getPlugin(pluginName);
 
         plugin.setName(pluginName);
         plugin.setTaskRegistry(taskRegistry);
-        plugin.setServiceLocator(serviceLocator);
+        plugin.setServiceRegistry(serviceRegistry);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(Version.getVersion(), pluginName)));
@@ -124,7 +120,13 @@ public class PluginLoader {
     }
 
     private Plugin getPlugin(final String pluginName) {
-        final Class<?> pluginClass = pluginClasses.computeIfAbsent(pluginName, this::loadPlugin);
+        final String pluginClassname = INTERNAL_MODULE_PLUGINS.get(pluginName);
+        if (pluginClassname == null) {
+            throw new IllegalArgumentException("Unknown plugin: " + pluginName);
+        }
+
+        final Class<?> pluginClass = pluginClasses.computeIfAbsent(pluginName, (t) ->
+            ExtensionLoader.loadExtension(loomBaseDir, "plugin-" + pluginName, pluginClassname));
 
         try {
             return (Plugin) pluginClass.getDeclaredConstructor().newInstance();
@@ -134,51 +136,7 @@ public class PluginLoader {
         }
     }
 
-    private Class<?> loadPlugin(final String pluginName) {
-        final String pluginClassname = INTERNAL_MODULE_PLUGINS.get(pluginName);
-        if (pluginClassname == null) {
-            throw new IllegalArgumentException("Unknown plugin: " + pluginName);
-        }
-
-        final URL pluginJarUrl = findPluginUrl(pluginName);
-
-        // Note that plugin dependencies are specified in MANIFEST.MF
-        // @link https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html
-
-        final URLClassLoader classLoader = new URLClassLoader(
-            new URL[]{pluginJarUrl},
-            new BiSectFilteringClassLoader(
-                getPlatformClassLoader(),
-                Thread.currentThread().getContextClassLoader()
-            ));
-
-        final Class<?> pluginClass;
-        try {
-            pluginClass = classLoader.loadClass(pluginClassname);
-        } catch (final ClassNotFoundException e) {
-            throw new IllegalStateException(String
-                .format("Couldn't load plugin %s from jar file %s", pluginName, pluginJarUrl), e);
-        }
-
-        LOG.debug("Loaded plugin {} from {}", pluginName, pluginJarUrl);
-
-        return pluginClass;
-    }
-
-    private URL findPluginUrl(final String name) {
-        final String loomVersion = Version.getVersion();
-        final Path libraryPath = loomBaseDir.resolve(Paths.get("library", "loom-" + loomVersion));
-        final Path pluginDir = libraryPath.resolve("plugin-" + name);
-        final Path pluginFile =
-            pluginDir.resolve(String.format("loom-plugin-%s-%s.jar", name, loomVersion));
-
-        return ClassLoaderUtil.toUrl(pluginFile);
-    }
-
-    private static ClassLoader getPlatformClassLoader() {
-        return ClassLoader.getSystemClassLoader().getParent();
-    }
-
+    @SuppressWarnings("checkstyle:illegalcatch")
     private static Set<String> injectPluginSettings(final String plugin, final Plugin regPlugin,
                                                     final BuildConfig moduleConfig) {
 

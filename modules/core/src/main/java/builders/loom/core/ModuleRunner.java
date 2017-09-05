@@ -76,14 +76,10 @@ public class ModuleRunner {
     }
 
     public void init() {
-        final Stopwatch sw = new Stopwatch();
-
         resolveModuleDependencyGraph();
 
         registerGlobalPlugins();
         registerModulePlugins();
-
-        LOG.debug("Initialized all plugins in {}", sw);
     }
 
     private void registerGlobalPlugins() {

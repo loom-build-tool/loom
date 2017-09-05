@@ -64,15 +64,21 @@ public class LoomProcessor {
         listModules(runtimeConfiguration).forEach(moduleRegistry::register);
 
         LOG.debug("Initialized modules in {}", sw);
+        sw.reset();
 
         final ServiceRegistryImpl serviceRegistry = new ServiceRegistryImpl();
         new ServiceLoader(runtimeConfiguration, progressMonitor, serviceRegistry).initServices();
+
+        LOG.debug("Initialized services in {}", sw);
+        sw.reset();
 
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration, progressMonitor,
             serviceRegistry);
         moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry,
             progressMonitor);
         moduleRunner.init();
+
+        LOG.debug("Initialized ModuleRunner in {}", sw);
     }
 
     public ModuleRunner getModuleRunner() {
@@ -151,11 +157,11 @@ public class LoomProcessor {
 
             for (final Path module : modulePaths) {
                 final Path moduleBuildConfig = module.resolve("module.yml");
-                final String modulePathName = module.getFileName().toString();
 
                 final ModuleBuildConfig buildConfig;
 
                 if (Files.exists(moduleBuildConfig)) {
+                    final String modulePathName = module.getFileName().toString();
                     buildConfig = ConfigReader.readConfig(
                         rtConfig, moduleBuildConfig, modulePathName);
                 } else {

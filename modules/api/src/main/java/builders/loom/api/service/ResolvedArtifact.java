@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.api.service;
 
 import java.nio.file.Path;
 
-import builders.loom.api.service.ServiceLocator;
+public interface ResolvedArtifact {
 
-/**
- * Marker interface for services managed by {@link ServiceLocator}.
- */
-public interface Service {
+    Path getMainArtifact();
 
-    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
-
-    void setRepositoryPath(Path repositoryPath);
-
-    void init();
+    Path getSourceArtifact();
 
 }

@@ -35,6 +35,8 @@ public interface Plugin {
 
     void setTaskRegistry(TaskRegistry taskRegistry);
 
+    void setServiceRegistry(ServiceRegistry serviceRegistry);
+
     void setServiceLocator(ServiceLocatorRegistration serviceLocator);
 
     void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);

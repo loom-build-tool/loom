@@ -16,19 +16,9 @@
 
 package builders.loom.api;
 
-import java.nio.file.Path;
+public interface ServiceRegistry {
 
-import builders.loom.api.service.ServiceLocator;
-
-/**
- * Marker interface for services managed by {@link ServiceLocator}.
- */
-public interface Service {
-
-    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
-
-    void setRepositoryPath(Path repositoryPath);
-
-    void init();
+    DependencyResolverService getDependencyResolverService();
 
 }
+

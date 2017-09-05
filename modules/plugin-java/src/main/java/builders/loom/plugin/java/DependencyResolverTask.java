@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.plugin.java;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
 
-public class MavenResolverTask extends MavenArtifactResolverTask {
+public class DependencyResolverTask extends ArtifactResolverTask {
 
-    public MavenResolverTask(final DependencyScope dependencyScope,
-                             final DependencyResolver dependencyResolver) {
+    public DependencyResolverTask(final DependencyScope dependencyScope,
+                                  final DependencyResolverService dependencyResolver) {
         super(dependencyScope, dependencyResolver);
     }
 

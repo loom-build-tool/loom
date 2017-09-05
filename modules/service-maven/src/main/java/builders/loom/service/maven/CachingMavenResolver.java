@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builders.loom.plugin.maven;
+package builders.loom.service.maven;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
-import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.service.ResolvedArtifact;
 import builders.loom.util.Hasher;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
@@ -40,39 +39,39 @@ public class CachingMavenResolver implements DependencyResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(CachingMavenResolver.class);
 
-    private final MavenResolverPluginSettings pluginSettings;
+    private final String repositoryUrl;
     private final DownloadProgressEmitter downloadProgressEmitter;
     private final Path cacheDir;
 
-    public CachingMavenResolver(final MavenResolverPluginSettings pluginSettings,
-                                final DownloadProgressEmitter downloadProgressEmitter,
-                                final Path cacheDir) {
-        this.pluginSettings = pluginSettings;
+    CachingMavenResolver(final String repositoryUrl,
+                         final DownloadProgressEmitter downloadProgressEmitter,
+                         final Path cacheDir) {
+        this.repositoryUrl = repositoryUrl;
         this.downloadProgressEmitter = downloadProgressEmitter;
         this.cacheDir = cacheDir;
     }
 
     @Override
-    public List<ArtifactProduct> resolve(final List<String> deps, final DependencyScope scope,
-                                         final String classifier) {
+    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
+                                          final boolean withSources) {
 
         final Path cacheFile = cacheDir.resolve(
             String.format("dependencies-%s-%s-%s",
                 scope.name().toLowerCase(),
-                Objects.toString(classifier, "unclassified"),
+                withSources ? "with-sources" : "wo-sources",
                 Hasher.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
-        final Optional<List<ArtifactProduct>> cachedArtifacts = readCache(cacheFile);
+        final Optional<List<ResolvedArtifact>> cachedArtifacts = readCache(cacheFile);
         if (cachedArtifacts.isPresent()) {
-            final List<ArtifactProduct> artifacts = cachedArtifacts.get();
+            final List<ResolvedArtifact> artifacts = cachedArtifacts.get();
             LOG.debug("Resolved {} dependencies {} to {} from cache", scope, deps, artifacts);
             return artifacts;
         }
 
-        final List<ArtifactProduct> artifacts = MavenResolverSingleton
-            .getInstance(pluginSettings, downloadProgressEmitter)
-            .resolve(deps, scope, classifier);
+        final List<ResolvedArtifact> artifacts = MavenResolverSingleton
+            .getInstance(repositoryUrl, downloadProgressEmitter)
+            .resolve(deps, scope, withSources);
 
         LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
 
@@ -81,19 +80,20 @@ public class CachingMavenResolver implements DependencyResolver {
         return artifacts;
     }
 
-    private Optional<List<ArtifactProduct>> readCache(final Path file) {
+    private Optional<List<ResolvedArtifact>> readCache(final Path file) {
         if (Files.notExists(file)) {
             return Optional.empty();
         }
 
-        final List<ArtifactProduct> artifacts = new ArrayList<>();
+        final List<ResolvedArtifact> artifacts = new ArrayList<>();
 
         try {
             SimpleSerializer.read(file, record -> {
                 final List<String> fields = record.getFields();
                 final Path mainArtifact = Paths.get(fields.get(0));
                 final Path sourceArtifact = fields.get(1) != null ? Paths.get(fields.get(1)) : null;
-                final ArtifactProduct artifact = new ArtifactProduct(mainArtifact, sourceArtifact);
+                final ResolvedArtifact artifact =
+                    new ResolvedArtifactImpl(mainArtifact, sourceArtifact);
                 artifacts.add(artifact);
             });
         } catch (final IOException e) {
@@ -104,7 +104,7 @@ public class CachingMavenResolver implements DependencyResolver {
         return Optional.of(artifacts);
     }
 
-    private void writeCache(final List<ArtifactProduct> artifacts, final Path file) {
+    private void writeCache(final List<ResolvedArtifact> artifacts, final Path file) {
         try {
             Files.createDirectories(file.getParent());
             SimpleSerializer.write(file, artifacts, CachingMavenResolver::mapRecord);
@@ -113,7 +113,7 @@ public class CachingMavenResolver implements DependencyResolver {
         }
     }
 
-    private static Record mapRecord(final ArtifactProduct artifact) {
+    private static Record mapRecord(final ResolvedArtifact artifact) {
         final String mainArtifact = artifact.getMainArtifact().toAbsolutePath().toString();
         final String sourceArtifact = artifact.getSourceArtifact() != null
             ? artifact.getSourceArtifact().toAbsolutePath().toString()

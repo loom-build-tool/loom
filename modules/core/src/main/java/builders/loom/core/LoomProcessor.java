@@ -40,6 +40,8 @@ import builders.loom.api.ModuleBuildConfig;
 import builders.loom.core.config.BuildConfigImpl;
 import builders.loom.core.config.ConfigReader;
 import builders.loom.core.plugin.PluginLoader;
+import builders.loom.core.service.ServiceLoader;
+import builders.loom.core.service.ServiceRegistryImpl;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -63,7 +65,11 @@ public class LoomProcessor {
 
         LOG.debug("Initialized modules in {}", sw);
 
-        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration, progressMonitor);
+        final ServiceRegistryImpl serviceRegistry = new ServiceRegistryImpl();
+        new ServiceLoader(runtimeConfiguration, progressMonitor, serviceRegistry).initServices();
+
+        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration, progressMonitor,
+            serviceRegistry);
         moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry,
             progressMonitor);
         moduleRunner.init();

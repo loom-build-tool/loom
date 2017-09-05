@@ -19,9 +19,15 @@ package builders.loom.api;
 import java.nio.file.Path;
 import java.util.List;
 
+import builders.loom.api.service.ResolvedArtifact;
+
 public interface DependencyResolverService extends Service {
 
-    List<Path> resolve(final List<String> deps, final DependencyScope scope,
-                       final String cacheName);
+    void setDownloadProgressEmitter(DownloadProgressEmitter downloadProgressEmitter);
+
+    List<Path> resolveMainArtifacts(List<String> deps, DependencyScope scope);
+
+    List<ResolvedArtifact> resolveArtifacts(List<String> deps, DependencyScope scope,
+                                            boolean withSources);
 
 }

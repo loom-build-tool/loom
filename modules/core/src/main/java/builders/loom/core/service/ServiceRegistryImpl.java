@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package builders.loom.api;
+package builders.loom.core.service;
 
-import java.nio.file.Path;
+import builders.loom.api.DependencyResolverService;
+import builders.loom.api.ServiceRegistry;
 
-import builders.loom.api.service.ServiceLocator;
+public class ServiceRegistryImpl implements ServiceRegistry {
 
-/**
- * Marker interface for services managed by {@link ServiceLocator}.
- */
-public interface Service {
+    private DependencyResolverService dependencyResolverService;
 
-    void setRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration);
+    @Override
+    public DependencyResolverService getDependencyResolverService() {
+        return dependencyResolverService;
+    }
 
-    void setRepositoryPath(Path repositoryPath);
-
-    void init();
+    public void setDependencyResolverService(
+        final DependencyResolverService dependencyResolverService) {
+        this.dependencyResolverService = dependencyResolverService;
+    }
 
 }

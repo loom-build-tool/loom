@@ -109,7 +109,7 @@ public class ModuleRunner {
     }
 
     private void registerModulePlugins() {
-        final Set<String> defaultPlugins = Set.of("java", "maven");
+        final Set<String> defaultPlugins = Set.of("java");
         for (final Module module : moduleRegistry.getModules()) {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
             registerModule(defaultPlugins, module);

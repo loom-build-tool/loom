@@ -38,6 +38,11 @@
         <allow pkg="org.yaml.snakeyaml"/>
     </subpackage>
 
+    <subpackage name="service.maven">
+        <allow pkg="org.apache.maven"/>
+        <allow pkg="org.sonatype.aether"/>
+    </subpackage>
+
     <subpackage name="plugin.maven">
         <allow pkg="org.apache.maven"/>
         <allow pkg="org.sonatype.aether"/>

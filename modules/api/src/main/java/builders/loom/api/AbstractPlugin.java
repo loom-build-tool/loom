@@ -32,6 +32,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private final S pluginSettings;
     private String pluginName;
     private TaskRegistry taskRegistry;
+    private ServiceRegistry serviceRegistry;
     private ServiceLocatorRegistration serviceLocator;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
@@ -58,6 +59,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     @Override
     public void setTaskRegistry(final TaskRegistry taskRegistry) {
         this.taskRegistry = taskRegistry;
+    }
+
+    public ServiceRegistry getServiceRegistry() {
+        return serviceRegistry;
+    }
+
+    @Override
+    public void setServiceRegistry(final ServiceRegistry serviceRegistry) {
+        this.serviceRegistry = serviceRegistry;
     }
 
     @Override

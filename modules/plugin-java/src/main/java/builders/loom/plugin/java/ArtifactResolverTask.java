@@ -47,7 +47,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
             return completeEmpty();
         }
 
-        final List<ArtifactProduct> artifacts = resolve(dependencies, "sources");
+        final List<ArtifactProduct> artifacts = resolve(dependencies, true);
         return completeOk(new ArtifactListProduct(artifacts));
     }
 
@@ -68,8 +68,9 @@ public class ArtifactResolverTask extends AbstractModuleTask {
     }
 
     protected List<ArtifactProduct> resolve(final List<String> dependencies,
-                                            final String classifier) {
-        return dependencyResolver.resolveArtifacts(dependencies, dependencyScope, true).stream()
+                                            final boolean withSources) {
+        return dependencyResolver
+            .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
             .map(a -> new ArtifactProduct(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());
     }

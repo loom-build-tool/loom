@@ -41,7 +41,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
             return completeEmpty();
         }
 
-        final List<Path> artifacts = resolve(dependencies, null).stream()
+        final List<Path> artifacts = resolve(dependencies, false).stream()
             .map(ArtifactProduct::getMainArtifact)
             .collect(Collectors.toList());
 

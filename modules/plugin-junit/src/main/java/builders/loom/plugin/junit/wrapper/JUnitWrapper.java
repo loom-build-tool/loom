@@ -18,15 +18,10 @@ package builders.loom.plugin.junit.wrapper;
 
 import java.nio.file.Path;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -39,7 +34,9 @@ import builders.loom.plugin.junit.shared.TestResult;
  */
 public class JUnitWrapper {
 
-    public TestResult run(final ClassLoader classLoader, final Path classesDir) {
+    public TestResult run(final ClassLoader classLoader, final Path classesDir,
+                          final Path reportDir) {
+
         Thread.currentThread().setContextClassLoader(classLoader);
 
         final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
@@ -48,12 +45,14 @@ public class JUnitWrapper {
 
         final Launcher launcher = LauncherFactory.create();
 
-        final SummaryGeneratingListener listener = new SummaryGeneratingListener();
-        launcher.registerTestExecutionListeners(listener, new LogListener());
+        final SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
+        final XmlReportListener xmlReportListener = new XmlReportListener(reportDir);
+        launcher.registerTestExecutionListeners(new LogListener(), xmlReportListener,
+            summaryListener);
 
         launcher.execute(request);
 
-        final TestExecutionSummary summary = listener.getSummary();
+        final TestExecutionSummary summary = summaryListener.getSummary();
 
         return new TestResult(
             summary.getTimeStarted(),
@@ -71,23 +70,6 @@ public class JUnitWrapper {
             summary.getTestsAbortedCount(),
             summary.getTestsSucceededCount(),
             summary.getTestsFailedCount());
-    }
-
-    static class LogListener implements TestExecutionListener {
-
-        private static final Logger LOG = Logger.getLogger("JUnit");
-
-        @Override
-        public void executionFinished(final TestIdentifier testIdentifier,
-                                      final TestExecutionResult testExecutionResult) {
-
-            if (testExecutionResult.getStatus() == TestExecutionResult.Status.FAILED) {
-                LOG.log(Level.SEVERE, "Test failed: " + testIdentifier.getUniqueId(),
-                    testExecutionResult.getThrowable());
-            }
-
-        }
-
     }
 
 }

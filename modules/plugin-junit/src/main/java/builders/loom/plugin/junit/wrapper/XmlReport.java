@@ -27,8 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.junit.platform.engine.reporting.ReportEntry;
 
 import builders.loom.plugin.junit.wrapper.util.XmlBuilder;
@@ -47,7 +45,7 @@ class XmlReport {
         rootElement = XmlBuilder.root("testsuite");
     }
 
-    void writeReport() throws XMLStreamException {
+    void writeReport() {
         writeTestSuiteAttributes();
 
         writeSystemProperties();

@@ -39,6 +39,7 @@ import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PackageObjectFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
 import com.puppycrawl.tools.checkstyle.XMLLogger;
+import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.RootModule;
@@ -220,7 +221,8 @@ public class CheckstyleTask extends AbstractModuleTask {
     }
 
     private XMLLogger newXmlLogger(final Path reportFile) throws IOException {
-        return new XMLLogger(new BufferedOutputStream(Files.newOutputStream(reportFile)), true);
+        return new XMLLogger(new BufferedOutputStream(Files.newOutputStream(reportFile)),
+            AutomaticBean.OutputStreamOptions.CLOSE);
     }
 
 }

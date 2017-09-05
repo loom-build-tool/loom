@@ -24,8 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import builders.loom.api.service.ServiceLocatorRegistration;
-
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
@@ -33,7 +31,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private String pluginName;
     private TaskRegistry taskRegistry;
     private ServiceRegistry serviceRegistry;
-    private ServiceLocatorRegistration serviceLocator;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
     private DownloadProgressEmitter downloadProgressEmitter;
@@ -71,11 +68,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     }
 
     @Override
-    public void setServiceLocator(final ServiceLocatorRegistration serviceLocator) {
-        this.serviceLocator = serviceLocator;
-    }
-
-    @Override
     public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
         this.runtimeConfiguration = runtimeConfiguration;
     }
@@ -108,10 +100,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
     protected GoalBuilder goal(final String goalName) {
         return new GoalBuilder(goalName);
-    }
-
-    protected ServiceBuilder service(final String serviceName) {
-        return new ServiceBuilder(serviceName);
     }
 
     protected class TaskBuilder {
@@ -188,26 +176,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerGoal(pluginName, goalName, usedProducts);
-        }
-
-    }
-
-    protected class ServiceBuilder {
-
-        private final String serviceName;
-        private Supplier<Service> serviceSupplier;
-
-        public ServiceBuilder(final String serviceName) {
-            this.serviceName = serviceName;
-        }
-
-        public ServiceBuilder impl(final Supplier<Service> supplier) {
-            this.serviceSupplier = supplier;
-            return this;
-        }
-
-        public void register() {
-            serviceLocator.registerService(serviceName, serviceSupplier);
         }
 
     }

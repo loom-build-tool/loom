@@ -37,12 +37,10 @@ import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.ServiceLocatorAware;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.UsedProducts;
-import builders.loom.api.service.ServiceLocator;
 import builders.loom.core.plugin.ConfiguredTask;
 
 public class Job implements Callable<TaskStatus> {
@@ -55,7 +53,6 @@ public class Job implements Callable<TaskStatus> {
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
-    private final ServiceLocator serviceLocator;
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies;
     private UsedProducts usedProducts;
     private final Map<BuildContext, ProductRepository> moduleProductRepositories;
@@ -67,7 +64,6 @@ public class Job implements Callable<TaskStatus> {
         final RuntimeConfiguration runtimeConfiguration,
         final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
-        final ServiceLocator serviceLocator,
         final Map<Module, Set<Module>> transitiveModuleCompileDependencies,
         final Map<BuildContext, ProductRepository> moduleProductRepositories) {
 
@@ -77,7 +73,6 @@ public class Job implements Callable<TaskStatus> {
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
-        this.serviceLocator = serviceLocator;
         this.transitiveModuleCompileDependencies = transitiveModuleCompileDependencies;
         this.moduleProductRepositories = moduleProductRepositories;
         this.modules = moduleProductRepositories.keySet().stream()
@@ -140,10 +135,6 @@ public class Job implements Callable<TaskStatus> {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             usedProducts = buildProductView();
             pdaTask.setUsedProducts(usedProducts);
-        }
-        if (task instanceof ServiceLocatorAware) {
-            final ServiceLocatorAware slaTask = (ServiceLocatorAware) task;
-            slaTask.setServiceLocator(serviceLocator);
         }
         if (task instanceof ModuleBuildConfigAware) {
             final ModuleBuildConfigAware mbcaTask = (ModuleBuildConfigAware) task;

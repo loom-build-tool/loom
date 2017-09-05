@@ -23,10 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.product.Product;
-import builders.loom.api.service.ServiceLocator;
 
 public abstract class AbstractTask implements Task,
-    ProductDependenciesAware, ServiceLocatorAware {
+    ProductDependenciesAware {
 
     @SuppressWarnings("checkstyle:visibilitymodifier")
     protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -34,7 +33,6 @@ public abstract class AbstractTask implements Task,
     private RuntimeConfiguration runtimeConfiguration;
     private BuildContext buildContext;
     private UsedProducts usedProducts;
-    private ServiceLocator serviceLocator;
 
     public RuntimeConfiguration getRuntimeConfiguration() {
         return runtimeConfiguration;
@@ -97,15 +95,6 @@ public abstract class AbstractTask implements Task,
         Objects.requireNonNull(productId, "productId required");
         Objects.requireNonNull(productClass, "productClass required");
         return usedProducts.readProduct(moduleName, productId, productClass);
-    }
-
-    @Override
-    public void setServiceLocator(final ServiceLocator serviceLocator) {
-        this.serviceLocator = serviceLocator;
-    }
-
-    public ServiceLocator getServiceLocator() {
-        return serviceLocator;
     }
 
     public TaskResult completeOk(final Product product) {

@@ -83,12 +83,11 @@ public class PluginLoader {
 
     public void initPlugins(final Set<String> pluginsToInitialize,
                             final BuildConfig moduleConfig,
-                            final TaskRegistryImpl taskRegistry,
-                            final ServiceLocatorImpl serviceLocator) {
+                            final TaskRegistryImpl taskRegistry) {
 
         final Set<String> acceptedSettings = new HashSet<>();
         for (final String plugin : pluginsToInitialize) {
-            acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry, serviceLocator));
+            acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry));
         }
 
         validateConfiguredTasks(taskRegistry);
@@ -99,15 +98,13 @@ public class PluginLoader {
     }
 
     private Set<String> initPlugin(final String pluginName, final BuildConfig config,
-                                   final TaskRegistryImpl taskRegistry,
-                                   final ServiceLocatorImpl serviceLocator) {
+                                   final TaskRegistryImpl taskRegistry) {
 
         final Plugin plugin = getPlugin(pluginName);
 
         plugin.setName(pluginName);
         plugin.setTaskRegistry(taskRegistry);
         plugin.setServiceRegistry(serviceRegistry);
-        plugin.setServiceLocator(serviceLocator);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(Version.getVersion(), pluginName)));

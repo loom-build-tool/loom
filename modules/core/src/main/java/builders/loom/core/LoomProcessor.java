@@ -75,7 +75,7 @@ public class LoomProcessor {
         final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration, progressMonitor,
             serviceRegistry);
         moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry,
-            progressMonitor);
+            progressMonitor, new TestProgressEmitterBridge(progressMonitor));
         moduleRunner.init();
 
         LOG.debug("Initialized ModuleRunner in {}", sw);

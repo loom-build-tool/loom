@@ -31,24 +31,33 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
+import builders.loom.api.TestProgressEmitter;
+import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.ReportProduct;
+import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
 import builders.loom.plugin.junit.shared.TestResult;
 import builders.loom.plugin.junit.util.InjectingClassLoader;
 import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.FileUtil;
 
-public class JUnitTestTask extends AbstractModuleTask {
+public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmitterAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(JUnitTestTask.class);
 
     private final DependencyResolverService dependencyResolverService;
+    private TestProgressEmitter testProgressEmitter;
 
     public JUnitTestTask(final DependencyResolverService dependencyResolverService) {
         this.dependencyResolverService = dependencyResolverService;
+    }
+
+    @Override
+    public void setTestProgressEmitter(final TestProgressEmitter testProgressEmitter) {
+        this.testProgressEmitter = testProgressEmitter;
     }
 
     @Override
@@ -144,10 +153,10 @@ public class JUnitTestTask extends AbstractModuleTask {
 
             final Object wrapper = wrapperClass.getConstructor().newInstance();
             final Method wrapperRun = wrapperClass.getMethod("run",
-                ClassLoader.class, Path.class, Path.class);
+                ClassLoader.class, Path.class, Path.class, ProgressListenerDelegate.class);
 
             return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
-                reportDir);
+                reportDir, new ProgressListenerDelegate(testProgressEmitter));
         }
     }
 

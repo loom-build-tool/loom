@@ -27,6 +27,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
+import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
 import builders.loom.plugin.junit.shared.TestResult;
 
 /**
@@ -35,7 +36,8 @@ import builders.loom.plugin.junit.shared.TestResult;
 public class JUnitWrapper {
 
     public TestResult run(final ClassLoader classLoader, final Path classesDir,
-                          final Path reportDir) {
+                          final Path reportDir,
+                          final ProgressListenerDelegate progressListenerDelegate) {
 
         Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -48,7 +50,7 @@ public class JUnitWrapper {
         final SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
         final XmlReportListener xmlReportListener = new XmlReportListener(reportDir);
         launcher.registerTestExecutionListeners(new LogListener(), xmlReportListener,
-            summaryListener);
+            new ProgressListenerBridge(progressListenerDelegate), summaryListener);
 
         launcher.execute(request);
 

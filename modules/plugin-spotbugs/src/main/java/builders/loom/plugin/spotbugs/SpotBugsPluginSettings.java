@@ -23,6 +23,7 @@ public class SpotBugsPluginSettings implements PluginSettings {
     private String customPlugins;
     private String effort = "default";
     private String reportLevel = "NORMAL";
+    private String reporter = "html";
 
     public String getCustomPlugins() {
         return customPlugins;
@@ -46,6 +47,14 @@ public class SpotBugsPluginSettings implements PluginSettings {
 
     public void setReportLevel(final String reportLevel) {
         this.reportLevel = reportLevel;
+    }
+
+    public String getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(final String reporter) {
+        this.reporter = reporter;
     }
 
 }

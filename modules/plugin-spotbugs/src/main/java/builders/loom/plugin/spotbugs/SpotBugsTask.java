@@ -41,11 +41,10 @@ import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
 import builders.loom.util.StringUtil;
+import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
 import edu.umd.cs.findbugs.FindBugs2;
-import edu.umd.cs.findbugs.HTMLBugReporter;
 import edu.umd.cs.findbugs.Project;
-import edu.umd.cs.findbugs.XMLBugReporter;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
@@ -60,6 +59,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     private final String sourceProductId;
     private final String compilationProductId;
     private final String reportOutputDescription;
+    private final ReporterType reporter;
 
     public SpotBugsTask(final CompileTarget compileTarget,
                         final SpotBugsPluginSettings pluginSettings) {
@@ -68,6 +68,7 @@ public class SpotBugsTask extends AbstractModuleTask {
         effort = pluginSettings.getEffort();
         priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getReportLevel());
         plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
+        reporter = ReporterType.valueOf(pluginSettings.getReporter().toUpperCase());
 
         switch (compileTarget) {
             case MAIN:
@@ -191,27 +192,12 @@ public class SpotBugsTask extends AbstractModuleTask {
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
 
-        final LoggingBugReporter loggingBugReporter = new LoggingBugReporter();
-        loggingBugReporter.setPriorityThreshold(priorityThreshold);
-
-        final XMLBugReporter xmlBugReporter = new XMLBugReporter(project);
-        xmlBugReporter.setPriorityThreshold(priorityThreshold);
-        xmlBugReporter.setAddMessages(true);
-        xmlBugReporter.setOutputStream(new PrintStream(
-            reportDir.resolve("spotbugs-result.xml").toFile(), "UTF-8"));
-
-        final HTMLBugReporter htmlBugReporter = new HTMLBugReporter(project, "default.xsl");
-        htmlBugReporter.setPriorityThreshold(priorityThreshold);
-        htmlBugReporter.setOutputStream(new PrintStream(
-            reportDir.resolve("spotbugs-result.html").toFile(), "UTF-8"));
-
-        final MultiplexingBugReporter multiplexingBugReporter =
-            new MultiplexingBugReporter(loggingBugReporter, xmlBugReporter, htmlBugReporter);
+        final BugReporter bugReporter = setupBugReporter(project, reportDir);
 
         try {
             final FindBugs2 engine = new FindBugs2();
             engine.setProject(project);
-            engine.setBugReporter(multiplexingBugReporter);
+            engine.setBugReporter(bugReporter);
             engine.setNoClassOk(false);
             engine.setDetectorFactoryCollection(DetectorFactoryCollection.instance());
 
@@ -233,9 +219,33 @@ public class SpotBugsTask extends AbstractModuleTask {
                     engine.getBugCount(), engine.getErrorCount()));
             }
         } finally {
-            multiplexingBugReporter.finish();
+            bugReporter.finish();
             System.setSecurityManager(currentSecurityManager);
         }
+    }
+
+    private BugReporter setupBugReporter(final Project project, final Path reportDir)
+        throws IOException {
+
+        if (reporter == ReporterType.HTML) {
+            final LogHTMLBugReporter htmlBugReporter =
+                new LogHTMLBugReporter(project, "default.xsl");
+            htmlBugReporter.setPriorityThreshold(priorityThreshold);
+            htmlBugReporter.setOutputStream(new PrintStream(
+                reportDir.resolve("spotbugs-result.html").toFile(), "UTF-8"));
+            return htmlBugReporter;
+        }
+
+        if (reporter == ReporterType.XML) {
+            final LogXMLBugReporter xmlBugReporter = new LogXMLBugReporter(project);
+            xmlBugReporter.setPriorityThreshold(priorityThreshold);
+            xmlBugReporter.setAddMessages(true);
+            xmlBugReporter.setOutputStream(new PrintStream(
+                reportDir.resolve("spotbugs-result.xml").toFile(), "UTF-8"));
+            return xmlBugReporter;
+        }
+
+        throw new IllegalStateException("Unknown reporter: " + reporter);
     }
 
 }

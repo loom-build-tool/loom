@@ -19,44 +19,35 @@ package builders.loom.plugin.spotbugs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.AbstractBugReporter;
 import edu.umd.cs.findbugs.AnalysisError;
-import edu.umd.cs.findbugs.BugCollection;
 import edu.umd.cs.findbugs.BugInstance;
-import edu.umd.cs.findbugs.classfile.ClassDescriptor;
+import edu.umd.cs.findbugs.HTMLBugReporter;
+import edu.umd.cs.findbugs.Project;
 
-public class LoggingBugReporter extends AbstractBugReporter {
+public class LogHTMLBugReporter extends HTMLBugReporter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LoggingBugReporter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LogHTMLBugReporter.class);
+
+    public LogHTMLBugReporter(final Project project, final String stylesheet) {
+        super(project, stylesheet);
+    }
 
     @Override
-    protected void doReportBug(final BugInstance bugInstance) {
+    public void doReportBug(final BugInstance bugInstance) {
         LOG.error("SpotBugs bug: {}", bugInstance.getMessage());
+        super.doReportBug(bugInstance);
     }
 
     @Override
     public void reportAnalysisError(final AnalysisError error) {
         LOG.error("SpotBugs analysis error: {}", error);
+        super.reportAnalysisError(error);
     }
 
     @Override
     public void reportMissingClass(final String string) {
         LOG.error("Missing class: {}", string);
-    }
-
-    @Override
-    public void finish() {
-
-    }
-
-    @Override
-    public BugCollection getBugCollection() {
-        return null;
-    }
-
-    @Override
-    public void observeClass(final ClassDescriptor classDescriptor) {
-
+        super.reportMissingClass(string);
     }
 
 }

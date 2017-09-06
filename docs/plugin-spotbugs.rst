@@ -37,6 +37,10 @@ reportLevel
     Defines the minimum priority a bug has to have to get reported.
     Possible levels are: ``LOW``, ``NORMAL`` (default), ``HIGH``.
 
+reporter
+    The report output format.
+    Possible values are: ``html`` (default) and ``xml``.
+
 
 .. _SpotBugs: https://spotbugs.github.io
 .. _FindBugs: http://findbugs.sourceforge.net

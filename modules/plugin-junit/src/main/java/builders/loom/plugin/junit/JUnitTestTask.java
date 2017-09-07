@@ -70,10 +70,11 @@ public class JUnitTestTask extends AbstractModuleTask {
 
         if (result.getTotalFailureCount() > 0) {
             throw new IllegalStateException(
-                String.format("tests failed: %d (succeeded: %d; skipped: %d; total: %d)",
+                String.format("tests failed: %d (succeeded: %d; skipped: %d; aborted: %d; total: %d)",
                     result.getTestsFailedCount(),
                     result.getTestsSucceededCount(),
                     result.getTestsSkippedCount(),
+                    result.getTestsAbortedCount(),
                     result.getTestsFoundCount()));
         }
 

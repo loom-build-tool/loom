@@ -20,16 +20,15 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
@@ -138,29 +137,20 @@ class XmlReportListener implements TestExecutionListener {
     }
 
     private TestCase mapTestCase(final TestIdentifier testIdentifier) {
-        final MethodSource methodSource = getMethodSource(testIdentifier);
-        final TestData td = this.testData.get(testIdentifier);
+        final TestData td = testData.get(testIdentifier);
 
-        return new TestCase(methodSource.getMethodName(), methodSource.getClassName(),
-            td.getDuration(),
-            td.getStatus(),
-            td.getThrowable(),
-            td.getSkipReason(),
-            td.getReportEntries());
+        final String className = findParent(testIdentifier)
+            .map(TestIdentifier::getLegacyReportingName)
+            .orElse(null);
+
+        return new TestCase(testIdentifier.getDisplayName(), className, td.getDuration(),
+            td.getStatus(), td.getThrowable(), td.getSkipReason(), td.getReportEntries());
     }
 
-    private static MethodSource getMethodSource(final TestIdentifier testIdentifier) {
-        final TestSource testSource = testIdentifier.getSource()
-            .orElseThrow(() -> new IllegalStateException("Found no testSource of "
-                + testIdentifier));
-
-        if (!(testSource instanceof MethodSource)) {
-            throw new IllegalStateException(String.format(
-                "TestSource of %s is of class %s! Required is %s",
-                testIdentifier, testSource.getClass(), MethodSource.class));
-        }
-
-        return (MethodSource) testSource;
+    private Optional<TestIdentifier> findParent(final TestIdentifier child) {
+        return child.getParentId()
+            .flatMap(parentId -> testData.keySet().stream()
+                .filter(id -> id.getUniqueId().equals(parentId)).findFirst());
     }
 
 }

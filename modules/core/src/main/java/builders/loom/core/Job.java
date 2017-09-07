@@ -125,6 +125,11 @@ public class Job implements Callable<TaskStatus> {
 
         productPromise.complete(taskResult);
 
+        if (taskResult.getStatus() == TaskStatus.FAIL) {
+            throw new IllegalStateException("Task <" + name + "> resulted in failure: "
+                + taskResult.getErrorReason());
+        }
+
         return taskResult.getStatus();
     }
 

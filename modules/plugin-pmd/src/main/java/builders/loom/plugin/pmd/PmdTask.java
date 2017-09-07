@@ -172,7 +172,8 @@ public class PmdTask extends AbstractModuleTask {
         final int ruleViolationCnt = ruleViolations.get();
 
         if (ruleViolationCnt > 0) {
-            throw new IllegalStateException("Stopping build since PMD found " + ruleViolationCnt
+            return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+                "Stopping build since PMD found " + ruleViolationCnt
                 + " rule violations in the code");
         }
 

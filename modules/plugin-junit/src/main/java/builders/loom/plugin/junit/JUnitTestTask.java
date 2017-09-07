@@ -69,7 +69,7 @@ public class JUnitTestTask extends AbstractModuleTask {
         LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
-            throw new IllegalStateException(
+            return completeFail(new ReportProduct(reportDir, "JUnit report"),
                 String.format("tests failed: %d (succeeded: %d; skipped: %d; total: %d)",
                     result.getTestsFailedCount(),
                     result.getTestsSucceededCount(),

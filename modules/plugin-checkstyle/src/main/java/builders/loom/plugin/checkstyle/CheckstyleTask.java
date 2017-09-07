@@ -114,7 +114,8 @@ public class CheckstyleTask extends AbstractModuleTask {
             final int errors = rootModule.process(files);
 
             if (errors > 0) {
-                throw new IllegalStateException("Checkstyle reported " + errors + " errors");
+                return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+                    "Checkstyle reported " + errors + " errors");
             }
         } finally {
             rootModule.destroy();

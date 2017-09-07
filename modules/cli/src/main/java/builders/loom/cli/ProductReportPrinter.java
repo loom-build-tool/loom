@@ -30,7 +30,6 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.api.product.Product;
-import builders.loom.core.ExecutionReport;
 import builders.loom.core.ModuleRunner;
 import builders.loom.core.plugin.ConfiguredTask;
 
@@ -42,10 +41,10 @@ final class ProductReportPrinter {
         this.moduleRunner = moduleRunner;
     }
 
-    void print(final ExecutionReport executionReport) {
+    void print(final List<ConfiguredTask> resolvedTasks) {
         // aggregate plugin -> products
         final Map<String, List<ProductInfo>> aggProducts =
-            aggregateProducts(executionReport.getResolvedTasks());
+            aggregateProducts(resolvedTasks);
 
         if (!aggProducts.isEmpty()) {
             outputProductInfos(aggProducts);

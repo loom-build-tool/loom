@@ -109,7 +109,13 @@ public class SpotBugsTask extends AbstractModuleTask {
         SpotBugsSingleton.initSpotBugs(plugins);
 
         final Project project = createSpotBugsProject(srcFiles, classFiles, calcClasspath());
-        executeSpotBugs(project, reportDir);
+        final FindBugs2 engine = executeSpotBugs(project, reportDir);
+
+        if (engine.getBugCount() + engine.getErrorCount() > 0) {
+            return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+                String.format("SpotBugs reported %d bugs and %d errors",
+                    engine.getBugCount(), engine.getErrorCount()));
+        }
 
         return completeOk(new ReportProduct(reportDir, reportOutputDescription));
     }
@@ -187,7 +193,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    private void executeSpotBugs(final Project project, final Path reportDir)
+    private FindBugs2 executeSpotBugs(final Project project, final Path reportDir)
         throws IOException, InterruptedException {
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
@@ -213,11 +219,7 @@ public class SpotBugsTask extends AbstractModuleTask {
 
             engine.execute();
 
-            if (engine.getBugCount() + engine.getErrorCount() > 0) {
-                throw new IllegalStateException(String.format(
-                    "SpotBugs reported %d bugs and %d errors",
-                    engine.getBugCount(), engine.getErrorCount()));
-            }
+            return engine;
         } finally {
             bugReporter.finish();
             System.setSecurityManager(currentSecurityManager);

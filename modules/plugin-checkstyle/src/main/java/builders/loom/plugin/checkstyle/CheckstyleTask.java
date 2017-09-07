@@ -98,7 +98,7 @@ public class CheckstyleTask extends AbstractModuleTask {
         final List<File> files = listSourceFiles();
 
         if (files.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         LOG.info("Start analyzing {} source files with Checkstyle", files.size());
@@ -114,14 +114,14 @@ public class CheckstyleTask extends AbstractModuleTask {
             final int errors = rootModule.process(files);
 
             if (errors > 0) {
-                return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+                return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
                     "Checkstyle reported " + errors + " errors");
             }
         } finally {
             rootModule.destroy();
         }
 
-        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
     }
 
     private List<File> listSourceFiles() throws InterruptedException {

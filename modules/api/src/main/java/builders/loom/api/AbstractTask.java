@@ -97,20 +97,4 @@ public abstract class AbstractTask implements Task,
         return usedProducts.readProduct(moduleName, productId, productClass);
     }
 
-    public TaskResult completeOk(final Product product) {
-        return TaskResult.ok(product);
-    }
-
-    public TaskResult completeUpToDate(final Product product) {
-        return TaskResult.up2date(product);
-    }
-
-    public TaskResult completeEmpty() {
-        return TaskResult.empty();
-    }
-
-    public TaskResult completeFail(final Product product, final String errorReason) {
-        return TaskResult.fail(product, errorReason);
-    }
-
 }

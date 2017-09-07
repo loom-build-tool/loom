@@ -55,7 +55,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             "processedResources", ProcessedResourceProduct.class);
 
         if (!compilationProduct.isPresent() && !resourcesTreeProduct.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path jarFile = Files
@@ -94,7 +94,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             }
         }
 
-        return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
+        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
     private String buildAutomaticModuleName() {

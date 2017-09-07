@@ -95,7 +95,7 @@ public class SpotBugsTask extends AbstractModuleTask {
                 .orElse(Collections.emptyList());
 
         if (classFiles.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final List<Path> srcFiles =
@@ -112,12 +112,12 @@ public class SpotBugsTask extends AbstractModuleTask {
         final FindBugs2 engine = executeSpotBugs(project, reportDir);
 
         if (engine.getBugCount() + engine.getErrorCount() > 0) {
-            return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
                 String.format("SpotBugs reported %d bugs and %d errors",
                     engine.getBugCount(), engine.getErrorCount()));
         }
 
-        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
     }
 
     private static List<String> getClassesToScan(final Path classesDir) {

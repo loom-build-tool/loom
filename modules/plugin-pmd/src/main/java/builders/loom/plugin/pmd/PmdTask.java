@@ -134,7 +134,7 @@ public class PmdTask extends AbstractModuleTask {
             useProduct(sourceProductId, SourceTreeProduct.class);
 
         if (!sourceTreeProduct.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final PMDConfiguration configuration = getConfiguration();
@@ -172,12 +172,12 @@ public class PmdTask extends AbstractModuleTask {
         final int ruleViolationCnt = ruleViolations.get();
 
         if (ruleViolationCnt > 0) {
-            return completeFail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
                 "Stopping build since PMD found " + ruleViolationCnt
-                + " rule violations in the code");
+                    + " rule violations in the code");
         }
 
-        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
     }
 
     private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {

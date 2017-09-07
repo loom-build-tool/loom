@@ -78,7 +78,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         if (!sourceTreeProduct.isPresent()) {
             FileUtil.deleteDirectoryRecursively(buildDir, true);
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final List<Path> classpath = new ArrayList<>();
@@ -108,7 +108,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         compile(buildDir, classpath, srcFiles);
 
-        return completeOk(new CompilationProduct(buildDir));
+        return TaskResult.ok(new CompilationProduct(buildDir));
     }
 
     private Path resolveBuildDir() {

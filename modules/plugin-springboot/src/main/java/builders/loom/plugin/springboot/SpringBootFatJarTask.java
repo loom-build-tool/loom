@@ -40,7 +40,7 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
         // assemble jar
         new JarAssembler().assemble(baseDir, jarFile);
 
-        return completeOk(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
+        return TaskResult.ok(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
     }
 
 }

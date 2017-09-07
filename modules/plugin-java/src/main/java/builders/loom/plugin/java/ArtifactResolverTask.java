@@ -44,11 +44,11 @@ public class ArtifactResolverTask extends AbstractModuleTask {
         final List<String> dependencies = listDependencies();
 
         if (dependencies.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final List<ArtifactProduct> artifacts = resolve(dependencies, true);
-        return completeOk(new ArtifactListProduct(artifacts));
+        return TaskResult.ok(new ArtifactListProduct(artifacts));
     }
 
     List<String> listDependencies() {

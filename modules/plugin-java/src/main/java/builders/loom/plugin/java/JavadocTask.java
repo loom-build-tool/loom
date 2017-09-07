@@ -50,7 +50,7 @@ public class JavadocTask extends AbstractModuleTask {
         final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
 
         if (!source.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("javadoc"));
@@ -107,7 +107,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return completeOk(new DirectoryProduct(buildDir, "JavaDoc output"));
+        return TaskResult.ok(new DirectoryProduct(buildDir, "JavaDoc output"));
     }
 
     private Path getBuildDir() {

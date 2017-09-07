@@ -57,7 +57,7 @@ public class JUnitTestTask extends AbstractModuleTask {
             useProduct("testCompilation", CompilationProduct.class);
 
         if (!testCompilation.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path classesDir = testCompilation.get().getClassesDir();
@@ -69,7 +69,7 @@ public class JUnitTestTask extends AbstractModuleTask {
         LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
-            return completeFail(new ReportProduct(reportDir, "JUnit report"),
+            return TaskResult.fail(new ReportProduct(reportDir, "JUnit report"),
                 String.format("tests failed: %d (succeeded: %d; skipped: %d; total: %d)",
                     result.getTestsFailedCount(),
                     result.getTestsSucceededCount(),
@@ -77,7 +77,7 @@ public class JUnitTestTask extends AbstractModuleTask {
                     result.getTestsFoundCount()));
         }
 
-        return completeOk(new ReportProduct(reportDir, "JUnit report"));
+        return TaskResult.ok(new ReportProduct(reportDir, "JUnit report"));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {

@@ -41,11 +41,12 @@ public final class TaskResult {
     }
 
     public static TaskResult fail(final Product product, final String errorReason) {
-        return new TaskResult(TaskStatus.FAIL, product, errorReason);
+        return new TaskResult(TaskStatus.FAIL, Objects.requireNonNull(product),
+            Objects.requireNonNull(errorReason));
     }
 
     public static TaskResult up2date(final Product product) {
-        return new TaskResult(TaskStatus.UP_TO_DATE, product, null);
+        return new TaskResult(TaskStatus.UP_TO_DATE, Objects.requireNonNull(product), null);
     }
 
     public TaskStatus getStatus() {
@@ -64,7 +65,9 @@ public final class TaskResult {
     public String toString() {
         final StringBuilder sb = new StringBuilder("TaskResult{");
         sb.append("status=").append(status);
-        sb.append(", product=").append(product);
+        if (product != null) {
+            sb.append(", product=").append(product);
+        }
         if (errorReason != null) {
             sb.append(", errorReason='").append(errorReason).append('\'');
         }

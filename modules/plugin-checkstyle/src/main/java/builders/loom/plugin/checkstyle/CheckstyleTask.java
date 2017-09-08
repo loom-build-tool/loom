@@ -20,6 +20,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -166,6 +167,7 @@ public class CheckstyleTask extends AbstractModuleTask {
 
             final Checker checker = (Checker) factory.createModule(config.getName());
             checker.setModuleClassLoader(moduleClassLoader);
+            checker.setCharset("UTF-8");
 
             // Checker.setClassLoader is planned to be removed -
             // https://github.com/checkstyle/checkstyle/issues/3773
@@ -189,7 +191,7 @@ public class CheckstyleTask extends AbstractModuleTask {
             }
 
             return checker;
-        } catch (final CheckstyleException e) {
+        } catch (final CheckstyleException | UnsupportedEncodingException e) {
             throw new IllegalStateException("Unable to create Root Module with configuration: "
                 + configLocation, e);
         }

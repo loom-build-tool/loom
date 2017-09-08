@@ -18,6 +18,7 @@ package builders.loom.api;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -132,19 +133,31 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return this;
         }
 
+        public TaskBuilder uses(final Collection<String> products) {
+            usedProducts = new HashSet<>(Objects.requireNonNull(products));
+            return this;
+        }
+
         public TaskBuilder uses(final String... products) {
-            usedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return uses(Arrays.asList(Objects.requireNonNull(products)));
+        }
+
+        public TaskBuilder importFromModules(final Collection<String> products) {
+            importedProducts = new HashSet<>(Objects.requireNonNull(products));
             return this;
         }
 
         public TaskBuilder importFromModules(final String... products) {
-            importedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+            return importFromModules(Arrays.asList(Objects.requireNonNull(products)));
+        }
+
+        public TaskBuilder importFromAllModules(final Collection<String> products) {
+            importedAllProducts = new HashSet<>(Objects.requireNonNull(products));
             return this;
         }
 
         public TaskBuilder importFromAllModules(final String... products) {
-            importedAllProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
-            return this;
+            return importFromAllModules(Arrays.asList(Objects.requireNonNull(products)));
         }
 
         public TaskBuilder desc(final String taskDescription) {
@@ -169,9 +182,13 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             this.goalName = goalName;
         }
 
-        public GoalBuilder requires(final String... products) {
-            this.usedProducts = new HashSet<>(Arrays.asList(Objects.requireNonNull(products)));
+        public GoalBuilder requires(final Collection<String> products) {
+            this.usedProducts = new HashSet<>(Objects.requireNonNull(products));
             return this;
+        }
+
+        public GoalBuilder requires(final String... products) {
+            return requires(Arrays.asList(products));
         }
 
         public void register() {

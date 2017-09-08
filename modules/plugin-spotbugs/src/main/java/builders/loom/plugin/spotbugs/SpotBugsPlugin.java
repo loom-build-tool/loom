@@ -16,6 +16,9 @@
 
 package builders.loom.plugin.spotbugs;
 
+import java.util.Collections;
+import java.util.List;
+
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 
@@ -29,6 +32,8 @@ public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
     public void configure() {
         final SpotBugsPluginSettings pluginSettings = getPluginSettings();
 
+        final List<String> tasksOfGoal = Collections.singletonList("spotbugsMainReport");
+
         task("spotbugsMain")
             .impl(() -> new SpotBugsTask(CompileTarget.MAIN, pluginSettings))
             .provides("spotbugsMainReport")
@@ -36,15 +41,19 @@ public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
             .desc("Runs SpotBugs against main classes and create report.")
             .register();
 
-        task("spotbugsTest")
-            .impl(() -> new SpotBugsTask(CompileTarget.TEST, pluginSettings))
-            .provides("spotbugsTestReport")
-            .uses("testSource", "testDependencies", "compilation", "testCompilation")
-            .desc("Runs SpotBugs against test classes and create report.")
-            .register();
+        if (!pluginSettings.isExcludeTests()) {
+            task("spotbugsTest")
+                .impl(() -> new SpotBugsTask(CompileTarget.TEST, pluginSettings))
+                .provides("spotbugsTestReport")
+                .uses("testSource", "testDependencies", "compilation", "testCompilation")
+                .desc("Runs SpotBugs against test classes and create report.")
+                .register();
+
+            tasksOfGoal.add("spotbugsTestReport");
+        }
 
         goal("check")
-            .requires("spotbugsMainReport", "spotbugsTestReport")
+            .requires(tasksOfGoal)
             .register();
     }
 

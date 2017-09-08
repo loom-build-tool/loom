@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -53,6 +54,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsTask.class);
 
     private final CompileTarget compileTarget;
+    private final SpotBugsPluginSettings pluginSettings;
     private final String effort;
     private final List<String> plugins;
     private final int priorityThreshold;
@@ -65,6 +67,7 @@ public class SpotBugsTask extends AbstractModuleTask {
                         final SpotBugsPluginSettings pluginSettings) {
 
         this.compileTarget = Objects.requireNonNull(compileTarget);
+        this.pluginSettings = pluginSettings;
         effort = pluginSettings.getEffort();
         priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getReportLevel());
         plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
@@ -203,6 +206,16 @@ public class SpotBugsTask extends AbstractModuleTask {
 
             final UserPreferences userPreferences = UserPreferences.createDefaultUserPreferences();
             userPreferences.setEffort(effort);
+
+            Optional.ofNullable(pluginSettings.getIncludeFilterFiles())
+                .ifPresent(files -> userPreferences.getIncludeFilterFiles().put(files, true));
+
+            Optional.ofNullable(pluginSettings.getExcludeFilterFiles())
+                .ifPresent(files -> userPreferences.getExcludeFilterFiles().put(files, true));
+
+            Optional.ofNullable(pluginSettings.getExcludeBugsFiles())
+                .ifPresent(files -> userPreferences.getExcludeBugsFiles().put(files, true));
+
             engine.setUserPreferences(userPreferences);
 
             // this is required, because edu.umd.cs.findbugs.FindBugs2.setUserPreferences()

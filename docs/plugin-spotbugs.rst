@@ -47,13 +47,13 @@ includeFilterFiles
     Example: ``config/spotbugs/include-filters.xml``.
     See `SpotBugs Filter file`_ for details on how to create such a filter.
 
-reportLevel
-    Defines the minimum priority a bug has to have to get reported.
-    Possible levels are: ``LOW``, ``NORMAL`` (default), ``HIGH``.
-
 reporter
     The report output format.
     Possible values are: ``html`` (default) and ``xml``.
+
+reportLevel
+    Defines the minimum priority a bug has to have to get reported.
+    Possible levels are: ``LOW``, ``NORMAL`` (default), ``HIGH``.
 
 
 .. _SpotBugs: https://spotbugs.github.io

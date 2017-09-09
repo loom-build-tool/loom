@@ -3,7 +3,7 @@ Plugin spotbugs
 
 The SpotBugs plugin provides the functionality of SpotBugs_ to Loom.
 
-From the SpotBugs website: *SpotBugs is the spiritual successor of FindBugs,
+From the SpotBugs website: *SpotBugs is the spiritual successor of FindBugs_,
 carrying on from the point where it left off with support of its community.*
 
 Loom uses SpotBugs version 3.1.0-RC5, FbContrib version 7.0.3.sb, FindSecBugs version 1.7.1.
@@ -33,6 +33,20 @@ effort
     Higher values may find more bugs, but also have more cpu and memory consumption
     (and thus may take longer).
 
+excludeFilterFiles
+    Filename of a filter configuration (blacklist).
+    Example: ``config/spotbugs/exclude-filters.xml``.
+    See `SpotBugs Filter file`_ for details on how to create such a filter.
+
+excludeTests
+    Boolean flag to allow the exclusion of test classes. As it is *not* recommended,
+    thd default is ``false``. Set it to ``true`` to have standard Maven behaviour.
+
+includeFilterFiles
+    Filename of a filter configuration (whitelist).
+    Example: ``config/spotbugs/include-filters.xml``.
+    See `SpotBugs Filter file`_ for details on how to create such a filter.
+
 reportLevel
     Defines the minimum priority a bug has to have to get reported.
     Possible levels are: ``LOW``, ``NORMAL`` (default), ``HIGH``.
@@ -44,3 +58,4 @@ reporter
 
 .. _SpotBugs: https://spotbugs.github.io
 .. _FindBugs: http://findbugs.sourceforge.net
+.. _SpotBugs Filter file: http://spotbugs.readthedocs.io/en/latest/filter.html

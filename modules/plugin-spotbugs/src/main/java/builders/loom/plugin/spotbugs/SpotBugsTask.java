@@ -213,9 +213,6 @@ public class SpotBugsTask extends AbstractModuleTask {
             Optional.ofNullable(pluginSettings.getExcludeFilterFiles())
                 .ifPresent(files -> userPreferences.getExcludeFilterFiles().put(files, true));
 
-            Optional.ofNullable(pluginSettings.getExcludeBugsFiles())
-                .ifPresent(files -> userPreferences.getExcludeBugsFiles().put(files, true));
-
             engine.setUserPreferences(userPreferences);
 
             // this is required, because edu.umd.cs.findbugs.FindBugs2.setUserPreferences()

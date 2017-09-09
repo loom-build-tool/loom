@@ -85,12 +85,4 @@ public class SpotBugsPluginSettings implements PluginSettings {
         this.excludeFilterFiles = excludeFilterFiles;
     }
 
-    public String getExcludeBugsFiles() {
-        return excludeBugsFiles;
-    }
-
-    public void setExcludeBugsFiles(final String excludeBugsFiles) {
-        this.excludeBugsFiles = excludeBugsFiles;
-    }
-
 }

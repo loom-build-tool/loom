@@ -5,7 +5,7 @@ archivesBaseName = 'loom-plugin-junit'
 dependencies {
     compileOnly project(':modules:api')
     compileOnly project(':modules:util')
-    compileOnly('org.junit.platform:junit-platform-launcher:1.0.0-RC3')
+    compileOnly('org.junit.platform:junit-platform-launcher:1.0.0')
 }
 
 jar {

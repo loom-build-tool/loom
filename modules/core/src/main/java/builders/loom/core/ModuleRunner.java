@@ -39,6 +39,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.TestProgressEmitter;
 import builders.loom.core.misc.DirectedGraph;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.GoalInfo;
@@ -55,6 +56,21 @@ public class ModuleRunner {
 
     private static final long NANO_MILLI = 1_000_000;
 
+    private static final Map<String, String> INTERNAL_GLOBAL_PLUGINS = Map.of(
+        "idea", "builders.loom.plugin.idea.IdeaPlugin",
+        "eclipse", "builders.loom.plugin.eclipse.EclipsePlugin"
+    );
+
+    private static final Map<String, String> INTERNAL_MODULE_PLUGINS = Map.of(
+        "java", "builders.loom.plugin.java.JavaPlugin",
+        "junit", "builders.loom.plugin.junit.JUnitPlugin",
+        "maven", "builders.loom.plugin.maven.MavenPlugin",
+        "checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin",
+        "spotbugs", "builders.loom.plugin.spotbugs.SpotBugsPlugin",
+        "pmd", "builders.loom.plugin.pmd.PmdPlugin",
+        "springboot", "builders.loom.plugin.springboot.SpringBootPlugin"
+    );
+
     private final RuntimeConfiguration runtimeConfiguration;
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
@@ -62,15 +78,18 @@ public class ModuleRunner {
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies = new HashMap<>();
+    private final TestProgressEmitter testProgressEmitter;
 
     public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
                         final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry,
-                        final ProgressMonitor progressMonitor) {
+                        final ProgressMonitor progressMonitor,
+                        final TestProgressEmitter emitter) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
         this.progressMonitor = progressMonitor;
+        testProgressEmitter = emitter;
     }
 
     public void init() {
@@ -82,18 +101,21 @@ public class ModuleRunner {
 
     private void registerGlobalPlugins() {
         LOG.info("Initialize Plugins for global build context");
-        registerModule(Set.of("eclipse", "idea"),
+        registerModule(INTERNAL_GLOBAL_PLUGINS, Set.of("eclipse", "idea"),
             new GlobalBuildContext(runtimeConfiguration.getProjectBaseDir()));
     }
 
-    private void registerModule(final Set<String> defaultPlugins, final BuildContext buildContext) {
+    private void registerModule(final Map<String, String> availablePlugins,
+                                final Set<String> defaultPlugins,
+                                final BuildContext buildContext) {
         final TaskRegistryImpl taskRegistry = new TaskRegistryImpl(buildContext);
 
         final Set<String> pluginsToInitialize = new HashSet<>();
         pluginsToInitialize.addAll(defaultPlugins);
         pluginsToInitialize.addAll(buildContext.getConfig().getPlugins());
 
-        pluginLoader.initPlugins(pluginsToInitialize, buildContext.getConfig(), taskRegistry);
+        pluginLoader.initPlugins(availablePlugins, pluginsToInitialize, buildContext.getConfig(),
+            taskRegistry);
 
         moduleTaskRegistries.put(buildContext, taskRegistry);
         moduleProductRepositories.put(buildContext, new ProductRepositoryImpl());
@@ -103,7 +125,7 @@ public class ModuleRunner {
         final Set<String> defaultPlugins = Set.of("java");
         for (final Module module : moduleRegistry.getModules()) {
             LOG.info("Initialize Plugins for module {}", module.getModuleName());
-            registerModule(defaultPlugins, module);
+            registerModule(INTERNAL_MODULE_PLUGINS, defaultPlugins, module);
         }
     }
 
@@ -355,7 +377,8 @@ public class ModuleRunner {
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
-            productRepository, transitiveModuleCompileDependencies, moduleProductRepositories);
+            productRepository, transitiveModuleCompileDependencies, moduleProductRepositories,
+            testProgressEmitter);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

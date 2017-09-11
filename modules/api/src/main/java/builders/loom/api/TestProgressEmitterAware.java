@@ -14,34 +14,10 @@
  * limitations under the License.
  */
 
-package builders.loom.core;
+package builders.loom.api;
 
-public interface ProgressMonitor {
+public interface TestProgressEmitterAware {
 
-    void start();
-
-    void setTasks(int tasks);
-
-    void progress();
-
-    void progressDownloadedFiles();
-
-    void progressDownloadedBytes(long bytes);
-
-    void testsTotal(long tests);
-
-    void testsAdd();
-
-    void testSuccess();
-
-    void testAbort();
-
-    void testSkip();
-
-    void testFail();
-
-    void testError();
-
-    void stop();
+    void setTestProgressEmitter(TestProgressEmitter emitter);
 
 }

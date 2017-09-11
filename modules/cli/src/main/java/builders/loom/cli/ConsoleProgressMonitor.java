@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,15 +33,25 @@ import builders.loom.core.ProgressMonitor;
 final class ConsoleProgressMonitor implements ProgressMonitor {
 
     private static final int DELAY = 100;
-    private static final int JANSI_BUF = 100;
+    private static final int JANSI_BUF = 200;
     private static final PrintStream OUT = AnsiConsole.out();
     private static final String[] UNITS = {"B", "KiB", "MiB"};
 
     private static final AtomicInteger TASKS = new AtomicInteger();
     private static final AtomicInteger COMPLETED_TASKS = new AtomicInteger();
+
     private static final AtomicInteger DOWNLOADED_FILES = new AtomicInteger();
     private static final AtomicLong DOWNLOADED_BYTES = new AtomicLong();
-    private static final AtomicLong LAST_PROGRESS = new AtomicLong();
+
+    private static final AtomicLong TESTS_TOTAL = new AtomicLong();
+    private static final AtomicLong TESTS_SUCCESS = new AtomicLong();
+    private static final AtomicLong TESTS_ABORT = new AtomicLong();
+    private static final AtomicLong TESTS_SKIP = new AtomicLong();
+    private static final AtomicLong TESTS_FAIL = new AtomicLong();
+    private static final AtomicLong TESTS_ERROR = new AtomicLong();
+
+    private static final AtomicBoolean UPDATED_REQUIRED = new AtomicBoolean(false);
+
     private static final Timer TIMER = new Timer("ProgressMonitor", true);
 
     @Override
@@ -48,7 +59,7 @@ final class ConsoleProgressMonitor implements ProgressMonitor {
         TIMER.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (COMPLETED_TASKS.get() + DOWNLOADED_BYTES.get() > LAST_PROGRESS.get()) {
+                if (UPDATED_REQUIRED.getAndSet(false)) {
                     update();
                 }
             }
@@ -59,27 +70,73 @@ final class ConsoleProgressMonitor implements ProgressMonitor {
     public void setTasks(final int tasks) {
         OUT.println();
         ConsoleProgressMonitor.TASKS.set(tasks);
+        UPDATED_REQUIRED.set(true);
     }
 
     @Override
     public void progress() {
         COMPLETED_TASKS.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
     }
 
     @Override
     public void progressDownloadedFiles() {
         DOWNLOADED_FILES.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
     }
 
     @Override
     public void progressDownloadedBytes(final long bytes) {
         DOWNLOADED_BYTES.addAndGet(bytes);
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testsTotal(final long tests) {
+        TESTS_TOTAL.set(tests);
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testsAdd() {
+        TESTS_TOTAL.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testSuccess() {
+        TESTS_SUCCESS.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testAbort() {
+        TESTS_ABORT.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testSkip() {
+        TESTS_SKIP.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testFail() {
+        TESTS_FAIL.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
+    }
+
+    @Override
+    public void testError() {
+        TESTS_ERROR.incrementAndGet();
+        UPDATED_REQUIRED.set(true);
     }
 
     @Override
     public void stop() {
         TIMER.cancel();
-        OUT.print(Ansi.ansi().reset().cursorUp(1).eraseLine());
+        update();
     }
 
     private static void update() {
@@ -93,22 +150,30 @@ final class ConsoleProgressMonitor implements ProgressMonitor {
         final int nullProgress = progressBarLength - progress;
 
         final Ansi a = Ansi.ansi(JANSI_BUF).cursorUp(1)
-            .fg(Ansi.Color.WHITE)
-            .a('[')
-            .a(String.join("", Collections.nCopies(progress, "=")))
-            .a('>')
-            .a(String.join("", Collections.nCopies(nullProgress, " ")))
-            .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
+            .fg(Ansi.Color.WHITE);
+
+        if (cpl == taskCnt) {
+            a.format("All %d tasks completed ", cpl);
+        } else {
+            a.a('[')
+                .a(String.join("", Collections.nCopies(progress, "=")))
+                .a('>')
+                .a(String.join("", Collections.nCopies(nullProgress, " ")))
+                .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
+        }
 
         if (DOWNLOADED_FILES.intValue() > 0) {
             a.format(" (Downloaded: %d files | %s)",
-                DOWNLOADED_FILES.get(), formatBytes(DOWNLOADED_BYTES.get()))
-                .eraseLine(Ansi.Erase.FORWARD);
+                DOWNLOADED_FILES.get(), formatBytes(DOWNLOADED_BYTES.get()));
         }
 
-        OUT.println(a);
+        if (TESTS_TOTAL.longValue() > 0) {
+            a.render(" (Tests: %d | SU=%d SK=%d A=%d F=%d E=%d)",
+                TESTS_TOTAL.get(), TESTS_SUCCESS.get(), TESTS_SKIP.get(), TESTS_ABORT.get(),
+                TESTS_FAIL.get(), TESTS_ERROR.get());
+        }
 
-        LAST_PROGRESS.set(cpl + DOWNLOADED_BYTES.get());
+        OUT.println(a.eraseLine(Ansi.Erase.FORWARD));
     }
 
     // not in a util class, because of the special handling (stop at MiB, show floating number)

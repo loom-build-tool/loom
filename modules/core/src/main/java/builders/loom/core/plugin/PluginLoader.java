@@ -49,24 +49,6 @@ public class PluginLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(PluginLoader.class);
 
-    // FIXME
-    private static final Map<String, String> INTERNAL_GLOBAL_PLUGINS = Map.of(
-        "idea", "builders.loom.plugin.idea.IdeaPlugin",
-        "eclipse", "builders.loom.plugin.eclipse.EclipsePlugin"
-    );
-
-    private static final Map<String, String> INTERNAL_MODULE_PLUGINS = Map.of(
-        "java", "builders.loom.plugin.java.JavaPlugin",
-        "junit", "builders.loom.plugin.junit.JUnitPlugin",
-        "maven", "builders.loom.plugin.maven.MavenPlugin",
-        "checkstyle", "builders.loom.plugin.checkstyle.CheckstylePlugin",
-        "spotbugs", "builders.loom.plugin.spotbugs.SpotBugsPlugin",
-        "pmd", "builders.loom.plugin.pmd.PmdPlugin",
-        "springboot", "builders.loom.plugin.springboot.SpringBootPlugin",
-        "idea", "builders.loom.plugin.idea.IdeaPlugin",
-        "eclipse", "builders.loom.plugin.eclipse.EclipsePlugin"
-    );
-
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final Map<String, Class<?>> pluginClasses = new HashMap<>();
     private final RuntimeConfigurationImpl runtimeConfiguration;
@@ -81,13 +63,15 @@ public class PluginLoader {
         this.serviceRegistry = serviceRegistry;
     }
 
-    public void initPlugins(final Set<String> pluginsToInitialize,
+    public void initPlugins(final Map<String, String> availablePlugins,
+                            final Set<String> pluginsToInitialize,
                             final BuildConfig moduleConfig,
                             final TaskRegistryImpl taskRegistry) {
 
         final Set<String> acceptedSettings = new HashSet<>();
         for (final String plugin : pluginsToInitialize) {
-            acceptedSettings.addAll(initPlugin(plugin, moduleConfig, taskRegistry));
+            acceptedSettings.addAll(initPlugin(availablePlugins, plugin, moduleConfig,
+                taskRegistry));
         }
 
         validateConfiguredTasks(taskRegistry);
@@ -97,10 +81,11 @@ public class PluginLoader {
         }
     }
 
-    private Set<String> initPlugin(final String pluginName, final BuildConfig config,
+    private Set<String> initPlugin(final Map<String, String> availablePlugins,
+                                   final String pluginName, final BuildConfig config,
                                    final TaskRegistryImpl taskRegistry) {
 
-        final Plugin plugin = getPlugin(pluginName);
+        final Plugin plugin = getPlugin(availablePlugins, pluginName);
 
         plugin.setName(pluginName);
         plugin.setTaskRegistry(taskRegistry);
@@ -119,8 +104,8 @@ public class PluginLoader {
         return acceptedSettings;
     }
 
-    private Plugin getPlugin(final String pluginName) {
-        final String pluginClassname = INTERNAL_MODULE_PLUGINS.get(pluginName);
+    private Plugin getPlugin(final Map<String, String> availablePlugins, final String pluginName) {
+        final String pluginClassname = availablePlugins.get(pluginName);
         if (pluginClassname == null) {
             throw new IllegalArgumentException("Unknown plugin: " + pluginName);
         }

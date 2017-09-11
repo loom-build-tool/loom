@@ -20,10 +20,13 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +52,10 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
+import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ReportProduct;
 import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.util.ClassLoaderUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractModuleTask {
@@ -62,7 +67,6 @@ public class CheckstyleTask extends AbstractModuleTask {
     private final CheckstylePluginSettings pluginSettings;
     private final Path cacheDir;
     private final String sourceProductId;
-    private final String classpathProductId;
     private final String reportOutputDescription;
 
     public CheckstyleTask(final CompileTarget compileTarget,
@@ -79,12 +83,10 @@ public class CheckstyleTask extends AbstractModuleTask {
         switch (compileTarget) {
             case MAIN:
                 sourceProductId = "source";
-                classpathProductId = "compileDependencies";
                 reportOutputDescription = "Checkstyle main report";
                 break;
             case TEST:
                 sourceProductId = "testSource";
-                classpathProductId = "testDependencies";
                 reportOutputDescription = "Checkstyle test report";
                 break;
             default:
@@ -157,13 +159,21 @@ public class CheckstyleTask extends AbstractModuleTask {
             final ModuleFactory factory = new PackageObjectFactory(
                 Checker.class.getPackage().getName(), moduleClassLoader);
 
+            final Object module = factory.createModule(config.getName());
+
+            if (!(module instanceof Checker)) {
+                throw new IllegalStateException("Only Checker root module is supported. "
+                    + "Got " + module.getClass());
+            }
+
             final Checker checker = (Checker) factory.createModule(config.getName());
             checker.setModuleClassLoader(moduleClassLoader);
+            checker.setCharset("UTF-8");
 
-            useProduct(classpathProductId, ClasspathProduct.class)
-                .map(ClasspathProduct::getEntriesAsUrlArray)
-                .map(URLClassLoader::new)
-                .ifPresent(checker::setClassLoader);
+            // Checker.setClassLoader is planned to be removed -
+            // https://github.com/checkstyle/checkstyle/issues/3773
+            // it is only required for JavadocMethodCheck
+            buildClassLoader().ifPresent(checker::setClassLoader);
 
             checker.configure(config);
 
@@ -182,10 +192,45 @@ public class CheckstyleTask extends AbstractModuleTask {
             }
 
             return checker;
-        } catch (final CheckstyleException e) {
+        } catch (final CheckstyleException | UnsupportedEncodingException e) {
             throw new IllegalStateException("Unable to create Root Module with configuration: "
                 + configLocation, e);
         }
+    }
+
+    private Optional<ClassLoader> buildClassLoader() throws InterruptedException {
+        final List<URL> urls = new ArrayList<>();
+
+        switch (compileTarget) {
+            case MAIN:
+                useProduct("compilation", CompilationProduct.class)
+                    .map(CompilationProduct::getClassesDir)
+                    .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
+
+                useProduct("compileDependencies", ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntriesAsUrls)
+                    .ifPresent(urls::addAll);
+                break;
+            case TEST:
+                useProduct("testCompilation", CompilationProduct.class)
+                    .map(CompilationProduct::getClassesDir)
+                    .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
+
+                useProduct("compilation", CompilationProduct.class)
+                    .map(CompilationProduct::getClassesDir)
+                    .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
+
+                useProduct("testDependencies", ClasspathProduct.class)
+                    .map(ClasspathProduct::getEntriesAsUrls)
+                    .ifPresent(urls::addAll);
+                break;
+            default:
+                throw new IllegalStateException("Unknown compileTarget " + compileTarget);
+        }
+
+        return urls.isEmpty()
+            ? Optional.empty()
+            : Optional.of(new URLClassLoader(urls.toArray(new URL[]{})));
     }
 
     private String determineConfigLocation() {

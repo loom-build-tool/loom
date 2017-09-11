@@ -34,7 +34,8 @@ import builders.loom.plugin.junit.wrapper.util.XmlWriter;
 
 class XmlReport {
 
-    private static final double NANO_TO_SEC = 1_000_000_000D;
+    private static final double MILLIS_TO_SEC = 1_000;
+
     private final TestSuite testSuite;
     private final XmlBuilder.Element rootElement;
     private final Path reportFile;
@@ -149,7 +150,7 @@ class XmlReport {
 
     private static String timeOfDuration(final Duration duration) {
         final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
-        return nf.format(duration.getNano() / NANO_TO_SEC);
+        return nf.format(duration.toMillis() / MILLIS_TO_SEC);
     }
 
     private static String throwableToString(final Throwable throwable) {

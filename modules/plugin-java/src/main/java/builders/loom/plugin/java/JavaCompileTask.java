@@ -150,11 +150,11 @@ public class JavaCompileTask extends AbstractModuleTask {
                 // Case 4 - 1st step
 
                 // Unfortunately JDK doesn't support cross-compile for module-info.java
-                // First, compile everything with Java 9 (TODO what to do with Java 10?)
+                // First, compile everything with current Java release
 
                 LOG.debug("Compile {} java files (with module path)", srcFiles.size());
                 compileSources(buildDir, classpath, srcFiles, compiler, diag,
-                    true, JavaVersion.JAVA_9);
+                    true, null);
 
                 // Case 4 - 2nd step
                 // Then, compile everything but the module-info with requested Version

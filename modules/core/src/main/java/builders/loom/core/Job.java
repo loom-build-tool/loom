@@ -40,6 +40,8 @@ import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
+import builders.loom.api.TestProgressEmitter;
+import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.UsedProducts;
 import builders.loom.core.plugin.ConfiguredTask;
 
@@ -57,6 +59,7 @@ public class Job implements Callable<TaskStatus> {
     private UsedProducts usedProducts;
     private final Map<BuildContext, ProductRepository> moduleProductRepositories;
     private final Set<Module> modules;
+    private final TestProgressEmitter testProgressEmitter;
 
     @SuppressWarnings("checkstyle:parameternumber")
     Job(final String name,
@@ -65,7 +68,8 @@ public class Job implements Callable<TaskStatus> {
         final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final Map<Module, Set<Module>> transitiveModuleCompileDependencies,
-        final Map<BuildContext, ProductRepository> moduleProductRepositories) {
+        final Map<BuildContext, ProductRepository> moduleProductRepositories,
+        final TestProgressEmitter emitter) {
 
         this.name = Objects.requireNonNull(name, "name required");
         this.buildContext = buildContext;
@@ -78,6 +82,7 @@ public class Job implements Callable<TaskStatus> {
         this.modules = moduleProductRepositories.keySet().stream()
             .filter(Module.class::isInstance)
             .map(Module.class::cast).collect(Collectors.toSet());
+        testProgressEmitter = emitter;
     }
 
     public String getName() {
@@ -149,6 +154,10 @@ public class Job implements Callable<TaskStatus> {
         if (task instanceof ModuleGraphAware) {
             final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
             mgaTask.setTransitiveModuleGraph(transitiveModuleCompileDependencies);
+        }
+        if (task instanceof TestProgressEmitterAware) {
+            final TestProgressEmitterAware tpea = (TestProgressEmitterAware) task;
+            tpea.setTestProgressEmitter(testProgressEmitter);
         }
     }
 

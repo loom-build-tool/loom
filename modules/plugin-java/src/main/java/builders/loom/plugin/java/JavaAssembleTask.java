@@ -17,6 +17,7 @@
 package builders.loom.plugin.java;
 
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,13 +86,10 @@ public class JavaAssembleTask extends AbstractModuleTask {
         final Manifest manifest = prepareManifest(automaticModuleName);
 
         final Path tmpDir = Files.createDirectories(LoomPaths.tmpDir(getBuildContext().getPath()));
-        try (TempFile tf = new TempFile(tmpDir, "meta-inf", null)) {
-            final Path file = tf.getFile();
-            try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
-                manifest.write(os);
-            }
+        try (TempFile metaInfTmpFile = new TempFile(tmpDir, "meta-inf", null)) {
+            writeMetaInfFile(manifest, metaInfTmpFile.getFile());
 
-            args.addAll(List.of("-m", file.toString()));
+            args.addAll(List.of("-m", metaInfTmpFile.getFile().toString()));
 
             compilationProduct.ifPresent(p ->
                 args.addAll(List.of("-C", p.getClassesDir().toString(), ".")));
@@ -148,6 +146,14 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .ifPresent(s -> manifestBuilder.put("Automatic-Module-Name", s));
 
         return newManifest;
+    }
+
+    private static void writeMetaInfFile(final Manifest manifest, final Path file)
+        throws IOException {
+
+        try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
+            manifest.write(os);
+        }
     }
 
 }

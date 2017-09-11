@@ -49,6 +49,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
     }
 
+    @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
     public TaskResult run() throws Exception {
         final Optional<CompilationProduct> compilationProduct = useProduct(
@@ -76,8 +77,10 @@ public class JavaAssembleTask extends AbstractModuleTask {
 
         final int result;
 
-        final String automaticModuleName = buildAutomaticModuleName(compilationProduct.orElse(null));
+        final String automaticModuleName =
+            buildAutomaticModuleName(compilationProduct.orElse(null));
         final Manifest manifest = prepareManifest(automaticModuleName);
+
         final Path tmpDir = Files.createDirectories(LoomPaths.tmpDir(getBuildContext().getPath()));
         try (TempFile tf = new TempFile(tmpDir, "meta-inf", null)) {
             final Path file = tf.getFile();

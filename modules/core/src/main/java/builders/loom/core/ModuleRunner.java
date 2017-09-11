@@ -39,6 +39,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.TestProgressEmitter;
 import builders.loom.core.misc.DirectedGraph;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.GoalInfo;
@@ -77,15 +78,18 @@ public class ModuleRunner {
     private final Map<BuildContext, TaskRegistryImpl> moduleTaskRegistries = new HashMap<>();
     private final Map<BuildContext, ProductRepository> moduleProductRepositories = new HashMap<>();
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies = new HashMap<>();
+    private final TestProgressEmitter testProgressEmitter;
 
     public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
                         final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry,
-                        final ProgressMonitor progressMonitor) {
+                        final ProgressMonitor progressMonitor,
+                        final TestProgressEmitter emitter) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
         this.progressMonitor = progressMonitor;
+        testProgressEmitter = emitter;
     }
 
     public void init() {
@@ -373,7 +377,8 @@ public class ModuleRunner {
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
         return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
-            productRepository, transitiveModuleCompileDependencies, moduleProductRepositories);
+            productRepository, transitiveModuleCompileDependencies, moduleProductRepositories,
+            testProgressEmitter);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {

@@ -31,8 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
-import builders.loom.core.misc.ThreadFactoryBuilder;
-
 public class JobPool {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobPool.class);
@@ -48,9 +46,9 @@ public class JobPool {
     public JobPool(final ProgressMonitor progressMonitor) {
         this.progressMonitor = progressMonitor;
 
-        final ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
-        threadFactoryBuilder.setDaemon(true);
-        executor = Executors.newCachedThreadPool(threadFactoryBuilder.build());
+        // do not enable daemon threads -- sub-threads (e.g. unit tests) would also become daemon
+        // threads -- this causes commons-lang testsuite to fail
+        executor = Executors.newCachedThreadPool();
 
         timer = new Timer("JobPoolMonitor", true);
         timer.schedule(new MonitorTask(), MONITOR_INTERVAL, MONITOR_INTERVAL);

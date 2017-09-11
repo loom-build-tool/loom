@@ -16,7 +16,7 @@
 
 package builders.loom.plugin.spotbugs;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import builders.loom.api.AbstractPlugin;
@@ -32,7 +32,8 @@ public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
     public void configure() {
         final SpotBugsPluginSettings pluginSettings = getPluginSettings();
 
-        final List<String> tasksOfGoal = Collections.singletonList("spotbugsMainReport");
+        final List<String> tasksOfGoal = new ArrayList<>();
+        tasksOfGoal.add("spotbugsMainReport");
 
         task("spotbugsMain")
             .impl(() -> new SpotBugsTask(CompileTarget.MAIN, pluginSettings))

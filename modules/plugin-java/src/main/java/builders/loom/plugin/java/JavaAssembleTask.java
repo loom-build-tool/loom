@@ -76,13 +76,20 @@ public class JavaAssembleTask extends AbstractModuleTask {
             args.addAll(List.of("-e", pluginSettings.getMainClassName()));
         }
 
-        Optional.ofNullable(getRuntimeConfiguration().getVersion()).ifPresent(v ->
-            args.addAll(List.of("--module-version", v)));
+        final boolean moduleInfoExists = compilationProduct
+            .map(CompilationProduct::getClassesDir)
+            .map(dir -> dir.resolve(LoomPaths.MODULE_INFO_CLASS))
+            .filter(Files::exists)
+            .isPresent();
+
+        if (moduleInfoExists) {
+            Optional.ofNullable(getRuntimeConfiguration().getVersion()).ifPresent(v ->
+                args.addAll(List.of("--module-version", v)));
+        }
 
         final int result;
 
-        final String automaticModuleName =
-            buildAutomaticModuleName(compilationProduct.orElse(null));
+        final String automaticModuleName = moduleInfoExists ? null : buildAutomaticModuleName();
         final Manifest manifest = prepareManifest(automaticModuleName);
 
         final Path tmpDir = Files.createDirectories(LoomPaths.tmpDir(getBuildContext().getPath()));
@@ -108,17 +115,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
         return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
-    private String buildAutomaticModuleName(final CompilationProduct compilationProduct) {
-        if (compilationProduct != null) {
-            final Path moduleInfo = compilationProduct.getClassesDir()
-                .resolve(LoomPaths.MODULE_INFO_CLASS);
-
-            if (Files.exists(moduleInfo)) {
-                // Automatic-Module-Name not required -- got module-info.class
-                return null;
-            }
-        }
-
+    private String buildAutomaticModuleName() {
         if (!Module.UNNAMED_MODULE.equals(getBuildContext().getModuleName())) {
             // Use configured module name
             return getBuildContext().getModuleName();

@@ -75,6 +75,9 @@ public class JavaAssembleTask extends AbstractModuleTask {
             args.addAll(List.of("-e", pluginSettings.getMainClassName()));
         }
 
+        Optional.ofNullable(getRuntimeConfiguration().getVersion()).ifPresent(v ->
+            args.addAll(List.of("--module-version", v)));
+
         final int result;
 
         final String automaticModuleName =

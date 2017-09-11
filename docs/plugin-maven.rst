@@ -27,7 +27,7 @@ groupAndArtifact
     creating a ``pom.xml`` and installing to your local repository.
     The format is: ``yourGroupId:yourArtifactId``.
     The also required *version* is specified through the
-    ``--artifact-version`` or ``-a`` parameters of the Loom CLI.
+    ``--release`` or ``-r`` parameters of the Loom CLI.
 
 
 .. _Apache Maven: https://maven.apache.org

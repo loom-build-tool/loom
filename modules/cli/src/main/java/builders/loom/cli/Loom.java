@@ -155,8 +155,8 @@ public final class Loom {
             .addOption("c", "clean", false, "Clean before execution")
             .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
             .addOption(
-                Option.builder("a")
-                    .longOpt("artifact-version")
+                Option.builder("r")
+                    .longOpt("release")
                     .numberOfArgs(1)
                     .optionalArg(false)
                     .argName("version")
@@ -232,7 +232,7 @@ public final class Loom {
 
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(projectBaseDir, !noCacheMode,
-                cmd.getOptionValue("artifact-version"),
+                cmd.getOptionValue("release"),
                 loomProcessor.isModuleBuild(projectBaseDir));
 
         printRuntimeConfiguration(runtimeConfiguration);

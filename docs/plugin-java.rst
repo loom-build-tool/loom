@@ -20,7 +20,7 @@ default values instead, use the syntax ``${placeholder:default-value}``.
 The following placeholders are registered automatically:
 
 * ``${project.version}`` will be replaced by the version defined for the build.
-  Don't forget to specify a version for the build via the ``--artifact-version`` or ``-a`` parameter.
+  Don't forget to specify a version for the build via the ``--release`` or ``-r`` parameter.
 
 See the setting ``resourceFilterGlob`` for how to control which files should be filtered.
 

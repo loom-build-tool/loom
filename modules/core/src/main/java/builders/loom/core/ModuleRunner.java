@@ -129,21 +129,21 @@ public class ModuleRunner {
         }
     }
 
-    public Optional<ExecutionReport> execute(final Set<String> productIds)
-        throws BuildException, InterruptedException {
-
+    public List<ConfiguredTask> resolveTasks(final Set<String> productIds) {
         final Stopwatch sw = new Stopwatch();
 
-        final List<ConfiguredTask> resolvedTasks = resolveTasks(productIds).resolve(
+        final List<ConfiguredTask> resolvedTasks = graphTasks(productIds).resolve(
             configuredTask -> productIds.contains(configuredTask.getProvidedProduct()));
 
         LOG.debug("Analyzed task dependency graph in {}", sw);
 
-        if (resolvedTasks.isEmpty()) {
-            return Optional.empty();
-        }
+        return resolvedTasks;
+    }
 
-        sw.reset();
+    public ExecutionReport execute(final List<ConfiguredTask> resolvedTasks)
+        throws BuildException, InterruptedException {
+
+        final Stopwatch sw = new Stopwatch();
 
         LOG.info("Execute {}", resolvedTasks.stream()
             .map(ConfiguredTask::toString)
@@ -206,7 +206,7 @@ public class ModuleRunner {
 
             });
 
-        return Optional.of(executionReport);
+        return executionReport;
     }
 
     private void resolveModuleDependencyGraph() {
@@ -233,7 +233,7 @@ public class ModuleRunner {
         }
     }
 
-    private DirectedGraph<ConfiguredTask> resolveTasks(final Set<String> productIds) {
+    private DirectedGraph<ConfiguredTask> graphTasks(final Set<String> productIds) {
         final Set<ConfiguredTask> allConfiguredTasks = moduleTaskRegistries.values().stream()
             .flatMap(task -> task.configuredTasks().stream())
             .collect(Collectors.toSet());

@@ -82,13 +82,12 @@ public class MavenInstallTask extends AbstractModuleTask {
         }
 
         if (pluginSettings.getGroupAndArtifact() == null) {
-            // Not every module needs to be installed
-            return completeEmpty();
+            throw new IllegalStateException("Missing configuration of maven.groupAndArtifact");
         }
 
         final Path jarFile = requireProduct("jar", AssemblyProduct.class).getAssemblyFile();
 
-        return completeOk(new DirectoryProduct(install(jarFile),
+        return TaskResult.ok(new DirectoryProduct(install(jarFile),
             "Directory of installed artifact"));
     }
 

@@ -53,12 +53,12 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
         final List<Path> srcFiles = findSources(srcDir);
 
         if (srcFiles.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         validateFiles(srcFiles);
 
-        return completeOk(new SourceTreeProduct(srcDir, srcFiles));
+        return TaskResult.ok(new SourceTreeProduct(srcDir, srcFiles));
     }
 
     private List<Path> findSources(final Path srcDir) throws IOException {

@@ -20,22 +20,33 @@ import java.util.Objects;
 
 import builders.loom.api.product.Product;
 
-public class TaskResult {
+public final class TaskResult {
 
     private final TaskStatus status;
     private final Product product;
+    private final String errorReason;
 
-    public TaskResult(final TaskStatus status, final Product product) {
-        if (status == TaskStatus.EMPTY) {
-            throw new IllegalArgumentException("TaskResult with product must not EMPTY");
-        }
-        this.status = Objects.requireNonNull(status);
-        this.product = Objects.requireNonNull(product);
+    private TaskResult(final TaskStatus status, final Product product, final String errorReason) {
+        this.status = status;
+        this.product = product;
+        this.errorReason = errorReason;
     }
 
-    public TaskResult() {
-        this.status = TaskStatus.EMPTY;
-        this.product = null;
+    public static TaskResult ok(final Product product) {
+        return new TaskResult(TaskStatus.OK, Objects.requireNonNull(product), null);
+    }
+
+    public static TaskResult empty() {
+        return new TaskResult(TaskStatus.EMPTY, null, null);
+    }
+
+    public static TaskResult fail(final Product product, final String errorReason) {
+        return new TaskResult(TaskStatus.FAIL, Objects.requireNonNull(product),
+            Objects.requireNonNull(errorReason));
+    }
+
+    public static TaskResult up2date(final Product product) {
+        return new TaskResult(TaskStatus.UP_TO_DATE, Objects.requireNonNull(product), null);
     }
 
     public TaskStatus getStatus() {
@@ -46,12 +57,22 @@ public class TaskResult {
         return product;
     }
 
+    public String getErrorReason() {
+        return errorReason;
+    }
+
     @Override
     public String toString() {
-        return "TaskResult{"
-            + "status=" + status
-            + ", product=" + product
-            + '}';
+        final StringBuilder sb = new StringBuilder("TaskResult{");
+        sb.append("status=").append(status);
+        if (product != null) {
+            sb.append(", product=").append(product);
+        }
+        if (errorReason != null) {
+            sb.append(", errorReason='").append(errorReason).append('\'');
+        }
+        sb.append('}');
+        return sb.toString();
     }
 
 }

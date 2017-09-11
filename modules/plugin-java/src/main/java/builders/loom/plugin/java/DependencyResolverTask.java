@@ -38,14 +38,14 @@ public class DependencyResolverTask extends ArtifactResolverTask {
         final List<String> dependencies = listDependencies();
 
         if (dependencies.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final List<Path> artifacts = resolve(dependencies, false).stream()
             .map(ArtifactProduct::getMainArtifact)
             .collect(Collectors.toList());
 
-        return completeOk(new ClasspathProduct(artifacts));
+        return TaskResult.ok(new ClasspathProduct(artifacts));
     }
 
 }

@@ -39,6 +39,7 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.core.config.BuildConfigImpl;
 import builders.loom.core.config.ConfigReader;
+import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.PluginLoader;
 import builders.loom.core.service.ServiceLoader;
 import builders.loom.core.service.ServiceRegistryImpl;
@@ -234,8 +235,13 @@ public class LoomProcessor {
         }
     }
 
-    public Optional<ExecutionReport> execute(final List<String> productIds) throws Exception {
-        return moduleRunner.execute(new HashSet<>(productIds));
+    public List<ConfiguredTask> resolveTasks(final List<String> productIds) {
+        return moduleRunner.resolveTasks(new HashSet<>(productIds));
+    }
+
+    public ExecutionReport execute(final List<ConfiguredTask> resolvedTasks)
+        throws Exception {
+        return moduleRunner.execute(resolvedTasks);
     }
 
     public void logSystemEnvironment() {

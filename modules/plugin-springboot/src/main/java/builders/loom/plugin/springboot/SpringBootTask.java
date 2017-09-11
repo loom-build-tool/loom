@@ -104,7 +104,7 @@ public class SpringBootTask extends AbstractModuleTask {
         final String applicationStarter = scanForApplicationStarter(compilationProduct);
         writeManifest(buildDir, prepareManifest(applicationStarter));
 
-        return completeOk(new DirectoryProduct(buildDir, "Spring Boot application"));
+        return TaskResult.ok(new DirectoryProduct(buildDir, "Spring Boot application"));
     }
 
     private Path resolveSpringBootLoaderJar() {

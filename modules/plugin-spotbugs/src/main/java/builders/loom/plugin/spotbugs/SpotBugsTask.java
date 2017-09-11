@@ -98,7 +98,7 @@ public class SpotBugsTask extends AbstractModuleTask {
                 .orElse(Collections.emptyList());
 
         if (classFiles.isEmpty()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final List<Path> srcFiles =
@@ -112,9 +112,15 @@ public class SpotBugsTask extends AbstractModuleTask {
         SpotBugsSingleton.initSpotBugs(plugins);
 
         final Project project = createSpotBugsProject(srcFiles, classFiles, calcClasspath());
-        executeSpotBugs(project, reportDir);
+        final FindBugs2 engine = executeSpotBugs(project, reportDir);
 
-        return completeOk(new ReportProduct(reportDir, reportOutputDescription));
+        if (engine.getBugCount() + engine.getErrorCount() > 0) {
+            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+                String.format("SpotBugs reported %d bugs and %d errors",
+                    engine.getBugCount(), engine.getErrorCount()));
+        }
+
+        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
     }
 
     private static List<String> getClassesToScan(final Path classesDir) {
@@ -190,7 +196,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     }
 
     @SuppressWarnings("checkstyle:executablestatementcount")
-    private void executeSpotBugs(final Project project, final Path reportDir)
+    private FindBugs2 executeSpotBugs(final Project project, final Path reportDir)
         throws IOException, InterruptedException {
 
         final SecurityManager currentSecurityManager = System.getSecurityManager();
@@ -223,11 +229,7 @@ public class SpotBugsTask extends AbstractModuleTask {
 
             engine.execute();
 
-            if (engine.getBugCount() + engine.getErrorCount() > 0) {
-                throw new IllegalStateException(String.format(
-                    "SpotBugs reported %d bugs and %d errors",
-                    engine.getBugCount(), engine.getErrorCount()));
-            }
+            return engine;
         } finally {
             bugReporter.finish();
             System.setSecurityManager(currentSecurityManager);

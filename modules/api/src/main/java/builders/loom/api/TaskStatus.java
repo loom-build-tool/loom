@@ -20,6 +20,7 @@ public enum TaskStatus {
 
     OK,
     UP_TO_DATE,
-    EMPTY
+    EMPTY,
+    FAIL
 
 }

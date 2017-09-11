@@ -58,7 +58,7 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
                 projectBaseDir, IdeaUtil.ideaModuleName(projectBaseDir)));
         }
 
-        return completeEmpty();
+        return TaskResult.empty();
     }
 
     private Set<Module> listAllModules() {

@@ -21,7 +21,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
+import java.util.List;
 
 import javax.tools.ToolProvider;
 
@@ -41,6 +41,7 @@ import builders.loom.core.LoomProcessor;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.Version;
+import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 
 @SuppressWarnings({"checkstyle:hideutilityclassconstructor",
@@ -255,17 +256,21 @@ public final class Loom {
 
             progressMonitor.start();
 
-            final Optional<ExecutionReport> optExecutionReport;
-            try {
-                optExecutionReport = loomProcessor.execute(cmd.getArgList());
-            } finally {
-                progressMonitor.stop();
-            }
+            final List<ConfiguredTask> configuredTasks =
+                loomProcessor.resolveTasks(cmd.getArgList());
 
-            if (optExecutionReport.isPresent()) {
-                final ExecutionReport executionReport = optExecutionReport.get();
-                new ProductReportPrinter(loomProcessor.getModuleRunner()).print(executionReport);
-                new ExecutionReportPrinter().print(executionReport);
+            if (!configuredTasks.isEmpty()) {
+                final ExecutionReport executionReport;
+                try {
+                    executionReport = loomProcessor.execute(configuredTasks);
+                } finally {
+                    progressMonitor.stop();
+
+                    new ProductReportPrinter(loomProcessor.getModuleRunner())
+                        .print(configuredTasks);
+                }
+
+                new ExecutionReportPrinter().print(executionReport.getDurations());
             }
         }
 

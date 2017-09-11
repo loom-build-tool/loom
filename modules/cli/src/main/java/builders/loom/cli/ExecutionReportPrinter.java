@@ -22,15 +22,12 @@ import java.util.Map;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
-import builders.loom.core.ExecutionReport;
 import builders.loom.core.ExecutionStatus;
 import builders.loom.core.plugin.TaskType;
 
 final class ExecutionReportPrinter {
 
-    void print(final ExecutionReport executionReport) {
-        final Map<String, ExecutionStatus> durations = executionReport.getDurations();
-
+    void print(final Map<String, ExecutionStatus> durations) {
         final int longestKey = durations.keySet().stream()
             .mapToInt(String::length)
             .max()

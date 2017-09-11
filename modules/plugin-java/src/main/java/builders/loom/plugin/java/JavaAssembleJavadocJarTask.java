@@ -34,7 +34,7 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             useProduct("javadoc", DirectoryProduct.class);
 
         if (!resourcesTreeProduct.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path jarFile = Files
@@ -45,7 +45,7 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             JavaFileUtil.copy(resourcesTreeProduct.get().getDir(), os);
         }
 
-        return completeOk(new AssemblyProduct(jarFile, "Jar of Javadoc"));
+        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of Javadoc"));
     }
 
 }

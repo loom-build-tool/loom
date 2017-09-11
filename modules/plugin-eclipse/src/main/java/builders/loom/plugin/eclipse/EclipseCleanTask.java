@@ -50,7 +50,7 @@ public class EclipseCleanTask extends AbstractTask implements ModuleGraphAware {
             removeDir(module.getPath().resolve(".settings"));
         }
 
-        return completeEmpty();
+        return TaskResult.empty();
     }
 
     private Set<Module> listAllModules() {

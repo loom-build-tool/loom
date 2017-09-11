@@ -38,7 +38,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             "resources", ResourcesTreeProduct.class);
 
         if (!sourceTree.isPresent() && !resourcesTreeProduct.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path sourceJarFile = Files
@@ -55,7 +55,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             }
         }
 
-        return completeOk(new AssemblyProduct(sourceJarFile, "Jar of sources"));
+        return TaskResult.ok(new AssemblyProduct(sourceJarFile, "Jar of sources"));
     }
 
 }

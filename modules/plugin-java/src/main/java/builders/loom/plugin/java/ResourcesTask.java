@@ -64,7 +64,7 @@ public class ResourcesTask extends AbstractModuleTask {
             useProduct(resourcesProductId, ResourcesTreeProduct.class);
 
         if (!resourcesProduct.isPresent()) {
-            return completeEmpty();
+            return TaskResult.empty();
         }
 
         final Path buildDir =
@@ -81,7 +81,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
         cache.saveCache();
 
-        return completeOk(new ProcessedResourceProduct(buildDir));
+        return TaskResult.ok(new ProcessedResourceProduct(buildDir));
     }
 
     private KeyValueCache initCache() {

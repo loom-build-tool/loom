@@ -24,6 +24,10 @@ public class SpotBugsPluginSettings implements PluginSettings {
     private String effort = "default";
     private String reportLevel = "NORMAL";
     private String reporter = "html";
+    private boolean excludeTests;
+    private String includeFilterFiles;
+    private String excludeFilterFiles;
+    private String excludeBugsFiles;
 
     public String getCustomPlugins() {
         return customPlugins;
@@ -55,6 +59,30 @@ public class SpotBugsPluginSettings implements PluginSettings {
 
     public void setReporter(final String reporter) {
         this.reporter = reporter;
+    }
+
+    public boolean isExcludeTests() {
+        return excludeTests;
+    }
+
+    public void setExcludeTests(final boolean excludeTests) {
+        this.excludeTests = excludeTests;
+    }
+
+    public String getIncludeFilterFiles() {
+        return includeFilterFiles;
+    }
+
+    public void setIncludeFilterFiles(final String includeFilterFiles) {
+        this.includeFilterFiles = includeFilterFiles;
+    }
+
+    public String getExcludeFilterFiles() {
+        return excludeFilterFiles;
+    }
+
+    public void setExcludeFilterFiles(final String excludeFilterFiles) {
+        this.excludeFilterFiles = excludeFilterFiles;
     }
 
 }

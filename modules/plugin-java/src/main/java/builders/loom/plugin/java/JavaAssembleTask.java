@@ -16,14 +16,17 @@
 
 package builders.loom.plugin.java;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.spi.ToolProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.util.TempFile;
 
 public class JavaAssembleTask extends AbstractModuleTask {
 
@@ -46,6 +50,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
     }
 
+    @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
     public TaskResult run() throws Exception {
         final Optional<CompilationProduct> compilationProduct = useProduct(
@@ -62,42 +67,58 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("jar"))
             .resolve(String.format("%s.jar", getBuildContext().getModuleName()));
 
-        final Optional<Path> modulesInfoClassFileOpt = compilationProduct
-            .map(CompilationProduct::getClassesDir)
-            .map(c -> c.resolve(LoomPaths.MODULE_INFO_CLASS))
-            .filter(c -> Files.exists(c));
+        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
+            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
 
-        final String automaticModuleName = modulesInfoClassFileOpt.isPresent() ? null
-            : buildAutomaticModuleName();
+        final List<String> args = new ArrayList<>(List.of("-c", "-f", jarFile.toString()));
 
-        try (final JarOutputStream os = buildJarOutput(jarFile, automaticModuleName)) {
-            // compilation & module-info.class first !
-            if (compilationProduct.isPresent()) {
-                final Path classesDir = compilationProduct.get().getClassesDir();
+        if (pluginSettings.getMainClassName() != null) {
+            args.addAll(List.of("-e", pluginSettings.getMainClassName()));
+        }
 
-                if (modulesInfoClassFileOpt.isPresent()) {
-                    final Path modulesInfoClassFile = modulesInfoClassFileOpt.get();
-                    final JarEntry entry =
-                        new JarEntry(classesDir.relativize(modulesInfoClassFile).toString());
-                    entry.setTime(Files.getLastModifiedTime(modulesInfoClassFile).toMillis());
-                    os.putNextEntry(entry);
-                    os.write(extendedModuleInfoClass(modulesInfoClassFile));
-                    os.closeEntry();
-                }
+        Optional.ofNullable(getRuntimeConfiguration().getVersion()).ifPresent(v ->
+            args.addAll(List.of("--module-version", v)));
 
-                // module-info.class is skipped by this method:
-                JavaFileUtil.copy(classesDir, os);
-            }
+        final int result;
 
-            if (resourcesTreeProduct.isPresent()) {
-                JavaFileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
-            }
+        final String automaticModuleName =
+            buildAutomaticModuleName(compilationProduct.orElse(null));
+        final Manifest manifest = prepareManifest(automaticModuleName);
+
+        final Path tmpDir = Files.createDirectories(LoomPaths.tmpDir(getBuildContext().getPath()));
+        try (TempFile metaInfTmpFile = new TempFile(tmpDir, "meta-inf", null)) {
+            writeMetaInfFile(manifest, metaInfTmpFile.getFile());
+
+            args.addAll(List.of("-m", metaInfTmpFile.getFile().toString()));
+
+            compilationProduct.ifPresent(p ->
+                args.addAll(List.of("-C", p.getClassesDir().toString(), ".")));
+
+            resourcesTreeProduct.ifPresent(p ->
+                args.addAll(List.of("-C", p.getSrcDir().toString(), ".")));
+
+            LOG.debug("Run JarToolProvider with args: {}", args);
+            result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
+        }
+
+        if (result != 0) {
+            throw new IllegalStateException("Building jar file failed");
         }
 
         return completeOk(new AssemblyProduct(jarFile, "Jar of compiled classes"));
     }
 
-    private String buildAutomaticModuleName() {
+    private String buildAutomaticModuleName(final CompilationProduct compilationProduct) {
+        if (compilationProduct != null) {
+            final Path moduleInfo = compilationProduct.getClassesDir()
+                .resolve(LoomPaths.MODULE_INFO_CLASS);
+
+            if (Files.exists(moduleInfo)) {
+                // Automatic-Module-Name not required -- got module-info.class
+                return null;
+            }
+        }
+
         if (!Module.UNNAMED_MODULE.equals(getBuildContext().getModuleName())) {
             // Use configured module name
             return getBuildContext().getModuleName();
@@ -108,24 +129,6 @@ public class JavaAssembleTask extends AbstractModuleTask {
             + "module name by either adding a module-info.java, using the module/ "
             + "directory structure or add moduleName to module.yml");
         return null;
-    }
-
-    private byte[] extendedModuleInfoClass(final Path modulesInfoClassFile) throws IOException {
-        final byte[] data = Files.readAllBytes(modulesInfoClassFile);
-
-        if (pluginSettings.getMainClassName() == null) {
-            return data;
-        }
-
-        return ModuleInfoExtender.extend(data, pluginSettings.getMainClassName());
-    }
-
-    private JarOutputStream buildJarOutput(final Path jarFile, final String automaticModuleName)
-        throws IOException {
-
-        // TODO this creates META-INF/MANIFEST.MF but no META-INF directory?!
-        return new JarOutputStream(Files.newOutputStream(jarFile),
-            prepareManifest(automaticModuleName));
     }
 
     private Manifest prepareManifest(final String automaticModuleName) {
@@ -139,13 +142,18 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .put("Build-Jdk", String.format("%s (%s)", System.getProperty("java.version"),
                 System.getProperty("java.vendor")));
 
-        Optional.ofNullable(pluginSettings.getMainClassName())
-            .ifPresent(s -> manifestBuilder.put(Attributes.Name.MAIN_CLASS, s));
-
         Optional.ofNullable(automaticModuleName)
             .ifPresent(s -> manifestBuilder.put("Automatic-Module-Name", s));
 
         return newManifest;
+    }
+
+    private static void writeMetaInfFile(final Manifest manifest, final Path file)
+        throws IOException {
+
+        try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
+            manifest.write(os);
+        }
     }
 
 }

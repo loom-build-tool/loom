@@ -66,14 +66,19 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
         if (sourceBasePath == null) {
             sourceBasePath = dir;
-        } else {
-            final Path destPath = targetBasePath.resolve(sourceBasePath.relativize(dir));
-            if (Files.exists(destPath) && !Files.isDirectory(destPath)) {
-                Files.delete(destPath);
+            return FileVisitResult.CONTINUE;
+        }
+
+        final Path destPath = targetBasePath.resolve(sourceBasePath.relativize(dir));
+        if (Files.exists(destPath)) {
+            if (Files.isDirectory(destPath)) {
+                return FileVisitResult.CONTINUE;
             }
 
-            Files.createDirectory(destPath);
+            Files.delete(destPath);
         }
+
+        Files.createDirectory(destPath);
 
         return FileVisitResult.CONTINUE;
     }

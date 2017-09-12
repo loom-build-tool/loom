@@ -31,6 +31,9 @@ public interface Plugin {
 
     void setTaskRegistry(TaskRegistry taskRegistry);
 
+    default void setModuleBuildConfig(final ModuleBuildConfig config) {
+    }
+
     default PluginSettings getPluginSettings() {
         return null;
     }

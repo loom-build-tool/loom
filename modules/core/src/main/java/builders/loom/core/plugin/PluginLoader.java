@@ -34,6 +34,7 @@ import builders.loom.api.BuildConfig;
 import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.LoomPaths;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
 import builders.loom.api.ServiceRegistry;
@@ -89,6 +90,9 @@ public class PluginLoader {
 
         plugin.setName(pluginName);
         plugin.setTaskRegistry(taskRegistry);
+        if (config instanceof ModuleBuildConfig) {
+            plugin.setModuleBuildConfig((ModuleBuildConfig) config);
+        }
         plugin.setServiceRegistry(serviceRegistry);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())

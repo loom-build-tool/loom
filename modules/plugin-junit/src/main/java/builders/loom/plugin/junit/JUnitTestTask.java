@@ -71,6 +71,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
 
         final Path classesDir = testCompilation.get().getClassesDir();
         final List<URL> junitClassPath = buildJunitClassPath();
+
+        LOG.debug("Test with classpath: {}", junitClassPath);
+
         final Path reportDir = FileUtil.createOrCleanDirectory(resolveReportDir("test"));
 
         final TestResult result = runTests(classesDir, junitClassPath, reportDir);
@@ -156,6 +159,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             final Object wrapper = wrapperClass.getConstructor().newInstance();
             final Method wrapperRun = wrapperClass.getMethod("run",
                 ClassLoader.class, Path.class, Path.class, ProgressListenerDelegate.class);
+
+            Thread.currentThread().setContextClassLoader(junitUrlClassLoader);
+
 
             return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
                 reportDir, new ProgressListenerDelegate(testProgressEmitter));

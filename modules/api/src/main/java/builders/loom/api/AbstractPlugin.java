@@ -28,9 +28,10 @@ import java.util.function.Supplier;
 @SuppressWarnings({"checkstyle:visibilitymodifier", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"})
 public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin {
 
+    private final S pluginSettings;
     private String pluginName;
     private TaskRegistry taskRegistry;
-    private final S pluginSettings;
+    private ModuleBuildConfig moduleBuildConfig;
     private ServiceRegistry serviceRegistry;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
@@ -45,6 +46,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     }
 
     @Override
+    public S getPluginSettings() {
+        return pluginSettings;
+    }
+
+    @Override
     public void setName(final String name) {
         this.pluginName = name;
     }
@@ -54,9 +60,13 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         this.taskRegistry = taskRegistry;
     }
 
+    public ModuleBuildConfig getModuleBuildConfig() {
+        return moduleBuildConfig;
+    }
+
     @Override
-    public S getPluginSettings() {
-        return pluginSettings;
+    public void setModuleBuildConfig(final ModuleBuildConfig moduleBuildConfig) {
+        this.moduleBuildConfig = moduleBuildConfig;
     }
 
     public ServiceRegistry getServiceRegistry() {

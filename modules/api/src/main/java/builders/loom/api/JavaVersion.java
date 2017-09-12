@@ -40,6 +40,10 @@ public enum JavaVersion {
         return stringVersion;
     }
 
+    public boolean isNewerThan(final JavaVersion version) {
+        return numericVersion > version.getNumericVersion();
+    }
+
     @SuppressWarnings("checkstyle:returncount")
     public static JavaVersion ofVersion(final String versionStr) {
         switch (versionStr) {

@@ -121,6 +121,11 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             .map(ClasspathProduct::getEntriesAsUrls)
             .ifPresent(urls::addAll);
 
+        for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
+            useProduct(moduleName, "compilation", CompilationProduct.class)
+                .ifPresent(product -> urls.add(ClassLoaderUtil.toUrl(product.getClassesDir())));
+        }
+
         resolveJUnitPlatformLauncher().stream()
             .map(ClassLoaderUtil::toUrl)
             .forEach(urls::add);

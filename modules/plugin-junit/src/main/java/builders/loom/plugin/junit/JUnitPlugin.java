@@ -28,6 +28,7 @@ public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
             .provides("junitReport")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")
+            .importFromModules("compilation")
             .desc("Executes tests with JUnit 5 and creates test report.")
             .register();
 

@@ -145,7 +145,7 @@ public class MavenResolver implements DependencyResolver {
         } catch (final DependencyCollectionException | DependencyResolutionException e) {
             throw new IllegalStateException(
                 String.format("Unresolvable dependencies for scope <%s>: %s",
-                    scope, e.getMessage()));
+                    scope, e.getMessage()), e);
         }
     }
 

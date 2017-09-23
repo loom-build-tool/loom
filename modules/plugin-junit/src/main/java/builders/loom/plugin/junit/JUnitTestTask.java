@@ -165,9 +165,6 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             final Method wrapperRun = wrapperClass.getMethod("run",
                 ClassLoader.class, Path.class, Path.class, ProgressListenerDelegate.class);
 
-            Thread.currentThread().setContextClassLoader(junitUrlClassLoader);
-
-
             return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
                 reportDir, new ProgressListenerDelegate(testProgressEmitter));
         }

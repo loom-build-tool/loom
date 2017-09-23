@@ -25,21 +25,29 @@ public final class SourceTreeProduct extends AbstractProduct {
 
     private final Path srcDir;
     private final List<Path> srcFiles;
+	private final String checksum;
 
-    public SourceTreeProduct(final Path srcDir, final List<Path> srcFiles) {
+    public SourceTreeProduct(final Path srcDir, final List<Path> srcFiles, final String checksum) {
         this.srcDir = Objects.requireNonNull(srcDir, "srcDir must not be null");
         if (srcFiles == null || srcFiles.isEmpty()) {
             throw new IllegalArgumentException("srcFiles must not be null or empty");
         }
         this.srcFiles = Collections.unmodifiableList(srcFiles);
+        this.checksum = checksum;
     }
 
-    public Path getSrcDir() {
+
+	public Path getSrcDir() {
         return srcDir;
     }
 
     public List<Path> getSrcFiles() {
         return srcFiles;
+    }
+    
+    @Override
+    public String checksum() {
+    		return checksum;
     }
 
     @Override

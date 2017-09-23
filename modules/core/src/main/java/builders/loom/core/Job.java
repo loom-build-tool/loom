@@ -16,6 +16,14 @@
 
 package builders.loom.core;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.BuildContext;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
+import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleBuildConfigAware;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
@@ -43,7 +53,10 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.UsedProducts;
+import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
+import builders.loom.util.Hasher;
+import builders.loom.util.Iterables;
 
 public class Job implements Callable<TaskStatus> {
 
@@ -112,7 +125,17 @@ public class Job implements Callable<TaskStatus> {
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
-
+        
+        final String signature = calcSignature();
+        
+        if (canSkipTask(signature)) {
+        		// TODO
+        	productPromise.complete(TaskResult.up2date(null));
+        		return TaskStatus.UP_TO_DATE;
+        }
+        
+        clearProductChecksums();
+        
         final TaskResult taskResult = task.run();
 
         LOG.info("Task resulted with {}", taskResult);
@@ -128,17 +151,120 @@ public class Job implements Callable<TaskStatus> {
                 + "status: " + taskResult.getStatus());
         }
 
+        commitProductChecksum(taskResult);
+        commitSignature(signature);
+        
+        // note on fail status: product may contain details about the failure (reports)
         productPromise.complete(taskResult);
 
         if (taskResult.getStatus() == TaskStatus.FAIL) {
             throw new IllegalStateException("Task <" + name + "> resulted in failure: "
                 + taskResult.getErrorReason());
         }
-
+        
         return taskResult.getStatus();
     }
 
-    private void injectTaskProperties(final Task task) {
+    private void commitSignature(final String signature) {
+    		final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
+    		
+    		try {
+			Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW);
+		} catch (final IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		
+	}
+
+	private boolean canSkipTask(final String signature) {
+    		final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
+    		if (Files.notExists(checksumFile)) {
+    			return false;
+    		}
+    		
+		try {
+			final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
+			return signatureLastRun.equals(signature);
+		} catch (final IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    		
+	}
+
+	private String calcSignature() throws InterruptedException {
+    		final UsedProducts productView = buildProductView();
+    		
+    		final List<String> checksumParts = new ArrayList<>();
+    		
+		for (final ProductPromise productPromise : productView.getAllProducts()) {
+			final String productId = productPromise.getProductId();
+			final String moduleName = productPromise.getModuleName();
+			LOG.info("!!!! {} - {} (from {})", moduleName, productId, name); // FIXME
+			final Optional<Product> product = productView.readProduct(moduleName, productId, Product.class);
+			if (product.isPresent()) {
+				checksumParts.add(moduleName+"-"+productId+":"+product.get().checksum());
+			} else {
+				checksumParts.add(moduleName+"-"+productId+":EMPTY");
+			}
+		}
+		
+		checksumParts.addAll(configuredTask.getSkipHints());
+		
+		
+		// TODO
+		// config ?
+		// config files (e.g. checkstyle.xml)
+		// setup: (e.g. jdk version)
+		// ENV
+		// systemproperties
+    		
+		// TODO Auto-generated method stub
+		return Hasher.hash(checksumParts);
+	}
+
+	private void clearProductChecksums() {
+    		try {
+			Files.deleteIfExists(buildChecksumFileName(".out"));
+			Files.deleteIfExists(buildChecksumFileName(".sig"));
+		} catch (final IOException e) {
+			throw new UncheckedIOException(e);
+		}
+    }
+    
+    private void commitProductChecksum(final TaskResult taskResult) {
+    	
+	    	try {
+	    		
+			final Path checksumFile = buildChecksumFileName(".out");
+			System.out.println("checksumFile="+checksumFile);
+			
+			Files.createDirectories(checksumFile.getParent());
+		
+			if (taskResult.getStatus() == TaskStatus.EMPTY) {
+					/**
+					 * .loom/JavaPlugin/processedTestResources.checksum
+					 */
+								
+				Files.write(checksumFile, List.of("foo"), StandardOpenOption.CREATE_NEW);
+	    			
+	    		} else {
+	    			final String checksum = taskResult.getProduct().checksum();
+	    			Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
+	    		}
+	    	} catch(final IOException ioe) {
+	    		throw new UncheckedIOException(ioe);
+	    	}
+			
+	}
+
+	private Path buildChecksumFileName(final String suffix) {
+		final Path checksumFile = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+				.resolve(Paths.get(Version.getVersion(), "checksums", configuredTask.getBuildContext().getModuleName(),
+						configuredTask.getProvidedProduct() + suffix));
+		return checksumFile;
+	}
+
+	private void injectTaskProperties(final Task task) {
         task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
@@ -167,15 +293,23 @@ public class Job implements Callable<TaskStatus> {
             configuredTask.getUsedProducts().stream()
                 .map(moduleProductRepositories.get(buildContext)::lookup);
 
-
-        final Stream<ProductPromise> importedProductPromises = modules.stream()
-            .flatMap(m -> m.getConfig().getModuleCompileDependencies().stream())
-            .flatMap(moduleName -> configuredTask.getImportedProducts().stream()
-                .map(p -> buildModuleProduct(moduleName, p)));
-
+        // TODO we may check, if current module can be references in moduleDependencies
+        final Stream<ProductPromise> importedProductPromises;
+        if (buildContext instanceof Module) {
+        		final ModuleBuildConfig moduleBuildConfig = ((Module) buildContext).getConfig();
+        		importedProductPromises =
+        		moduleBuildConfig.getModuleCompileDependencies().stream()
+        		.flatMap(moduleName -> configuredTask.getImportedProducts().stream()
+                        .map(p -> buildModuleProduct(moduleName, p)))
+                    	.peek(p -> { if (p.getModuleName().endsWith("api")) LOG.info("????a "+p.getModuleName()+"-"+p.getProductId()); });
+        } else {
+        	importedProductPromises = Stream.empty();
+        }
         final Stream<ProductPromise> importedAllProductPromises = modules.stream()
+        		.filter(m -> !buildContext.getModuleName().equals(m.getModuleName()))
             .flatMap(bc -> configuredTask.getImportedAllProducts().stream()
-                .map(p -> buildModuleProduct(bc.getModuleName(), p)));
+                .map(p -> buildModuleProduct(bc.getModuleName(), p)))
+            .peek(p -> { if (p.getModuleName().endsWith("api")) LOG.info("????b "+p.getModuleName()+"-"+p.getProductId()); });
 
         final Set<ProductPromise> productPromises =
             Stream.concat(
@@ -184,7 +318,7 @@ public class Job implements Callable<TaskStatus> {
                     importedAllProductPromises,
                     importedProductPromises))
                 .collect(Collectors.toSet());
-
+        
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 

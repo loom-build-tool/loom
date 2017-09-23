@@ -88,6 +88,10 @@ public class UsedProducts {
                         productId, moduleName)));
 
     }
+    
+    public Set<ProductPromise> getAllProducts() {
+    		return Collections.unmodifiableSet(productPromises);
+    }
 
     /**
      * Value is only useful after tasks have been running.

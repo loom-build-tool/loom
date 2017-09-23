@@ -48,7 +48,9 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
                              final Supplier<Task> taskSupplier, final String providedProduct,
                              final boolean intermediateProduct, final Set<String> usedProducts,
                              final Set<String> importedProducts,
-                             final Set<String> importedAllProducts, final String description) {
+                             final Set<String> importedAllProducts,
+                             final List<String> skipHints,
+                             final String description) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");
         Objects.requireNonNull(taskSupplier, "taskSupplier missing on task <" + taskName + ">");
@@ -79,6 +81,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
         final TaskType type = intermediateProduct ? TaskType.INTERMEDIATE : TaskType.STANDARD;
         if (taskMap.putIfAbsent(taskName, new ConfiguredTask(buildContext, taskName, pluginName,
             taskSupplier, providedProduct, usedProducts, importedProducts, importedAllProducts,
+            skipHints,
             description, type)) != null) {
 
             throw new IllegalStateException("Task with name " + taskName + " already registered.");
@@ -104,7 +107,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
                 : new ConfiguredTask(
                     buildContext, name, pluginName, () -> new GoalTask(usedProducts),
                 goalName, usedProducts,
-                Collections.emptySet(), Collections.emptySet(), null,
+                Collections.emptySet(), Collections.emptySet(), Collections.emptyList(), null,
                 TaskType.GOAL);
 
         taskMap.compute(goalName, fn);

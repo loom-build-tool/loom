@@ -20,6 +20,7 @@ import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
+import builders.loom.util.SkipChecksumUtils;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
@@ -76,9 +77,11 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("compilation")
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
+            // TODO ? use lambdas
+            .skipHints(SkipChecksumUtils.jvmVersion(), getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
             .desc("Compiles main sources.")
             .register();
-
+        
         task("compileTestJava")
             .impl(() -> new JavaCompileTask(CompileTarget.TEST))
             .provides("testCompilation")

@@ -17,12 +17,18 @@
 package builders.loom.api.product;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public abstract class AbstractProduct implements Product {
 
     @Override
     public Optional<String> outputInfo() {
         return Optional.empty();
+    }
+    
+    @Override
+    public String checksum() {
+    		return UUID.randomUUID()+"NOOOO"; // FIXME
     }
 
 }

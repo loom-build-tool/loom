@@ -29,6 +29,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
@@ -58,7 +59,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
         validateFiles(srcFiles);
 
-        return TaskResult.ok(new SourceTreeProduct(srcDir, srcFiles));
+        return TaskResult.ok(new SourceTreeProduct(srcDir, srcFiles, ProductChecksumUtil.calcChecksum(srcFiles)));
     }
 
     private List<Path> findSources(final Path srcDir) throws IOException {

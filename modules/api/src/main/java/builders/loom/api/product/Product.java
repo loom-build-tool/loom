@@ -25,4 +25,6 @@ public interface Product {
      */
     Optional<String> outputInfo();
 
+    String checksum();
+    
 }

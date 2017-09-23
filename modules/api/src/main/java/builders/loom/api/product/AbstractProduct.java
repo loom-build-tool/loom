@@ -25,10 +25,10 @@ public abstract class AbstractProduct implements Product {
     public Optional<String> outputInfo() {
         return Optional.empty();
     }
-    
+
     @Override
     public String checksum() {
-    		return UUID.randomUUID()+"NOOOO"; // FIXME
+        return UUID.randomUUID().toString();
     }
 
 }

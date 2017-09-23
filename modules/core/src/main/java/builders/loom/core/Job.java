@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -126,16 +127,24 @@ public class Job implements Callable<TaskStatus> {
         injectTaskProperties(task);
 
         final String signature = calcSignature();
+        LOG.info("Calculated signature is {}", signature);
 
         if (canSkipTask(signature)) {
-        		// TODO
-        	productPromise.complete(TaskResult.up2date(null));
-        		return TaskStatus.UP_TO_DATE;
+            final TaskResult taskResult = task.run(true);
+
+            LOG.info("Task (skipped) resulted with {}", taskResult);
+
+            // FIXME check result
+
+            // note on fail status: product may contain details about the failure (reports)
+            productPromise.complete(taskResult);
+
+            return taskResult.getStatus();
         }
 
         clearProductChecksums();
 
-        final TaskResult taskResult = task.run();
+        final TaskResult taskResult = task.run(false);
 
         LOG.info("Task resulted with {}", taskResult);
 
@@ -183,7 +192,10 @@ public class Job implements Callable<TaskStatus> {
 
 		try {
 			final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
-			return signatureLastRun.equals(signature);
+
+            final boolean equals = signatureLastRun.equals(signature);
+            LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
+            return equals;
 		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -195,7 +207,14 @@ public class Job implements Callable<TaskStatus> {
 
     		final List<String> checksumParts = new ArrayList<>();
 
-		for (final ProductPromise productPromise : productView.getAllProducts()) {
+        // guarantee stable order
+        final List<ProductPromise> orderedProductPromises = productView.getAllProducts().stream()
+            .sorted(Comparator
+                .comparing(ProductPromise::getModuleName)
+                .thenComparing(ProductPromise::getProductId))
+            .collect(Collectors.toList());
+
+        for (final ProductPromise productPromise : orderedProductPromises) {
 			final String productId = productPromise.getProductId();
 			final String moduleName = productPromise.getModuleName();
 			LOG.info("!!!! {} - {} (from {})", moduleName, productId, name); // FIXME

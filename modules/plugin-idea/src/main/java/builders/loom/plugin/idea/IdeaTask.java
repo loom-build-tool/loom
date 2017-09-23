@@ -49,7 +49,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
         final Path ideaDirectory = Files.createDirectories(projectBaseDir.resolve(".idea"));
 

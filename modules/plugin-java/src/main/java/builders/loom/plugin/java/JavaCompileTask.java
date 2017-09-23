@@ -46,6 +46,7 @@ import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaCompileTask extends AbstractModuleTask {
 
@@ -70,11 +71,15 @@ public class JavaCompileTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
+        final Path buildDir = resolveBuildDir();
+
+        if (skip) {
+            return TaskResult.up2date(new CompilationProduct(buildDir, ProductChecksumUtil.calcChecksum(buildDir)));
+        }
+
         final Optional<SourceTreeProduct> sourceTreeProduct =
             useProduct(sourceProductId, SourceTreeProduct.class);
-
-        final Path buildDir = resolveBuildDir();
 
         if (!sourceTreeProduct.isPresent()) {
             FileUtil.deleteDirectoryRecursively(buildDir, true);
@@ -108,7 +113,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         compile(buildDir, classpath, srcFiles);
 
-        return TaskResult.ok(new CompilationProduct(buildDir));
+        return TaskResult.ok(new CompilationProduct(buildDir, ProductChecksumUtil.calcChecksum(buildDir)));
     }
 
     private Path resolveBuildDir() {

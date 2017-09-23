@@ -27,6 +27,6 @@ public interface Task {
     default void setBuildContext(final BuildContext buildContext) {
     }
 
-    TaskResult run() throws Exception;
+    TaskResult run(boolean skip) throws Exception;
 
 }

@@ -25,6 +25,7 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.ClasspathProduct;
+import builders.loom.util.ProductChecksumUtil;
 
 public class DependencyResolverTask extends ArtifactResolverTask {
 
@@ -34,7 +35,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final List<String> dependencies = listDependencies();
 
         if (dependencies.isEmpty()) {
@@ -45,7 +46,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
             .map(ArtifactProduct::getMainArtifact)
             .collect(Collectors.toList());
 
-        return TaskResult.ok(new ClasspathProduct(artifacts));
+        return TaskResult.ok(new ClasspathProduct(artifacts, ProductChecksumUtil.calcChecksum(artifacts)));
     }
 
 }

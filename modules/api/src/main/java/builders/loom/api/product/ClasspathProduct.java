@@ -30,12 +30,14 @@ import java.util.stream.Collectors;
 public final class ClasspathProduct extends AbstractProduct {
 
     private final List<Path> entries;
+    private final String checksum;
 
-    public ClasspathProduct(final List<Path> entries) {
+    public ClasspathProduct(final List<Path> entries, final String checksum) {
         if (entries == null) {
             throw new IllegalArgumentException("entries must not be null");
         }
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
+        this.checksum = checksum;
     }
 
     public List<Path> getEntries() {
@@ -65,9 +67,15 @@ public final class ClasspathProduct extends AbstractProduct {
     }
 
     @Override
+    public String checksum() {
+        return checksum;
+    }
+
+    @Override
     public String toString() {
         return "ClasspathProduct{"
             + "entries=" + entries
+            + "checksum=" + checksum
             + '}';
     }
 

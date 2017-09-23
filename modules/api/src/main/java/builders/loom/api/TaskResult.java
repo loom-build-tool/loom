@@ -45,8 +45,8 @@ public final class TaskResult {
             Objects.requireNonNull(errorReason));
     }
 
-    public static TaskResult up2date(final Product product) { // FIXME
-        return new TaskResult(TaskStatus.UP_TO_DATE, null, null);
+    public static TaskResult up2date(final Product product) {
+        return new TaskResult(TaskStatus.UP_TO_DATE, Objects.requireNonNull(product), null);
     }
 
     public TaskStatus getStatus() {

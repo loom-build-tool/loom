@@ -30,7 +30,7 @@ import builders.loom.api.product.SourceTreeProduct;
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Optional<SourceTreeProduct> sourceTree = useProduct(
             "source", SourceTreeProduct.class);
 

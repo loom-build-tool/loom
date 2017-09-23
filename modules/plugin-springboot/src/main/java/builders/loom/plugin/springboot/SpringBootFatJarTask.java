@@ -27,7 +27,7 @@ import builders.loom.util.FileUtil;
 public class SpringBootFatJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final DirectoryProduct springBootApplication =
             requireProduct("springBootApplication", DirectoryProduct.class);
 

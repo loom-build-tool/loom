@@ -129,7 +129,7 @@ public class PmdTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Optional<SourceTreeProduct> sourceTreeProduct =
             useProduct(sourceProductId, SourceTreeProduct.class);
 

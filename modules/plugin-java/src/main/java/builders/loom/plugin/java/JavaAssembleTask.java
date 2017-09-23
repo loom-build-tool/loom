@@ -52,7 +52,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
 
     @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Optional<CompilationProduct> compilationProduct = useProduct(
             "compilation", CompilationProduct.class);
 

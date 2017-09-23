@@ -21,9 +21,11 @@ import java.nio.file.Path;
 public final class CompilationProduct extends AbstractProduct {
 
     private final Path classesDir;
+    private final String checksum;
 
-    public CompilationProduct(final Path classesDir) {
+    public CompilationProduct(final Path classesDir, final String checksum) {
         this.classesDir = classesDir;
+        this.checksum = checksum;
     }
 
     public Path getClassesDir() {
@@ -31,9 +33,15 @@ public final class CompilationProduct extends AbstractProduct {
     }
 
     @Override
+    public String checksum() {
+        return checksum;
+    }
+
+    @Override
     public String toString() {
         return "CompilationProduct{"
             + "classesDir=" + classesDir
+            + "checksum=" + checksum
             + '}';
     }
 

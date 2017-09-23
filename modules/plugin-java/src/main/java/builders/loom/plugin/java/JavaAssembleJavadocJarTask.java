@@ -29,7 +29,7 @@ import builders.loom.api.product.DirectoryProduct;
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Optional<DirectoryProduct> resourcesTreeProduct =
             useProduct("javadoc", DirectoryProduct.class);
 

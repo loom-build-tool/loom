@@ -64,7 +64,7 @@ public class SpringBootTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot"));
 
         final Path classesDir = Files.createDirectories(

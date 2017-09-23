@@ -48,7 +48,7 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
         final List<Path> srcFiles = findSources(srcDir);
 

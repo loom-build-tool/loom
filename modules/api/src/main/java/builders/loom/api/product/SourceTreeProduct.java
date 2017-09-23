@@ -44,10 +44,10 @@ public final class SourceTreeProduct extends AbstractProduct {
     public List<Path> getSrcFiles() {
         return srcFiles;
     }
-    
+
     @Override
     public String checksum() {
-    		return checksum;
+        return checksum;
     }
 
     @Override
@@ -55,6 +55,7 @@ public final class SourceTreeProduct extends AbstractProduct {
         return "SourceTreeProduct{"
             + "srcDir=" + srcDir
             + ", srcFiles=" + srcFiles
+            + ", checksum=" + checksum
             + '}';
     }
 

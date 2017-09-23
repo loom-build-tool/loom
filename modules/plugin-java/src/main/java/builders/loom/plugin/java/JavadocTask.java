@@ -46,7 +46,7 @@ public class JavadocTask extends AbstractModuleTask {
     private static final Logger LOG = LoggerFactory.getLogger(JavadocTask.class);
 
     @Override
-    public TaskResult run() throws Exception {
+    public TaskResult run(final boolean skip) throws Exception {
         final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
 
         if (!source.isPresent()) {

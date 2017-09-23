@@ -13,21 +13,25 @@ import java.util.stream.Stream;
 // FIXME
 public class ProductChecksumUtil {
 
-	public static String calcChecksum(final List<Path> srcFiles) {
-		final List<String> foo = srcFiles.stream().sorted(Comparator.comparing((final Path f) -> f.toString())).flatMap(f -> hash(f)).collect(Collectors.toList());
+    public static String calcChecksum(final Path path) {
+        return Hasher.hash(List.of(path.toString()));
+    }
 
-		System.out.println("allPaths=" + foo);
+    public static String calcChecksum(final List<Path> srcFiles) {
+        final List<String> foo = srcFiles.stream().sorted(Comparator.comparing((final Path f) -> f.toString())).flatMap(f -> hash(f)).collect(Collectors.toList());
 
-		return Hasher.hash(foo);
-	}
+        System.out.println("allPaths=" + foo);
 
-	private static Stream<String> hash(final Path f) {
-		try {
-			return Stream.of(f.toString(), Long.toString(Files.size(f)));
-		} catch (final IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
+        return Hasher.hash(foo);
+    }
+
+    private static Stream<String> hash(final Path f) {
+        try {
+            return Stream.of(f.toString(), Long.toString(Files.size(f)));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
 
 }

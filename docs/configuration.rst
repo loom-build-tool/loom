@@ -78,7 +78,7 @@ Example:
     compileDependencies:
       - com.google.guava:guava:21.0
     testDependencies:
-      - junit:junit:4.12
+      - org.junit.jupiter:junit-jupiter-engine:5.0.0
 
 
 

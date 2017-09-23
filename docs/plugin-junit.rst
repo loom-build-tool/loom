@@ -22,10 +22,10 @@ To execute Tests with JUnit 5 natively, this is your configuration:
 .. code-block:: yaml
    :caption: module.yml
 
-        plugins:
-          - junit
-        testDependencies:
-          - org.junit.jupiter:junit-jupiter-engine:5.0.0
+    plugins:
+      - junit
+    testDependencies:
+      - org.junit.jupiter:junit-jupiter-engine:5.0.0
 
 
 Legacy configuration

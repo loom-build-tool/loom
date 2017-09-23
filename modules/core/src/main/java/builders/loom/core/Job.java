@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +33,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.BuildContext;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
-import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleBuildConfigAware;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
@@ -125,17 +124,17 @@ public class Job implements Callable<TaskStatus> {
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
         final Task task = taskSupplier.get();
         injectTaskProperties(task);
-        
+
         final String signature = calcSignature();
-        
+
         if (canSkipTask(signature)) {
         		// TODO
         	productPromise.complete(TaskResult.up2date(null));
         		return TaskStatus.UP_TO_DATE;
         }
-        
+
         clearProductChecksums();
-        
+
         final TaskResult taskResult = task.run();
 
         LOG.info("Task resulted with {}", taskResult);
@@ -153,7 +152,7 @@ public class Job implements Callable<TaskStatus> {
 
         commitProductChecksum(taskResult);
         commitSignature(signature);
-        
+
         // note on fail status: product may contain details about the failure (reports)
         productPromise.complete(taskResult);
 
@@ -161,19 +160,19 @@ public class Job implements Callable<TaskStatus> {
             throw new IllegalStateException("Task <" + name + "> resulted in failure: "
                 + taskResult.getErrorReason());
         }
-        
+
         return taskResult.getStatus();
     }
 
     private void commitSignature(final String signature) {
     		final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
-    		
+
     		try {
 			Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW);
 		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		
+
 	}
 
 	private boolean canSkipTask(final String signature) {
@@ -181,21 +180,21 @@ public class Job implements Callable<TaskStatus> {
     		if (Files.notExists(checksumFile)) {
     			return false;
     		}
-    		
+
 		try {
 			final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
 			return signatureLastRun.equals(signature);
 		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
-    		
+
 	}
 
 	private String calcSignature() throws InterruptedException {
     		final UsedProducts productView = buildProductView();
-    		
+
     		final List<String> checksumParts = new ArrayList<>();
-    		
+
 		for (final ProductPromise productPromise : productView.getAllProducts()) {
 			final String productId = productPromise.getProductId();
 			final String moduleName = productPromise.getModuleName();
@@ -207,17 +206,17 @@ public class Job implements Callable<TaskStatus> {
 				checksumParts.add(moduleName+"-"+productId+":EMPTY");
 			}
 		}
-		
+
 		checksumParts.addAll(configuredTask.getSkipHints());
-		
-		
+
+
 		// TODO
 		// config ?
 		// config files (e.g. checkstyle.xml)
 		// setup: (e.g. jdk version)
 		// ENV
 		// systemproperties
-    		
+
 		// TODO Auto-generated method stub
 		return Hasher.hash(checksumParts);
 	}
@@ -230,23 +229,23 @@ public class Job implements Callable<TaskStatus> {
 			throw new UncheckedIOException(e);
 		}
     }
-    
+
     private void commitProductChecksum(final TaskResult taskResult) {
-    	
+
 	    	try {
-	    		
+
 			final Path checksumFile = buildChecksumFileName(".out");
 			System.out.println("checksumFile="+checksumFile);
-			
+
 			Files.createDirectories(checksumFile.getParent());
-		
+
 			if (taskResult.getStatus() == TaskStatus.EMPTY) {
 					/**
 					 * .loom/JavaPlugin/processedTestResources.checksum
 					 */
-								
+
 				Files.write(checksumFile, List.of("foo"), StandardOpenOption.CREATE_NEW);
-	    			
+
 	    		} else {
 	    			final String checksum = taskResult.getProduct().checksum();
 	    			Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
@@ -254,7 +253,7 @@ public class Job implements Callable<TaskStatus> {
 	    	} catch(final IOException ioe) {
 	    		throw new UncheckedIOException(ioe);
 	    	}
-			
+
 	}
 
 	private Path buildChecksumFileName(final String suffix) {
@@ -288,37 +287,33 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private UsedProducts buildProductView() {
+        final Set<ProductPromise> productPromises = new HashSet<>();
 
-        final Stream<ProductPromise> usedProductsPromises =
-            configuredTask.getUsedProducts().stream()
-                .map(moduleProductRepositories.get(buildContext)::lookup);
+        // inner module dependencies
+        configuredTask.getUsedProducts().stream()
+            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .forEach(productPromises::add);
 
-        // TODO we may check, if current module can be references in moduleDependencies
-        final Stream<ProductPromise> importedProductPromises;
-        if (buildContext instanceof Module) {
-        		final ModuleBuildConfig moduleBuildConfig = ((Module) buildContext).getConfig();
-        		importedProductPromises =
-        		moduleBuildConfig.getModuleCompileDependencies().stream()
-        		.flatMap(moduleName -> configuredTask.getImportedProducts().stream()
-                        .map(p -> buildModuleProduct(moduleName, p)))
-                    	.peek(p -> { if (p.getModuleName().endsWith("api")) LOG.info("????a "+p.getModuleName()+"-"+p.getProductId()); });
-        } else {
-        	importedProductPromises = Stream.empty();
+        // explicit import from other modules
+        final Set<String> importedProducts = configuredTask.getImportedProducts();
+        if (!importedProducts.isEmpty()) {
+            final Module module = (Module) this.buildContext;
+            module.getConfig().getModuleCompileDependencies().stream()
+                .flatMap(moduleName -> importedProducts.stream()
+                    .map(p -> buildModuleProduct(moduleName, p)))
+                .forEach(productPromises::add);
         }
-        final Stream<ProductPromise> importedAllProductPromises = modules.stream()
-        		.filter(m -> !buildContext.getModuleName().equals(m.getModuleName()))
-            .flatMap(bc -> configuredTask.getImportedAllProducts().stream()
-                .map(p -> buildModuleProduct(bc.getModuleName(), p)))
-            .peek(p -> { if (p.getModuleName().endsWith("api")) LOG.info("????b "+p.getModuleName()+"-"+p.getProductId()); });
 
-        final Set<ProductPromise> productPromises =
-            Stream.concat(
-                usedProductsPromises,
-                Stream.concat(
-                    importedAllProductPromises,
-                    importedProductPromises))
-                .collect(Collectors.toSet());
-        
+        // import from all modules (e.g. for Eclipse / IntelliJ plugin)
+        final Set<String> importedAllProducts = configuredTask.getImportedAllProducts();
+        if (!importedAllProducts.isEmpty()) {
+            modules.stream()
+                .map(Module::getModuleName)
+                .flatMap(moduleName -> importedAllProducts.stream()
+                    .map(p -> buildModuleProduct(moduleName, p)))
+                .forEach(productPromises::add);
+        }
+
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 

@@ -50,7 +50,7 @@ public final class Hasher {
         }
     }
 
-    private static String bytesToHex(final byte[] hash) {
+    public static String bytesToHex(final byte[] hash) {
         final StringBuilder hexString = new StringBuilder();
         for (final byte aHash : hash) {
             final String hex = Integer.toHexString(MASK & aHash);

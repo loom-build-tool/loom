@@ -16,6 +16,7 @@
 
 package builders.loom.core;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +25,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,28 +162,32 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private UsedProducts buildProductView() {
+        final Set<ProductPromise> productPromises = new HashSet<>();
 
-        final Stream<ProductPromise> usedProductsPromises =
-            configuredTask.getUsedProducts().stream()
-                .map(moduleProductRepositories.get(buildContext)::lookup);
+        // inner module dependencies
+        configuredTask.getUsedProducts().stream()
+            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .forEach(productPromises::add);
 
+        // explicit import from other modules
+        final Set<String> importedProducts = configuredTask.getImportedProducts();
+        if (!importedProducts.isEmpty()) {
+            final Module module = (Module) this.buildContext;
+            module.getConfig().getModuleCompileDependencies().stream()
+                .flatMap(moduleName -> importedProducts.stream()
+                    .map(p -> buildModuleProduct(moduleName, p)))
+                .forEach(productPromises::add);
+        }
 
-        final Stream<ProductPromise> importedProductPromises = modules.stream()
-            .flatMap(m -> m.getConfig().getModuleCompileDependencies().stream())
-            .flatMap(moduleName -> configuredTask.getImportedProducts().stream()
-                .map(p -> buildModuleProduct(moduleName, p)));
-
-        final Stream<ProductPromise> importedAllProductPromises = modules.stream()
-            .flatMap(bc -> configuredTask.getImportedAllProducts().stream()
-                .map(p -> buildModuleProduct(bc.getModuleName(), p)));
-
-        final Set<ProductPromise> productPromises =
-            Stream.concat(
-                usedProductsPromises,
-                Stream.concat(
-                    importedAllProductPromises,
-                    importedProductPromises))
-                .collect(Collectors.toSet());
+        // import from all modules (e.g. for Eclipse / IntelliJ plugin)
+        final Set<String> importedAllProducts = configuredTask.getImportedAllProducts();
+        if (!importedAllProducts.isEmpty()) {
+            modules.stream()
+                .map(Module::getModuleName)
+                .flatMap(moduleName -> importedAllProducts.stream()
+                    .map(p -> buildModuleProduct(moduleName, p)))
+                .forEach(productPromises::add);
+        }
 
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }

@@ -38,7 +38,6 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
@@ -92,8 +91,8 @@ public class SpringBootTask extends AbstractModuleTask {
 
         // copy dep modules
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            final Path jarFile =
-                requireProduct(moduleName, "jar", AssemblyProduct.class).getAssemblyFile();
+            final Path jarFile = Paths.get(requireProduct(moduleName, "jar", Product.class)
+                .getProperty("classesJarFile"));
 
             Files.copy(jarFile, libDir.resolve(jarFile.getFileName()));
         }

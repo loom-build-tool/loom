@@ -18,12 +18,14 @@ package builders.loom.plugin.springboot;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class SpringBootFatJarTask extends AbstractModuleTask {
 
@@ -41,7 +43,13 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
         // assemble jar
         new JarAssembler().assemble(baseDir, jarFile);
 
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
+        return TaskResult.ok(newProduct(jarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        final Map<String, String> properties = Map.of("springBootFatJar", jarFile.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
+            "Spring Boot Fat Jar application");
     }
 
 }

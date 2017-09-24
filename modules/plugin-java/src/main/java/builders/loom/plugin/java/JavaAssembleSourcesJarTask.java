@@ -19,13 +19,15 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
@@ -55,7 +57,13 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             }
         }
 
-        return TaskResult.ok(new AssemblyProduct(sourceJarFile, "Jar of sources"));
+        return TaskResult.ok(newProduct(sourceJarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        final Map<String, String> properties = Map.of("sourceJarFile", jarFile.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
+            "Jar of sources");
     }
 
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,7 +51,6 @@ import org.sonatype.aether.util.artifact.SubArtifact;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
@@ -88,7 +88,8 @@ public class MavenInstallTask extends AbstractModuleTask {
             throw new IllegalStateException("Missing configuration of maven.groupAndArtifact");
         }
 
-        final Path jarFile = requireProduct("jar", AssemblyProduct.class).getAssemblyFile();
+        final Path jarFile = Paths.get(requireProduct("jar", Product.class)
+            .getProperty("classesJarFile"));
 
         return TaskResult.ok(newProduct(install(jarFile)));
     }

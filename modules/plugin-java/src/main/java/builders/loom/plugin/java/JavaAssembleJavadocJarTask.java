@@ -19,13 +19,15 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
@@ -46,7 +48,13 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("javaDocOut")), os);
         }
 
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of Javadoc"));
+        return TaskResult.ok(newProduct(jarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        final Map<String, String> properties = Map.of("javaDocJarFile", jarFile.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
+            "Jar of Javadoc");
     }
 
 }

@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -36,8 +37,9 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.TempFile;
 
 public class JavaAssembleTask extends AbstractModuleTask {
@@ -112,7 +114,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             throw new IllegalStateException("Building jar file failed");
         }
 
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of compiled classes"));
+        return TaskResult.ok(newProduct(jarFile));
     }
 
     private String buildAutomaticModuleName() {
@@ -151,6 +153,12 @@ public class JavaAssembleTask extends AbstractModuleTask {
         try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
             manifest.write(os);
         }
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        final Map<String, String> properties = Map.of("classesJarFile", jarFile.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
+            "Jar of compiled classes");
     }
 
 }

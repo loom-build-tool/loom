@@ -40,7 +40,6 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -82,9 +81,9 @@ public class SpringBootTask extends AbstractModuleTask {
             Paths.get(processedResourceProduct.getProperty("processedResourcesDir")), classesDir));
 
         // copy classes
-        final CompilationProduct compilationProduct =
-            requireProduct("compilation", CompilationProduct.class);
-        FileUtil.copyFiles(compilationProduct.getClassesDir(), classesDir);
+        final Product compilationProduct =
+            requireProduct("compilation", Product.class);
+        FileUtil.copyFiles(Paths.get(compilationProduct.getProperty("classesDir")), classesDir);
 
         // copy libs
         final ClasspathProduct compileDependenciesProduct =
@@ -144,11 +143,12 @@ public class SpringBootTask extends AbstractModuleTask {
         }
     }
 
-    private String scanForApplicationStarter(final CompilationProduct compilationProduct)
+    private String scanForApplicationStarter(final Product compilationProduct)
         throws IOException {
 
         final String applicationClassname = new ClassScanner()
-            .scanArchives(compilationProduct.getClassesDir(), SPRING_BOOT_APPLICATION_ANNOTATION);
+            .scanArchives(Paths.get(compilationProduct.getProperty("classesDir")),
+                SPRING_BOOT_APPLICATION_ANNOTATION);
 
         if (applicationClassname == null) {
             throw new IllegalStateException("Couldn't find class with "

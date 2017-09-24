@@ -36,7 +36,6 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
@@ -65,14 +64,14 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<CompilationProduct> testCompilation =
-            useProduct("testCompilation", CompilationProduct.class);
+        final Optional<Product> testCompilation =
+            useProduct("testCompilation", Product.class);
 
         if (!testCompilation.isPresent()) {
             return TaskResult.empty();
         }
 
-        final Path classesDir = testCompilation.get().getClassesDir();
+        final Path classesDir = Paths.get(testCompilation.get().getProperty("classesDir"));
         final List<URL> junitClassPath = buildJunitClassPath();
 
         LOG.debug("Test with classpath: {}", junitClassPath);
@@ -100,8 +99,8 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
     private List<URL> buildJunitClassPath() throws InterruptedException {
         final List<URL> urls = new ArrayList<>();
 
-        useProduct("testCompilation", CompilationProduct.class)
-            .map(CompilationProduct::getClassesDir)
+        useProduct("testCompilation", Product.class)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
@@ -110,8 +109,8 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("compilation", CompilationProduct.class)
-            .map(CompilationProduct::getClassesDir)
+        useProduct("compilation", Product.class)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
@@ -125,8 +124,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             .ifPresent(urls::addAll);
 
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            useProduct(moduleName, "compilation", CompilationProduct.class)
-                .ifPresent(product -> urls.add(ClassLoaderUtil.toUrl(product.getClassesDir())));
+            useProduct(moduleName, "compilation", Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
+                .ifPresent(classesDir -> urls.add(ClassLoaderUtil.toUrl(classesDir)));
         }
 
         resolveJUnitPlatformLauncher().stream()

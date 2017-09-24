@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
@@ -76,7 +77,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         final Path buildDir = resolveBuildDir();
 
         if (skip) {
-            return TaskResult.up2date(new CompilationProduct(buildDir, ProductChecksumUtil.calcChecksum(buildDir)));
+            return TaskResult.up2date(newProduct(buildDir));
         }
 
         final Optional<Product> sourceTreeProduct =
@@ -96,8 +97,8 @@ public class JavaCompileTask extends AbstractModuleTask {
                     .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(classpath::add);
 
                 useProduct("testDependencies", ClasspathProduct.class)
@@ -117,7 +118,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         compile(buildDir, classpath, srcFiles);
 
-        return TaskResult.ok(new CompilationProduct(buildDir, ProductChecksumUtil.calcChecksum(buildDir)));
+        return TaskResult.ok(newProduct(buildDir));
     }
 
     private Path resolveBuildDir() {
@@ -127,8 +128,8 @@ public class JavaCompileTask extends AbstractModuleTask {
                 getBuildContext().getModuleName()));
     }
 
-    // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
 
+    // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
     private void compile(final Path buildDir, final List<Path> classpath,
                          final List<Path> srcFiles)
         throws IOException, InterruptedException {
@@ -269,8 +270,9 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         // Wait until other modules have delivered their compilations to module path
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            useProduct(moduleName, "compilation", CompilationProduct.class)
-                .ifPresent(product -> classPath.add(product.getClassesDir()));
+            useProduct(moduleName, "compilation", Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
+                .ifPresent(classPath::add);
         }
 
         classPath.addAll(classpath);
@@ -316,6 +318,11 @@ public class JavaCompileTask extends AbstractModuleTask {
         }
 
         return options;
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        final Map<String, String> properties = Map.of("classesDir", buildDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir), null);
     }
 
 }

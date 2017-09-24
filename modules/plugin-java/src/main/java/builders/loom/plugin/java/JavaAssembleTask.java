@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +37,6 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.TempFile;
 
@@ -53,8 +53,8 @@ public class JavaAssembleTask extends AbstractModuleTask {
     @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<CompilationProduct> compilationProduct = useProduct(
-            "compilation", CompilationProduct.class);
+        final Optional<Product> compilationProduct = useProduct(
+            "compilation", Product.class);
 
         final Optional<Product> resourcesTreeProduct = useProduct(
             "processedResources", Product.class);
@@ -77,7 +77,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
         }
 
         final boolean moduleInfoExists = compilationProduct
-            .map(CompilationProduct::getClassesDir)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(dir -> dir.resolve(LoomPaths.MODULE_INFO_CLASS))
             .filter(Files::exists)
             .isPresent();
@@ -99,7 +99,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             args.addAll(List.of("-m", metaInfTmpFile.getFile().toString()));
 
             compilationProduct.ifPresent(p ->
-                args.addAll(List.of("-C", p.getClassesDir().toString(), ".")));
+                args.addAll(List.of("-C", p.getProperty("classesDir"), ".")));
 
             resourcesTreeProduct.ifPresent(p ->
                 args.addAll(List.of("-C", p.getProperty("processedResourcesDir"), ".")));

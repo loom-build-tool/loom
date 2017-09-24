@@ -39,7 +39,6 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -95,8 +94,8 @@ public class SpotBugsTask extends AbstractModuleTask {
     @Override
     public TaskResult run(final boolean skip) throws Exception {
         final List<String> classFiles =
-            useProduct(compilationProductId, CompilationProduct.class)
-                .map(CompilationProduct::getClassesDir)
+            useProduct(compilationProductId, Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
                 .map(SpotBugsTask::getClassesToScan)
                 .orElse(Collections.emptyList());
 
@@ -166,8 +165,8 @@ public class SpotBugsTask extends AbstractModuleTask {
                     .ifPresent(classpath::addAll);
                 break;
             case TEST:
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(classpath::add);
 
                 useProduct("testDependencies", ClasspathProduct.class)

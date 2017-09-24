@@ -42,7 +42,6 @@ import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
 import builders.loom.api.product.GenericProduct;
-import builders.loom.api.product.ProcessedResourceProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
@@ -77,10 +76,10 @@ public class SpringBootTask extends AbstractModuleTask {
             buildDir.resolve(Paths.get("BOOT-INF", "lib")));
 
         // copy resources
-        final Optional<ProcessedResourceProduct> resourcesTreeProduct =
-            useProduct("processedResources", ProcessedResourceProduct.class);
-        resourcesTreeProduct.ifPresent(processedResourceProduct ->
-            FileUtil.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
+        final Optional<Product> resourcesTreeProduct =
+            useProduct("processedResources", Product.class);
+        resourcesTreeProduct.ifPresent(processedResourceProduct -> FileUtil.copyFiles(
+            Paths.get(processedResourceProduct.getProperty("processedResourcesDir")), classesDir));
 
         // copy classes
         final CompilationProduct compilationProduct =

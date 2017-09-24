@@ -37,7 +37,7 @@ import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.TempFile;
 
 public class JavaAssembleTask extends AbstractModuleTask {
@@ -56,8 +56,8 @@ public class JavaAssembleTask extends AbstractModuleTask {
         final Optional<CompilationProduct> compilationProduct = useProduct(
             "compilation", CompilationProduct.class);
 
-        final Optional<ProcessedResourceProduct> resourcesTreeProduct = useProduct(
-            "processedResources", ProcessedResourceProduct.class);
+        final Optional<Product> resourcesTreeProduct = useProduct(
+            "processedResources", Product.class);
 
         if (!compilationProduct.isPresent() && !resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -102,7 +102,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
                 args.addAll(List.of("-C", p.getClassesDir().toString(), ".")));
 
             resourcesTreeProduct.ifPresent(p ->
-                args.addAll(List.of("-C", p.getSrcDir().toString(), ".")));
+                args.addAll(List.of("-C", p.getProperty("processedResourcesDir"), ".")));
 
             LOG.debug("Run JarToolProvider with args: {}", args);
             result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));

@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -27,9 +28,10 @@ import java.util.function.Function;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.Hasher;
+import builders.loom.util.ProductChecksumUtil;
 
 public class ResourcesTask extends AbstractModuleTask {
 
@@ -82,7 +84,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
         cache.saveCache();
 
-        return TaskResult.ok(new ProcessedResourceProduct(buildDir));
+        return TaskResult.ok(newProduct(buildDir));
     }
 
     private KeyValueCache initCache() {
@@ -111,6 +113,12 @@ public class ResourcesTask extends AbstractModuleTask {
             return Optional.ofNullable(System.getProperty(placeholder))
                 .or(() -> Optional.ofNullable(System.getenv(placeholder)));
         };
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        final Map<String, String> properties =
+            Map.of("processedResourcesDir", buildDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir), null);
     }
 
 }

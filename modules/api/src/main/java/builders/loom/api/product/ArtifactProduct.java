@@ -18,6 +18,7 @@ package builders.loom.api.product;
 
 import java.nio.file.Path;
 
+// FIXME not API
 public final class ArtifactProduct {
 
     private final Path mainArtifact;

@@ -18,14 +18,17 @@ package builders.loom.plugin.java;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class ArtifactResolverTask extends AbstractModuleTask {
 
@@ -48,7 +51,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
         }
 
         final List<ArtifactProduct> artifacts = resolve(dependencies, true);
-        return TaskResult.ok(new ArtifactListProduct(artifacts));
+        return TaskResult.ok(newProduct(artifacts));
     }
 
     List<String> listDependencies() {
@@ -73,6 +76,17 @@ public class ArtifactResolverTask extends AbstractModuleTask {
             .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
             .map(a -> new ArtifactProduct(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());
+    }
+
+    private static Product newProduct(final List<ArtifactProduct> artifacts) {
+        // FIXME evil hack
+        final Map<String, List<String>> properties = Map.of(
+            "artifacts",
+            artifacts.stream()
+                .map(a -> a.getMainArtifact() + "#" + a.getSourceArtifact())
+                .collect(Collectors.toList())
+        );
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(properties), null);
     }
 
 }

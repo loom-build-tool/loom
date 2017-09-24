@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,5 +35,15 @@ public class ProductChecksumUtil {
         }
     }
 
+    public static String calcChecksum(final Map<String, List<String>> properties) {
+        final List<String> foo = new ArrayList<>();
+
+        properties.keySet().stream().sorted().forEach(k -> {
+            foo.add(k);
+            foo.addAll(properties.get(k));
+        });
+
+        return Hasher.hash(foo);
+    }
 
 }

@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -39,8 +41,6 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactListProduct;
-import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.Preconditions;
@@ -292,11 +292,18 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
                         .attr("value", "true");
         }
 
-        final Optional<ArtifactListProduct> testArtifacts =
-            useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class);
+        final List<String> testArtifacts =
+            useProduct(module.getModuleName(), "testArtifacts", Product.class)
+            .map(p -> p.getProperties("artifacts"))
+            .orElse(Collections.emptyList());
 
-        testArtifacts.map(ArtifactListProduct::getArtifacts).orElse(Collections.emptyList())
-            .forEach(artifactProduct -> buildClasspathElement(rootBuilder, artifactProduct));
+        for (final String testArtifact : testArtifacts) {
+            // FIXME evil hack
+            final String[] split = testArtifact.split("#");
+            final Path mainArtifact = Paths.get(split[0]);
+            final Path sourceArtifact = split[1].isEmpty() ? null : Paths.get(split[1]);
+            buildClasspathElement(rootBuilder, mainArtifact, sourceArtifact);
+        }
 
         return rootBuilder.getDocument();
     }
@@ -311,10 +318,9 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private void buildClasspathElement(final XmlBuilder.Element rootBuilder,
-                                       final ArtifactProduct artifactProduct) {
+                                       final Path mainArtifact, final Path sourceArtifact) {
 
-        final String jar = artifactProduct.getMainArtifact().toAbsolutePath().toString();
-        final Path sourceArtifact = artifactProduct.getSourceArtifact();
+        final String jar = mainArtifact.toAbsolutePath().toString();
         final Optional<String> sourceJar =
             Optional.ofNullable(sourceArtifact)
                 .map(Path::toAbsolutePath)

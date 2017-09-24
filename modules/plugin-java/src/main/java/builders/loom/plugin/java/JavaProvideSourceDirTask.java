@@ -21,13 +21,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
 
@@ -59,7 +61,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
         validateFiles(srcFiles);
 
-        return TaskResult.ok(new SourceTreeProduct(srcDir, srcFiles, ProductChecksumUtil.calcChecksum(srcFiles)));
+        return TaskResult.ok(newProduct(srcDir, srcFiles));
     }
 
     private List<Path> findSources(final Path srcDir) throws IOException {
@@ -81,6 +83,12 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
             throw new IllegalStateException("Found files with other suffix than .java: "
                 + illegalFiles);
         }
+    }
+
+    private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
+        final Map<String, Object> properties = Map.of("srcDir", srcDir, "srcFiles", srcFiles);
+        return new GenericProduct(properties,
+            ProductChecksumUtil.calcChecksum(srcFiles), null);
     }
 
 }

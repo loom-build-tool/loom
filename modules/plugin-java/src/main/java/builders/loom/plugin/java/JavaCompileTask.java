@@ -44,7 +44,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
 
@@ -78,8 +78,8 @@ public class JavaCompileTask extends AbstractModuleTask {
             return TaskResult.up2date(new CompilationProduct(buildDir, ProductChecksumUtil.calcChecksum(buildDir)));
         }
 
-        final Optional<SourceTreeProduct> sourceTreeProduct =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+        final Optional<Product> sourceTreeProduct =
+            useProduct(sourceProductId, Product.class);
 
         if (!sourceTreeProduct.isPresent()) {
             FileUtil.deleteDirectoryRecursively(buildDir, true);
@@ -107,7 +107,7 @@ public class JavaCompileTask extends AbstractModuleTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcFiles = sourceTreeProduct.get().getSrcFiles();
+        final List<Path> srcFiles = sourceTreeProduct.get().getProperties(Path.class, "srcFiles");
 
         FileUtil.createOrCleanDirectory(buildDir);
 

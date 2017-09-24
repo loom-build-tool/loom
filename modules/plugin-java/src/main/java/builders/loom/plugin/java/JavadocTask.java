@@ -38,7 +38,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.DirectoryProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 
 public class JavadocTask extends AbstractModuleTask {
@@ -47,7 +47,7 @@ public class JavadocTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
+        final Optional<Product> source = useProduct("source", Product.class);
 
         if (!source.isPresent()) {
             return TaskResult.empty();
@@ -94,10 +94,12 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
                 List.of(getBuildDir().getParent()));
 
-            final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromPaths(source.get().getSrcFiles());
+            final List<Path> srcFiles = source.get().getProperties(Path.class, "srcFiles");
 
-            LOG.info("Create Javadoc for {} files", source.get().getSrcFiles().size());
+            final Iterable<? extends JavaFileObject> compUnits =
+                fileManager.getJavaFileObjectsFromPaths(srcFiles);
+
+            LOG.info("Create Javadoc for {} files", srcFiles.size());
 
             final DocumentationTool.DocumentationTask javaDocTask =
                 docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);

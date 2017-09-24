@@ -53,8 +53,8 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.Product;
 import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.ClassLoaderUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -127,15 +127,15 @@ public class CheckstyleTask extends AbstractModuleTask {
     }
 
     private List<File> listSourceFiles() throws InterruptedException {
-        final Optional<SourceTreeProduct> sourceTree =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+        final Optional<Product> sourceTree =
+            useProduct(sourceProductId, Product.class);
 
         if (!sourceTree.isPresent()) {
             return Collections.emptyList();
         }
 
         // Checkstyle doesn't support module-info.java, so skip it
-        return sourceTree.get().getSrcFiles().stream()
+        return sourceTree.get().getProperties(Path.class, "srcFiles").stream()
             .filter(f -> !f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .map(Path::toFile)
             .collect(Collectors.toList());

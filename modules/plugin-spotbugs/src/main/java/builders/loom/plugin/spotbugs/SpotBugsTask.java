@@ -38,8 +38,8 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.Product;
 import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
 import builders.loom.util.StringUtil;
 import edu.umd.cs.findbugs.BugReporter;
@@ -102,8 +102,8 @@ public class SpotBugsTask extends AbstractModuleTask {
         }
 
         final List<Path> srcFiles =
-            useProduct(sourceProductId, SourceTreeProduct.class)
-            .map(SourceTreeProduct::getSrcFiles)
+            useProduct(sourceProductId, Product.class)
+            .map(p -> p.getProperties(Path.class, "srcFiles"))
             .orElse(Collections.emptyList());
 
         final Path reportDir =

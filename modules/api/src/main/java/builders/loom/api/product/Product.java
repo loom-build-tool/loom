@@ -16,15 +16,20 @@
 
 package builders.loom.api.product;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface Product {
+
+    <T> T getProperty(Class<T> clazz, String key);
+
+    <T> List<T> getProperties(Class<T> clazz, String key);
+
+    String checksum();
 
     /**
      * Spring Boot application: build/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
      */
     Optional<String> outputInfo();
 
-    String checksum();
-    
 }

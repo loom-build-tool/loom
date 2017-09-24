@@ -24,15 +24,15 @@ import java.util.jar.JarOutputStream;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
+import builders.loom.api.product.Product;
 import builders.loom.api.product.ResourcesTreeProduct;
-import builders.loom.api.product.SourceTreeProduct;
 
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<SourceTreeProduct> sourceTree = useProduct(
-            "source", SourceTreeProduct.class);
+        final Optional<Product> sourceTree = useProduct(
+            "source", Product.class);
 
         final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
             "resources", ResourcesTreeProduct.class);
@@ -47,7 +47,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
             if (sourceTree.isPresent()) {
-                JavaFileUtil.copy(sourceTree.get().getSrcDir(), os);
+                JavaFileUtil.copy(sourceTree.get().getProperty(Path.class, "srcDir"), os);
             }
 
             if (resourcesTreeProduct.isPresent()) {

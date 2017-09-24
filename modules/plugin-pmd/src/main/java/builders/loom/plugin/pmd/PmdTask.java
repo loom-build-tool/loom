@@ -32,8 +32,8 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.TaskResult;
+import builders.loom.api.product.Product;
 import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
 import builders.loom.util.FileUtil;
 import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
@@ -130,8 +130,8 @@ public class PmdTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<SourceTreeProduct> sourceTreeProduct =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+        final Optional<Product> sourceTreeProduct =
+            useProduct(sourceProductId, Product.class);
 
         if (!sourceTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -144,12 +144,12 @@ public class PmdTask extends AbstractModuleTask {
         final AtomicInteger ruleViolations = new AtomicInteger(0);
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
-        final List<DataSource> files = sourceTreeProduct.get().getSrcFiles().stream()
+        final List<DataSource> files = sourceTreeProduct.get().getProperties(Path.class, "srcFiles").stream()
             .map(Path::toFile)
             .map(FileDataSource::new)
             .collect(Collectors.toList());
 
-        final String inputPaths = sourceTreeProduct.get().getSrcDir().toString();
+        final String inputPaths = sourceTreeProduct.get().getProperty(Path.class, "srcDir").toString();
         configuration.setInputPaths(inputPaths);
 
         final Path reportDir =

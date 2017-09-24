@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.maven.model.Dependency;
@@ -50,7 +51,9 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -87,8 +90,7 @@ public class MavenInstallTask extends AbstractModuleTask {
 
         final Path jarFile = requireProduct("jar", AssemblyProduct.class).getAssemblyFile();
 
-        return TaskResult.ok(new DirectoryProduct(install(jarFile),
-            "Directory of installed artifact"));
+        return TaskResult.ok(newProduct(install(jarFile)));
     }
 
     private Path install(final Path jarFile) throws IOException, InstallationException {
@@ -168,6 +170,12 @@ public class MavenInstallTask extends AbstractModuleTask {
         return new DefaultArtifact(
             String.format("%s:%s", pluginSettings.getGroupAndArtifact(), version))
             .setFile(assemblyFile.toFile());
+    }
+
+    private static Product newProduct(final Path install) {
+        return new GenericProduct(Map.of("mavenInstallDir", install.toString()),
+            ProductChecksumUtil.calcChecksum(install),
+            "Directory of installed artifact");
     }
 
 }

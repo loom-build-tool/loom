@@ -27,6 +27,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -40,11 +41,13 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
+import builders.loom.util.ProductChecksumUtil;
 
 public class SpringBootTask extends AbstractModuleTask {
 
@@ -104,7 +107,7 @@ public class SpringBootTask extends AbstractModuleTask {
         final String applicationStarter = scanForApplicationStarter(compilationProduct);
         writeManifest(buildDir, prepareManifest(applicationStarter));
 
-        return TaskResult.ok(new DirectoryProduct(buildDir, "Spring Boot application"));
+        return TaskResult.ok(newProduct(buildDir));
     }
 
     private Path resolveSpringBootLoaderJar() {
@@ -179,6 +182,12 @@ public class SpringBootTask extends AbstractModuleTask {
         try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
             manifest.write(os);
         }
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        final Map<String, String> properties = Map.of("springBootOut", buildDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir),
+            "Spring Boot application");
     }
 
 }

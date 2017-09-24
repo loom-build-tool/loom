@@ -18,20 +18,21 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.Product;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<DirectoryProduct> resourcesTreeProduct =
-            useProduct("javadoc", DirectoryProduct.class);
+        final Optional<Product> resourcesTreeProduct =
+            useProduct("javadoc", Product.class);
 
         if (!resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -41,8 +42,8 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("javadoc-jar"))
             .resolve(String.format("%s-javadoc.jar", getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            JavaFileUtil.copy(resourcesTreeProduct.get().getDir(), os);
+        try (JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
+            JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("javaDocOut")), os);
         }
 
         return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of Javadoc"));

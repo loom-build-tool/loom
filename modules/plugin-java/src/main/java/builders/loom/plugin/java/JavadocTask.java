@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,9 +40,10 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavadocTask extends AbstractModuleTask {
 
@@ -114,7 +116,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return TaskResult.ok(new DirectoryProduct(buildDir, "JavaDoc output"));
+        return TaskResult.ok(newProduct(buildDir));
     }
 
     private Path getBuildDir() {
@@ -122,6 +124,12 @@ public class JavadocTask extends AbstractModuleTask {
         return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
             .resolve(Paths.get("compilation", CompileTarget.MAIN.name().toLowerCase(),
                 getBuildContext().getModuleName()));
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        final Map<String, String> properties = Map.of("javaDocOut", buildDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir),
+            "JavaDoc output");
     }
 
 }

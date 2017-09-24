@@ -126,7 +126,7 @@ public class CheckstyleTask extends AbstractModuleTask {
         return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
     }
 
-    private List<File> listSourceFiles() throws InterruptedException {
+    private List<File> listSourceFiles() throws InterruptedException, IOException {
         final Optional<Product> sourceTree =
             useProduct(sourceProductId, Product.class);
 
@@ -134,8 +134,11 @@ public class CheckstyleTask extends AbstractModuleTask {
             return Collections.emptyList();
         }
 
+        final Path srcDir = Paths.get(sourceTree.get().getProperty("srcDir"));
+
         // Checkstyle doesn't support module-info.java, so skip it
-        return sourceTree.get().getProperties(Path.class, "srcFiles").stream()
+        return Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
             .filter(f -> !f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .map(Path::toFile)
             .collect(Collectors.toList());

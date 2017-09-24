@@ -18,6 +18,7 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
@@ -47,7 +48,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
         try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
             if (sourceTree.isPresent()) {
-                JavaFileUtil.copy(sourceTree.get().getProperty(Path.class, "srcDir"), os);
+                JavaFileUtil.copy(Paths.get(sourceTree.get().getProperty("srcDir")), os);
             }
 
             if (resourcesTreeProduct.isPresent()) {

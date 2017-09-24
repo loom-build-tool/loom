@@ -16,14 +16,11 @@
 
 package builders.loom.api.product;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface Product {
 
-    <T> T getProperty(Class<T> clazz, String key);
-
-    <T> List<T> getProperties(Class<T> clazz, String key);
+    String getProperty(String key);
 
     String checksum();
 

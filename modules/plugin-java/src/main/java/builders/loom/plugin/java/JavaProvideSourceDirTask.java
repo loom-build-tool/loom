@@ -86,7 +86,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
-        final Map<String, Object> properties = Map.of("srcDir", srcDir, "srcFiles", srcFiles);
+        final Map<String, Object> properties = Map.of("srcDir", srcDir.toString());
         return new GenericProduct(properties,
             ProductChecksumUtil.calcChecksum(srcFiles), null);
     }

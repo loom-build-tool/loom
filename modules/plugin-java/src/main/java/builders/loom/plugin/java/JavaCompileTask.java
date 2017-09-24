@@ -18,6 +18,7 @@ package builders.loom.plugin.java;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -107,7 +108,10 @@ public class JavaCompileTask extends AbstractModuleTask {
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcFiles = sourceTreeProduct.get().getProperties(Path.class, "srcFiles");
+        final Path srcDir = Paths.get(sourceTreeProduct.get().getProperty("srcDir"));
+        final List<Path> srcFiles = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .collect(Collectors.toList());
 
         FileUtil.createOrCleanDirectory(buildDir);
 

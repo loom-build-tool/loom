@@ -19,6 +19,7 @@ package builders.loom.plugin.pmd;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -144,12 +145,14 @@ public class PmdTask extends AbstractModuleTask {
         final AtomicInteger ruleViolations = new AtomicInteger(0);
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
-        final List<DataSource> files = sourceTreeProduct.get().getProperties(Path.class, "srcFiles").stream()
-            .map(Path::toFile)
-            .map(FileDataSource::new)
+        final Path srcDir = Paths.get(sourceTreeProduct.get().getProperty("srcDir"));
+
+        final List<DataSource> files = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .map(p -> new FileDataSource(p.toFile()))
             .collect(Collectors.toList());
 
-        final String inputPaths = sourceTreeProduct.get().getProperty(Path.class, "srcDir").toString();
+        final String inputPaths = sourceTreeProduct.get().getProperty("srcDir");
         configuration.setInputPaths(inputPaths);
 
         final Path reportDir =

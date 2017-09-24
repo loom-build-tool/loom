@@ -16,7 +16,6 @@
 
 package builders.loom.api.product;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,12 +24,7 @@ public abstract class AbstractProduct implements Product {
     private final String checksum = UUID.randomUUID().toString();
 
     @Override
-    public <T> T getProperty(final Class<T> clazz, final String key) {
-        return null;
-    }
-
-    @Override
-    public <T> List<T> getProperties(final Class<T> clazz, final String key) {
+    public String getProperty(final String key) {
         return null;
     }
 

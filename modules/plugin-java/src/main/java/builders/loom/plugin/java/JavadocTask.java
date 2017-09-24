@@ -17,10 +17,12 @@
 package builders.loom.plugin.java;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
 import javax.tools.DocumentationTool;
@@ -94,7 +96,10 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
                 List.of(getBuildDir().getParent()));
 
-            final List<Path> srcFiles = source.get().getProperties(Path.class, "srcFiles");
+            final Path srcDir = Paths.get(source.get().getProperty("srcDir"));
+            final List<Path> srcFiles = Files
+                .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+                .collect(Collectors.toList());
 
             final Iterable<? extends JavaFileObject> compUnits =
                 fileManager.getJavaFileObjectsFromPaths(srcFiles);

@@ -18,7 +18,6 @@ package builders.loom.api.product;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -38,13 +37,12 @@ public class GenericProduct implements Product {
     }
 
     @Override
-    public <T> T getProperty(final Class<T> clazz, final String key) {
-        return clazz.cast(properties.get(key));
-    }
-
-    @Override
-    public <T> List<T> getProperties(final Class<T> clazz, final String key) {
-        return (List<T>) properties.get(key);
+    public String getProperty(final String key) {
+        final Object val = properties.get(key);
+        if (val == null) {
+            throw new IllegalArgumentException("key <" + key + "> not found in properties");
+        }
+        return (String) val;
     }
 
     @Override

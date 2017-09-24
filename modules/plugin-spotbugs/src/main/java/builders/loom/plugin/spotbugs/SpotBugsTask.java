@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,10 +102,14 @@ public class SpotBugsTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<Path> srcFiles =
-            useProduct(sourceProductId, Product.class)
-            .map(p -> p.getProperties(Path.class, "srcFiles"))
-            .orElse(Collections.emptyList());
+        final Product product = useProduct(sourceProductId, Product.class).orElseThrow(
+            () -> new IllegalStateException("No product <" + sourceProductId + "> found"));
+
+        final Path srcDir = Paths.get(product.getProperty("srcDir"));
+
+        final List<Path> srcFiles = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .collect(Collectors.toList());
 
         final Path reportDir =
             FileUtil.createOrCleanDirectory(resolveReportDir("spotbugs", compileTarget));

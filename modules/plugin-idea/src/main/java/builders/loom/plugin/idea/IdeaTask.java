@@ -20,10 +20,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.w3c.dom.Document;
@@ -34,7 +36,8 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
-import builders.loom.api.product.DummyProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
@@ -82,7 +85,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
         // modules.xml file containing referencing all modules
         xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
-        return TaskResult.ok(new DummyProduct("Idea project files"));
+        return TaskResult.ok(newProduct());
     }
 
     private JavaVersion determineModulesHighestJavaVersion() {
@@ -323,6 +326,11 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
             libHolder.element("root")
                 .attr("url", String.format("jar://%s!/", jar));
         }
+    }
+
+    private static Product newProduct() {
+        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+            "Idea project files");
     }
 
 }

@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -40,7 +41,8 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ArtifactListProduct;
 import builders.loom.api.product.ArtifactProduct;
-import builders.loom.api.product.DummyProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.Preconditions;
 import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
@@ -65,7 +67,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
             createModuleProject(module);
         }
 
-        return TaskResult.ok(new DummyProduct("Eclipse project files"));
+        return TaskResult.ok(newProduct());
     }
 
     private Set<Module> allModules() {
@@ -324,6 +326,11 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
         classpathentry.attr("kind", "lib");
         classpathentry.attr("path", jar);
 
+    }
+
+    private static Product newProduct() {
+        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+            "Eclipse project files");
     }
 
 }

@@ -55,7 +55,7 @@ public class GoalTask implements Task, ProductDependenciesAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(), "goal");
+        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(), null);
     }
 
 }

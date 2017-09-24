@@ -19,7 +19,6 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 
@@ -52,9 +51,8 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path jarFile) {
-        final Map<String, String> properties = Map.of("javaDocJarFile", jarFile.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
-            "Jar of Javadoc");
+        return new GenericProduct("javaDocJarFile", jarFile.toString(),
+            ProductChecksumUtil.calcChecksum(jarFile), "Jar of Javadoc");
     }
 
 }

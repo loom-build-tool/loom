@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,6 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -70,12 +68,15 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
                 List.of(buildDir));
 
-            final Optional<ClasspathProduct> compileDependencies =
-                useProduct("compileDependencies", ClasspathProduct.class);
+            final Optional<Product> compileDependencies =
+                useProduct("compileDependencies", Product.class);
 
             if (compileDependencies.isPresent()) {
-                fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
-                    compileDependencies.get().getEntries());
+                final List<Path> files = compileDependencies.get()
+                    .getProperties("classpath").stream()
+                    .map(p -> Paths.get(p)).collect(Collectors.toList());
+
+                fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, files);
             }
 
             for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
@@ -127,9 +128,8 @@ public class JavadocTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        final Map<String, String> properties = Map.of("javaDocOut", buildDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir),
-            "JavaDoc output");
+        return new GenericProduct("javaDocOut", buildDir.toString(),
+            ProductChecksumUtil.calcChecksum(buildDir), "JavaDoc output");
     }
 
 }

@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -156,9 +155,8 @@ public class JavaAssembleTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path jarFile) {
-        final Map<String, String> properties = Map.of("classesJarFile", jarFile.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(jarFile),
-            "Jar of compiled classes");
+        return new GenericProduct("classesJarFile", jarFile.toString(),
+            ProductChecksumUtil.calcChecksum(jarFile), "Jar of compiled classes");
     }
 
 }

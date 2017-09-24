@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -220,9 +219,8 @@ public class PmdTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path reportDir, final String outputInfo) {
-        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
-            outputInfo);
+        return new GenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.calcChecksum(reportDir), outputInfo);
     }
 
     private static class LogRenderer extends AbstractRenderer {

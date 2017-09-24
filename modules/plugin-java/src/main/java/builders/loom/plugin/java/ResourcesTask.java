@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -116,9 +115,8 @@ public class ResourcesTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        final Map<String, String> properties =
-            Map.of("processedResourcesDir", buildDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir), null);
+        return new GenericProduct("processedResourcesDir", buildDir.toString(),
+            ProductChecksumUtil.calcChecksum(buildDir), null);
     }
 
 }

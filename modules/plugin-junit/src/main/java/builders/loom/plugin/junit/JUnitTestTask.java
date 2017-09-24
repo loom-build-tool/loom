@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -35,7 +34,6 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
-import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
@@ -83,7 +81,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
-            return TaskResult.fail(newProduct(reportDir, "JUnit report"),
+            return TaskResult.fail(newProduct(reportDir),
                 String.format(
                 "tests failed: %d (succeeded: %d; skipped: %d; aborted: %d; total: %d)",
                 result.getTestsFailedCount(),
@@ -93,7 +91,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
                 result.getTestsFoundCount()));
         }
 
-        return TaskResult.ok(newProduct(reportDir, "JUnit report"));
+        return TaskResult.ok(newProduct(reportDir));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {
@@ -119,9 +117,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("testDependencies", ClasspathProduct.class)
-            .map(ClasspathProduct::getEntriesAsUrls)
-            .ifPresent(urls::addAll);
+        useProduct("testDependencies", Product.class)
+            .map(p -> p.getProperties("classpath"))
+            .ifPresent(p -> p.forEach(c -> urls.add(ClassLoaderUtil.toUrl(Paths.get(c)))));
 
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
             useProduct(moduleName, "compilation", Product.class)
@@ -173,10 +171,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         }
     }
 
-    private static Product newProduct(final Path reportDir, final String outputInfo) {
-        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
-            outputInfo);
+    private static Product newProduct(final Path reportDir) {
+        return new GenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.calcChecksum(reportDir), "JUnit report");
     }
 
 }

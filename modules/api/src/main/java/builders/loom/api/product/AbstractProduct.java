@@ -16,6 +16,7 @@
 
 package builders.loom.api.product;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +26,11 @@ public abstract class AbstractProduct implements Product {
 
     @Override
     public String getProperty(final String key) {
+        return null;
+    }
+
+    @Override
+    public List<String> getProperties(final String key) {
         return null;
     }
 

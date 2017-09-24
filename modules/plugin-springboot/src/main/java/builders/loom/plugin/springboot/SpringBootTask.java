@@ -27,18 +27,17 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -85,9 +84,12 @@ public class SpringBootTask extends AbstractModuleTask {
         FileUtil.copyFiles(Paths.get(compilationProduct.getProperty("classesDir")), classesDir);
 
         // copy libs
-        final ClasspathProduct compileDependenciesProduct =
-            requireProduct("compileDependencies", ClasspathProduct.class);
-        FileUtil.copyFiles(compileDependenciesProduct.getEntries(), libDir);
+        final List<Path> compileDependencies =
+            requireProduct("compileDependencies", Product.class)
+            .getProperties("classpath").stream()
+            .map(p -> Paths.get(p))
+            .collect(Collectors.toList());
+        FileUtil.copyFiles(compileDependencies, libDir);
 
         // copy dep modules
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
@@ -183,9 +185,8 @@ public class SpringBootTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        final Map<String, String> properties = Map.of("springBootOut", buildDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir),
-            "Spring Boot application");
+        return new GenericProduct("springBootOut", buildDir.toString(),
+            ProductChecksumUtil.calcChecksum(buildDir), "Spring Boot application");
     }
 
 }

@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.maven.model.Dependency;
@@ -174,9 +173,8 @@ public class MavenInstallTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path install) {
-        return new GenericProduct(Map.of("mavenInstallDir", install.toString()),
-            ProductChecksumUtil.calcChecksum(install),
-            "Directory of installed artifact");
+        return new GenericProduct("mavenInstallDir", install.toString(),
+            ProductChecksumUtil.calcChecksum(install), "Directory of installed artifact");
     }
 
 }

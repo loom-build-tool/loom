@@ -24,7 +24,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,7 +43,6 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -92,18 +90,18 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         switch (compileTarget) {
             case MAIN:
-                useProduct("compileDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("compileDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 break;
             case TEST:
                 useProduct("compilation", Product.class)
                     .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(classpath::add);
 
-                useProduct("testDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("testDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -321,8 +319,8 @@ public class JavaCompileTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        final Map<String, String> properties = Map.of("classesDir", buildDir.toString());
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(buildDir), null);
+        return new GenericProduct("classesDir", buildDir.toString(),
+            ProductChecksumUtil.calcChecksum(buildDir), null);
     }
 
 }

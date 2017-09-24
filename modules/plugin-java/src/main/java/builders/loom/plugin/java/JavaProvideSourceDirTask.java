@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
@@ -87,8 +86,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
-        final Map<String, String> properties = Map.of("srcDir", srcDir.toString());
-        return new GenericProduct(properties,
+        return new GenericProduct("srcDir", srcDir.toString(),
             ProductChecksumUtil.calcChecksum(srcFiles), null);
     }
 

@@ -26,7 +26,6 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.AssemblyProduct;
 import builders.loom.api.product.Product;
-import builders.loom.api.product.ResourcesTreeProduct;
 
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
@@ -35,8 +34,8 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
         final Optional<Product> sourceTree = useProduct(
             "source", Product.class);
 
-        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
-            "resources", ResourcesTreeProduct.class);
+        final Optional<Product> resourcesTreeProduct = useProduct(
+            "resources", Product.class);
 
         if (!sourceTree.isPresent() && !resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -46,13 +45,13 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("sources-jar"))
             .resolve(String.format("%s-sources.jar", getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
+        try (JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
             if (sourceTree.isPresent()) {
                 JavaFileUtil.copy(Paths.get(sourceTree.get().getProperty("srcDir")), os);
             }
 
             if (resourcesTreeProduct.isPresent()) {
-                JavaFileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
+                JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("srcDir")), os);
             }
         }
 

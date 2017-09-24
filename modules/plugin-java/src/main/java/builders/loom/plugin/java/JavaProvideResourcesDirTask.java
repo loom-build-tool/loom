@@ -21,14 +21,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaProvideResourcesDirTask extends AbstractModuleTask {
 
@@ -56,7 +59,7 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        return TaskResult.ok(new ResourcesTreeProduct(srcDir, srcFiles));
+        return TaskResult.ok(newProduct(srcDir, srcFiles));
     }
 
     private List<Path> findSources(final Path srcDir) throws IOException {
@@ -67,6 +70,11 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
         return Files
             .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
             .collect(Collectors.toList());
+    }
+
+    private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
+        final Map<String, String> properties = Map.of("srcDir", srcDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(srcFiles), null);
     }
 
 }

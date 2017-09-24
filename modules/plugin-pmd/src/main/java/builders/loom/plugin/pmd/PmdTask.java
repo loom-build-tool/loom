@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -33,9 +34,10 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.TaskResult;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
-import builders.loom.api.product.ReportProduct;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.Report;
@@ -175,12 +177,12 @@ public class PmdTask extends AbstractModuleTask {
         final int ruleViolationCnt = ruleViolations.get();
 
         if (ruleViolationCnt > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                 "Stopping build since PMD found " + ruleViolationCnt
                     + " rule violations in the code");
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
     }
 
     private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {
@@ -217,6 +219,12 @@ public class PmdTask extends AbstractModuleTask {
         return ruleSetFactory;
     }
 
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
+            outputInfo);
+    }
+
     private static class LogRenderer extends AbstractRenderer {
 
         private final String inputPaths;
@@ -247,6 +255,7 @@ public class PmdTask extends AbstractModuleTask {
         public String defaultFileExtension() {
             return null;
         }
+
 
     }
 

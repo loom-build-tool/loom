@@ -26,6 +26,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,9 +40,10 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
-import builders.loom.api.product.ReportProduct;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.StringUtil;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
@@ -120,12 +122,12 @@ public class SpotBugsTask extends AbstractModuleTask {
         final FindBugs2 engine = executeSpotBugs(project, reportDir);
 
         if (engine.getBugCount() + engine.getErrorCount() > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                 String.format("SpotBugs reported %d bugs and %d errors",
                     engine.getBugCount(), engine.getErrorCount()));
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
     }
 
     private static List<String> getClassesToScan(final Path classesDir) {
@@ -263,6 +265,12 @@ public class SpotBugsTask extends AbstractModuleTask {
         }
 
         throw new IllegalStateException("Unknown reporter: " + reporter);
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
+            outputInfo);
     }
 
 }

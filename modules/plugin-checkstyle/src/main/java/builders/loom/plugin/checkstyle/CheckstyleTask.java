@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -53,9 +54,10 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
-import builders.loom.api.product.ReportProduct;
 import builders.loom.util.ClassLoaderUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractModuleTask {
@@ -116,14 +118,14 @@ public class CheckstyleTask extends AbstractModuleTask {
             final int errors = rootModule.process(files);
 
             if (errors > 0) {
-                return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+                return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                     "Checkstyle reported " + errors + " errors");
             }
         } finally {
             rootModule.destroy();
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
     }
 
     private List<File> listSourceFiles() throws InterruptedException, IOException {
@@ -272,6 +274,12 @@ public class CheckstyleTask extends AbstractModuleTask {
     private XMLLogger newXmlLogger(final Path reportFile) throws IOException {
         return new XMLLogger(new BufferedOutputStream(Files.newOutputStream(reportFile)),
             AutomaticBean.OutputStreamOptions.CLOSE);
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
+            outputInfo);
     }
 
 }

@@ -24,11 +24,11 @@ import java.util.Optional;
 
 public class GenericProduct implements Product {
 
-    private final Map<String, Object> properties;
+    private final Map<String, String> properties;
     private final String checksum;
     private final String outputInfo;
 
-    public GenericProduct(final Map<String, Object> properties, final String checksum,
+    public GenericProduct(final Map<String, String> properties, final String checksum,
                           final String outputInfo) {
         Objects.requireNonNull(properties, "properties required");
         this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
@@ -38,11 +38,11 @@ public class GenericProduct implements Product {
 
     @Override
     public String getProperty(final String key) {
-        final Object val = properties.get(key);
+        final String val = properties.get(key);
         if (val == null) {
             throw new IllegalArgumentException("key <" + key + "> not found in properties");
         }
-        return (String) val;
+        return val;
     }
 
     @Override

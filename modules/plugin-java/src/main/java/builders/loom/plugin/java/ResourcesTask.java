@@ -18,6 +18,7 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,7 +28,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.Hasher;
 
 public class ResourcesTask extends AbstractModuleTask {
@@ -60,8 +61,8 @@ public class ResourcesTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run(final boolean skip) throws Exception {
-        final Optional<ResourcesTreeProduct> resourcesProduct =
-            useProduct(resourcesProductId, ResourcesTreeProduct.class);
+        final Optional<Product> resourcesProduct =
+            useProduct(resourcesProductId, Product.class);
 
         if (!resourcesProduct.isPresent()) {
             return TaskResult.empty();
@@ -70,7 +71,7 @@ public class ResourcesTask extends AbstractModuleTask {
         final Path buildDir =
             Files.createDirectories(resolveBuildDir("resources", compileTarget));
 
-        final Path srcDir = resourcesProduct.get().getSrcDir();
+        final Path srcDir = Paths.get(resourcesProduct.get().getProperty("srcDir"));
 
         final KeyValueCache cache = initCache();
 

@@ -22,6 +22,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -35,14 +36,16 @@ import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.product.ClasspathProduct;
 import builders.loom.api.product.CompilationProduct;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.api.product.ReportProduct;
+import builders.loom.api.product.Product;
 import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
 import builders.loom.plugin.junit.shared.TestResult;
 import builders.loom.plugin.junit.util.InjectingClassLoader;
 import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmitterAware {
 
@@ -81,7 +84,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, "JUnit report"),
+            return TaskResult.fail(newProduct(reportDir, "JUnit report"),
                 String.format(
                 "tests failed: %d (succeeded: %d; skipped: %d; aborted: %d; total: %d)",
                 result.getTestsFailedCount(),
@@ -91,7 +94,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
                 result.getTestsFoundCount()));
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, "JUnit report"));
+        return TaskResult.ok(newProduct(reportDir, "JUnit report"));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {
@@ -168,6 +171,12 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
                 reportDir, new ProgressListenerDelegate(testProgressEmitter));
         }
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        final Map<String, String> properties = Map.of("reportDir", reportDir.toString());
+        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(reportDir),
+            outputInfo);
     }
 
 }

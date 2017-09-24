@@ -55,6 +55,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
         final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
         final List<Path> srcFiles = findSources(srcDir);
 
+
         if (srcFiles.isEmpty()) {
             return TaskResult.empty();
         }
@@ -86,7 +87,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
-        final Map<String, Object> properties = Map.of("srcDir", srcDir.toString());
+        final Map<String, String> properties = Map.of("srcDir", srcDir.toString());
         return new GenericProduct(properties,
             ProductChecksumUtil.calcChecksum(srcFiles), null);
     }

@@ -61,7 +61,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Optional<Product> testCompilation =
             useProduct("testCompilation", Product.class);
 

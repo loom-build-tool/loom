@@ -90,7 +90,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final List<String> classFiles =
             useProduct(compilationProductId, Product.class)
                 .map(p -> Paths.get(p.getProperty("classesDir")))

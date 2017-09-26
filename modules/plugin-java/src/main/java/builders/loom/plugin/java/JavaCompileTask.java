@@ -71,15 +71,11 @@ public class JavaCompileTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
-        final Path buildDir = resolveBuildDir();
-
-        if (skip) {
-            return TaskResult.up2date(newProduct(buildDir));
-        }
-
+    public TaskResult run() throws Exception {
         final Optional<Product> sourceTreeProduct =
             useProduct(sourceProductId, Product.class);
+
+        final Path buildDir = resolveBuildDir();
 
         if (!sourceTreeProduct.isPresent()) {
             FileUtil.deleteDirectoryRecursively(buildDir, true);

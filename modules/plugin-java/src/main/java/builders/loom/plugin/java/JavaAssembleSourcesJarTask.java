@@ -31,7 +31,7 @@ import builders.loom.util.ProductChecksumUtil;
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Optional<Product> sourceTree = useProduct(
             "source", Product.class);
 

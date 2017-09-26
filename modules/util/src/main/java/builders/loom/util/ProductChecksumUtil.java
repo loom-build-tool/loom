@@ -20,16 +20,18 @@ public class ProductChecksumUtil {
     }
 
     public static String calcChecksum(final List<Path> srcFiles) {
-        final List<String> foo = srcFiles.stream().sorted(Comparator.comparing((final Path f) -> f.toString())).flatMap(f -> hash(f)).collect(Collectors.toList());
-
-        System.out.println("allPaths=" + foo);
+        final List<String> foo = srcFiles.stream()
+            .sorted(Comparator.comparing(Path::toString))
+            .flatMap(ProductChecksumUtil::hash)
+            .collect(Collectors.toList());
 
         return Hasher.hash(foo);
     }
 
     private static Stream<String> hash(final Path f) {
         try {
-            return Stream.of(f.toString(), Long.toString(Files.size(f)));
+            return Stream.of(f.toString(), Long.toString(Files.size(f)),
+                Long.toString(Files.getLastModifiedTime(f).toMillis()));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

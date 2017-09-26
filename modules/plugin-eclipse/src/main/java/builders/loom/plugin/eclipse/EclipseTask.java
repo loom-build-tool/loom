@@ -62,7 +62,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         for (final Module module : allModules()) {
             createModuleProject(module);
         }

@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +54,13 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.UsedProducts;
+import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.Hasher;
 import builders.loom.util.Iterables;
+import builders.loom.util.serialize.Record;
+import builders.loom.util.serialize.SimpleSerializer;
 
 public class Job implements Callable<TaskStatus> {
 
@@ -121,16 +125,27 @@ public class Job implements Callable<TaskStatus> {
         productPromise
             .setStartTime(System.nanoTime());
 
-        final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
-        Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
-        final Task task = taskSupplier.get();
-        injectTaskProperties(task);
-
         final String signature = calcSignature();
         LOG.info("Calculated signature is {}", signature);
 
-        if (canSkipTask(signature)) {
-            final TaskResult taskResult = task.run(true);
+        final Path productFile = buildChecksumFileName(".product");
+
+        if (canSkipTask(signature) && Files.exists(productFile)) {
+
+            final Path checksumFile = buildChecksumFileName(".out");
+
+            final Map<String, List<String>> properties = new HashMap<>();
+
+            SimpleSerializer.read(productFile, (e) -> {
+                final String key = e.getFields().get(0);
+                final List<String> values = e.getFields().subList(1, e.getFields().size());
+                properties.put(key, values);
+            });
+
+            // TODO add outputInfo
+            final GenericProduct genericProduct = new GenericProduct(properties,
+                Files.readAllLines(checksumFile).get(0), null);
+            final TaskResult taskResult = TaskResult.up2date(genericProduct);
 
             LOG.info("Task (skipped) resulted with {}", taskResult);
 
@@ -144,7 +159,12 @@ public class Job implements Callable<TaskStatus> {
 
         clearProductChecksums();
 
-        final TaskResult taskResult = task.run(false);
+        final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
+        Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
+        final Task task = taskSupplier.get();
+        injectTaskProperties(task);
+
+        final TaskResult taskResult = task.run();
 
         LOG.info("Task resulted with {}", taskResult);
 
@@ -174,38 +194,38 @@ public class Job implements Callable<TaskStatus> {
     }
 
     private void commitSignature(final String signature) {
-    		final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
+        final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
 
-    		try {
-			Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW);
-		} catch (final IOException e) {
-			throw new UncheckedIOException(e);
-		}
+        try {
+            Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
-	}
+    }
 
 	private boolean canSkipTask(final String signature) {
-    		final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
-    		if (Files.notExists(checksumFile)) {
-    			return false;
-    		}
+        final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
+        if (Files.notExists(checksumFile)) {
+            return false;
+        }
 
-		try {
-			final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
+        try {
+            final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
 
             final boolean equals = signatureLastRun.equals(signature);
             LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
             return equals;
-		} catch (final IOException e) {
-			throw new UncheckedIOException(e);
-		}
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
-	}
+    }
 
 	private String calcSignature() throws InterruptedException {
-    		final UsedProducts productView = buildProductView();
+        final UsedProducts productView = buildProductView();
 
-    		final List<String> checksumParts = new ArrayList<>();
+        final List<String> checksumParts = new ArrayList<>();
 
         // guarantee stable order
         final List<ProductPromise> orderedProductPromises = productView.getAllProducts().stream()
@@ -215,65 +235,72 @@ public class Job implements Callable<TaskStatus> {
             .collect(Collectors.toList());
 
         for (final ProductPromise productPromise : orderedProductPromises) {
-			final String productId = productPromise.getProductId();
-			final String moduleName = productPromise.getModuleName();
-			LOG.info("!!!! {} - {} (from {})", moduleName, productId, name); // FIXME
-			final Optional<Product> product = productView.readProduct(moduleName, productId, Product.class);
-			if (product.isPresent()) {
-				checksumParts.add(moduleName+"-"+productId+":"+product.get().checksum());
-			} else {
-				checksumParts.add(moduleName+"-"+productId+":EMPTY");
-			}
-		}
+            final String productId = productPromise.getProductId();
+            final String moduleName = productPromise.getModuleName();
+            LOG.info("!!!! {} - {} (from {})", moduleName, productId, name); // FIXME
+            final Optional<Product> product = productView.readProduct(moduleName, productId, Product.class);
+            if (product.isPresent()) {
+                checksumParts.add(moduleName + "-" + productId + ":" + product.get().checksum());
+            } else {
+                checksumParts.add(moduleName + "-" + productId + ":EMPTY");
+            }
+        }
 
-		checksumParts.addAll(configuredTask.getSkipHints());
+        checksumParts.addAll(configuredTask.getSkipHints());
 
 
-		// TODO
-		// config ?
-		// config files (e.g. checkstyle.xml)
-		// setup: (e.g. jdk version)
-		// ENV
-		// systemproperties
+        // TODO
+        // config ?
+        // config files (e.g. checkstyle.xml)
+        // setup: (e.g. jdk version)
+        // ENV
+        // systemproperties
 
-		// TODO Auto-generated method stub
-		return Hasher.hash(checksumParts);
+        // TODO Auto-generated method stub
+        return Hasher.hash(checksumParts);
 	}
 
-	private void clearProductChecksums() {
-    		try {
-			Files.deleteIfExists(buildChecksumFileName(".out"));
-			Files.deleteIfExists(buildChecksumFileName(".sig"));
-		} catch (final IOException e) {
-			throw new UncheckedIOException(e);
-		}
+    private void clearProductChecksums() {
+        try {
+            Files.deleteIfExists(buildChecksumFileName(".out"));
+            Files.deleteIfExists(buildChecksumFileName(".sig"));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void commitProductChecksum(final TaskResult taskResult) {
+        try {
+            final Path checksumFile = buildChecksumFileName(".out");
+            final Path productFile = buildChecksumFileName(".product");
 
-	    	try {
+            Files.createDirectories(checksumFile.getParent());
 
-			final Path checksumFile = buildChecksumFileName(".out");
-			System.out.println("checksumFile="+checksumFile);
+            if (taskResult.getStatus() == TaskStatus.EMPTY) {
+                /**
+                 * .loom/JavaPlugin/processedTestResources.checksum
+                 */
 
-			Files.createDirectories(checksumFile.getParent());
+                Files.write(checksumFile, List.of("foo"), StandardOpenOption.CREATE_NEW);
 
-			if (taskResult.getStatus() == TaskStatus.EMPTY) {
-					/**
-					 * .loom/JavaPlugin/processedTestResources.checksum
-					 */
+            } else {
+                final Map<String, List<String>> properties = taskResult.getProduct().getProperties();
 
-				Files.write(checksumFile, List.of("foo"), StandardOpenOption.CREATE_NEW);
+                SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
+                    final List<String> elements = new ArrayList<>();
+                    elements.add(e.getKey());
+                    elements.addAll(e.getValue());
+                    return new Record(elements);
+                });
 
-	    		} else {
-	    			final String checksum = taskResult.getProduct().checksum();
-	    			Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
-	    		}
-	    	} catch(final IOException ioe) {
-	    		throw new UncheckedIOException(ioe);
-	    	}
+                final String checksum = taskResult.getProduct().checksum();
+                Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
+            }
+        } catch (final IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
 
-	}
+    }
 
 	private Path buildChecksumFileName(final String suffix) {
 		final Path checksumFile = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())

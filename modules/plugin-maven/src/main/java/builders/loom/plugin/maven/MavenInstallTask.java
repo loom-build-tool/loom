@@ -77,7 +77,7 @@ public class MavenInstallTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         if (getRuntimeConfiguration().getVersion() == null) {
             throw new IllegalStateException("Artifact version required "
                 + "(specify --release)");

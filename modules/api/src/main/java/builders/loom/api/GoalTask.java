@@ -46,7 +46,7 @@ public class GoalTask implements Task, ProductDependenciesAware {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         for (final String usedProductId : usedProductIds) {
             usedProducts.waitForProduct(usedProductId);
         }

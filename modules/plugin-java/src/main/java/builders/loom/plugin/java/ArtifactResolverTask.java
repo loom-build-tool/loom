@@ -43,7 +43,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final List<String> dependencies = listDependencies();
 
         if (dependencies.isEmpty()) {

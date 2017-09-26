@@ -29,7 +29,7 @@ import builders.loom.util.ProductChecksumUtil;
 public class SpringBootFatJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Product springBootApplication =
             requireProduct("springBootApplication", Product.class);
 

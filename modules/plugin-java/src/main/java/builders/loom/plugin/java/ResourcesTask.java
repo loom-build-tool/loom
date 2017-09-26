@@ -61,7 +61,7 @@ public class ResourcesTask extends AbstractModuleTask {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Optional<Product> resourcesProduct =
             useProduct(resourcesProductId, Product.class);
 

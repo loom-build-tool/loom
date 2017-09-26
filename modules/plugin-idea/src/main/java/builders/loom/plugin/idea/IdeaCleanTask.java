@@ -43,7 +43,7 @@ public class IdeaCleanTask extends AbstractTask implements ModuleGraphAware {
     }
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
 
         removeDir(projectBaseDir.resolve(".idea"));

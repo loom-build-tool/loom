@@ -60,6 +60,11 @@ public class GenericProduct implements Product {
     }
 
     @Override
+    public Map<String, List<String>> getProperties() {
+        return properties;
+    }
+
+    @Override
     public String checksum() {
         return checksum;
     }

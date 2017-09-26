@@ -31,7 +31,7 @@ import builders.loom.util.ProductChecksumUtil;
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
-    public TaskResult run(final boolean skip) throws Exception {
+    public TaskResult run() throws Exception {
         final Optional<Product> resourcesTreeProduct =
             useProduct("javadoc", Product.class);
 

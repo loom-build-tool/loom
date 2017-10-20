@@ -182,7 +182,7 @@ public class ModuleRunner {
         final ExecutionReport executionReport = new ExecutionReport();
         reportingData.stream()
             .sorted(Comparator.comparingLong(
-                foo -> foo.getCompletedProductReport().getCompletedAt()))
+                item -> item.getCompletedProductReport().getCompletedAt()))
             .forEach(item -> {
 
                 final Optional<CompletedProductReport> latest =

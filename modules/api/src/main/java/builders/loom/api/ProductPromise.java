@@ -29,123 +29,124 @@ import builders.loom.api.product.Product;
 
 public final class ProductPromise {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProductPromise.class);
 
-	private final String moduleName;
-	private final String productId;
+    private final String moduleName;
+    private final String productId;
 
-	private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
+    private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-	private long startTime;
-	private long completedAt;
-	private TaskResult taskResult;
+    private long startTime;
+    private long completedAt;
+    private TaskResult taskResult;
 
-	public ProductPromise(final String moduleName, final String productId) {
-		this.moduleName = Objects.requireNonNull(moduleName);
-		this.productId = Objects.requireNonNull(productId);
-	}
+    public ProductPromise(final String moduleName, final String productId) {
+        this.moduleName = Objects.requireNonNull(moduleName);
+        this.productId = Objects.requireNonNull(productId);
+    }
 
-	public void setStartTime(final long startTime) {
-		this.startTime = startTime;
-	}
+    public void setStartTime(final long startTime) {
+        this.startTime = startTime;
+    }
 
-	public void complete(final TaskResult result) {
-		Objects.requireNonNull(result, "taskResult required");
-		this.taskResult = result;
-		final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
-		if (!completed) {
-			throw new IllegalStateException(
-					"Product promise <" + productId + "> already completed");
-		}
+    public void complete(final TaskResult result) {
+        Objects.requireNonNull(result, "taskResult required");
+        this.taskResult = result;
+        final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
+        if (!completed) {
+            throw new IllegalStateException(
+                "Product promise <" + productId + "> already completed");
+        }
 
+        final long now = System.nanoTime();
 
-		final long now = System.nanoTime();
+        if (now < startTime) {
+            throw new IllegalStateException();
+        }
 
-		if (now < startTime) {
-			throw new IllegalStateException();
-		}
+        completedAt = now;
+    }
 
-		completedAt = now;
-	}
+    public String getModuleName() {
+        return moduleName;
+    }
 
-	public String getModuleName() {
-		return moduleName;
-	}
+    public String getProductId() {
+        return productId;
+    }
 
-	public String getProductId() {
-		return productId;
-	}
+    public Optional<Product> getAndWaitForProduct() throws InterruptedException {
+        return waitAndGet(promise);
+    }
 
-	public Optional<Product> getAndWaitForProduct() throws InterruptedException {
-		return waitAndGet(promise);
-	}
+    public Optional<Product> getWithoutWait() {
+        return promise.getNow(Optional.empty());
+    }
 
-	public Optional<Product> getWithoutWait() {
-		return promise.getNow(Optional.empty());
-	}
+    private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
+        throws InterruptedException {
 
-	private Optional<Product> waitAndGet(final Future<Optional<Product>> future)
-			throws InterruptedException {
+        LOG.debug("Requesting product <{}> ...", productId);
 
-		LOG.debug("Requesting product <{}> ...", productId);
+        try {
+            final Optional<Product> product = future.get();
+            LOG.debug("Return product <{}> with value: {}", productId, product.orElse(null));
+            return product;
+        } catch (final ExecutionException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-		try {
-			final Optional<Product> product = future.get();
-			LOG.debug("Return product <{}> with value: {}", productId, product.orElse(null));
-			return product;
-		} catch (final ExecutionException e) {
-			throw new IllegalStateException(e);
-		}
-	}
+    public long getStartTime() {
+        return startTime;
+    }
 
-	public long getStartTime() {
-		return startTime;
-	}
+    public long getCompletedAt() {
+        return completedAt;
+    }
 
-	public long getCompletedAt() {
-		return completedAt;
-	}
+    public TaskStatus getTaskStatus() {
+        if (taskResult == null) {
+            throw new IllegalStateException("taskResult is null");
+        }
+        return taskResult.getStatus();
+    }
 
-	public TaskStatus getTaskStatus() {
-		if (taskResult == null) {
-			throw new IllegalStateException("taskResult is null");
-		}
-		return taskResult.getStatus();
-	}
-	
-	public CompletedProductReport buildReport() {
-		return new CompletedProductReport(productId, getTaskStatus(), startTime, completedAt);
-	}
+    public CompletedProductReport buildReport() {
+        return new CompletedProductReport(productId, getTaskStatus(), startTime, completedAt);
+    }
 
-	public static final class CompletedProductReport {
+    public static final class CompletedProductReport {
 
-		private final String productId;
-		private final TaskStatus taskStatus;
-		private final long startTime;
-		private final long completedAt;
+        private final String productId;
+        private final TaskStatus taskStatus;
+        private final long startTime;
+        private final long completedAt;
 
-		CompletedProductReport(final String productId, final TaskStatus taskStatus, final long startTime, final long completedAt) {
-			this.productId = productId;
-			this.taskStatus = taskStatus;
-			this.startTime = startTime;
-			this.completedAt = completedAt;
-		}
-		
-		public String getProductId() {
-			return productId;
-		}
-		public TaskStatus getTaskStatus() {
-			return taskStatus;
-		}
-		
-		public long getStartTime() {
-			return startTime;
-		}
-		
-		public long getCompletedAt() {
-			return completedAt;
-		}
+        CompletedProductReport(final String productId, final TaskStatus taskStatus,
+            final long startTime, final long completedAt) {
+            this.productId = productId;
+            this.taskStatus = taskStatus;
+            this.startTime = startTime;
+            this.completedAt = completedAt;
+        }
 
-	}
+        public String getProductId() {
+            return productId;
+        }
+
+        public TaskStatus getTaskStatus() {
+            return taskStatus;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public long getCompletedAt() {
+            return completedAt;
+        }
+
+    }
 
 }

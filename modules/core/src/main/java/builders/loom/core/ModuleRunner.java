@@ -179,14 +179,17 @@ public class ModuleRunner {
                         .getActuallyUsedProducts().orElse(Collections.emptySet());
 
                 final Optional<CompletedProductReport> latest = actuallyUsedProducts.stream()
-                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt)).map(ProductPromise::buildReport);
+                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt))
+                    .map(ProductPromise::buildReport);
 
                 if (latest.isPresent()) {
                     reportProductWithDependencies(
-                    		executionReport, configuredTask.buildReportItem(), productPromise.buildReport(), latest.get());
+                        executionReport, configuredTask.buildReportItem(),
+                        productPromise.buildReport(), latest.get());
                 } else {
-                		reportProductWithoutDependencies(
-                				executionReport, configuredTask.buildReportItem(), productPromise.buildReport());
+                    reportProductWithoutDependencies(
+                        executionReport, configuredTask.buildReportItem(),
+                        productPromise.buildReport());
                 }
 
             });
@@ -194,34 +197,37 @@ public class ModuleRunner {
         return executionReport;
     }
 
-	private void reportProductWithoutDependencies(final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
-			final CompletedProductReport productPromise) {
-		executionReport.add(executionReportItem.toString(), executionReportItem.getType(),
-		    productPromise.getTaskStatus(),
-		    productPromise.getCompletedAt()
-		        - productPromise.getStartTime());
+    private void reportProductWithoutDependencies(
+        final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
+        final CompletedProductReport productPromise) {
+        executionReport.add(executionReportItem.toString(), executionReportItem.getType(),
+            productPromise.getTaskStatus(),
+            productPromise.getCompletedAt()
+            - productPromise.getStartTime());
 
-		LOG.info("Product {} was completed at {} after {}ms without any dependencies",
-		    productPromise.getProductId(), productPromise.getCompletedAt(),
-		    (productPromise.getCompletedAt()
-		        - productPromise.getStartTime()) / NANO_MILLI);
-	}
+        LOG.info("Product {} was completed at {} after {}ms without any dependencies",
+            productPromise.getProductId(), productPromise.getCompletedAt(),
+            (productPromise.getCompletedAt()
+                - productPromise.getStartTime()) / NANO_MILLI);
+    }
 
-	private void reportProductWithDependencies(final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
-			final CompletedProductReport productPromise, final CompletedProductReport productExecutionReport) {
-		executionReport.add(
-		    executionReportItem.toString(), executionReportItem.getType(),
-		    productPromise.getTaskStatus(),
-		    productPromise.getCompletedAt() - productExecutionReport.getCompletedAt());
+    private void reportProductWithDependencies(
+        final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
+        final CompletedProductReport productPromise,
+        final CompletedProductReport productExecutionReport) {
+        executionReport.add(
+            executionReportItem.toString(), executionReportItem.getType(),
+            productPromise.getTaskStatus(),
+            productPromise.getCompletedAt() - productExecutionReport.getCompletedAt());
 
-		LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
-		    productPromise.getProductId(), productPromise.getCompletedAt(),
-		    (productPromise.getCompletedAt()
-		        - productPromise.getStartTime()) / NANO_MILLI,
-		    productExecutionReport.getProductId(),
-		    (productPromise.getCompletedAt()
-		        - productExecutionReport.getCompletedAt()) / NANO_MILLI);
-	}
+        LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
+            productPromise.getProductId(), productPromise.getCompletedAt(),
+            (productPromise.getCompletedAt()
+                - productPromise.getStartTime()) / NANO_MILLI,
+            productExecutionReport.getProductId(),
+            (productPromise.getCompletedAt()
+                - productExecutionReport.getCompletedAt()) / NANO_MILLI);
+    }
 
     private void resolveModuleDependencyGraph() {
         final DirectedGraph<Module> dependentModules =
@@ -232,7 +238,7 @@ public class ModuleRunner {
                 .stream().map(m -> moduleRegistry.lookup(m)
                     .orElseThrow(() -> new IllegalStateException(
                         "Failed resolving dependent module "
-                        + m + " from module " + module.getModuleName())))
+                            + m + " from module " + module.getModuleName())))
                 .collect(Collectors.toSet());
 
             dependentModules.addEdges(module, modCmpDeps);

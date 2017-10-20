@@ -38,9 +38,6 @@ public class ExecutionReport {
         return resolvedTasks;
     }
 
-    /**
-     * @param reportKey identifies using module and task (e.g. "com.example.api > compilation") 
-     */
     public void add(final String reportKey, final TaskType type, final TaskStatus taskStatus,
                     final long duration) {
         durations.put(reportKey, new ExecutionStatus(taskStatus, type, duration));

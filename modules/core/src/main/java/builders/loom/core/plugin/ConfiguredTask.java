@@ -26,95 +26,118 @@ import builders.loom.api.Task;
 
 public class ConfiguredTask {
 
-    private final BuildContext buildContext;
-    private final String name;
-    private final Set<String> pluginNames;
-    private final Supplier<Task> taskSupplier;
-    private final String providedProduct;
-    private final Set<String> usedProducts;
-    private final Set<String> importedProducts;
-    private final Set<String> importedAllProducts;
-    private final String description;
-    private final TaskType type;
+	private final BuildContext buildContext;
+	private final String name;
+	private final Set<String> pluginNames;
+	private final Supplier<Task> taskSupplier;
+	private final String providedProduct;
+	private final Set<String> usedProducts;
+	private final Set<String> importedProducts;
+	private final Set<String> importedAllProducts;
+	private final String description;
+	private final TaskType type;
 
-    @SuppressWarnings("checkstyle:parameternumber")
-    ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
-                   final Supplier<Task> taskSupplier, final String providedProduct,
-                   final Set<String> usedProducts, final Set<String> importedProducts,
-                   final Set<String> importedAllProducts, final String description,
-                   final TaskType type) {
-        this.buildContext = buildContext;
-        this.name = name;
-        this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
-        this.taskSupplier = taskSupplier;
-        this.providedProduct = providedProduct;
-        this.usedProducts = new HashSet<>(usedProducts);
-        this.importedProducts = importedProducts;
-        this.importedAllProducts = importedAllProducts;
-        this.description = description;
-        this.type = type;
-    }
+	@SuppressWarnings("checkstyle:parameternumber")
+	ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
+			final Supplier<Task> taskSupplier, final String providedProduct,
+			final Set<String> usedProducts, final Set<String> importedProducts,
+			final Set<String> importedAllProducts, final String description,
+			final TaskType type) {
+		this.buildContext = buildContext;
+		this.name = name;
+		this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
+		this.taskSupplier = taskSupplier;
+		this.providedProduct = providedProduct;
+		this.usedProducts = new HashSet<>(usedProducts);
+		this.importedProducts = importedProducts;
+		this.importedAllProducts = importedAllProducts;
+		this.description = description;
+		this.type = type;
+	}
 
-    public BuildContext getBuildContext() {
-        return buildContext;
-    }
+	public BuildContext getBuildContext() {
+		return buildContext;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public Set<String> getPluginNames() {
-        return Collections.unmodifiableSet(pluginNames);
-    }
+	public Set<String> getPluginNames() {
+		return Collections.unmodifiableSet(pluginNames);
+	}
 
-    public String getPluginName() {
-        if (pluginNames.size() != 1) {
-            throw new IllegalStateException("Expected exactly 1 Plugin, got " + pluginNames.size());
-        }
-        return pluginNames.iterator().next();
-    }
+	public String getPluginName() {
+		if (pluginNames.size() != 1) {
+			throw new IllegalStateException("Expected exactly 1 Plugin, got " + pluginNames.size());
+		}
+		return pluginNames.iterator().next();
+	}
 
-    public Supplier<Task> getTaskSupplier() {
-        return taskSupplier;
-    }
+	public Supplier<Task> getTaskSupplier() {
+		return taskSupplier;
+	}
 
-    public String getProvidedProduct() {
-        return providedProduct;
-    }
+	public String getProvidedProduct() {
+		return providedProduct;
+	}
 
-    public Set<String> getUsedProducts() {
-        return Collections.unmodifiableSet(usedProducts);
-    }
+	public Set<String> getUsedProducts() {
+		return Collections.unmodifiableSet(usedProducts);
+	}
 
-    public Set<String> getImportedProducts() {
-        return Collections.unmodifiableSet(importedProducts);
-    }
+	public Set<String> getImportedProducts() {
+		return Collections.unmodifiableSet(importedProducts);
+	}
 
-    ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
-        pluginNames.add(pluginName);
-        this.usedProducts.addAll(additionalProducts);
-        return this;
-    }
+	ConfiguredTask addUsedProducts(final String pluginName, final Set<String> additionalProducts) {
+		pluginNames.add(pluginName);
+		this.usedProducts.addAll(additionalProducts);
+		return this;
+	}
 
-    public Set<String> getImportedAllProducts() {
-        return Collections.unmodifiableSet(importedAllProducts);
-    }
+	public Set<String> getImportedAllProducts() {
+		return Collections.unmodifiableSet(importedAllProducts);
+	}
 
-    public String getDescription() {
-        return description;
-    }
+	public String getDescription() {
+		return description;
+	}
 
-    public TaskType getType() {
-        return type;
-    }
+	public TaskType getType() {
+		return type;
+	}
 
-    public boolean isGoal() {
-        return type == TaskType.GOAL;
-    }
+	public boolean isGoal() {
+		return type == TaskType.GOAL;
+	}
 
-    @Override
-    public String toString() {
-        return buildContext.getModuleName() + " > " + name;
-    }
+	@Override
+	public String toString() {
+		return buildContext.getModuleName() + " > " + name;
+	}
+
+	public ExecutionReportItem buildReportItem() {
+		return new ExecutionReportItem(this.toString(), type);
+	}
+
+	public static final class ExecutionReportItem {
+
+		private final String reportKey;
+		private final TaskType type;
+
+		ExecutionReportItem(final String reportKey, final TaskType type) {
+			this.reportKey = reportKey;
+			this.type = type;
+		}
+		
+		public String getReportKey() {
+			return reportKey;
+		}
+		
+		public TaskType getType() {
+			return type;
+		}
+	}
 
 }

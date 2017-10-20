@@ -200,7 +200,7 @@ public class ModuleRunner {
     private void reportProductWithoutDependencies(
         final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
         final CompletedProductReport productPromise) {
-        executionReport.add(executionReportItem.toString(), executionReportItem.getType(),
+        executionReport.add(executionReportItem.getReportKey(), executionReportItem.getType(),
             productPromise.getTaskStatus(),
             productPromise.getCompletedAt()
             - productPromise.getStartTime());
@@ -216,7 +216,7 @@ public class ModuleRunner {
         final CompletedProductReport productPromise,
         final CompletedProductReport productExecutionReport) {
         executionReport.add(
-            executionReportItem.toString(), executionReportItem.getType(),
+            executionReportItem.getReportKey(), executionReportItem.getType(),
             productPromise.getTaskStatus(),
             productPromise.getCompletedAt() - productExecutionReport.getCompletedAt());
 

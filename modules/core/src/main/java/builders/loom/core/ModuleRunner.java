@@ -205,7 +205,7 @@ public class ModuleRunner {
             productPromise.getCompletedAt()
             - productPromise.getStartTime());
 
-        LOG.info("Product {} was completed at {} after {}ms without any dependencies",
+        LOG.info("Product <{}> was completed at {} after {}ms without any dependencies",
             productPromise.getProductId(), productPromise.getCompletedAt(),
             (productPromise.getCompletedAt()
                 - productPromise.getStartTime()) / NANO_MILLI);
@@ -220,7 +220,7 @@ public class ModuleRunner {
             productPromise.getTaskStatus(),
             productPromise.getCompletedAt() - productExecutionReport.getCompletedAt());
 
-        LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
+        LOG.info("Product <{}> was completed at {} after {}ms blocked by <{}> for {}ms",
             productPromise.getProductId(), productPromise.getCompletedAt(),
             (productPromise.getCompletedAt()
                 - productPromise.getStartTime()) / NANO_MILLI,

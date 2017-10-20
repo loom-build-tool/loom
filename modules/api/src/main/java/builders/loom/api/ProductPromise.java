@@ -36,8 +36,8 @@ public final class ProductPromise {
 
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-    private long startTime;
-    private long completedAt;
+    private Long startTime;
+    private Long completedAt;
     private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {

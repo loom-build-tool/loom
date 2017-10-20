@@ -17,7 +17,6 @@
 package builders.loom.core;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,40 +163,47 @@ public class ModuleRunner {
 
         LOG.debug("Executed {} tasks in {}", resolvedTasks.size(), sw);
 
-        final ExecutionReport executionReport = new ExecutionReport(resolvedTasks);
+        final List<ReportDataItem> reportingData = resolvedTasks.stream()
+            .map(configuredTask -> new ReportDataItem(configuredTask,
+                lookupProductPromise(configuredTask.getBuildContext(),
+                configuredTask.getProvidedProduct()).buildReport(),
 
-        resolvedTasks.stream()
+                configuredTaskJobMap.get(configuredTask)
+                    .getActuallyUsedProducts().stream()
+                    .map(pp -> pp.buildReport())
+                    .collect(Collectors.toSet())
+                ))
+            .collect(Collectors.toList());
+
+        return createExecutionReport(reportingData);
+    }
+
+    private static ExecutionReport createExecutionReport(final List<ReportDataItem> reportingData) {
+        final ExecutionReport executionReport = new ExecutionReport();
+        reportingData.stream()
             .sorted(Comparator.comparingLong(
-                ct -> lookupProductPromise(
-                    ct.getBuildContext(), ct.getProvidedProduct()).getCompletedAt()))
-            .forEach(configuredTask -> {
-                final ProductPromise productPromise =
-                    lookupProductPromise(configuredTask.getBuildContext(),
-                        configuredTask.getProvidedProduct());
-                final Set<ProductPromise> actuallyUsedProducts =
-                    configuredTaskJobMap.get(configuredTask)
-                        .getActuallyUsedProducts().orElse(Collections.emptySet());
+                foo -> foo.getCompletedProductReport().getCompletedAt()))
+            .forEach(item -> {
 
-                final Optional<CompletedProductReport> latest = actuallyUsedProducts.stream()
-                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt))
-                    .map(ProductPromise::buildReport);
+                final Optional<CompletedProductReport> latest =
+                    item.getAcutallyCompletedProductReports().stream()
+                    .max(Comparator.comparingLong(CompletedProductReport::getCompletedAt));
 
                 if (latest.isPresent()) {
                     reportProductWithDependencies(
-                        executionReport, configuredTask.buildReportItem(),
-                        productPromise.buildReport(), latest.get());
+                        executionReport, item.getConfiguredTask().buildReportItem(),
+                        item.getCompletedProductReport(), latest.get());
                 } else {
                     reportProductWithoutDependencies(
-                        executionReport, configuredTask.buildReportItem(),
-                        productPromise.buildReport());
+                        executionReport, item.getConfiguredTask().buildReportItem(),
+                        item.getCompletedProductReport());
                 }
 
             });
-
         return executionReport;
     }
 
-    private void reportProductWithoutDependencies(
+    private static void reportProductWithoutDependencies(
         final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
         final CompletedProductReport productPromise) {
         executionReport.add(executionReportItem.getReportKey(), executionReportItem.getType(),
@@ -211,7 +217,7 @@ public class ModuleRunner {
                 - productPromise.getStartTime()) / NANO_MILLI);
     }
 
-    private void reportProductWithDependencies(
+    private static void reportProductWithDependencies(
         final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
         final CompletedProductReport productPromise,
         final CompletedProductReport productExecutionReport) {
@@ -442,5 +448,31 @@ public class ModuleRunner {
             .collect(Collectors.toSet());
     }
 
+    private static final class ReportDataItem {
+
+        private final ConfiguredTask configuredTask;
+        private final CompletedProductReport completedProductReport;
+        private final Set<CompletedProductReport> acutallyCompletedProductReports;
+
+        ReportDataItem(final ConfiguredTask configuredTask,
+            final CompletedProductReport completedProductReport,
+            final Set<CompletedProductReport> acutallyCompletedProductReports) {
+            this.configuredTask = configuredTask;
+            this.completedProductReport = completedProductReport;
+            this.acutallyCompletedProductReports = acutallyCompletedProductReports;
+        }
+
+        public ConfiguredTask getConfiguredTask() {
+            return configuredTask;
+        }
+
+        public CompletedProductReport getCompletedProductReport() {
+            return completedProductReport;
+        }
+
+        public Set<CompletedProductReport> getAcutallyCompletedProductReports() {
+            return acutallyCompletedProductReports;
+        }
+    }
 }
 

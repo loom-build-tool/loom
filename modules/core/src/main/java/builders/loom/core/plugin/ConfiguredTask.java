@@ -39,10 +39,10 @@ public class ConfiguredTask {
 
     @SuppressWarnings("checkstyle:parameternumber")
     ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
-                   final Supplier<Task> taskSupplier, final String providedProduct,
-                   final Set<String> usedProducts, final Set<String> importedProducts,
-                   final Set<String> importedAllProducts, final String description,
-                   final TaskType type) {
+            final Supplier<Task> taskSupplier, final String providedProduct,
+            final Set<String> usedProducts, final Set<String> importedProducts,
+            final Set<String> importedAllProducts, final String description,
+            final TaskType type) {
         this.buildContext = buildContext;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
@@ -115,6 +115,29 @@ public class ConfiguredTask {
     @Override
     public String toString() {
         return buildContext.getModuleName() + " > " + name;
+    }
+
+    public ExecutionReportItem buildReportItem() {
+        return new ExecutionReportItem(this.toString(), type);
+    }
+
+    public static final class ExecutionReportItem {
+
+        private final String reportKey;
+        private final TaskType type;
+
+        ExecutionReportItem(final String reportKey, final TaskType type) {
+            this.reportKey = reportKey;
+            this.type = type;
+        }
+
+        public String getReportKey() {
+            return reportKey;
+        }
+
+        public TaskType getType() {
+            return type;
+        }
     }
 
 }

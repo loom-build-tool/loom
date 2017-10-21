@@ -36,8 +36,8 @@ public final class ProductPromise {
 
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
-    private long startTime;
-    private long completedAt;
+    private Long startTime;
+    private Long completedAt;
     private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {
@@ -57,7 +57,6 @@ public final class ProductPromise {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
         }
-
 
         final long now = System.nanoTime();
 
@@ -111,6 +110,43 @@ public final class ProductPromise {
             throw new IllegalStateException("taskResult is null");
         }
         return taskResult.getStatus();
+    }
+
+    public CompletedProductReport buildReport() {
+        return new CompletedProductReport(productId, getTaskStatus(), startTime, completedAt);
+    }
+
+    public static final class CompletedProductReport {
+
+        private final String productId;
+        private final TaskStatus taskStatus;
+        private final long startTime;
+        private final long completedAt;
+
+        CompletedProductReport(final String productId, final TaskStatus taskStatus,
+            final long startTime, final long completedAt) {
+            this.productId = productId;
+            this.taskStatus = taskStatus;
+            this.startTime = startTime;
+            this.completedAt = completedAt;
+        }
+
+        public String getProductId() {
+            return productId;
+        }
+
+        public TaskStatus getTaskStatus() {
+            return taskStatus;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public long getCompletedAt() {
+            return completedAt;
+        }
+
     }
 
 }

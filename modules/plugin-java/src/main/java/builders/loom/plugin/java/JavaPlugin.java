@@ -80,7 +80,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(CompileTarget.MAIN))
             .provides("compilation")
             .uses("source", "compileDependencies")
-            .importFromModules("compilation")
+            .importFromModules("compilation", "compileDependencies")
             // TODO ? use lambdas
             .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
                 + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
@@ -91,7 +91,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(CompileTarget.TEST))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
-            .importFromModules("compilation")
+            .importFromModules("compilation", "compileDependencies")
             .desc("Compiles test sources.")
             .register();
 

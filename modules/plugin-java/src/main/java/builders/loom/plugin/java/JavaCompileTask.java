@@ -22,10 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
@@ -82,13 +85,19 @@ public class JavaCompileTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<Path> classpath = new ArrayList<>();
+        final Set<Path> classpath = new LinkedHashSet<>();
 
         switch (compileTarget) {
             case MAIN:
                 useProduct("compileDependencies", Product.class)
                     .map(p -> p.getProperties("classpath"))
                     .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+
+                for (final String module : getModuleConfig().getModuleCompileDependencies()) {
+                    useProduct(module,"compileDependencies", Product.class)
+                        .map(p -> p.getProperties("classpath"))
+                        .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+                }
                 break;
             case TEST:
                 useProduct("compilation", Product.class)
@@ -98,6 +107,12 @@ public class JavaCompileTask extends AbstractModuleTask {
                 useProduct("testDependencies", Product.class)
                     .map(p -> p.getProperties("classpath"))
                     .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+
+                for (final String module : getModuleConfig().getModuleCompileDependencies()) {
+                    useProduct(module,"compileDependencies", Product.class)
+                        .map(p -> p.getProperties("classpath"))
+                        .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+                }
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -124,7 +139,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
-    private void compile(final Path buildDir, final List<Path> classpath,
+    private void compile(final Path buildDir, final Collection<Path> classpath,
                          final List<Path> srcFiles)
         throws IOException, InterruptedException {
 
@@ -208,7 +223,7 @@ public class JavaCompileTask extends AbstractModuleTask {
     private StandardJavaFileManager newFileManager(
         final Path buildDir, final JavaCompiler compiler,
         final DiagnosticListener<JavaFileObject> diagnosticListener,
-        final boolean useModulePath, final List<Path> classpath)
+        final boolean useModulePath, final Collection<Path> classpath)
         throws IOException, InterruptedException {
 
         final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
@@ -226,7 +241,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         return fileManager;
     }
 
-    private void buildModulePath(final Path buildDir, final List<Path> classpath,
+    private void buildModulePath(final Path buildDir, final Collection<Path> classpath,
                                  final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
 
@@ -256,7 +271,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         LOG.debug("Modulepath: {}", modulePath);
     }
 
-    private void buildClassPath(final List<Path> classpath,
+    private void buildClassPath(final Collection<Path> classpath,
                                 final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
 
@@ -275,7 +290,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         LOG.debug("Classpath: {}", classPath);
     }
 
-    private void compileSources(final Path buildDir, final List<Path> classpath,
+    private void compileSources(final Path buildDir, final Collection<Path> classpath,
                                 final List<Path> srcFiles, final JavaCompiler compiler,
                                 final DiagnosticListener<JavaFileObject> diag,
                                 final boolean useModulePath, final JavaVersion release)

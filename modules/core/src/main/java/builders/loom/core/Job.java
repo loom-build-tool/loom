@@ -146,7 +146,7 @@ public class Job implements Callable<TaskStatus> {
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 
-    private void injectTaskProperties(final Task task, final UsedProducts usedProducts) {
+    private void injectTaskProperties(final Task task) {
         task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
         if (task instanceof ProductDependenciesAware) {
@@ -194,7 +194,6 @@ public class Job implements Callable<TaskStatus> {
             + ", status=" + status
             + '}';
     }
-
 
     private final class CacheableTaskRun extends AbstractTaskExecutionStrategy {
 
@@ -259,7 +258,7 @@ public class Job implements Callable<TaskStatus> {
             final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
             Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
             final Task task = taskSupplier.get();
-            injectTaskProperties(task, usedProducts);
+            injectTaskProperties(task);
 
             final TaskResult taskResult = task.run();
 
@@ -281,7 +280,7 @@ public class Job implements Callable<TaskStatus> {
 
     }
 
-    private static abstract class AbstractTaskExecutionStrategy implements TaskExecutionStrategy {
+    private abstract static class AbstractTaskExecutionStrategy implements TaskExecutionStrategy {
 
         protected abstract boolean canSkip();
 

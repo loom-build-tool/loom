@@ -254,7 +254,6 @@ public class PmdTask extends AbstractModuleTask {
             return null;
         }
 
-
     }
 
     private static class LogListener implements ThreadSafeReportListener {

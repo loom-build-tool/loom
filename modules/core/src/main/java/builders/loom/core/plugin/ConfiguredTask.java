@@ -43,8 +43,8 @@ public class ConfiguredTask {
     ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
                    final Supplier<Task> taskSupplier, final String providedProduct,
                    final Set<String> usedProducts, final Set<String> importedProducts,
-                   final Set<String> importedAllProducts, final List<String> skipHints, final String description,
-                   final TaskType type) {
+                   final Set<String> importedAllProducts, final List<String> skipHints,
+                   final String description, final TaskType type) {
         this.buildContext = buildContext;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));

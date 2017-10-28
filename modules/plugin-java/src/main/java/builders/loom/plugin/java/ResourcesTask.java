@@ -19,7 +19,6 @@ package builders.loom.plugin.java;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -29,7 +28,7 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
-import builders.loom.util.Hasher;
+import builders.loom.util.Hashing;
 import builders.loom.util.ProductChecksumUtil;
 
 public class ResourcesTask extends AbstractModuleTask {
@@ -93,7 +92,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
         // hash has to change for filter glob changes -- filtered files must not be cached
         final String hash =
-            Hasher.hash(List.of(Objects.toString(pluginSettings.getResourceFilterGlob())));
+            Hashing.hash(Objects.toString(pluginSettings.getResourceFilterGlob()));
 
         final Path cacheFile = cacheDir
             .resolve(getBuildContext().getModuleName())

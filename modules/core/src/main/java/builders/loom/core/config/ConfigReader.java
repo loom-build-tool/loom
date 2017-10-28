@@ -36,7 +36,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.Version;
-import builders.loom.util.Hasher;
+import builders.loom.util.Hashing;
 
 public final class ConfigReader {
 
@@ -75,7 +75,7 @@ public final class ConfigReader {
 
     private static BuildConfigImpl parseAndCacheConfig(final byte[] configData,
                                                        final Path cachePath) throws IOException {
-        final byte[] configHash = Hasher.hash(configData);
+        final byte[] configHash = Hashing.hash(configData);
 
         Files.createDirectories(cachePath);
 

@@ -37,7 +37,7 @@ import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
-import builders.loom.util.Hasher;
+import builders.loom.util.Hashing;
 import builders.loom.util.Iterables;
 
 public class TaskExecutionPrediction {
@@ -93,7 +93,7 @@ public class TaskExecutionPrediction {
             checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));
         }
 
-        final String hash = Hasher.hash(checksumParts);
+        final String hash = Hashing.hash(checksumParts);
 
         LOG.debug("Signature: {}; Hash: {}", checksumParts, hash);
 

@@ -13,7 +13,7 @@ public class SkipChecksumUtils {
     }
 
     public static String file(final Path file) {
-        return Hasher.hashContent(file);
+        return Hashing.hash(file);
     }
 
     public static String always() {

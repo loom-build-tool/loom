@@ -18,6 +18,7 @@ package builders.loom.plugin.junit;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.PluginSettings;
+import builders.loom.util.SkipChecksumUtils;
 
 public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
 
@@ -30,6 +31,9 @@ public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
                 "processedTestResources", "testCompilation")
             .importFromModules("compilation")
             .desc("Executes tests with JUnit 5 and creates test report.")
+            // TODO ? use lambdas
+            .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
             .register();
 
         goal("check")

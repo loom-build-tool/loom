@@ -93,6 +93,9 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("compilation", "testSource", "testDependencies")
             .importFromModules("compilation", "compileDependencies")
             .desc("Compiles test sources.")
+            // TODO ? use lambdas
+            .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
             .register();
 
         task("assembleJar")

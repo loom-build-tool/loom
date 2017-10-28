@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public final class ProductPromise {
     private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
 
     private Long startTime;
-    private Long completedAt;
+    private AtomicLong completedAt = new AtomicLong();
     private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {
@@ -45,26 +46,22 @@ public final class ProductPromise {
         this.productId = Objects.requireNonNull(productId);
     }
 
-    public void setStartTime(final long startTime) {
-        this.startTime = startTime;
+    public void startTimer() {
+        if (this.startTime != null) {
+            throw new IllegalStateException("Timer already started!");
+        }
+        this.startTime = System.nanoTime();
     }
 
     public void complete(final TaskResult result) {
         Objects.requireNonNull(result, "taskResult required");
         this.taskResult = result;
+        promise.thenRun(() -> completedAt.set(System.nanoTime()));
         final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");
         }
-
-        final long now = System.nanoTime();
-
-        if (now < startTime) {
-            throw new IllegalStateException();
-        }
-
-        completedAt = now;
     }
 
     public String getModuleName() {
@@ -102,7 +99,7 @@ public final class ProductPromise {
     }
 
     public long getCompletedAt() {
-        return completedAt;
+        return completedAt.get();
     }
 
     public TaskStatus getTaskStatus() {
@@ -113,7 +110,7 @@ public final class ProductPromise {
     }
 
     public CompletedProductReport buildReport() {
-        return new CompletedProductReport(productId, getTaskStatus(), startTime, completedAt);
+        return new CompletedProductReport(productId, getTaskStatus(), startTime, completedAt.get());
     }
 
     public static final class CompletedProductReport {

@@ -16,10 +16,10 @@
 
 package builders.loom.core;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -110,7 +110,7 @@ public class Job implements Callable<TaskStatus> {
         final ProductPromise productPromise = productRepository
             .lookup(configuredTask.getProvidedProduct());
 
-        productPromise.setStartTime(System.nanoTime());
+        productPromise.startTimer();
 
         return productPromise;
     }
@@ -180,9 +180,11 @@ public class Job implements Callable<TaskStatus> {
             .lookup(productId);
     }
 
-    Optional<Set<ProductPromise>> getActuallyUsedProducts() {
-        return Optional.ofNullable(usedProducts)
-            .map(UsedProducts::getActuallyUsedProducts);
+    Set<ProductPromise> getActuallyUsedProducts() {
+        if (usedProducts == null) {
+            return Collections.emptySet();
+        }
+        return usedProducts.getActuallyUsedProducts();
     }
 
     @Override

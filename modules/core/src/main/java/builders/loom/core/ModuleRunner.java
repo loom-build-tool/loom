@@ -17,7 +17,6 @@
 package builders.loom.core;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,11 +36,13 @@ import builders.loom.api.BuildContext;
 import builders.loom.api.GlobalBuildContext;
 import builders.loom.api.Module;
 import builders.loom.api.ProductPromise;
+import builders.loom.api.ProductPromise.CompletedProductReport;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.core.misc.DirectedGraph;
 import builders.loom.core.plugin.ConfiguredTask;
+import builders.loom.core.plugin.ConfiguredTask.ExecutionReportItem;
 import builders.loom.core.plugin.GoalInfo;
 import builders.loom.core.plugin.PluginLoader;
 import builders.loom.core.plugin.ProductRepositoryImpl;
@@ -162,51 +163,76 @@ public class ModuleRunner {
 
         LOG.debug("Executed {} tasks in {}", resolvedTasks.size(), sw);
 
-        final ExecutionReport executionReport = new ExecutionReport(resolvedTasks);
+        final List<ReportDataItem> reportingData = resolvedTasks.stream()
+            .map(configuredTask -> new ReportDataItem(configuredTask,
+                lookupProductPromise(configuredTask.getBuildContext(),
+                configuredTask.getProvidedProduct()).buildReport(),
 
-        resolvedTasks.stream()
+                configuredTaskJobMap.get(configuredTask)
+                    .getActuallyUsedProducts().stream()
+                    .map(pp -> pp.buildReport())
+                    .collect(Collectors.toSet())
+                ))
+            .collect(Collectors.toList());
+
+        return createExecutionReport(reportingData);
+    }
+
+    private static ExecutionReport createExecutionReport(final List<ReportDataItem> reportingData) {
+        final ExecutionReport executionReport = new ExecutionReport();
+        reportingData.stream()
             .sorted(Comparator.comparingLong(
-                ct -> lookupProductPromise(
-                    ct.getBuildContext(), ct.getProvidedProduct()).getCompletedAt()))
-            .forEach(configuredTask -> {
-                final ProductPromise productPromise =
-                    lookupProductPromise(configuredTask.getBuildContext(),
-                        configuredTask.getProvidedProduct());
-                final Set<ProductPromise> actuallyUsedProducts =
-                    configuredTaskJobMap.get(configuredTask)
-                        .getActuallyUsedProducts().orElse(Collections.emptySet());
+                item -> item.getCompletedProductReport().getCompletedAt()))
+            .forEach(item -> {
 
-                final Optional<ProductPromise> latest = actuallyUsedProducts.stream()
-                    .max(Comparator.comparingLong(ProductPromise::getCompletedAt));
+                final Optional<CompletedProductReport> latest =
+                    item.getAcutallyCompletedProductReports().stream()
+                    .max(Comparator.comparingLong(CompletedProductReport::getCompletedAt));
 
                 if (latest.isPresent()) {
-                    executionReport.add(
-                        configuredTask.toString(), configuredTask.getType(),
-                        productPromise.getTaskStatus(),
-                        productPromise.getCompletedAt() - latest.get().getCompletedAt());
-
-                    LOG.info("Product {} was completed at {} after {}ms blocked by {} for {}ms",
-                        productPromise.getProductId(), productPromise.getCompletedAt(),
-                        (productPromise.getCompletedAt()
-                            - productPromise.getStartTime()) / NANO_MILLI,
-                        latest.get().getProductId(),
-                        (productPromise.getCompletedAt()
-                            - latest.get().getCompletedAt()) / NANO_MILLI);
+                    reportProductWithDependencies(
+                        executionReport, item.getConfiguredTask().buildReportItem(),
+                        item.getCompletedProductReport(), latest.get());
                 } else {
-                    executionReport.add(configuredTask.toString(), configuredTask.getType(),
-                        productPromise.getTaskStatus(),
-                        productPromise.getCompletedAt()
-                            - productPromise.getStartTime());
-
-                    LOG.info("Product {} was completed at {} after {}ms without any dependencies",
-                        productPromise.getProductId(), productPromise.getCompletedAt(),
-                        (productPromise.getCompletedAt()
-                            - productPromise.getStartTime()) / NANO_MILLI);
+                    reportProductWithoutDependencies(
+                        executionReport, item.getConfiguredTask().buildReportItem(),
+                        item.getCompletedProductReport());
                 }
 
             });
-
         return executionReport;
+    }
+
+    private static void reportProductWithoutDependencies(
+        final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
+        final CompletedProductReport productPromise) {
+        executionReport.add(executionReportItem.getReportKey(), executionReportItem.getType(),
+            productPromise.getTaskStatus(),
+            productPromise.getCompletedAt()
+            - productPromise.getStartTime());
+
+        LOG.info("Product <{}> was completed at {} after {}ms without any dependencies",
+            productPromise.getProductId(), productPromise.getCompletedAt(),
+            (productPromise.getCompletedAt()
+                - productPromise.getStartTime()) / NANO_MILLI);
+    }
+
+    private static void reportProductWithDependencies(
+        final ExecutionReport executionReport, final ExecutionReportItem executionReportItem,
+        final CompletedProductReport productPromise,
+        final CompletedProductReport productExecutionReport) {
+        executionReport.add(
+            executionReportItem.getReportKey(), executionReportItem.getType(),
+            productPromise.getTaskStatus(),
+            productPromise.getCompletedAt() - productExecutionReport.getCompletedAt());
+
+        LOG.info("Product <{}> was completed at {} after {}ms blocked by <{}> for {}ms",
+            productPromise.getProductId(), productPromise.getCompletedAt(),
+            (productPromise.getCompletedAt()
+                - productPromise.getStartTime()) / NANO_MILLI,
+            productExecutionReport.getProductId(),
+            (productPromise.getCompletedAt()
+                - productExecutionReport.getCompletedAt()) / NANO_MILLI);
     }
 
     private void resolveModuleDependencyGraph() {
@@ -218,7 +244,7 @@ public class ModuleRunner {
                 .stream().map(m -> moduleRegistry.lookup(m)
                     .orElseThrow(() -> new IllegalStateException(
                         "Failed resolving dependent module "
-                        + m + " from module " + module.getModuleName())))
+                            + m + " from module " + module.getModuleName())))
                 .collect(Collectors.toSet());
 
             dependentModules.addEdges(module, modCmpDeps);
@@ -422,5 +448,31 @@ public class ModuleRunner {
             .collect(Collectors.toSet());
     }
 
+    private static final class ReportDataItem {
+
+        private final ConfiguredTask configuredTask;
+        private final CompletedProductReport completedProductReport;
+        private final Set<CompletedProductReport> acutallyCompletedProductReports;
+
+        ReportDataItem(final ConfiguredTask configuredTask,
+            final CompletedProductReport completedProductReport,
+            final Set<CompletedProductReport> acutallyCompletedProductReports) {
+            this.configuredTask = configuredTask;
+            this.completedProductReport = completedProductReport;
+            this.acutallyCompletedProductReports = acutallyCompletedProductReports;
+        }
+
+        public ConfiguredTask getConfiguredTask() {
+            return configuredTask;
+        }
+
+        public CompletedProductReport getCompletedProductReport() {
+            return completedProductReport;
+        }
+
+        public Set<CompletedProductReport> getAcutallyCompletedProductReports() {
+            return acutallyCompletedProductReports;
+        }
+    }
 }
 

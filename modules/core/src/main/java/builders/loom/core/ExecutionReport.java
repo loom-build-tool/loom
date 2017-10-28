@@ -18,29 +18,18 @@ package builders.loom.core;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import builders.loom.api.TaskStatus;
-import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.TaskType;
 
 public class ExecutionReport {
 
     private final Map<String, ExecutionStatus> durations = new LinkedHashMap<>();
-    private final List<ConfiguredTask> resolvedTasks;
 
-    public ExecutionReport(final List<ConfiguredTask> resolvedTasks) {
-        this.resolvedTasks = resolvedTasks;
-    }
-
-    public List<ConfiguredTask> getResolvedTasks() {
-        return resolvedTasks;
-    }
-
-    public void add(final String taskName, final TaskType type, final TaskStatus taskStatus,
+    public void add(final String reportKey, final TaskType type, final TaskStatus taskStatus,
                     final long duration) {
-        durations.put(taskName, new ExecutionStatus(taskStatus, type, duration));
+        durations.put(reportKey, new ExecutionStatus(taskStatus, type, duration));
     }
 
     public Map<String, ExecutionStatus> getDurations() {

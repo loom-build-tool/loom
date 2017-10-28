@@ -124,4 +124,27 @@ public class ConfiguredTask {
         return buildContext.getModuleName() + " > " + name;
     }
 
+    public ExecutionReportItem buildReportItem() {
+        return new ExecutionReportItem(this.toString(), type);
+    }
+
+    public static final class ExecutionReportItem {
+
+        private final String reportKey;
+        private final TaskType type;
+
+        ExecutionReportItem(final String reportKey, final TaskType type) {
+            this.reportKey = reportKey;
+            this.type = type;
+        }
+
+        public String getReportKey() {
+            return reportKey;
+        }
+
+        public TaskType getType() {
+            return type;
+        }
+    }
+
 }

@@ -105,7 +105,7 @@ public class Job implements Callable<TaskStatus> {
         final ProductPromise productPromise = productRepository
             .lookup(configuredTask.getProvidedProduct());
 
-		productPromise.startTimer();
+        productPromise.startTimer();
 
         final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
         Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());

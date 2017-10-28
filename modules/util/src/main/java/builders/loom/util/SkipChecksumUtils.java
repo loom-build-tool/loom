@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
 
 // TODO
 public class SkipChecksumUtils {
 
 	public static String jvmVersion() {
-		return Runtime.version().toString();
+		return "JVM " + Runtime.version().toString();
 	}
 
 	public static String file(final Path file) {
@@ -21,8 +20,14 @@ public class SkipChecksumUtils {
 		}
 	}
 
-	public static String neverSkip() {
-		return UUID.randomUUID().toString();
-	}
+
+
+	// TODO
+	// config ?
+	// config files (e.g. checkstyle.xml)
+	// setup: (e.g. jdk version)
+	// ENV
+	// systemproperties
+
 
 }

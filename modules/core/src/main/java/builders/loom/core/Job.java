@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -116,23 +117,18 @@ public class Job implements Callable<TaskStatus> {
         }
     }
 
+    // TODO add more logging
     public TaskStatus runTask() throws Exception {
         LOG.info("Start task {}", name);
 
-        final ProductPromise productPromise = productRepository
-            .lookup(configuredTask.getProvidedProduct());
-
-        productPromise
-            .setStartTime(System.nanoTime());
+        final ProductPromise productPromise = prepareProductPromise();
 
         final String signature = calcSignature();
-        LOG.info("Calculated signature is {}", signature);
 
-        final Path productFile = buildChecksumFileName(".product");
+        final Path productFile = buildFileName(".product");
 
         if (canSkipTask(signature) && Files.exists(productFile)) {
-
-            final Path checksumFile = buildChecksumFileName(".out");
+            final Path checksumFile = buildFileName(".product.checksum");
 
             final Map<String, List<String>> properties = new HashMap<>();
 
@@ -179,7 +175,7 @@ public class Job implements Callable<TaskStatus> {
                 + "status: " + taskResult.getStatus());
         }
 
-        commitProductChecksum(taskResult);
+        saveProduct(taskResult);
         commitSignature(signature);
 
         // note on fail status: product may contain details about the failure (reports)
@@ -193,39 +189,26 @@ public class Job implements Callable<TaskStatus> {
         return taskResult.getStatus();
     }
 
-    private void commitSignature(final String signature) {
-        final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
+    private ProductPromise prepareProductPromise() {
+        final ProductPromise productPromise = productRepository
+            .lookup(configuredTask.getProvidedProduct());
 
-        try {
-            Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        productPromise.setStartTime(System.nanoTime());
 
+        return productPromise;
     }
 
-	private boolean canSkipTask(final String signature) {
-        final Path checksumFile = buildChecksumFileName(".sig"); // TODO better suffix
-        if (Files.notExists(checksumFile)) {
-            return false;
-        }
-
-        try {
-            final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile));
-
-            final boolean equals = signatureLastRun.equals(signature);
-            LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
-            return equals;
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-    }
-
-	private String calcSignature() throws InterruptedException {
+    private String calcSignature() throws InterruptedException {
         final UsedProducts productView = buildProductView();
 
-        final List<String> checksumParts = new ArrayList<>();
+        final List<String> skipHints = configuredTask.getSkipHints();
+
+        if (skipHints.isEmpty()) {
+            LOG.debug("No skip hints configured -- don't skip");
+            return "PREVENT-SKIP:" + UUID.randomUUID().toString();
+        }
+
+        final List<String> checksumParts = new ArrayList<>(skipHints);
 
         // guarantee stable order
         final List<ProductPromise> orderedProductPromises = productView.getAllProducts().stream()
@@ -237,99 +220,20 @@ public class Job implements Callable<TaskStatus> {
         for (final ProductPromise productPromise : orderedProductPromises) {
             final String productId = productPromise.getProductId();
             final String moduleName = productPromise.getModuleName();
-            LOG.info("!!!! {} - {} (from {})", moduleName, productId, name); // FIXME
-            final Optional<Product> product = productView.readProduct(moduleName, productId, Product.class);
-            if (product.isPresent()) {
-                checksumParts.add(moduleName + "-" + productId + ":" + product.get().checksum());
-            } else {
-                checksumParts.add(moduleName + "-" + productId + ":EMPTY");
-            }
+
+            final String checksum = productView
+                .readProduct(moduleName, productId, Product.class)
+                .map(Product::checksum)
+                .orElse("EMPTY");
+
+            checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));
         }
 
-        checksumParts.addAll(configuredTask.getSkipHints());
+        final String hash = Hasher.hash(checksumParts);
 
+        LOG.debug("Signature: {}; Hash: {}", checksumParts, hash);
 
-        // TODO
-        // config ?
-        // config files (e.g. checkstyle.xml)
-        // setup: (e.g. jdk version)
-        // ENV
-        // systemproperties
-
-        // TODO Auto-generated method stub
-        return Hasher.hash(checksumParts);
-	}
-
-    private void clearProductChecksums() {
-        try {
-            Files.deleteIfExists(buildChecksumFileName(".out"));
-            Files.deleteIfExists(buildChecksumFileName(".sig"));
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void commitProductChecksum(final TaskResult taskResult) {
-        try {
-            final Path checksumFile = buildChecksumFileName(".out");
-            final Path productFile = buildChecksumFileName(".product");
-
-            Files.createDirectories(checksumFile.getParent());
-
-            if (taskResult.getStatus() == TaskStatus.EMPTY) {
-                /**
-                 * .loom/JavaPlugin/processedTestResources.checksum
-                 */
-
-                Files.write(checksumFile, List.of("foo"), StandardOpenOption.CREATE_NEW);
-
-            } else {
-                final Map<String, List<String>> properties = taskResult.getProduct().getProperties();
-
-                SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
-                    final List<String> elements = new ArrayList<>();
-                    elements.add(e.getKey());
-                    elements.addAll(e.getValue());
-                    return new Record(elements);
-                });
-
-                final String checksum = taskResult.getProduct().checksum();
-                Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
-            }
-        } catch (final IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-
-    }
-
-	private Path buildChecksumFileName(final String suffix) {
-		final Path checksumFile = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-				.resolve(Paths.get(Version.getVersion(), "checksums", configuredTask.getBuildContext().getModuleName(),
-						configuredTask.getProvidedProduct() + suffix));
-		return checksumFile;
-	}
-
-	private void injectTaskProperties(final Task task) {
-        task.setRuntimeConfiguration(runtimeConfiguration);
-        task.setBuildContext(buildContext);
-        if (task instanceof ProductDependenciesAware) {
-            final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
-            usedProducts = buildProductView();
-            pdaTask.setUsedProducts(usedProducts);
-        }
-        if (task instanceof ModuleBuildConfigAware) {
-            final ModuleBuildConfigAware mbcaTask = (ModuleBuildConfigAware) task;
-            final Module module = (Module) buildContext;
-            mbcaTask.setModuleBuildConfig(module.getConfig());
-        }
-        if (task instanceof ModuleGraphAware) {
-            final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
-            mgaTask.setTransitiveModuleGraph(transitiveModuleCompileDependencies);
-        }
-        if (task instanceof TestProgressEmitterAware) {
-            final TestProgressEmitterAware tpea = (TestProgressEmitterAware) task;
-            tpea.setTestProgressEmitter(testProgressEmitter);
-        }
+        return hash;
     }
 
     private UsedProducts buildProductView() {
@@ -361,6 +265,102 @@ public class Job implements Callable<TaskStatus> {
         }
 
         return new UsedProducts(buildContext.getModuleName(), productPromises);
+    }
+
+    private void commitSignature(final String signature) {
+        final Path checksumFile = buildFileName(".sig"); // TODO better suffix
+
+        try {
+            Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW); // TODO improve
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+	private boolean canSkipTask(final String signature) {
+        final Path checksumFile = buildFileName(".sig"); // TODO better suffix
+        if (Files.notExists(checksumFile)) {
+            return false;
+        }
+
+        try {
+            final String signatureLastRun = Iterables.getOnlyElement(Files.readAllLines(checksumFile)); // TODO improve
+
+            final boolean equals = signatureLastRun.equals(signature);
+            LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
+            return equals;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+    }
+
+    private void clearProductChecksums() {
+        try {
+            Files.deleteIfExists(buildFileName(".product.checksum"));
+            Files.deleteIfExists(buildFileName(".sig"));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void saveProduct(final TaskResult taskResult) {
+        final Path checksumFile = buildFileName(".product.checksum");
+        final Path productFile = buildFileName(".product");
+
+        try {
+            final String checksum;
+            if (taskResult.getStatus() == TaskStatus.EMPTY) {
+                checksum = "foo";
+            } else {
+                final Product product = taskResult.getProduct();
+                final Map<String, List<String>> properties = product.getProperties();
+
+                SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
+                    final List<String> elements = new ArrayList<>();
+                    elements.add(e.getKey());
+                    elements.addAll(e.getValue());
+                    return new Record(elements);
+                });
+
+                checksum = product.checksum();
+            }
+
+            Files.createDirectories(checksumFile.getParent());
+            Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+	private Path buildFileName(final String suffix) {
+        return LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+            .resolve(Paths.get(Version.getVersion(), "checksums",
+                configuredTask.getBuildContext().getModuleName(),
+                configuredTask.getProvidedProduct() + suffix));
+    }
+
+	private void injectTaskProperties(final Task task) {
+        task.setRuntimeConfiguration(runtimeConfiguration);
+        task.setBuildContext(buildContext);
+        if (task instanceof ProductDependenciesAware) {
+            final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
+            usedProducts = buildProductView();
+            pdaTask.setUsedProducts(usedProducts);
+        }
+        if (task instanceof ModuleBuildConfigAware) {
+            final ModuleBuildConfigAware mbcaTask = (ModuleBuildConfigAware) task;
+            final Module module = (Module) buildContext;
+            mbcaTask.setModuleBuildConfig(module.getConfig());
+        }
+        if (task instanceof ModuleGraphAware) {
+            final ModuleGraphAware mgaTask = (ModuleGraphAware) task;
+            mgaTask.setTransitiveModuleGraph(transitiveModuleCompileDependencies);
+        }
+        if (task instanceof TestProgressEmitterAware) {
+            final TestProgressEmitterAware tpea = (TestProgressEmitterAware) task;
+            tpea.setTestProgressEmitter(testProgressEmitter);
+        }
     }
 
     private ProductPromise buildModuleProduct(final String moduleName, final String productId) {

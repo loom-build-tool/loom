@@ -63,14 +63,12 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
         task("provideSource")
             .impl(() -> new JavaProvideSourceDirTask(CompileTarget.MAIN))
             .provides("source", true)
-            .skipHints(SkipChecksumUtils.neverSkip())
             .desc("Provides main sources for other products.")
             .register();
 
         task("provideTestSource")
             .impl(() -> new JavaProvideSourceDirTask(CompileTarget.TEST))
             .provides("testSource", true)
-            .skipHints(SkipChecksumUtils.neverSkip())
             .desc("Provides test sources for other products.")
             .register();
 
@@ -80,7 +78,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
             // TODO ? use lambdas
-            .skipHints(SkipChecksumUtils.jvmVersion(), getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
+            .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
             .desc("Compiles main sources.")
             .register();
 

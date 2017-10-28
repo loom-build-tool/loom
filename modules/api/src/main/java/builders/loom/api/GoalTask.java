@@ -51,7 +51,7 @@ public class GoalTask implements Task, ProductDependenciesAware {
             usedProducts.waitForProduct(usedProductId);
         }
 
-        return TaskResult.ok(newProduct());
+        return TaskResult.done(newProduct());
     }
 
     private static Product newProduct() {

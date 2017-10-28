@@ -42,7 +42,7 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
         // assemble jar
         new JarAssembler().assemble(baseDir, jarFile);
 
-        return TaskResult.ok(newProduct(jarFile));
+        return TaskResult.done(newProduct(jarFile));
     }
 
     private static Product newProduct(final Path jarFile) {

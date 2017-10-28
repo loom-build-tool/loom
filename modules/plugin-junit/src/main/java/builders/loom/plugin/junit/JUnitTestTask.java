@@ -91,7 +91,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
                 result.getTestsFoundCount()));
         }
 
-        return TaskResult.ok(newProduct(reportDir));
+        return TaskResult.done(newProduct(reportDir));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {

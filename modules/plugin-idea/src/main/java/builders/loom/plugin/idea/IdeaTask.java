@@ -85,7 +85,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
         // modules.xml file containing referencing all modules
         xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
-        return TaskResult.ok(newProduct());
+        return TaskResult.done(newProduct());
     }
 
     private JavaVersion determineModulesHighestJavaVersion() {

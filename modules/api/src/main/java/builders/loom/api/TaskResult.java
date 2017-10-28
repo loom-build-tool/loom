@@ -32,8 +32,8 @@ public final class TaskResult {
         this.errorReason = errorReason;
     }
 
-    public static TaskResult ok(final Product product) {
-        return new TaskResult(TaskStatus.OK, Objects.requireNonNull(product), null);
+    public static TaskResult done(final Product product) {
+        return new TaskResult(TaskStatus.DONE, Objects.requireNonNull(product), null);
     }
 
     public static TaskResult empty() {
@@ -45,8 +45,8 @@ public final class TaskResult {
             Objects.requireNonNull(errorReason));
     }
 
-    public static TaskResult up2date(final Product product) {
-        return new TaskResult(TaskStatus.UP_TO_DATE, Objects.requireNonNull(product), null);
+    public static TaskResult skip(final Product product) {
+        return new TaskResult(TaskStatus.SKIP, product, null);
     }
 
     public TaskStatus getStatus() {

@@ -84,13 +84,13 @@ public class UsedProducts {
                 && pp.getProductId().equals(productId))
             .findFirst().orElseThrow(()
                 -> new IllegalStateException(
-                    String.format("No access to product <%s> of module <%s>",
-                        productId, moduleName)));
+                String.format("No access to product <%s> of module <%s>",
+                    productId, moduleName)));
 
     }
-    
+
     public Set<ProductPromise> getAllProducts() {
-    		return Collections.unmodifiableSet(productPromises);
+        return Collections.unmodifiableSet(productPromises);
     }
 
     /**

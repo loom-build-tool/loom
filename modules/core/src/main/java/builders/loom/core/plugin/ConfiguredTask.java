@@ -102,10 +102,10 @@ public class ConfiguredTask {
     public Set<String> getImportedAllProducts() {
         return Collections.unmodifiableSet(importedAllProducts);
     }
-    
+
     public List<String> getSkipHints() {
-		return Collections.unmodifiableList(skipHints);
-	}
+        return Collections.unmodifiableList(skipHints);
+    }
 
     public String getDescription() {
         return description;

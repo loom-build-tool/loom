@@ -19,9 +19,6 @@ package builders.loom.plugin.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
@@ -52,28 +49,28 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
-        final List<Path> srcFiles = findSources(srcDir);
+        final boolean hasSrcFiles = findSources(srcDir);
 
-        if (srcFiles.isEmpty()) {
+        if (!hasSrcFiles) {
             return TaskResult.empty();
         }
 
-        return TaskResult.ok(newProduct(srcDir, srcFiles));
+        return TaskResult.done(newProduct(srcDir));
     }
 
-    private List<Path> findSources(final Path srcDir) throws IOException {
+    private boolean findSources(final Path srcDir) throws IOException {
         if (FileUtil.isDirAbsentOrEmpty(srcDir)) {
-            return Collections.emptyList();
+            return false;
         }
 
         return Files
             .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
-            .collect(Collectors.toList());
+            .findFirst().isPresent();
     }
 
-    private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
+    private static Product newProduct(final Path srcDir) {
         return new GenericProduct("srcDir", srcDir.toString(),
-            ProductChecksumUtil.calcChecksum(srcFiles), null);
+            ProductChecksumUtil.recursiveContentChecksum(srcDir), null);
     }
 
 }

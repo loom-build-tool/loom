@@ -112,7 +112,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         compile(buildDir, classpath, srcFiles);
 
-        return TaskResult.ok(newProduct(buildDir));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private Path resolveBuildDir() {

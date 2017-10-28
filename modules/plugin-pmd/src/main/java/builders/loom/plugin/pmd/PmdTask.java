@@ -181,7 +181,7 @@ public class PmdTask extends AbstractModuleTask {
                     + " rule violations in the code");
         }
 
-        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
     private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {

@@ -83,7 +83,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
         cache.saveCache();
 
-        return TaskResult.ok(newProduct(buildDir));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private KeyValueCache initCache() {
@@ -116,7 +116,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path buildDir) {
         return new GenericProduct("processedResourcesDir", buildDir.toString(),
-            ProductChecksumUtil.calcChecksum(buildDir), null);
+            ProductChecksumUtil.recursiveContentChecksum(buildDir), null);
     }
 
 }

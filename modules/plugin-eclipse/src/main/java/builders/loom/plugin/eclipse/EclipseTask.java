@@ -67,7 +67,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
             createModuleProject(module);
         }
 
-        return TaskResult.ok(newProduct());
+        return TaskResult.done(newProduct());
     }
 
     private Set<Module> allModules() {

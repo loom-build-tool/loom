@@ -56,7 +56,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             }
         }
 
-        return TaskResult.ok(newProduct(sourceJarFile));
+        return TaskResult.done(newProduct(sourceJarFile));
     }
 
     private static Product newProduct(final Path jarFile) {

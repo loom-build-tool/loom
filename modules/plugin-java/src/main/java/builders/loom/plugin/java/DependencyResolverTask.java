@@ -48,7 +48,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
             .map(ArtifactProduct::getMainArtifact)
             .collect(Collectors.toList());
 
-        return TaskResult.ok(newProduct(artifacts));
+        return TaskResult.done(newProduct(artifacts));
     }
 
     private static Product newProduct(final List<Path> artifacts) {

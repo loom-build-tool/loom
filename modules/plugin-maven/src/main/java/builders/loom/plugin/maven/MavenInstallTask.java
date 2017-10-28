@@ -90,7 +90,7 @@ public class MavenInstallTask extends AbstractModuleTask {
         final Path jarFile = Paths.get(requireProduct("jar", Product.class)
             .getProperty("classesJarFile"));
 
-        return TaskResult.ok(newProduct(install(jarFile)));
+        return TaskResult.done(newProduct(install(jarFile)));
     }
 
     private Path install(final Path jarFile) throws IOException, InstallationException {

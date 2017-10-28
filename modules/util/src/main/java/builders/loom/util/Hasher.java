@@ -42,7 +42,7 @@ public final class Hasher {
         return getMessageDigest().digest(data);
     }
 
-    private static MessageDigest getMessageDigest() {
+    public static MessageDigest getMessageDigest() {
         try {
             return MessageDigest.getInstance("SHA-256");
         } catch (final NoSuchAlgorithmException e) {

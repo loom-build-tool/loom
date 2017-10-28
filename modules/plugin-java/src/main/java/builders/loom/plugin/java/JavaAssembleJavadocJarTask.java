@@ -47,7 +47,7 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("javaDocOut")), os);
         }
 
-        return TaskResult.ok(newProduct(jarFile));
+        return TaskResult.done(newProduct(jarFile));
     }
 
     private static Product newProduct(final Path jarFile) {

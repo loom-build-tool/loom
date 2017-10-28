@@ -124,7 +124,7 @@ public class SpotBugsTask extends AbstractModuleTask {
                     engine.getBugCount(), engine.getErrorCount()));
         }
 
-        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
     private static List<String> getClassesToScan(final Path classesDir) {

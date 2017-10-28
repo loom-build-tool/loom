@@ -18,6 +18,7 @@ package builders.loom.plugin.springboot;
 
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.DependencyResolverService;
+import builders.loom.util.SkipChecksumUtils;
 
 public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
 
@@ -42,6 +43,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .uses("processedResources", "compilation", "compileDependencies")
             .importFromModules("jar")
             .desc("Builds Spring Boot application.")
+            .skipHints(SkipChecksumUtils.always())
             .register();
 
         task("springBootFatJarApplication")
@@ -49,6 +51,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .provides("springBootFatJarApplication")
             .uses("springBootApplication")
             .desc("Builds Spring Boot Fat Jar application.")
+            .skipHints(SkipChecksumUtils.always())
             .register();
 
         goal("assemble")

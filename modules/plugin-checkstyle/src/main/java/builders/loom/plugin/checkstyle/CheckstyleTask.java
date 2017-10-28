@@ -122,7 +122,7 @@ public class CheckstyleTask extends AbstractModuleTask {
             rootModule.destroy();
         }
 
-        return TaskResult.ok(newProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
     private List<File> listSourceFiles() throws InterruptedException, IOException {

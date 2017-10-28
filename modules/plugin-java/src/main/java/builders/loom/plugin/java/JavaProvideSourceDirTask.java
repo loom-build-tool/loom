@@ -60,7 +60,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
         validateFiles(srcFiles);
 
-        return TaskResult.ok(newProduct(srcDir, srcFiles));
+        return TaskResult.done(newProduct(srcDir, srcFiles));
     }
 
     private List<Path> findSources(final Path srcDir) throws IOException {
@@ -86,7 +86,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
         return new GenericProduct("srcDir", srcDir.toString(),
-            ProductChecksumUtil.calcChecksum(srcFiles), null);
+            ProductChecksumUtil.recursiveContentChecksum(srcFiles.stream()), null);
     }
 
 }

@@ -113,7 +113,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             throw new IllegalStateException("Building jar file failed");
         }
 
-        return TaskResult.ok(newProduct(jarFile));
+        return TaskResult.done(newProduct(jarFile));
     }
 
     private String buildAutomaticModuleName() {

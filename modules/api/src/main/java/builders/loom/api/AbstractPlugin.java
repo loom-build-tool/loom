@@ -172,11 +172,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return importFromAllModules(Arrays.asList(Objects.requireNonNull(products)));
         }
 
-		public TaskBuilder skipHints(final String... hints) {
-			this.skipHints = Arrays.asList(hints);
-			return this;
-		}
-		
+        public TaskBuilder skipHints(final String... hints) {
+            this.skipHints = Arrays.asList(hints);
+            return this;
+        }
+
         public TaskBuilder desc(final String taskDescription) {
             this.description = taskDescription;
             return this;

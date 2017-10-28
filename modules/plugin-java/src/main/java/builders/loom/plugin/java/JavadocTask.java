@@ -117,7 +117,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return TaskResult.ok(newProduct(buildDir));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private Path getBuildDir() {

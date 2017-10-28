@@ -35,28 +35,26 @@ public final class ProductPromise {
     private final String moduleName;
     private final String productId;
 
-    private final CompletableFuture<Optional<Product>> promise = new CompletableFuture<>();
+    private final CompletableFuture<Optional<Product>> promise;
 
-    private Long startTime;
+    private long startTime;
     private AtomicLong completedAt = new AtomicLong();
     private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {
         this.moduleName = Objects.requireNonNull(moduleName);
         this.productId = Objects.requireNonNull(productId);
+        promise = new CompletableFuture<>();
+        promise.thenRun(() -> completedAt.set(System.nanoTime()));
     }
 
     public void startTimer() {
-        if (this.startTime != null) {
-            throw new IllegalStateException("Timer already started!");
-        }
         this.startTime = System.nanoTime();
     }
 
     public void complete(final TaskResult result) {
         Objects.requireNonNull(result, "taskResult required");
         this.taskResult = result;
-        promise.thenRun(() -> completedAt.set(System.nanoTime()));
         final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
         if (!completed) {
             throw new IllegalStateException(

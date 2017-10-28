@@ -1,8 +1,5 @@
 package builders.loom.util;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.UUID;
@@ -16,11 +13,7 @@ public class SkipChecksumUtils {
     }
 
     public static String file(final Path file) {
-        try {
-            return Hasher.bytesToHex(Hasher.hash(Files.readAllBytes(file))); // FIXME
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return Hasher.hashContent(file);
     }
 
     public static String always() {

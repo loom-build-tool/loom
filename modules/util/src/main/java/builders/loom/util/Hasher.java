@@ -16,7 +16,12 @@
 
 package builders.loom.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
@@ -60,6 +65,22 @@ public final class Hasher {
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    public static String hashContent(final Path f) {
+        final MessageDigest md = getMessageDigest();
+
+        try (final InputStream in = Files.newInputStream(f)) {
+            final byte[] buf = new byte[8192];
+            int cnt;
+            while ((cnt = in.read(buf)) != -1) {
+                md.update(buf, 0, cnt);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        return bytesToHex(md.digest());
     }
 
 }

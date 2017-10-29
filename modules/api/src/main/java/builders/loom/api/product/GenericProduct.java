@@ -69,6 +69,7 @@ public class GenericProduct implements Product {
         return checksum;
     }
 
+    // FIXME outputInfo is not logged to console correctly (path / files are missing)
     @Override
     public Optional<String> outputInfo() {
         return Optional.ofNullable(outputInfo);

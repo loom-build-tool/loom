@@ -69,7 +69,7 @@ public class CachedProduct {
         final Map<String, List<String>> properties = new HashMap<>();
 
         try {
-            final String checksum = Files.readAllLines(checksumFile).get(0);
+            final String checksum = FileUtil.readToString(checksumFile);
 
             if ("EMPTY".equals(checksum)) {
                 return null;
@@ -123,13 +123,14 @@ public class CachedProduct {
                 });
 
                 if (product.outputInfo().isPresent()) {
-                    FileUtil.writeStringToFile(productInfoFile, product.outputInfo().get());
+                    FileUtil.writeStringToFile(productInfoFile, product.outputInfo().get(),
+                        StandardOpenOption.CREATE_NEW);
                 }
 
                 checksum = product.checksum();
             }
 
-            Files.write(checksumFile, List.of(checksum), StandardOpenOption.CREATE_NEW);
+            FileUtil.writeStringToFile(checksumFile, checksum, StandardOpenOption.CREATE_NEW);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

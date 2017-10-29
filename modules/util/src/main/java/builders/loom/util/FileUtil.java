@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -36,8 +37,9 @@ public final class FileUtil {
         return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
     }
 
-    public static void writeStringToFile(final Path file, final String data) throws IOException {
-        Files.write(file, data.getBytes(StandardCharsets.UTF_8));
+    public static void writeStringToFile(final Path file, final String data,
+                                         final OpenOption... options) throws IOException {
+        Files.write(file, data.getBytes(StandardCharsets.UTF_8), options);
     }
 
     public static Path createOrCleanDirectory(final Path directory) throws IOException {

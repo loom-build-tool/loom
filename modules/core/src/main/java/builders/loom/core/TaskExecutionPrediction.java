@@ -37,8 +37,8 @@ import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.UsedProducts;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
+import builders.loom.util.FileUtil;
 import builders.loom.util.Hashing;
-import builders.loom.util.Iterables;
 
 public class TaskExecutionPrediction {
 
@@ -107,8 +107,7 @@ public class TaskExecutionPrediction {
         }
 
         try {
-            final String signatureLastRun =
-                Iterables.getOnlyElement(Files.readAllLines(checksumFile)); // TODO improve
+            final String signatureLastRun = FileUtil.readToString(checksumFile);
 
             final boolean equals = signatureLastRun.equals(signature);
             LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
@@ -138,7 +137,7 @@ public class TaskExecutionPrediction {
         final Path checksumFile = buildFileName(".sig"); // TODO better suffix
 
         try {
-            Files.write(checksumFile, List.of(signature), StandardOpenOption.CREATE_NEW); // TODO improve
+            FileUtil.writeStringToFile(checksumFile, signature, StandardOpenOption.CREATE_NEW);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

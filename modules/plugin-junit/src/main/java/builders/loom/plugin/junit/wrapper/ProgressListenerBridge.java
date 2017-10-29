@@ -32,7 +32,7 @@ public class ProgressListenerBridge implements TestExecutionListener {
     }
 
     public void testPlanExecutionStarted(final TestPlan testPlan) {
-        final long totalTests = testPlan.countTestIdentifiers((t) -> true);
+        final long totalTests = testPlan.countTestIdentifiers(TestIdentifier::isTest);
         progressListener.total(totalTests);
     }
 
@@ -46,6 +46,11 @@ public class ProgressListenerBridge implements TestExecutionListener {
 
     public void executionFinished(final TestIdentifier testIdentifier,
                                   final TestExecutionResult testExecutionResult) {
+
+        if (!testIdentifier.isTest()) {
+            // skip containers
+            return;
+        }
 
         switch (testExecutionResult.getStatus()) {
             case SUCCESSFUL:

@@ -51,6 +51,11 @@ class XmlReport {
 
         writeSystemProperties();
 
+        // we might have initialization errors
+        if (testSuite.getTestClassCase() != null) {
+            writeTestCase(testSuite.getTestClassCase());
+        }
+
         testSuite.getTestCases().forEach(this::writeTestCase);
 
         new XmlWriter().write(rootElement.getDocument(), reportFile);

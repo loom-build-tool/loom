@@ -83,12 +83,12 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         if (result.getTotalFailureCount() > 0) {
             return TaskResult.fail(newProduct(reportDir),
                 String.format(
-                "tests failed: %d (succeeded: %d; skipped: %d; aborted: %d; total: %d)",
-                result.getTestsFailedCount(),
+                "tests failed: %d (total: %d; succeeded: %d; skipped: %d; aborted: %d)",
+                result.getTotalFailureCount(),
+                result.getTestsFoundCount(),
                 result.getTestsSucceededCount(),
                 result.getTestsSkippedCount(),
-                result.getTestsAbortedCount(),
-                result.getTestsFoundCount()));
+                result.getTestsAbortedCount()));
         }
 
         return TaskResult.done(newProduct(reportDir));

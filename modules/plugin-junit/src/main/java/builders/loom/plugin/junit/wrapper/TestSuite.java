@@ -18,16 +18,20 @@ package builders.loom.plugin.junit.wrapper;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Stream;
 
 class TestSuite {
 
     private final String name;
     private final Duration duration;
+    private final TestCase testClassCase;
     private final List<TestCase> testCases;
 
-    TestSuite(final String name, final Duration duration, final List<TestCase> testCases) {
+    TestSuite(final String name, final Duration duration, final TestCase testClassCase,
+              final List<TestCase> testCases) {
         this.name = name;
         this.duration = duration;
+        this.testClassCase = testClassCase;
         this.testCases = testCases;
     }
 
@@ -39,24 +43,32 @@ class TestSuite {
         return duration;
     }
 
+    TestCase getTestClassCase() {
+        return testClassCase;
+    }
+
     List<TestCase> getTestCases() {
         return testCases;
     }
 
     int getTestCount() {
-        return testCases.size();
+        return (int) allTests().count();
     }
 
     long getFailureCount() {
-        return testCases.stream().filter(TestCase::isFailed).count();
+        return allTests().filter(TestCase::isFailed).count();
     }
 
     long getErrorCount() {
-        return testCases.stream().filter(TestCase::isError).count();
+        return allTests().filter(TestCase::isError).count();
     }
 
     long getSkipCount() {
-        return testCases.stream().filter(TestCase::isSkipped).count();
+        return allTests().filter(TestCase::isSkipped).count();
+    }
+
+    private Stream<TestCase> allTests() {
+        return Stream.concat(Stream.ofNullable(testClassCase), testCases.stream());
     }
 
 }

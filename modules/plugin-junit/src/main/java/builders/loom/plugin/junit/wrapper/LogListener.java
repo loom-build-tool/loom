@@ -61,7 +61,7 @@ class LogListener implements TestExecutionListener {
 
         if (testExecutionResult.getStatus() == TestExecutionResult.Status.FAILED) {
             LOG.log(Level.SEVERE, "Test failed: " + testIdentifier.getUniqueId(),
-                testExecutionResult.getThrowable());
+                testExecutionResult.getThrowable().orElse(null));
         } else {
             LOG.info("Finished test " + testIdentifier.getUniqueId());
         }

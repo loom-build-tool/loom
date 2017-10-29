@@ -120,10 +120,16 @@ class XmlReportListener implements TestExecutionListener {
     }
 
     private TestSuite buildSuite(final TestIdentifier testIdentifier) {
-        final TestData td = this.testData.get(testIdentifier);
-        return new TestSuite(testIdentifier.getLegacyReportingName(),
-            td.getDuration(),
-            findTestsOfContainer(testIdentifier));
+        final TestData td = testData.get(testIdentifier);
+
+        // virtual TestCase for initialization errors (like @BeforeAll on non-static method)
+        final TestCase testClassCase = td.getStatus() != TestStatus.ERROR ? null
+            : new TestCase("Test initialization", testIdentifier.getLegacyReportingName(),
+            td.getDuration(), td.getStatus(), td.getThrowable(), td.getSkipReason(),
+            td.getReportEntries());
+
+        return new TestSuite(testIdentifier.getLegacyReportingName(), td.getDuration(),
+            testClassCase, findTestsOfContainer(testIdentifier));
     }
 
     private List<TestCase> findTestsOfContainer(final TestIdentifier testIdentifier) {

@@ -34,6 +34,7 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
+import builders.loom.util.FileUtil;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
 
@@ -62,6 +63,7 @@ public class CachedProduct {
 
     public Product load() {
         final Path productFile = buildFileName(".product");
+        final Path productInfoFile = buildFileName(".product.info");
         final Path checksumFile = buildFileName(".product.checksum");
 
         final Map<String, List<String>> properties = new HashMap<>();
@@ -79,8 +81,10 @@ public class CachedProduct {
                 properties.put(key, values);
             });
 
-            // TODO add outputInfo
-            return new GenericProduct(properties, checksum, null);
+            final String outputInfo =
+                Files.exists(productInfoFile) ? FileUtil.readToString(productInfoFile) : null;
+
+            return new GenericProduct(properties, checksum, outputInfo);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -89,6 +93,7 @@ public class CachedProduct {
     public void prepare() {
         try {
             Files.deleteIfExists(buildFileName(".product.checksum"));
+            Files.deleteIfExists(buildFileName(".product.info"));
             Files.deleteIfExists(buildFileName(".product"));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -96,8 +101,9 @@ public class CachedProduct {
     }
 
     public void persist(final TaskResult taskResult) {
-        final Path checksumFile = buildFileName(".product.checksum");
         final Path productFile = buildFileName(".product");
+        final Path productInfoFile = buildFileName(".product.info");
+        final Path checksumFile = buildFileName(".product.checksum");
 
         try {
             Files.createDirectories(checksumFile.getParent());
@@ -115,6 +121,10 @@ public class CachedProduct {
                     elements.addAll(e.getValue());
                     return new Record(elements);
                 });
+
+                if (product.outputInfo().isPresent()) {
+                    FileUtil.writeStringToFile(productInfoFile, product.outputInfo().get());
+                }
 
                 checksum = product.checksum();
             }

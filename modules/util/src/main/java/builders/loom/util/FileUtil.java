@@ -18,6 +18,7 @@ package builders.loom.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -29,6 +30,14 @@ import java.util.List;
 public final class FileUtil {
 
     private FileUtil() {
+    }
+
+    public static String readToString(final Path file) throws IOException {
+        return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+    }
+
+    public static void writeStringToFile(final Path file, final String data) throws IOException {
+        Files.write(file, data.getBytes(StandardCharsets.UTF_8));
     }
 
     public static Path createOrCleanDirectory(final Path directory) throws IOException {

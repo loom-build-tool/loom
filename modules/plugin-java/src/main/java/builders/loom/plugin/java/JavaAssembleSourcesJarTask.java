@@ -18,9 +18,13 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.jar.JarOutputStream;
+import java.util.spi.ToolProvider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
@@ -29,6 +33,8 @@ import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleSourcesJarTask.class);
 
     @Override
     public TaskResult run() throws Exception {
@@ -46,14 +52,22 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("sources-jar"))
             .resolve(String.format("%s-sources.jar", getBuildContext().getModuleName()));
 
-        try (JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
-            if (sourceTree.isPresent()) {
-                JavaFileUtil.copy(Paths.get(sourceTree.get().getProperty("srcDir")), os);
-            }
+        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
+            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
 
-            if (resourcesTreeProduct.isPresent()) {
-                JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("srcDir")), os);
-            }
+        final List<String> args = new ArrayList<>(List.of("-c", "-f", sourceJarFile.toString()));
+
+        sourceTree.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
+
+        resourcesTreeProduct.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
+
+        LOG.debug("Run JarToolProvider with args: {}", args);
+        final int result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
+
+        if (result != 0) {
+            throw new IllegalStateException("Building sources-jar file failed");
         }
 
         return TaskResult.done(newProduct(sourceJarFile));

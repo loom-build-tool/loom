@@ -18,9 +18,13 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.jar.JarOutputStream;
+import java.util.spi.ToolProvider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
@@ -29,6 +33,8 @@ import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleJavadocJarTask.class);
 
     @Override
     public TaskResult run() throws Exception {
@@ -43,8 +49,19 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("javadoc-jar"))
             .resolve(String.format("%s-javadoc.jar", getBuildContext().getModuleName()));
 
-        try (JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            JavaFileUtil.copy(Paths.get(resourcesTreeProduct.get().getProperty("javaDocOut")), os);
+        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
+            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
+
+        final List<String> args = new ArrayList<>(List.of("-c", "-f", jarFile.toString()));
+
+        resourcesTreeProduct.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("javaDocOut"), ".")));
+
+        LOG.debug("Run JarToolProvider with args: {}", args);
+        final int result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
+
+        if (result != 0) {
+            throw new IllegalStateException("Building sources-jar file failed");
         }
 
         return TaskResult.done(newProduct(jarFile));

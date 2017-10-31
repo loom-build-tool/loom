@@ -96,7 +96,7 @@ public class Job implements Callable<TaskStatus> {
             LOG.info("Start task {}", name);
             usedProducts = buildProductView();
 
-            final TaskExecutionStrategy strategy = runtimeConfiguration.isCacheEnabled()
+            final AbstractTaskExecutionStrategy strategy = runtimeConfiguration.isCacheEnabled()
                 ? new CacheableTaskRun(prepareProductPromise())
                 : new TaskRun(prepareProductPromise());
 
@@ -195,18 +195,17 @@ public class Job implements Callable<TaskStatus> {
             + '}';
     }
 
-    private final class CacheableTaskRun extends AbstractTaskExecutionStrategy {
+    private final class CacheableTaskRun extends TaskRun {
 
         private final ProductPromise productPromise;
         private final TaskExecutionPrediction tep;
         private final CachedProduct cachedProduct;
-        private final TaskRun taskRun;
 
         CacheableTaskRun(final ProductPromise productPromise) {
+            super(productPromise);
             this.productPromise = productPromise;
             tep = new TaskExecutionPrediction(runtimeConfiguration, configuredTask, usedProducts);
             cachedProduct = new CachedProduct(runtimeConfiguration, configuredTask);
-            taskRun = new TaskRun(productPromise);
         }
 
         @Override
@@ -235,7 +234,7 @@ public class Job implements Callable<TaskStatus> {
 
         @Override
         protected TaskResult doWork() throws Exception {
-            return taskRun.run();
+            return super.doWork();
         }
 
         @Override
@@ -243,9 +242,10 @@ public class Job implements Callable<TaskStatus> {
             cachedProduct.persist(taskResult);
             tep.commitSignature();
         }
+
     }
 
-    private final class TaskRun implements TaskExecutionStrategy {
+    private class TaskRun extends AbstractTaskExecutionStrategy {
 
         private final ProductPromise productPromise;
 
@@ -254,7 +254,21 @@ public class Job implements Callable<TaskStatus> {
         }
 
         @Override
-        public TaskResult run() throws Exception {
+        protected boolean canSkip() {
+            return false;
+        }
+
+        @Override
+        protected TaskResult doSkip() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected void beginTransaction() {
+        }
+
+        @Override
+        protected TaskResult doWork() throws Exception {
             final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
             Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
             final Task task = taskSupplier.get();
@@ -278,9 +292,13 @@ public class Job implements Callable<TaskStatus> {
             return taskResult;
         }
 
+        @Override
+        protected void commitTransaction(final TaskResult taskResult) {
+        }
+
     }
 
-    private abstract static class AbstractTaskExecutionStrategy implements TaskExecutionStrategy {
+    private abstract static class AbstractTaskExecutionStrategy {
 
         protected abstract boolean canSkip();
 
@@ -292,8 +310,7 @@ public class Job implements Callable<TaskStatus> {
 
         protected abstract void commitTransaction(final TaskResult taskResult);
 
-        @Override
-        public final TaskResult run() throws Exception {
+        final TaskResult run() throws Exception {
             final TaskResult taskResult;
 
             if (canSkip()) {
@@ -306,12 +323,6 @@ public class Job implements Callable<TaskStatus> {
 
             return taskResult;
         }
-
-    }
-
-    private interface TaskExecutionStrategy {
-
-        TaskResult run() throws Exception;
 
     }
 

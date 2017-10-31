@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-// TODO
 public final class SkipChecksumUtil {
 
     public static Supplier<String> jvmVersion() {
@@ -45,8 +44,8 @@ public final class SkipChecksumUtil {
         return str == null ? always() : never();
     }
 
-    public static Supplier<String> collection(final Collection<String> compileDependencies) {
-        return () -> compileDependencies.stream()
+    public static Supplier<String> collection(final Collection<String> items) {
+        return () -> items.stream()
             .sorted()
             .collect(Collectors.joining(";"));
     }

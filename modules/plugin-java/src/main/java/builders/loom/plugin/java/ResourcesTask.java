@@ -16,6 +16,7 @@
 
 package builders.loom.plugin.java;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,14 +76,23 @@ public class ResourcesTask extends AbstractModuleTask {
 
         final KeyValueCache cache = initCache();
 
-        Files.walkFileTree(srcDir, new CopyFileVisitor(buildDir, cache,
-            pluginSettings.getResourceFilterGlob(), buildVariablesMap()));
-
+        Files.walkFileTree(srcDir, newCopyVisitor(buildDir, cache));
         Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(srcDir, cache));
 
         cache.saveCache();
 
         return TaskResult.done(newProduct(buildDir));
+    }
+
+    private CopyFileVisitor newCopyVisitor(final Path buildDir, final KeyValueCache cache)
+        throws IOException {
+
+        final String glob = pluginSettings.getResourceFilterGlob();
+        if (glob != null) {
+            return new CopyFileVisitor(buildDir, cache, glob, buildVariablesMap());
+        }
+
+        return new CopyFileVisitor(buildDir, cache);
     }
 
     private KeyValueCache initCache() {

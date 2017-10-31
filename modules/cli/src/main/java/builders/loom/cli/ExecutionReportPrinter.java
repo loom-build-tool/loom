@@ -18,7 +18,6 @@ package builders.loom.cli;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +154,7 @@ final class ExecutionReportPrinter {
                     final int colSize = table.getColSize(i);
                     final int delta = colSize - getColSize(i);
                     if (delta > 0) {
-                        ansi.a(String.join("", Collections.nCopies(delta, " ")));
+                        ansi.a(StringUtil.repeat(' ', delta));
                     }
 
                     ansi.a(' ');

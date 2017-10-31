@@ -153,7 +153,8 @@ public final class Loom {
         return new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
-            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers); also implies clean")
+            .addOption("n", "no-cache", false,
+                "Disable all caches (use on CI servers); also implies clean")
             .addOption(
                 Option.builder("r")
                     .longOpt("release")

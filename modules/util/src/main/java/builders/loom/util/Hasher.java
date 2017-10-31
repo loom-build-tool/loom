@@ -1,6 +1,11 @@
 package builders.loom.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.stream.Stream;
@@ -10,6 +15,11 @@ public class Hasher {
     private static final int MASK = 0xff;
 
     private final MessageDigest messageDigest = getMessageDigest();
+
+    public Hasher putByte(final byte data) {
+        messageDigest.update(data);
+        return this;
+    }
 
     public Hasher putBytes(final byte[] data) {
         messageDigest.update(data);
@@ -40,6 +50,21 @@ public class Hasher {
 
     public Hasher putString(final String data) {
         messageDigest.update(data.getBytes(StandardCharsets.UTF_8));
+        return this;
+    }
+
+    public Hasher putFile(final Path f) {
+        final byte[] buf = new byte[8192];
+        int cnt;
+
+        try (final InputStream in = Files.newInputStream(f)) {
+            while ((cnt = in.read(buf)) != -1) {
+                messageDigest.update(buf, 0, cnt);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
         return this;
     }
 

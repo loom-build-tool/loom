@@ -331,7 +331,7 @@ public class JavaCompileTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path buildDir) {
         return new GenericProduct("classesDir", buildDir.toString(),
-            ProductChecksumUtil.calcChecksum(buildDir), null);
+            ProductChecksumUtil.recursiveMetaChecksum(buildDir), null);
     }
 
 }

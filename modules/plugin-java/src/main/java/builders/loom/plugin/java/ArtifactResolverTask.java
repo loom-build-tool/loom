@@ -25,7 +25,6 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
@@ -50,7 +49,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<ArtifactProduct> artifacts = resolve(dependencies, true);
+        final List<Artifact> artifacts = resolve(dependencies, true);
         return TaskResult.done(newProduct(artifacts));
     }
 
@@ -70,15 +69,15 @@ public class ArtifactResolverTask extends AbstractModuleTask {
         return deps;
     }
 
-    protected List<ArtifactProduct> resolve(final List<String> dependencies,
-                                            final boolean withSources) {
+    protected List<Artifact> resolve(final List<String> dependencies,
+                                     final boolean withSources) {
         return dependencyResolver
             .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
-            .map(a -> new ArtifactProduct(a.getMainArtifact(), a.getSourceArtifact()))
+            .map(a -> new Artifact(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());
     }
 
-    private static Product newProduct(final List<ArtifactProduct> artifacts) {
+    private static Product newProduct(final List<Artifact> artifacts) {
         // FIXME evil hack
         final Map<String, List<String>> properties = Map.of(
             "artifacts",
@@ -86,7 +85,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
                 .map(a -> a.getMainArtifact() + "#" + a.getSourceArtifact())
                 .collect(Collectors.toList())
         );
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(properties), null);
+        return new GenericProduct(properties, ProductChecksumUtil.checksum(properties), null);
     }
 
 }

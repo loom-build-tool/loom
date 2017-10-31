@@ -27,15 +27,15 @@ public class GenericProduct implements Product {
 
     private final Map<String, List<String>> properties;
     private final String checksum;
-    private final String outputInfo;
+    private final OutputInfo outputInfo;
 
     public GenericProduct(final String key, final String value, final String checksum,
-                          final String outputInfo) {
+                          final OutputInfo outputInfo) {
         this(Map.of(key, List.of(value)), checksum, outputInfo);
     }
 
     public GenericProduct(final Map<String, List<String>> properties, final String checksum,
-                          final String outputInfo) {
+                          final OutputInfo outputInfo) {
         Objects.requireNonNull(properties, "properties required");
         if (properties.values().stream().anyMatch(v -> v == null || v.isEmpty())) {
             throw new IllegalArgumentException("properties must not contain null/empty values");
@@ -69,9 +69,8 @@ public class GenericProduct implements Product {
         return checksum;
     }
 
-    // FIXME outputInfo is not logged to console correctly (path / files are missing)
     @Override
-    public Optional<String> outputInfo() {
+    public Optional<OutputInfo> outputInfo() {
         return Optional.ofNullable(outputInfo);
     }
 

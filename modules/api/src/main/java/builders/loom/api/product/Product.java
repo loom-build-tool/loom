@@ -33,6 +33,6 @@ public interface Product {
     /**
      * Spring Boot application: build/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
      */
-    Optional<String> outputInfo();
+    Optional<OutputInfo> outputInfo();
 
 }

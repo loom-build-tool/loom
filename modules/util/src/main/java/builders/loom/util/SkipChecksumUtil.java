@@ -23,14 +23,14 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 // TODO
-public class SkipChecksumUtils {
+public final class SkipChecksumUtil {
 
     public static Supplier<String> jvmVersion() {
         return () -> "JVM " + Runtime.version().toString();
     }
 
     public static Supplier<String> file(final Path file) {
-        return () -> Hashing.hash(file);
+        return () -> new Hasher().putFile(file).hashHex();
     }
 
     public static Supplier<String> always() {
@@ -41,12 +41,8 @@ public class SkipChecksumUtils {
         return () -> UUID.randomUUID().toString();
     }
 
-    public static Supplier<String> skipOnNull(final String str) {
-        if (str == null) {
-            return always();
-        }
-
-        return never();
+    public static Supplier<String> whenNull(final String str) {
+        return str == null ? always() : never();
     }
 
     public static Supplier<String> collection(final Collection<String> compileDependencies) {

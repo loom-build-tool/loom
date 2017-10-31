@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactProduct;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
@@ -45,7 +44,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
         }
 
         final List<Path> artifacts = resolve(dependencies, false).stream()
-            .map(ArtifactProduct::getMainArtifact)
+            .map(Artifact::getMainArtifact)
             .collect(Collectors.toList());
 
         return TaskResult.done(newProduct(artifacts));
@@ -56,7 +55,7 @@ public class DependencyResolverTask extends ArtifactResolverTask {
             "classpath",
             artifacts.stream().map(Path::toString).collect(Collectors.toList())
         );
-        return new GenericProduct(properties, ProductChecksumUtil.calcChecksum(artifacts), null);
+        return new GenericProduct(properties, ProductChecksumUtil.metaChecksum(artifacts), null);
     }
 
 }

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
 
@@ -69,7 +70,8 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path jarFile) {
         return new GenericProduct("javaDocJarFile", jarFile.toString(),
-            ProductChecksumUtil.calcChecksum(jarFile), "Jar of Javadoc");
+            ProductChecksumUtil.recursiveMetaChecksum(jarFile),
+            new OutputInfo("Jar of Javadoc", jarFile.toString()));
     }
 
 }

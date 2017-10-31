@@ -24,53 +24,55 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// FIXME
-public class ProductChecksumUtil {
+public final class ProductChecksumUtil {
 
     public static String recursiveContentChecksum(final Path path) {
         try {
             final Stream<Path> pathStream =
                 Files.find(path, Integer.MAX_VALUE, (p, attr) -> attr.isRegularFile());
 
-            return recursiveContentChecksum(pathStream);
+            return contentChecksum(pathStream);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static String recursiveContentChecksum(final Stream<Path> files) {
-        final List<String> hashes = files
+    public static String contentChecksum(final Stream<Path> files) {
+        final Hasher hasher = new Hasher();
+        files
             .sorted(Comparator.comparing(Path::toString))
-            .flatMap(p -> Stream.of(Hashing.hash(p)))
-            .collect(Collectors.toList());
+            .flatMap(p -> Stream.of(new Hasher().putFile(p).hash()))
+            .forEach(hasher::putBytes);
 
-        return Hashing.hash(hashes);
+        return hasher.hashHex();
     }
 
-    public static String calcChecksum(final Path path) {
-        final List<String> hashes;
+    public static String recursiveMetaChecksum(final Path path) {
+        final Hasher hasher = new Hasher();
+
         try {
-            hashes = Files.find(path, Integer.MAX_VALUE, (p, attr) -> true)
+            Files.find(path, Integer.MAX_VALUE, (p, attr) -> true)
                 .sorted(Comparator.comparing(Path::toString))
                 .flatMap(ProductChecksumUtil::hashMeta)
-                .collect(Collectors.toList());
+                .forEach(hasher::putString);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
 
-        return Hashing.hash(hashes);
+        return hasher.hashHex();
     }
 
-    public static String calcChecksum(final List<Path> srcFiles) {
-        final List<String> hashes = srcFiles.stream()
+    public static String metaChecksum(final List<Path> srcFiles) {
+        final Hasher hasher = new Hasher();
+
+        srcFiles.stream()
             .sorted(Comparator.comparing(Path::toString))
             .flatMap(ProductChecksumUtil::hashMeta)
-            .collect(Collectors.toList());
+            .forEach(hasher::putString);
 
-        return Hashing.hash(hashes);
+        return hasher.hashHex();
     }
 
     private static Stream<String> hashMeta(final Path f) {
@@ -82,7 +84,7 @@ public class ProductChecksumUtil {
         }
     }
 
-    public static String calcChecksum(final Map<String, List<String>> properties) {
+    public static String checksum(final Map<String, List<String>> properties) {
         final List<String> strings = new ArrayList<>();
 
         properties.keySet().stream().sorted().forEach(k -> {

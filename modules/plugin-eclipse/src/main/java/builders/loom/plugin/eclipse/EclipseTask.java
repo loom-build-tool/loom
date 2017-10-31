@@ -42,6 +42,7 @@ import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.Preconditions;
 import builders.loom.util.PropertiesMerger;
@@ -336,7 +337,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
 
     private static Product newProduct() {
         return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
-            "Eclipse project files");
+            new OutputInfo("Eclipse project files"));
     }
 
 }

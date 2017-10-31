@@ -41,7 +41,7 @@ import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Hashing;
 
-public class TaskExecutionPrediction {
+class TaskExecutionPrediction {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskExecutionPrediction.class);
 
@@ -49,22 +49,19 @@ public class TaskExecutionPrediction {
     private final ConfiguredTask configuredTask;
     private final UsedProducts usedProducts;
     private final String signature;
+    private final Path sigFile;
 
-    public TaskExecutionPrediction(final RuntimeConfiguration runtimeConfiguration,
-                                   final ConfiguredTask configuredTask,
-                                   final UsedProducts usedProducts) {
+    TaskExecutionPrediction(final RuntimeConfiguration runtimeConfiguration,
+                            final ConfiguredTask configuredTask,
+                            final UsedProducts usedProducts) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.configuredTask = configuredTask;
         this.usedProducts = usedProducts;
-
-        try {
-            signature = calcSignature();
-        } catch (final InterruptedException e) {
-            throw new IllegalStateException(e); // TODO ???
-        }
+        signature = calcSignature();
+        sigFile = buildFileName();
     }
 
-    public String calcSignature() throws InterruptedException {
+    private String calcSignature() {
         final List<String> skipHints = configuredTask.getSkipHints().stream()
             .map(Supplier::get)
             .collect(Collectors.toList());
@@ -88,12 +85,16 @@ public class TaskExecutionPrediction {
             final String productId = productPromise.getProductId();
             final String moduleName = productPromise.getModuleName();
 
-            final String checksum = usedProducts
-                .readProduct(moduleName, productId, Product.class)
-                .map(Product::checksum)
-                .orElse("EMPTY");
+            try {
+                final String checksum = usedProducts
+                    .readProduct(moduleName, productId, Product.class)
+                    .map(Product::checksum)
+                    .orElse("EMPTY");
 
-            checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));
+                checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));
+            } catch (final InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
         }
 
         final String hash = Hashing.hash(checksumParts);
@@ -103,14 +104,13 @@ public class TaskExecutionPrediction {
         return hash;
     }
 
-    public boolean canSkipTask() {
-        final Path checksumFile = buildFileName(".sig"); // TODO better suffix
-        if (Files.notExists(checksumFile)) {
+    boolean canSkipTask() {
+        if (Files.notExists(sigFile)) {
             return false;
         }
 
         try {
-            final String signatureLastRun = FileUtil.readToString(checksumFile);
+            final String signatureLastRun = FileUtil.readToString(sigFile);
 
             final boolean equals = signatureLastRun.equals(signature);
             LOG.info("Last run: {} - current: {}; equals: {}", signatureLastRun, signature, equals);
@@ -121,26 +121,32 @@ public class TaskExecutionPrediction {
 
     }
 
-    private Path buildFileName(final String suffix) {
-        return LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), "checksums",
+    private Path buildFileName() {
+        final Path file = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+            .resolve(Paths.get(Version.getVersion(), "execution-prevention", "checksums",
                 configuredTask.getBuildContext().getModuleName(),
-                configuredTask.getProvidedProduct() + suffix));
+                configuredTask.getProvidedProduct() + ".sig"));
+
+        try {
+            Files.createDirectories(file.getParent());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        return file;
     }
 
-    public void clearSignature() {
+    void clearSignature() {
         try {
-            Files.deleteIfExists(buildFileName(".sig"));
+            Files.deleteIfExists(sigFile);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void commitSignature() {
-        final Path checksumFile = buildFileName(".sig"); // TODO better suffix
-
+    void commitSignature() {
         try {
-            FileUtil.writeStringToFile(checksumFile, signature, StandardOpenOption.CREATE_NEW);
+            FileUtil.writeStringToFile(sigFile, signature, StandardOpenOption.CREATE_NEW);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

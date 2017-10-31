@@ -22,7 +22,7 @@ import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
-import builders.loom.util.SkipChecksumUtils;
+import builders.loom.util.SkipChecksumUtil;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
@@ -40,8 +40,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new DependencyResolverTask(DependencyScope.COMPILE, dependencyResolver))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
-            .skipHints(List.of(SkipChecksumUtils.jvmVersion(),
-                SkipChecksumUtils.collection(getModuleBuildConfig().getCompileDependencies())))
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies())))
             .register();
 
         task("resolveCompileArtifacts")
@@ -55,8 +55,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new DependencyResolverTask(DependencyScope.TEST, dependencyResolver))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
-            .skipHints(List.of(SkipChecksumUtils.jvmVersion(),
-                SkipChecksumUtils.collection(getModuleBuildConfig().getTestDependencies())))
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
         task("resolveTestArtifacts")
@@ -83,7 +83,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("compilation")
             .uses("source", "compileDependencies")
             .importFromModules("compilation", "compileDependencies")
-            .skipHints(List.of(SkipChecksumUtils.jvmVersion(), () -> "Module Java version "
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(), () -> "Module Java version "
                 + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .desc("Compiles main sources.")
             .register();
@@ -94,7 +94,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("compilation", "testSource", "testDependencies")
             .importFromModules("compilation", "compileDependencies")
             .desc("Compiles test sources.")
-            .skipHints(List.of(SkipChecksumUtils.jvmVersion(), () -> "Module Java version "
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(), () -> "Module Java version "
                 + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .register();
 
@@ -103,7 +103,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
-            .skipHints(List.of(SkipChecksumUtils.always()))
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         task("assembleSourcesJar")
@@ -111,7 +111,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
-            .skipHints(List.of(SkipChecksumUtils.always()))
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         task("provideResources")
@@ -132,7 +132,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedResources")
             .uses("resources")
             .desc("Processes main resources (copy and replace variables if necessary).")
-            .skipHints(List.of(SkipChecksumUtils.skipOnNull(getPluginSettings().getResourceFilterGlob())))
+            .skipHints(List.of(SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("processTestResources")

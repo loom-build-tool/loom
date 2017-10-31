@@ -26,42 +26,43 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
 
-public class CachedProduct {
+class CachedProduct {
 
     private final RuntimeConfiguration runtimeConfiguration;
     private final ConfiguredTask configuredTask;
 
-    public CachedProduct(final RuntimeConfiguration runtimeConfiguration,
-                         final ConfiguredTask configuredTask) {
+    CachedProduct(final RuntimeConfiguration runtimeConfiguration,
+                  final ConfiguredTask configuredTask) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.configuredTask = configuredTask;
     }
 
     private Path buildFileName(final String suffix) {
         return LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), "checksums", // TODO rename checksums dir
+            .resolve(Paths.get(Version.getVersion(), "execution-prevention", "products",
                 configuredTask.getBuildContext().getModuleName(),
                 configuredTask.getProvidedProduct() + suffix));
     }
 
-    public boolean available() {
-        final Path cachedProductFile = buildFileName(".product");
-        return Files.exists(cachedProductFile);
+    boolean available() {
+        return Files.exists(buildFileName(".product"));
     }
 
-    public Product load() {
+    Product load() {
         final Path productFile = buildFileName(".product");
         final Path productInfoFile = buildFileName(".product.info");
         final Path checksumFile = buildFileName(".product.checksum");
@@ -81,16 +82,23 @@ public class CachedProduct {
                 properties.put(key, values);
             });
 
-            final String outputInfo =
-                Files.exists(productInfoFile) ? FileUtil.readToString(productInfoFile) : null;
+            final AtomicReference<OutputInfo> outputInfo = new AtomicReference<>();
 
-            return new GenericProduct(properties, checksum, outputInfo);
+            if (Files.exists(productInfoFile)) {
+                SimpleSerializer.read(productInfoFile, (e) -> {
+                    final String name = e.getFields().get(0);
+                    final String details = e.getFields().get(1);
+                    outputInfo.set(new OutputInfo(name, details));
+                });
+            }
+
+            return new GenericProduct(properties, checksum, outputInfo.get());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void prepare() {
+    void prepare() {
         try {
             Files.deleteIfExists(buildFileName(".product.checksum"));
             Files.deleteIfExists(buildFileName(".product.info"));
@@ -100,7 +108,7 @@ public class CachedProduct {
         }
     }
 
-    public void persist(final TaskResult taskResult) {
+    void persist(final TaskResult taskResult) {
         final Path productFile = buildFileName(".product");
         final Path productInfoFile = buildFileName(".product.info");
         final Path checksumFile = buildFileName(".product.checksum");
@@ -123,8 +131,9 @@ public class CachedProduct {
                 });
 
                 if (product.outputInfo().isPresent()) {
-                    FileUtil.writeStringToFile(productInfoFile, product.outputInfo().get(),
-                        StandardOpenOption.CREATE_NEW);
+                    final OutputInfo outputInfo = product.outputInfo().get();
+                    SimpleSerializer.write(productInfoFile, List.of(outputInfo),
+                        (e) -> new Record(e.getName(), e.getDetails()));
                 }
 
                 checksum = product.checksum();

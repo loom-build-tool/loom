@@ -38,6 +38,7 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
@@ -266,7 +267,8 @@ public class SpotBugsTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path reportDir, final String outputInfo) {
         return new GenericProduct("reportDir", reportDir.toString(),
-            ProductChecksumUtil.calcChecksum(reportDir), outputInfo);
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo(outputInfo, reportDir.toString()));
     }
 
 }

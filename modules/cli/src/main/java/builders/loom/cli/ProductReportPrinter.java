@@ -29,6 +29,7 @@ import java.util.Optional;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.ModuleRunner;
 import builders.loom.core.plugin.ConfiguredTask;
@@ -65,7 +66,7 @@ final class ProductReportPrinter {
                 .getWithoutWait();
 
             if (product.isPresent() && product.get().outputInfo().isPresent()) {
-                final String outputInfo = product.get().outputInfo().get();
+                final OutputInfo outputInfo = product.get().outputInfo().get();
                 final String pluginName = configuredTask.getPluginName();
                 aggProducts.putIfAbsent(pluginName, new ArrayList<>());
                 aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
@@ -92,16 +93,20 @@ final class ProductReportPrinter {
                 .newline();
 
             for (final ProductInfo productInfo : productInfos) {
-                final String outputInfo = productInfo.getOutputInfo()
-                    .replace(Paths.get("").toAbsolutePath().toString() + "/", "");
-
                 ansi
                     .bold().a("| ").boldOff()
                     .fgCyan().a(productInfo.getProductId()).fgDefault()
                     .bold().a(" > ").boldOff()
-                    .fgGreen().a(outputInfo)
-                    .reset()
-                    .newline();
+                    .fgGreen().a(productInfo.getOutputInfo().getName());
+
+                if (productInfo.getOutputInfo().getDetails() != null) {
+                    final String details = productInfo.getOutputInfo().getDetails()
+                        .replace(Paths.get("").toAbsolutePath().toString() + "/", "");
+
+                    ansi.a(": ").fgDefault().a(details);
+                }
+
+                ansi.reset().newline();
             }
 
             if (iterator.hasNext()) {
@@ -115,9 +120,9 @@ final class ProductReportPrinter {
     private static final class ProductInfo {
 
         private final String productId;
-        private final String outputInfo;
+        private final OutputInfo outputInfo;
 
-        ProductInfo(final String productId, final String outputInfo) {
+        ProductInfo(final String productId, final OutputInfo outputInfo) {
             this.productId = productId;
             this.outputInfo = outputInfo;
         }
@@ -126,7 +131,7 @@ final class ProductReportPrinter {
             return productId;
         }
 
-        String getOutputInfo() {
+        OutputInfo getOutputInfo() {
             return outputInfo;
         }
 

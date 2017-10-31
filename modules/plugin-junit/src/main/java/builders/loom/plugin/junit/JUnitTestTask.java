@@ -35,6 +35,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
 import builders.loom.plugin.junit.shared.TestResult;
@@ -173,7 +174,8 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
 
     private static Product newProduct(final Path reportDir) {
         return new GenericProduct("reportDir", reportDir.toString(),
-            ProductChecksumUtil.calcChecksum(reportDir), "JUnit report");
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo("JUnit report", reportDir.toString()));
     }
 
 }

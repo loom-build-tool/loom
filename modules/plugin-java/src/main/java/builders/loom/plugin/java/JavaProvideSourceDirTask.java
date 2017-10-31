@@ -86,7 +86,7 @@ public class JavaProvideSourceDirTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path srcDir, final List<Path> srcFiles) {
         return new GenericProduct("srcDir", srcDir.toString(),
-            ProductChecksumUtil.recursiveContentChecksum(srcFiles.stream()), null);
+            ProductChecksumUtil.contentChecksum(srcFiles.stream()), null);
     }
 
 }

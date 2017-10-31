@@ -16,45 +16,30 @@
 
 package builders.loom.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 public final class Hashing {
 
     private Hashing() {
     }
 
-    public static String hash(final Collection<String> strings) {
-        return new Hasher().putStrings(strings).hashHex();
-    }
-
-    public static String hash(final String... strings) {
-        return new Hasher().putStrings(strings).hashHex();
-    }
-
-    public static String hash(final Path f) {
+    public static String hash(final Iterable<String> strings) {
         final Hasher hasher = new Hasher();
+        for (final Iterator<String> iterator = strings.iterator(); iterator.hasNext(); ) {
+            final String string = iterator.next();
+            hasher.putString(string);
 
-        final byte[] buf = new byte[8192];
-        int cnt;
-
-        try (final InputStream in = Files.newInputStream(f)) {
-            while ((cnt = in.read(buf)) != -1) {
-                hasher.putBytes(buf, 0, cnt);
+            if (iterator.hasNext()) {
+                hasher.putByte((byte) 0);
             }
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
 
+        }
         return hasher.hashHex();
     }
 
-    public static byte[] hash(final byte[] data) {
-        return new Hasher().putBytes(data).hash();
+    public static String hash(final String... strings) {
+        return hash(List.of(strings));
     }
 
 }

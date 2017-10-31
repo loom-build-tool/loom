@@ -39,6 +39,7 @@ import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
@@ -186,7 +187,8 @@ public class SpringBootTask extends AbstractModuleTask {
 
     private static Product newProduct(final Path buildDir) {
         return new GenericProduct("springBootOut", buildDir.toString(),
-            ProductChecksumUtil.calcChecksum(buildDir), "Spring Boot application");
+            ProductChecksumUtil.recursiveMetaChecksum(buildDir),
+            new OutputInfo("Spring Boot application", buildDir.toString()));
     }
 
 }

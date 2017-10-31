@@ -72,12 +72,12 @@ public class ResourcesTask extends AbstractModuleTask {
         final Path buildDir =
             Files.createDirectories(resolveBuildDir("resources", compileTarget));
 
-        final Path srcDir = Paths.get(resourcesProduct.get().getProperty("srcDir"));
+        final Path resDir = Paths.get(resourcesProduct.get().getProperty("resDir"));
 
         final KeyValueCache cache = initCache();
 
-        Files.walkFileTree(srcDir, newCopyVisitor(buildDir, cache));
-        Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(srcDir, cache));
+        Files.walkFileTree(resDir, newCopyVisitor(buildDir, cache));
+        Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(resDir, cache));
 
         cache.saveCache();
 

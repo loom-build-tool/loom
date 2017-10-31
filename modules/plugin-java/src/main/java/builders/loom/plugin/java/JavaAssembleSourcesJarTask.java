@@ -60,7 +60,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
 
         resourcesTreeProduct.ifPresent(p ->
-            args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
+            args.addAll(List.of("-C", p.getProperty("resDir"), ".")));
 
         LOG.debug("Run JarToolProvider with args: {}", args);
         jarTool.jar(args);

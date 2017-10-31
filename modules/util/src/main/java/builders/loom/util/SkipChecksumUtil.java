@@ -53,11 +53,4 @@ public final class SkipChecksumUtil {
             .collect(Collectors.joining(";"));
     }
 
-    // TODO
-    // config ?
-    // config files (e.g. checkstyle.xml)
-    // setup: (e.g. jdk version)
-    // ENV
-    // systemproperties
-
 }

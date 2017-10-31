@@ -298,6 +298,7 @@ public class Job implements Callable<TaskStatus> {
         }
 
         private void validate(final Path artifactPath) {
+            // TODO check if under build dir or outside project
             final Path buildDir = LoomPaths.buildDir(runtimeConfiguration.getProjectBaseDir())
                 .toAbsolutePath();
 

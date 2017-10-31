@@ -275,6 +275,8 @@ public class CheckstyleTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path reportDir, final String outputInfo) {
+        // note: skiphints can be based on report file meta data,
+        //   because checkstyle uses a cache to prevent recreation of identical reports
         return new GenericProduct("reportDir", reportDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(reportDir),
             new OutputInfo(outputInfo, reportDir));

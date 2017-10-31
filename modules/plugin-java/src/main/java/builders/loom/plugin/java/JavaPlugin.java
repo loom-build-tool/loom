@@ -158,7 +158,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
             .desc("Creates Javadoc pages.")
-            .skipHints(List.of(SkipChecksumUtil.always()))
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion()))
             .register();
 
         task("assembleJavadocJar")

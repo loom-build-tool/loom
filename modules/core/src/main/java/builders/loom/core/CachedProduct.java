@@ -92,6 +92,7 @@ class CachedProduct {
             if (Files.exists(productInfoFile)) {
                 SimpleSerializer.read(productInfoFile, (e) -> {
                     final String name = e.getFields().get(0);
+                    // TODO if not starting with "/", resolve path against buildDir
                     final Path artifact = Paths.get(e.getFields().get(1));
                     outputInfo.set(new OutputInfo(name, artifact));
                 });
@@ -136,6 +137,7 @@ class CachedProduct {
                 if (product.getOutputInfo().isPresent()) {
                     final OutputInfo outputInfo = product.getOutputInfo().get();
 
+                    // TODO relativize, if possible, otherwise use full path
                     final Path relativeArtifactPath = runtimeConfiguration.getProjectBaseDir()
                         .toAbsolutePath().relativize(outputInfo.getArtifact().toAbsolutePath());
 

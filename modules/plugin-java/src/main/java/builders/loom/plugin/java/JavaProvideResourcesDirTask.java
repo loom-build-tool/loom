@@ -69,8 +69,8 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path srcDir) {
-        return new GenericProduct("srcDir", srcDir.toString(),
-            ProductChecksumUtil.recursiveContentChecksum(srcDir), null);
+        return new GenericProduct("resDir", srcDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(srcDir), null);
     }
 
 }

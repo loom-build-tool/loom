@@ -104,6 +104,7 @@ final class ProductReportPrinter {
                     .fgGreen().a(productInfo.getOutputInfo().getName());
 
                 if (productInfo.getOutputInfo().getArtifact() != null) {
+                    // TODO show relative path if possible, otherwise full path
                     final Path relativeArtifactPath = runtimeConfiguration
                         .getProjectBaseDir().toAbsolutePath()
                         .relativize(productInfo.getOutputInfo().getArtifact().toAbsolutePath());

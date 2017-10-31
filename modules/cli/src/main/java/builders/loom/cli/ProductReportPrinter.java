@@ -16,7 +16,7 @@
 
 package builders.loom.cli;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import java.util.Optional;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.ModuleRunner;
@@ -36,9 +37,12 @@ import builders.loom.core.plugin.ConfiguredTask;
 
 final class ProductReportPrinter {
 
+    private final RuntimeConfiguration runtimeConfiguration;
     private final ModuleRunner moduleRunner;
 
-    ProductReportPrinter(final ModuleRunner moduleRunner) {
+    ProductReportPrinter(final RuntimeConfiguration runtimeConfiguration,
+                         final ModuleRunner moduleRunner) {
+        this.runtimeConfiguration = runtimeConfiguration;
         this.moduleRunner = moduleRunner;
     }
 
@@ -100,7 +104,11 @@ final class ProductReportPrinter {
                     .fgGreen().a(productInfo.getOutputInfo().getName());
 
                 if (productInfo.getOutputInfo().getArtifact() != null) {
-                    ansi.a(": ").fgDefault().a(Paths.get("").toAbsolutePath().relativize(productInfo.getOutputInfo().getArtifact().toAbsolutePath()).toString());
+                    final Path relativeArtifactPath = runtimeConfiguration
+                        .getProjectBaseDir().toAbsolutePath()
+                        .relativize(productInfo.getOutputInfo().getArtifact().toAbsolutePath());
+
+                    ansi.a(": ").fgDefault().a(relativeArtifactPath.toString());
                 }
 
                 ansi.reset().newline();

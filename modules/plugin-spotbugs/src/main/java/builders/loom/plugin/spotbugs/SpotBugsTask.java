@@ -49,7 +49,7 @@ import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
-@SuppressWarnings("checkstyle:classdataabstractioncoupling")
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class SpotBugsTask extends AbstractModuleTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsTask.class);

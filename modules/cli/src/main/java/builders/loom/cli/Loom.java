@@ -266,7 +266,7 @@ public final class Loom {
                 } finally {
                     progressMonitor.stop();
 
-                    new ProductReportPrinter(loomProcessor.getModuleRunner())
+                    new ProductReportPrinter(runtimeConfiguration, loomProcessor.getModuleRunner())
                         .print(configuredTasks);
                 }
 

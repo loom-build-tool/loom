@@ -26,7 +26,7 @@ public final class Hashing {
 
     public static String hash(final Iterable<String> strings) {
         final Hasher hasher = new Hasher();
-        for (final Iterator<String> iterator = strings.iterator(); iterator.hasNext(); ) {
+        for (final Iterator<String> iterator = strings.iterator(); iterator.hasNext();) {
             final String string = iterator.next();
             hasher.putString(string);
 

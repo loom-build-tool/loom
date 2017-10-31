@@ -94,7 +94,7 @@ public class JavaCompileTask extends AbstractModuleTask {
                     .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
 
                 for (final String module : getModuleConfig().getModuleCompileDependencies()) {
-                    useProduct(module,"compileDependencies", Product.class)
+                    useProduct(module, "compileDependencies", Product.class)
                         .map(p -> p.getProperties("classpath"))
                         .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 }
@@ -109,7 +109,7 @@ public class JavaCompileTask extends AbstractModuleTask {
                     .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
 
                 for (final String module : getModuleConfig().getModuleCompileDependencies()) {
-                    useProduct(module,"compileDependencies", Product.class)
+                    useProduct(module, "compileDependencies", Product.class)
                         .map(p -> p.getProperties("classpath"))
                         .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 }

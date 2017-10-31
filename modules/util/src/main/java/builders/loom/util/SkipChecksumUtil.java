@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 
 public final class SkipChecksumUtil {
 
+    private SkipChecksumUtil() {
+    }
+
     public static Supplier<String> jvmVersion() {
         return () -> "JVM " + Runtime.version().toString();
     }
@@ -50,13 +53,11 @@ public final class SkipChecksumUtil {
             .collect(Collectors.joining(";"));
     }
 
-
     // TODO
     // config ?
     // config files (e.g. checkstyle.xml)
     // setup: (e.g. jdk version)
     // ENV
     // systemproperties
-
 
 }

@@ -132,7 +132,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedResources")
             .uses("resources")
             .desc("Processes main resources (copy and replace variables if necessary).")
-            .skipHints(List.of(SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
+            .skipHints(List.of(
+                SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("processTestResources")

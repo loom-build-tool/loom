@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.spi.ToolProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +52,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("sources-jar"))
             .resolve(String.format("%s-sources.jar", getBuildContext().getModuleName()));
 
-        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
-            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
+        final JarToolWrapper jarTool = new JarToolWrapper();
 
         final List<String> args = new ArrayList<>(List.of("-c", "-f", sourceJarFile.toString()));
 
@@ -65,11 +63,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
 
         LOG.debug("Run JarToolProvider with args: {}", args);
-        final int result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
-
-        if (result != 0) {
-            throw new IllegalStateException("Building sources-jar file failed");
-        }
+        jarTool.jar(args);
 
         return TaskResult.done(newProduct(sourceJarFile));
     }

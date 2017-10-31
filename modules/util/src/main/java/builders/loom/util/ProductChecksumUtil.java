@@ -29,6 +29,9 @@ import java.util.stream.Stream;
 
 public final class ProductChecksumUtil {
 
+    private ProductChecksumUtil() {
+    }
+
     public static String recursiveContentChecksum(final Path path) {
         try {
             final Stream<Path> pathStream =

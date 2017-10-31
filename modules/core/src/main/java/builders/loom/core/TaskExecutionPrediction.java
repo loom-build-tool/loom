@@ -61,6 +61,7 @@ class TaskExecutionPrediction {
         sigFile = buildFileName();
     }
 
+    @SuppressWarnings("checkstyle:illegalcatch")
     private String calcSignature() {
         final List<String> skipHints;
         try {

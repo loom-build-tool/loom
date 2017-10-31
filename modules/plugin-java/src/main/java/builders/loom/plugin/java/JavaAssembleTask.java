@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.spi.ToolProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,6 @@ public class JavaAssembleTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
     }
 
-    @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
     public TaskResult run() throws Exception {
         final Optional<Product> compilationProduct = useProduct(
@@ -69,8 +67,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("jar"))
             .resolve(String.format("%s.jar", getBuildContext().getModuleName()));
 
-        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
-            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
+        final JarToolWrapper jarTool = new JarToolWrapper();
 
         final List<String> args = new ArrayList<>(List.of("-c", "-f", jarFile.toString()));
 
@@ -89,8 +86,6 @@ public class JavaAssembleTask extends AbstractModuleTask {
                 args.addAll(List.of("--module-version", v)));
         }
 
-        final int result;
-
         final String automaticModuleName = moduleInfoExists ? null : buildAutomaticModuleName();
         final Manifest manifest = prepareManifest(automaticModuleName);
 
@@ -107,11 +102,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
                 args.addAll(List.of("-C", p.getProperty("processedResourcesDir"), ".")));
 
             LOG.debug("Run JarToolProvider with args: {}", args);
-            result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
-        }
-
-        if (result != 0) {
-            throw new IllegalStateException("Building jar file failed");
+            jarTool.jar(args);
         }
 
         return TaskResult.done(newProduct(jarFile));

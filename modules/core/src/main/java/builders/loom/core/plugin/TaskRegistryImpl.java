@@ -49,7 +49,7 @@ public class TaskRegistryImpl implements TaskRegistryLookup {
                              final boolean intermediateProduct, final Set<String> usedProducts,
                              final Set<String> importedProducts,
                              final Set<String> importedAllProducts,
-                             final List<String> skipHints,
+                             final List<Supplier<String>> skipHints,
                              final String description) {
 
         Objects.requireNonNull(taskName, "taskName must be specified");

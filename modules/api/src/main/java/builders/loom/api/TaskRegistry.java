@@ -26,7 +26,8 @@ public interface TaskRegistry {
     void registerTask(String pluginName, String taskName, Supplier<Task> taskSupplier,
                       String providedProduct, boolean intermediateProduct,
                       Set<String> usedProducts, Set<String> importedProducts,
-                      Set<String> importedAllProducts, List<String> skipHints, String description);
+                      Set<String> importedAllProducts, List<Supplier<String>> skipHints,
+                      String description);
 
     void registerGoal(String pluginName, String goalName, Set<String> usedProducts);
 

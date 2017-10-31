@@ -16,6 +16,8 @@
 
 package builders.loom.plugin.java;
 
+import java.util.List;
+
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.DependencyResolverService;
@@ -38,8 +40,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new DependencyResolverTask(DependencyScope.COMPILE, dependencyResolver))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
-            .skipHints(SkipChecksumUtils.jvmVersion(),
-                SkipChecksumUtils.collection(getModuleBuildConfig().getCompileDependencies()))
+            .skipHints(List.of(SkipChecksumUtils.jvmVersion(),
+                SkipChecksumUtils.collection(getModuleBuildConfig().getCompileDependencies())))
             .register();
 
         task("resolveCompileArtifacts")
@@ -53,8 +55,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new DependencyResolverTask(DependencyScope.TEST, dependencyResolver))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
-            .skipHints(SkipChecksumUtils.jvmVersion(),
-                SkipChecksumUtils.collection(getModuleBuildConfig().getTestDependencies()))
+            .skipHints(List.of(SkipChecksumUtils.jvmVersion(),
+                SkipChecksumUtils.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
         task("resolveTestArtifacts")
@@ -81,9 +83,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("compilation")
             .uses("source", "compileDependencies")
             .importFromModules("compilation", "compileDependencies")
-            // TODO ? use lambdas
-            .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
-                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
+            .skipHints(List.of(SkipChecksumUtils.jvmVersion(), () -> "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .desc("Compiles main sources.")
             .register();
 
@@ -93,9 +94,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("compilation", "testSource", "testDependencies")
             .importFromModules("compilation", "compileDependencies")
             .desc("Compiles test sources.")
-            // TODO ? use lambdas
-            .skipHints(SkipChecksumUtils.jvmVersion(), "Module Java version "
-                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion().toString())
+            .skipHints(List.of(SkipChecksumUtils.jvmVersion(), () -> "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .register();
 
         task("assembleJar")
@@ -103,7 +103,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
-            .skipHints(SkipChecksumUtils.always())
+            .skipHints(List.of(SkipChecksumUtils.always()))
             .register();
 
         task("assembleSourcesJar")
@@ -111,7 +111,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
-            .skipHints(SkipChecksumUtils.always())
+            .skipHints(List.of(SkipChecksumUtils.always()))
             .register();
 
         task("provideResources")
@@ -132,7 +132,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedResources")
             .uses("resources")
             .desc("Processes main resources (copy and replace variables if necessary).")
-            .skipHints(SkipChecksumUtils.skipOnNull(getPluginSettings().getResourceFilterGlob()))
+            .skipHints(List.of(SkipChecksumUtils.skipOnNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("processTestResources")

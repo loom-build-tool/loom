@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -64,7 +65,9 @@ public class TaskExecutionPrediction {
     }
 
     public String calcSignature() throws InterruptedException {
-        final List<String> skipHints = configuredTask.getSkipHints();
+        final List<String> skipHints = configuredTask.getSkipHints().stream()
+            .map(Supplier::get)
+            .collect(Collectors.toList());
 
         // Prevent skipping tasks by default
         if (skipHints.isEmpty() && !configuredTask.isGoal()) {

@@ -35,7 +35,7 @@ public class ConfiguredTask {
     private final Set<String> usedProducts;
     private final Set<String> importedProducts;
     private final Set<String> importedAllProducts;
-    private final List<String> skipHints;
+    private final List<Supplier<String>> skipHints;
     private final String description;
     private final TaskType type;
 
@@ -43,7 +43,7 @@ public class ConfiguredTask {
     ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
                    final Supplier<Task> taskSupplier, final String providedProduct,
                    final Set<String> usedProducts, final Set<String> importedProducts,
-                   final Set<String> importedAllProducts, final List<String> skipHints,
+                   final Set<String> importedAllProducts, final List<Supplier<String>> skipHints,
                    final String description, final TaskType type) {
         this.buildContext = buildContext;
         this.name = name;
@@ -103,7 +103,7 @@ public class ConfiguredTask {
         return Collections.unmodifiableSet(importedAllProducts);
     }
 
-    public List<String> getSkipHints() {
+    public List<Supplier<String>> getSkipHints() {
         return Collections.unmodifiableList(skipHints);
     }
 

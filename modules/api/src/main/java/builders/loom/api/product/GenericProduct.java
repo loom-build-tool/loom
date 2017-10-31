@@ -16,12 +16,13 @@
 
 package builders.loom.api.product;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class GenericProduct implements Product {
 
@@ -40,9 +41,17 @@ public class GenericProduct implements Product {
         if (properties.values().stream().anyMatch(v -> v == null || v.isEmpty())) {
             throw new IllegalArgumentException("properties must not contain null/empty values");
         }
-        this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+        this.properties = immutable(properties);
         this.checksum = Objects.requireNonNull(checksum, "checksum required");
         this.outputInfo = outputInfo;
+    }
+
+    private static Map<String, List<String>> immutable(final Map<String, List<String>> properties) {
+        final Map<String, List<String>> propCopy = properties.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey,
+                e -> Collections.unmodifiableList(new ArrayList<>(e.getValue()))));
+
+        return Collections.unmodifiableMap(propCopy);
     }
 
     @Override

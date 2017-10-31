@@ -19,16 +19,10 @@ package builders.loom.plugin.spotbugs;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
-import builders.loom.api.JavaVersion;
 
 public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SpotBugsPlugin.class);
 
     public SpotBugsPlugin() {
         super(new SpotBugsPluginSettings());
@@ -36,14 +30,6 @@ public class SpotBugsPlugin extends AbstractPlugin<SpotBugsPluginSettings> {
 
     @Override
     public void configure() {
-        final JavaVersion platformVersion =
-            getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion();
-
-        if (platformVersion.isNewerThan(JavaVersion.JAVA_1_8)) {
-            LOG.warn("SpotBugs currently supports only Java <= 1.8 -- using it with version "
-                + platformVersion.getStringVersion() + " may not work");
-        }
-
         final SpotBugsPluginSettings pluginSettings = getPluginSettings();
 
         final List<String> tasksOfGoal = new ArrayList<>();

@@ -6,7 +6,7 @@ The SpotBugs plugin provides the functionality of SpotBugs_ to Loom.
 From the SpotBugs website: *SpotBugs is the spiritual successor of FindBugs_,
 carrying on from the point where it left off with support of its community.*
 
-Loom uses SpotBugs version 3.1.0-RC5, FbContrib version 7.0.3.sb, FindSecBugs version 1.7.1.
+Loom uses SpotBugs version 3.1.0, FbContrib version 7.0.5.sb, FindSecBugs version 1.7.1.
 
 
 Products

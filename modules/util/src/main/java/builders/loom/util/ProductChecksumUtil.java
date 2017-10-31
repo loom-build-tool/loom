@@ -47,7 +47,7 @@ public final class ProductChecksumUtil {
         final Hasher hasher = new Hasher();
         files
             .sorted(Comparator.comparing(Path::toString))
-            .flatMap(p -> Stream.of(new Hasher().putFile(p).hash()))
+            .map(p -> new Hasher().putFile(p).hash())
             .forEach(hasher::putBytes);
 
         return hasher.hashHex();

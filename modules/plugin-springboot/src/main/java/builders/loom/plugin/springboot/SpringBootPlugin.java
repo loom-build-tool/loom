@@ -45,7 +45,7 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             .uses("processedResources", "compilation", "compileDependencies")
             .importFromModules("jar")
             .desc("Builds Spring Boot application.")
-            .skipHints(List.of(SkipChecksumUtil.always()))
+            .skipHints(List.of(() -> pluginSettings.getVersion()))
             .register();
 
         task("springBootFatJarApplication")

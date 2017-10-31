@@ -219,8 +219,6 @@ public class Job implements Callable<TaskStatus> {
 
             LOG.info("Task (skipped) resulted with {}", taskResult);
 
-            // FIXME check result
-
             // note on fail status: product may contain details about the failure (reports)
             productPromise.complete(taskResult);
             return taskResult;

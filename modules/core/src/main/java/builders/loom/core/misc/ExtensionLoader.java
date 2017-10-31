@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import builders.loom.core.Version;
+import builders.loom.core.LoomVersion;
 import builders.loom.core.plugin.BiSectFilteringClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 
@@ -64,7 +64,7 @@ public final class ExtensionLoader {
     }
 
     private static URL findExtensionUrl(final Path baseDir, final String name) {
-        final String loomVersion = Version.getVersion();
+        final String loomVersion = LoomVersion.getVersion();
         final Path libraryPath = baseDir.resolve(Paths.get("library", "loom-" + loomVersion));
         final Path pluginDir = libraryPath.resolve(name);
         final Path pluginFile =

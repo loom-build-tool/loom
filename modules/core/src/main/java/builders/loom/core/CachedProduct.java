@@ -53,7 +53,7 @@ class CachedProduct {
 
     private Path buildFileName(final String suffix) {
         return LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), "execution-prevention", "products",
+            .resolve(Paths.get(LoomVersion.getVersion(), "execution-prevention", "products",
                 configuredTask.getBuildContext().getModuleName(),
                 configuredTask.getProvidedProduct() + suffix));
     }

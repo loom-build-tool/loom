@@ -34,8 +34,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
+import builders.loom.core.LoomVersion;
 import builders.loom.core.RuntimeConfigurationImpl;
-import builders.loom.core.Version;
 import builders.loom.util.Hasher;
 
 public final class ConfigReader {
@@ -61,7 +61,7 @@ public final class ConfigReader {
                 LOG.debug("Working with parsed config: {}", buildConfig);
             } else {
                 final Path cachePath = LoomPaths.loomDir(runtimeConfig.getProjectBaseDir())
-                    .resolve(Paths.get(Version.getVersion(), cacheName));
+                    .resolve(Paths.get(LoomVersion.getVersion(), cacheName));
 
                 buildConfig = parseAndCacheConfig(configData, cachePath);
                 LOG.debug("Working with cached config: {}", buildConfig);

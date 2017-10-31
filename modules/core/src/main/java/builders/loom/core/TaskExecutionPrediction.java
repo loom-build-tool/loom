@@ -123,7 +123,7 @@ class TaskExecutionPrediction {
 
     private Path buildFileName() {
         final Path file = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), "execution-prevention", "checksums",
+            .resolve(Paths.get(LoomVersion.getVersion(), "execution-prevention", "checksums",
                 configuredTask.getBuildContext().getModuleName(),
                 configuredTask.getProvidedProduct() + ".sig"));
 

@@ -53,7 +53,7 @@ public class LoomProcessor {
     private ModuleRunner moduleRunner;
 
     static {
-        System.setProperty("loom.version", Version.getVersion());
+        System.setProperty("loom.version", LoomVersion.getVersion());
     }
 
     public void init(final RuntimeConfigurationImpl runtimeConfiguration,
@@ -246,7 +246,7 @@ public class LoomProcessor {
 
     public void logSystemEnvironment() {
         LOG.debug("Running Loom {} on {} {} {}, Java {} ({}) with {} cores",
-            Version.getVersion(),
+            LoomVersion.getVersion(),
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             System.getProperty("os.arch"),

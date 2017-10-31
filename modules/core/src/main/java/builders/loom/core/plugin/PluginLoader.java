@@ -39,9 +39,9 @@ import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
 import builders.loom.api.ServiceRegistry;
 import builders.loom.core.DownloadProgressEmitterBridge;
+import builders.loom.core.LoomVersion;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
-import builders.loom.core.Version;
 import builders.loom.core.misc.BeanUtil;
 import builders.loom.core.misc.ExtensionLoader;
 import builders.loom.util.SystemUtil;
@@ -96,7 +96,7 @@ public class PluginLoader {
         plugin.setServiceRegistry(serviceRegistry);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), pluginName)));
+            .resolve(Paths.get(LoomVersion.getVersion(), pluginName)));
         plugin.setDownloadProgressEmitter(downloadProgressEmitter);
 
         final Set<String> acceptedSettings = injectPluginSettings(pluginName, plugin, config);

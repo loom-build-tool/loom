@@ -38,9 +38,9 @@ import builders.loom.api.LoomPaths;
 import builders.loom.core.BuildException;
 import builders.loom.core.ExecutionReport;
 import builders.loom.core.LoomProcessor;
+import builders.loom.core.LoomVersion;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
-import builders.loom.core.Version;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 
@@ -127,7 +127,7 @@ public final class Loom {
     }
 
     private static void init() {
-        final String loomVersion = Version.getVersion();
+        final String loomVersion = LoomVersion.getVersion();
         AnsiConsole.out().println(Ansi.ansi().reset().fgCyan()
             .format("Loom Build Tool v%s (on Java %s)",
                 loomVersion, Runtime.version())

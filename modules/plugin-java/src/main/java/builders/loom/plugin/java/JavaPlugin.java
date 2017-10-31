@@ -49,6 +49,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 dependencyResolver))
             .provides("compileArtifacts", true)
             .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies())))
             .register();
 
         task("resolveTestDependencies")
@@ -56,6 +58,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
             .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies()),
                 SkipChecksumUtil.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
@@ -64,6 +67,9 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 dependencyResolver))
             .provides("testArtifacts", true)
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies()),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
         task("provideSource")
@@ -142,6 +148,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedTestResources")
             .uses("testResources")
             .desc("Processes test resources (copy and replace variables if necessary).")
+            .skipHints(List.of(
+                SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("javadoc")
@@ -150,6 +158,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
             .desc("Creates Javadoc pages.")
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         task("assembleJavadocJar")
@@ -157,6 +166,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("javadocJar")
             .uses("javadoc")
             .desc("Assembles .jar file from Javadocs.")
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         goal("assemble")

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 public final class ProductChecksumUtil {
@@ -93,6 +94,10 @@ public final class ProductChecksumUtil {
         });
 
         return Hashing.hash(strings);
+    }
+
+    public static String random() {
+        return UUID.randomUUID().toString();
     }
 
 }

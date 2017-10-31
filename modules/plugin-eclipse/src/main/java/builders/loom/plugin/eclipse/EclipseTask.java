@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -45,6 +44,7 @@ import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.Preconditions;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlParser;
@@ -336,7 +336,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+        return new GenericProduct(Collections.emptyMap(), ProductChecksumUtil.random(),
             new OutputInfo("Eclipse project files"));
     }
 

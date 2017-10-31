@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.w3c.dom.Document;
@@ -39,6 +38,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
@@ -350,7 +350,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+        return new GenericProduct(Collections.emptyMap(), ProductChecksumUtil.random(),
             new OutputInfo("Idea project files"));
     }
 

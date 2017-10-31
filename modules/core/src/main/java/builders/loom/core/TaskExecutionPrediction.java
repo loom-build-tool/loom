@@ -25,7 +25,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -40,6 +39,7 @@ import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Hashing;
+import builders.loom.util.SkipChecksumUtil;
 
 class TaskExecutionPrediction {
 
@@ -62,14 +62,20 @@ class TaskExecutionPrediction {
     }
 
     private String calcSignature() {
-        final List<String> skipHints = configuredTask.getSkipHints().stream()
-            .map(Supplier::get)
-            .collect(Collectors.toList());
+        final List<String> skipHints;
+        try {
+            skipHints = configuredTask.getSkipHints().stream()
+                .map(Supplier::get)
+                .collect(Collectors.toList());
+        } catch (final RuntimeException e) {
+            throw new IllegalStateException("Error while evaluating skip hints for task "
+                + configuredTask, e);
+        }
 
         // Prevent skipping tasks by default
         if (skipHints.isEmpty() && !configuredTask.isGoal()) {
             LOG.debug("No skip hints configured -- don't skip");
-            return "PREVENT-SKIP:" + UUID.randomUUID().toString();
+            return "PREVENT-SKIP:" + SkipChecksumUtil.never();
         }
 
         final List<String> checksumParts = new ArrayList<>(skipHints);
@@ -89,7 +95,7 @@ class TaskExecutionPrediction {
                 final String checksum = usedProducts
                     .readProduct(moduleName, productId, Product.class)
                     .map(Product::checksum)
-                    .orElse("EMPTY");
+                    .orElse("NO_PRODUCT");
 
                 checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));
             } catch (final InterruptedException e) {

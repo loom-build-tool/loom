@@ -36,7 +36,7 @@ public final class SkipChecksumUtil {
         return () -> "SKIP";
     }
 
-    private static Supplier<String> never() {
+    public static Supplier<String> never() {
         return () -> UUID.randomUUID().toString();
     }
 

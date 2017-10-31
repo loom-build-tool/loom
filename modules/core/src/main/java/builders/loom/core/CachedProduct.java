@@ -42,13 +42,22 @@ import builders.loom.util.serialize.SimpleSerializer;
 
 class CachedProduct {
 
+    private static final String EMPTY_PRODUCT = "EMPTY";
+
     private final RuntimeConfiguration runtimeConfiguration;
     private final ConfiguredTask configuredTask;
+    private final Path productFile;
+    private final Path productInfoFile;
+    private final Path checksumFile;
 
     CachedProduct(final RuntimeConfiguration runtimeConfiguration,
                   final ConfiguredTask configuredTask) {
         this.runtimeConfiguration = runtimeConfiguration;
         this.configuredTask = configuredTask;
+
+        productFile = buildFileName(".product");
+        productInfoFile = buildFileName(".product.info");
+        checksumFile = buildFileName(".product.checksum");
     }
 
     private Path buildFileName(final String suffix) {
@@ -59,20 +68,16 @@ class CachedProduct {
     }
 
     boolean available() {
-        return Files.exists(buildFileName(".product"));
+        return Files.exists(productFile);
     }
 
     Product load() {
-        final Path productFile = buildFileName(".product");
-        final Path productInfoFile = buildFileName(".product.info");
-        final Path checksumFile = buildFileName(".product.checksum");
-
         final Map<String, List<String>> properties = new HashMap<>();
 
         try {
             final String checksum = FileUtil.readToString(checksumFile);
 
-            if ("EMPTY".equals(checksum)) {
+            if (EMPTY_PRODUCT.equals(checksum)) {
                 return null;
             }
 
@@ -100,25 +105,21 @@ class CachedProduct {
 
     void prepare() {
         try {
-            Files.deleteIfExists(buildFileName(".product.checksum"));
-            Files.deleteIfExists(buildFileName(".product.info"));
-            Files.deleteIfExists(buildFileName(".product"));
+            Files.deleteIfExists(checksumFile);
+            Files.deleteIfExists(productInfoFile);
+            Files.deleteIfExists(productFile);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     void persist(final TaskResult taskResult) {
-        final Path productFile = buildFileName(".product");
-        final Path productInfoFile = buildFileName(".product.info");
-        final Path checksumFile = buildFileName(".product.checksum");
-
         try {
             Files.createDirectories(checksumFile.getParent());
 
             final String checksum;
             if (taskResult.getStatus() == TaskStatus.EMPTY) {
-                checksum = "EMPTY";
+                checksum = EMPTY_PRODUCT;
             } else {
                 final Product product = taskResult.getProduct()
                     .orElseThrow(() -> new IllegalStateException("No Product available"));

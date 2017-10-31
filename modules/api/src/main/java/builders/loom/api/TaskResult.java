@@ -17,6 +17,7 @@
 package builders.loom.api;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import builders.loom.api.product.Product;
 
@@ -53,8 +54,8 @@ public final class TaskResult {
         return status;
     }
 
-    public Product getProduct() {
-        return product;
+    public Optional<Product> getProduct() {
+        return Optional.ofNullable(product);
     }
 
     public String getErrorReason() {

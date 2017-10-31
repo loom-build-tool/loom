@@ -222,7 +222,7 @@ public class PmdTask extends AbstractModuleTask {
     private static Product newProduct(final Path reportDir, final String outputInfo) {
         return new GenericProduct("reportDir", reportDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(reportDir),
-            new OutputInfo(outputInfo, reportDir.toString()));
+            new OutputInfo(outputInfo, reportDir));
     }
 
     private static class LogRenderer extends AbstractRenderer {

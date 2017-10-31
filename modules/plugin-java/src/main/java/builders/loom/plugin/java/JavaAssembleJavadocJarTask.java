@@ -71,7 +71,7 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
     private static Product newProduct(final Path jarFile) {
         return new GenericProduct("javaDocJarFile", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
-            new OutputInfo("Jar of Javadoc", jarFile.toString()));
+            new OutputInfo("Jar of Javadoc", jarFile));
     }
 
 }

@@ -65,8 +65,8 @@ final class ProductReportPrinter {
                 .lookupProduct(configuredTask.getBuildContext(), productId)
                 .getWithoutWait();
 
-            if (product.isPresent() && product.get().outputInfo().isPresent()) {
-                final OutputInfo outputInfo = product.get().outputInfo().get();
+            if (product.isPresent() && product.get().getOutputInfo().isPresent()) {
+                final OutputInfo outputInfo = product.get().getOutputInfo().get();
                 final String pluginName = configuredTask.getPluginName();
                 aggProducts.putIfAbsent(pluginName, new ArrayList<>());
                 aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
@@ -99,11 +99,8 @@ final class ProductReportPrinter {
                     .bold().a(" > ").boldOff()
                     .fgGreen().a(productInfo.getOutputInfo().getName());
 
-                if (productInfo.getOutputInfo().getDetails() != null) {
-                    final String details = productInfo.getOutputInfo().getDetails()
-                        .replace(Paths.get("").toAbsolutePath().toString() + "/", "");
-
-                    ansi.a(": ").fgDefault().a(details);
+                if (productInfo.getOutputInfo().getArtifact() != null) {
+                    ansi.a(": ").fgDefault().a(Paths.get("").toAbsolutePath().relativize(productInfo.getOutputInfo().getArtifact().toAbsolutePath()).toString());
                 }
 
                 ansi.reset().newline();

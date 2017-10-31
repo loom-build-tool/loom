@@ -70,7 +70,7 @@ public class GenericProduct implements Product {
     }
 
     @Override
-    public Optional<OutputInfo> outputInfo() {
+    public Optional<OutputInfo> getOutputInfo() {
         return Optional.ofNullable(outputInfo);
     }
 

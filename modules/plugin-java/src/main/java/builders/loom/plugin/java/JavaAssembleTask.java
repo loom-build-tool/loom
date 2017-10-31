@@ -158,7 +158,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
     private static Product newProduct(final Path jarFile) {
         return new GenericProduct("classesJarFile", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
-            new OutputInfo("Jar of compiled classes", jarFile.toString()));
+            new OutputInfo("Jar of compiled classes", jarFile));
     }
 
 }

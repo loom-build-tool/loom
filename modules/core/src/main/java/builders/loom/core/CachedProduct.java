@@ -87,8 +87,8 @@ class CachedProduct {
             if (Files.exists(productInfoFile)) {
                 SimpleSerializer.read(productInfoFile, (e) -> {
                     final String name = e.getFields().get(0);
-                    final String details = e.getFields().get(1);
-                    outputInfo.set(new OutputInfo(name, details));
+                    final Path artifact = Paths.get(e.getFields().get(1));
+                    outputInfo.set(new OutputInfo(name, artifact));
                 });
             }
 
@@ -120,7 +120,9 @@ class CachedProduct {
             if (taskResult.getStatus() == TaskStatus.EMPTY) {
                 checksum = "EMPTY";
             } else {
-                final Product product = taskResult.getProduct();
+                final Product product = taskResult.getProduct()
+                    .orElseThrow(() -> new IllegalStateException("No Product available"));
+
                 final Map<String, List<String>> properties = product.getProperties();
 
                 SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
@@ -130,10 +132,14 @@ class CachedProduct {
                     return new Record(elements);
                 });
 
-                if (product.outputInfo().isPresent()) {
-                    final OutputInfo outputInfo = product.outputInfo().get();
+                if (product.getOutputInfo().isPresent()) {
+                    final OutputInfo outputInfo = product.getOutputInfo().get();
+
+                    final Path relativeArtifactPath = runtimeConfiguration.getProjectBaseDir()
+                        .toAbsolutePath().relativize(outputInfo.getArtifact().toAbsolutePath());
+
                     SimpleSerializer.write(productInfoFile, List.of(outputInfo),
-                        (e) -> new Record(e.getName(), e.getDetails()));
+                        (e) -> new Record(e.getName(), relativeArtifactPath.toString()));
                 }
 
                 checksum = product.checksum();

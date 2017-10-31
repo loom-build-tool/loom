@@ -55,7 +55,7 @@ public final class ProductPromise {
     public void complete(final TaskResult result) {
         Objects.requireNonNull(result, "taskResult required");
         this.taskResult = result;
-        final boolean completed = promise.complete(Optional.ofNullable(taskResult.getProduct()));
+        final boolean completed = promise.complete(taskResult.getProduct());
         if (!completed) {
             throw new IllegalStateException(
                 "Product promise <" + productId + "> already completed");

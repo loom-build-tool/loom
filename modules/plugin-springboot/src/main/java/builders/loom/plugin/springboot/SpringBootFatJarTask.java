@@ -49,7 +49,7 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
     private static Product newProduct(final Path jarFile) {
         return new GenericProduct("springBootFatJar", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
-            new OutputInfo("Spring Boot Fat Jar application", jarFile.toString()));
+            new OutputInfo("Spring Boot Fat Jar application", jarFile));
     }
 
 }

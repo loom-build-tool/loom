@@ -131,7 +131,7 @@ public class JavadocTask extends AbstractModuleTask {
     private static Product newProduct(final Path buildDir) {
         return new GenericProduct("javaDocOut", buildDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(buildDir),
-            new OutputInfo("JavaDoc output", buildDir.toString()));
+            new OutputInfo("JavaDoc output", buildDir));
     }
 
 }

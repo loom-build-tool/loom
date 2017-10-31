@@ -188,7 +188,7 @@ public class SpringBootTask extends AbstractModuleTask {
     private static Product newProduct(final Path buildDir) {
         return new GenericProduct("springBootOut", buildDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(buildDir),
-            new OutputInfo("Spring Boot application", buildDir.toString()));
+            new OutputInfo("Spring Boot application", buildDir));
     }
 
 }

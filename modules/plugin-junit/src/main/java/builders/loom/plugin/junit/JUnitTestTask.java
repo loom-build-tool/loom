@@ -175,7 +175,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
     private static Product newProduct(final Path reportDir) {
         return new GenericProduct("reportDir", reportDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(reportDir),
-            new OutputInfo("JUnit report", reportDir.toString()));
+            new OutputInfo("JUnit report", reportDir));
     }
 
 }

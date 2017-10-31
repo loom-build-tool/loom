@@ -176,7 +176,7 @@ public class MavenInstallTask extends AbstractModuleTask {
     private static Product newProduct(final Path install) {
         return new GenericProduct("mavenInstallDir", install.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(install),
-            new OutputInfo("Directory of installed artifact", install.toString()));
+            new OutputInfo("Directory of installed artifact", install));
 
     }
 

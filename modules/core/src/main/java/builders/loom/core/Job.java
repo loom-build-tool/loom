@@ -16,6 +16,7 @@
 
 package builders.loom.core;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.BuildContext;
+import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfigAware;
 import builders.loom.api.ModuleGraphAware;
@@ -43,6 +45,8 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.UsedProducts;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 
 public class Job implements Callable<TaskStatus> {
@@ -280,6 +284,9 @@ public class Job implements Callable<TaskStatus> {
                 throw new IllegalStateException("Task <" + name + "> must not return null");
             }
 
+            taskResult.getProduct().flatMap(Product::getOutputInfo).map(OutputInfo::getArtifact)
+                .ifPresent(this::validate);
+
             // note on fail status: product may contain details about the failure (reports)
             productPromise.complete(taskResult);
 
@@ -288,6 +295,16 @@ public class Job implements Callable<TaskStatus> {
                     + taskResult.getErrorReason());
             }
             return taskResult;
+        }
+
+        private void validate(final Path artifactPath) {
+            final Path buildDir = LoomPaths.buildDir(runtimeConfiguration.getProjectBaseDir())
+                .toAbsolutePath();
+
+            if (!artifactPath.toAbsolutePath().startsWith(buildDir)) {
+                throw new IllegalStateException("OutputInfo artifact path <" + artifactPath
+                    + "> is not a child path of build dir <" + buildDir + ">");
+            }
         }
 
         @Override

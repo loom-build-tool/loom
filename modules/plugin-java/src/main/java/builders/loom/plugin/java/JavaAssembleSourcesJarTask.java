@@ -77,7 +77,7 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
     private static Product newProduct(final Path jarFile) {
         return new GenericProduct("sourceJarFile", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
-            new OutputInfo("Jar of sources", jarFile.toString()));
+            new OutputInfo("Jar of sources", jarFile));
     }
 
 }

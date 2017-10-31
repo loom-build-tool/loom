@@ -101,7 +101,6 @@ public class JavaAssembleTask extends AbstractModuleTask {
             resourcesTreeProduct.ifPresent(p ->
                 args.addAll(List.of("-C", p.getProperty("processedResourcesDir"), ".")));
 
-            LOG.debug("Run JarToolProvider with args: {}", args);
             jarTool.jar(args);
         }
 

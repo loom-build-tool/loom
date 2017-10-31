@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.GenericProduct;
@@ -33,8 +30,6 @@ import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JavaAssembleJavadocJarTask.class);
 
     @Override
     public TaskResult run() throws Exception {
@@ -56,7 +51,6 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
         resourcesTreeProduct.ifPresent(p ->
             args.addAll(List.of("-C", p.getProperty("javaDocOut"), ".")));
 
-        LOG.debug("Run JarToolProvider with args: {}", args);
         jarTool.jar(args);
 
         return TaskResult.done(newProduct(jarFile));

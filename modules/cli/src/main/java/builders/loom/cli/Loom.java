@@ -153,7 +153,7 @@ public final class Loom {
         return new Options()
             .addOption("h", "help", false, "Prints this help")
             .addOption("c", "clean", false, "Clean before execution")
-            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers)")
+            .addOption("n", "no-cache", false, "Disable all caches (use on CI servers); also implies clean")
             .addOption(
                 Option.builder("r")
                     .longOpt("release")
@@ -212,7 +212,7 @@ public final class Loom {
     private static void run(final Path projectBaseDir, final Path logFile, final CommandLine cmd)
         throws Exception {
 
-        if (cmd.hasOption("clean")) {
+        if (cmd.hasOption("clean") || cmd.hasOption("no-cache")) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
             clean(projectBaseDir);
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());

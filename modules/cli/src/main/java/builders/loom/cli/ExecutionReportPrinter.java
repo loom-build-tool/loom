@@ -30,6 +30,7 @@ import org.fusesource.jansi.AnsiString;
 import builders.loom.api.TaskStatus;
 import builders.loom.core.ExecutionStatus;
 import builders.loom.core.plugin.TaskType;
+import builders.loom.util.StringUtil;
 
 final class ExecutionReportPrinter {
 
@@ -60,7 +61,7 @@ final class ExecutionReportPrinter {
         table.print();
     }
 
-    private String renderType(final ExecutionStatus executionStatus) {
+    private static String renderType(final ExecutionStatus executionStatus) {
         if (executionStatus.getType() == TaskType.GOAL) {
             return "@|magenta Goal|@";
         }
@@ -68,7 +69,7 @@ final class ExecutionReportPrinter {
         return "@|cyan Task|@";
     }
 
-    private String renderStatus(final TaskStatus status) {
+    private static String renderStatus(final TaskStatus status) {
         final StringBuilder sb = new StringBuilder("@|");
         switch (status) {
             case DONE:
@@ -90,16 +91,14 @@ final class ExecutionReportPrinter {
         return sb.append(' ').append(status.name()).append("|@").toString();
     }
 
-    private String renderTime(final long totalDuration, final long duration) {
+    private static String renderTime(final long totalDuration, final long duration) {
         final double pct = 100D / totalDuration * duration;
-
-        final double minDuration = 0.1;
-        final String durationBar = pct < minDuration ? "." : String.join("",
-            Collections.nCopies((int) Math.ceil(pct / 2), "#"));
-
         final double durationSecs = duration / 1_000_000_000D;
+        return String.format("%5.2fs (%4.1f%%) %s", durationSecs, pct, renderBar(pct));
+    }
 
-        return String.format("%5.2fs (%4.1f%%) %s", durationSecs, pct, durationBar);
+    private static String renderBar(final double pct) {
+        return StringUtil.repeat('#', Math.max(1, (int) Math.ceil(pct / 2)));
     }
 
     private final class Table {

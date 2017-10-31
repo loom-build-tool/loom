@@ -37,4 +37,10 @@ public final class StringUtil {
             .collect(Collectors.toList());
     }
 
+    public static String repeat(final char c, final int cnt) {
+        final char[] chars = new char[cnt];
+        Arrays.fill(chars, c);
+        return new String(chars);
+    }
+
 }

@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -47,7 +47,7 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path jarFile) {
-        return new GenericProduct("springBootFatJar", jarFile.toString(),
+        return new ManagedGenericProduct("springBootFatJar", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
             new OutputInfo("Spring Boot Fat Jar application", jarFile));
     }

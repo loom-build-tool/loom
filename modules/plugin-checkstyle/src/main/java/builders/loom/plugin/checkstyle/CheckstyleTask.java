@@ -51,7 +51,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.ClassLoaderUtil;
@@ -277,7 +277,7 @@ public class CheckstyleTask extends AbstractModuleTask {
     private static Product newProduct(final Path reportDir, final String outputInfo) {
         // note: skiphints can be based on report file meta data,
         //   because checkstyle uses a cache to prevent recreation of identical reports
-        return new GenericProduct("reportDir", reportDir.toString(),
+        return new ManagedGenericProduct("reportDir", reportDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(reportDir),
             new OutputInfo(outputInfo, reportDir));
     }

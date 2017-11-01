@@ -38,7 +38,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
@@ -129,7 +129,7 @@ public class JavadocTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        return new GenericProduct("javaDocOut", buildDir.toString(),
+        return new ManagedGenericProduct("javaDocOut", buildDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(buildDir),
             new OutputInfo("JavaDoc output", buildDir));
     }

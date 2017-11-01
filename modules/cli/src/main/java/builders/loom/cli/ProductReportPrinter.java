@@ -104,12 +104,7 @@ final class ProductReportPrinter {
                     .fgGreen().a(productInfo.getOutputInfo().getName());
 
                 if (productInfo.getOutputInfo().getArtifact() != null) {
-                    // TODO show relative path if possible, otherwise full path
-                    final Path relativeArtifactPath = runtimeConfiguration
-                        .getProjectBaseDir().toAbsolutePath()
-                        .relativize(productInfo.getOutputInfo().getArtifact().toAbsolutePath());
-
-                    ansi.a(": ").fgDefault().a(relativeArtifactPath.toString());
+                    ansi.a(": ").fgDefault().a(constructArtifactPath(productInfo).toString());
                 }
 
                 ansi.reset().newline();
@@ -121,6 +116,17 @@ final class ProductReportPrinter {
 
             AnsiConsole.out().print(ansi);
         }
+    }
+
+    private Path constructArtifactPath(final ProductInfo productInfo) {
+        final Path artifactPath =
+            productInfo.getOutputInfo().getArtifact().toAbsolutePath();
+        final Path projectPath =
+            runtimeConfiguration.getProjectBaseDir().toAbsolutePath();
+
+        return artifactPath.startsWith(projectPath)
+            ? projectPath.relativize(artifactPath)
+            : artifactPath;
     }
 
     private static final class ProductInfo {

@@ -40,11 +40,10 @@ import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
+import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.Preconditions;
-import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.PropertiesMerger;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlParser;
@@ -336,7 +335,7 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), ProductChecksumUtil.random(),
+        return new UnmanagedGenericProduct(Collections.emptyMap(),
             new OutputInfo("Eclipse project files"));
     }
 

@@ -46,7 +46,7 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
@@ -330,7 +330,7 @@ public class JavaCompileTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path buildDir) {
-        return new GenericProduct("classesDir", buildDir.toString(),
+        return new ManagedGenericProduct("classesDir", buildDir.toString(),
             ProductChecksumUtil.recursiveContentChecksum(buildDir), null);
     }
 

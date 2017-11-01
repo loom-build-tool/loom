@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,6 +46,7 @@ import builders.loom.api.TaskStatus;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
 import builders.loom.api.UsedProducts;
+import builders.loom.api.product.ManagedProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
@@ -240,8 +242,8 @@ public class Job implements Callable<TaskStatus> {
         }
 
         @Override
-        protected void commitTransaction(final TaskResult taskResult) {
-            cachedProduct.persist(taskResult);
+        protected void commitTransaction(final ManagedProduct product) {
+            cachedProduct.persist(product);
             tep.commitSignature();
         }
 
@@ -284,7 +286,10 @@ public class Job implements Callable<TaskStatus> {
                 throw new IllegalStateException("Task <" + name + "> must not return null");
             }
 
-            taskResult.getProduct().flatMap(Product::getOutputInfo).map(OutputInfo::getArtifact)
+            taskResult.getProduct()
+                .filter(p -> p instanceof ManagedProduct)
+                .flatMap(Product::getOutputInfo)
+                .map(OutputInfo::getArtifact)
                 .ifPresent(this::validate);
 
             // note on fail status: product may contain details about the failure (reports)
@@ -298,7 +303,6 @@ public class Job implements Callable<TaskStatus> {
         }
 
         private void validate(final Path artifactPath) {
-            // TODO check if under build dir or outside project
             final Path buildDir = LoomPaths.buildDir(runtimeConfiguration.getProjectBaseDir())
                 .toAbsolutePath();
 
@@ -309,7 +313,7 @@ public class Job implements Callable<TaskStatus> {
         }
 
         @Override
-        protected void commitTransaction(final TaskResult taskResult) {
+        protected void commitTransaction(final ManagedProduct product) {
         }
 
     }
@@ -324,7 +328,7 @@ public class Job implements Callable<TaskStatus> {
 
         protected abstract TaskResult doWork() throws Exception;
 
-        protected abstract void commitTransaction(final TaskResult taskResult);
+        protected abstract void commitTransaction(final ManagedProduct product);
 
         final TaskResult run() throws Exception {
             final TaskResult taskResult;
@@ -334,7 +338,11 @@ public class Job implements Callable<TaskStatus> {
             } else {
                 beginTransaction();
                 taskResult = doWork();
-                commitTransaction(taskResult);
+
+                final Optional<Product> oProduct = taskResult.getProduct();
+                if (oProduct.isPresent() && oProduct.get() instanceof ManagedProduct) {
+                    commitTransaction((ManagedProduct) oProduct.get());
+                }
             }
 
             return taskResult;

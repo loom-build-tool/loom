@@ -24,7 +24,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.ProductChecksumUtil;
@@ -69,7 +69,7 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path srcDir) {
-        return new GenericProduct("resDir", srcDir.toString(),
+        return new ManagedGenericProduct("resDir", srcDir.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(srcDir), null);
     }
 

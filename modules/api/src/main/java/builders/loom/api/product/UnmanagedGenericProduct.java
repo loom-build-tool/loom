@@ -24,25 +24,23 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GenericProduct implements Product {
+public class UnmanagedGenericProduct implements Product {
 
     private final Map<String, List<String>> properties;
-    private final String checksum;
     private final OutputInfo outputInfo;
 
-    public GenericProduct(final String key, final String value, final String checksum,
-                          final OutputInfo outputInfo) {
-        this(Map.of(key, List.of(value)), checksum, outputInfo);
+    public UnmanagedGenericProduct(final String key, final String value,
+                                   final OutputInfo outputInfo) {
+        this(Map.of(key, List.of(value)), outputInfo);
     }
 
-    public GenericProduct(final Map<String, List<String>> properties, final String checksum,
-                          final OutputInfo outputInfo) {
+    public UnmanagedGenericProduct(final Map<String, List<String>> properties,
+                                   final OutputInfo outputInfo) {
         Objects.requireNonNull(properties, "properties required");
         if (properties.values().stream().anyMatch(v -> v == null || v.isEmpty())) {
             throw new IllegalArgumentException("properties must not contain null/empty values");
         }
         this.properties = immutable(properties);
-        this.checksum = Objects.requireNonNull(checksum, "checksum required");
         this.outputInfo = outputInfo;
     }
 
@@ -74,20 +72,14 @@ public class GenericProduct implements Product {
     }
 
     @Override
-    public String checksum() {
-        return checksum;
-    }
-
-    @Override
     public Optional<OutputInfo> getOutputInfo() {
         return Optional.ofNullable(outputInfo);
     }
 
     @Override
     public String toString() {
-        return "GenericProduct{"
+        return "UnmanagedGenericProduct{"
             + "properties=" + properties
-            + ", checksum='" + checksum + '\''
             + ", outputInfo='" + outputInfo + '\''
             + '}';
     }

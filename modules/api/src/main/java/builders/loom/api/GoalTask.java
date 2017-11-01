@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.Product;
 
 public class GoalTask implements Task, ProductDependenciesAware {
@@ -55,7 +55,8 @@ public class GoalTask implements Task, ProductDependenciesAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(), null);
+        return new ManagedGenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+            null);
     }
 
 }

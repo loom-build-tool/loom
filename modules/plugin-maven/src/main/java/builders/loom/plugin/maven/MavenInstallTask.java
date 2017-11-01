@@ -50,10 +50,9 @@ import org.sonatype.aether.util.artifact.SubArtifact;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
-import builders.loom.util.ProductChecksumUtil;
+import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -174,10 +173,8 @@ public class MavenInstallTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path install) {
-        return new GenericProduct("mavenInstallDir", install.toString(),
-            ProductChecksumUtil.recursiveMetaChecksum(install),
+        return new UnmanagedGenericProduct("mavenInstallDir", install.toString(),
             new OutputInfo("Directory of installed artifact", install));
-
     }
 
 }

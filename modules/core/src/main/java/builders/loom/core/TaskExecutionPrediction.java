@@ -35,7 +35,7 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.UsedProducts;
-import builders.loom.api.product.Product;
+import builders.loom.api.product.ManagedProduct;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Hashing;
@@ -94,8 +94,8 @@ class TaskExecutionPrediction {
 
             try {
                 final String checksum = usedProducts
-                    .readProduct(moduleName, productId, Product.class)
-                    .map(Product::checksum)
+                    .readProduct(moduleName, productId, ManagedProduct.class)
+                    .map(ManagedProduct::checksum)
                     .orElse("NO_PRODUCT");
 
                 checksumParts.add(String.format("%s#%s:%s", moduleName, productId, checksum));

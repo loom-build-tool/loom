@@ -35,10 +35,9 @@ import builders.loom.api.JavaVersion;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
-import builders.loom.util.ProductChecksumUtil;
+import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
@@ -350,7 +349,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
     }
 
     private static Product newProduct() {
-        return new GenericProduct(Collections.emptyMap(), ProductChecksumUtil.random(),
+        return new UnmanagedGenericProduct(Collections.emptyMap(),
             new OutputInfo("Idea project files"));
     }
 

@@ -25,7 +25,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
 
@@ -85,7 +85,8 @@ public class ArtifactResolverTask extends AbstractModuleTask {
                 .map(a -> a.getMainArtifact() + "#" + a.getSourceArtifact())
                 .collect(Collectors.toList())
         );
-        return new GenericProduct(properties, ProductChecksumUtil.checksum(properties), null);
+        return new ManagedGenericProduct(properties, ProductChecksumUtil.checksum(properties),
+            null);
     }
 
 }

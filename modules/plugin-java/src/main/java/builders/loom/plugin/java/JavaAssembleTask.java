@@ -35,7 +35,7 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.ProductChecksumUtil;
@@ -146,7 +146,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
     }
 
     private static Product newProduct(final Path jarFile) {
-        return new GenericProduct("classesJarFile", jarFile.toString(),
+        return new ManagedGenericProduct("classesJarFile", jarFile.toString(),
             ProductChecksumUtil.recursiveMetaChecksum(jarFile),
             new OutputInfo("Jar of compiled classes", jarFile));
     }

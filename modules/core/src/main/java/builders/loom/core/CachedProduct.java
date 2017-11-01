@@ -26,23 +26,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.api.RuntimeConfiguration;
-import builders.loom.api.TaskResult;
-import builders.loom.api.TaskStatus;
-import builders.loom.api.product.GenericProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.ManagedProduct;
 import builders.loom.api.product.OutputInfo;
-import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
 
 class CachedProduct {
-
-    private static final String EMPTY_PRODUCT = "EMPTY";
 
     private final RuntimeConfiguration runtimeConfiguration;
     private final ConfiguredTask configuredTask;
@@ -71,15 +68,11 @@ class CachedProduct {
         return Files.exists(productFile);
     }
 
-    Product load() {
+    ManagedProduct load() {
         final Map<String, List<String>> properties = new HashMap<>();
 
         try {
             final String checksum = FileUtil.readToString(checksumFile);
-
-            if (EMPTY_PRODUCT.equals(checksum)) {
-                return null;
-            }
 
             SimpleSerializer.read(productFile, (e) -> {
                 final String key = e.getFields().get(0);
@@ -92,13 +85,12 @@ class CachedProduct {
             if (Files.exists(productInfoFile)) {
                 SimpleSerializer.read(productInfoFile, (e) -> {
                     final String name = e.getFields().get(0);
-                    // TODO if not starting with "/", resolve path against buildDir
                     final Path artifact = Paths.get(e.getFields().get(1));
                     outputInfo.set(new OutputInfo(name, artifact));
                 });
             }
 
-            return new GenericProduct(properties, checksum, outputInfo.get());
+            return new ManagedGenericProduct(properties, checksum, outputInfo.get());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -114,39 +106,33 @@ class CachedProduct {
         }
     }
 
-    void persist(final TaskResult taskResult) {
+    void persist(final ManagedProduct product) {
+        Objects.requireNonNull(product, "product is required");
+
         try {
             Files.createDirectories(checksumFile.getParent());
 
             final String checksum;
-            if (taskResult.getStatus() == TaskStatus.EMPTY) {
-                checksum = EMPTY_PRODUCT;
-            } else {
-                final Product product = taskResult.getProduct()
-                    .orElseThrow(() -> new IllegalStateException("No Product available"));
+            final Map<String, List<String>> properties = product.getProperties();
 
-                final Map<String, List<String>> properties = product.getProperties();
+            SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
+                final List<String> elements = new ArrayList<>();
+                elements.add(e.getKey());
+                elements.addAll(e.getValue());
+                return new Record(elements);
+            });
 
-                SimpleSerializer.write(productFile, properties.entrySet(), (e) -> {
-                    final List<String> elements = new ArrayList<>();
-                    elements.add(e.getKey());
-                    elements.addAll(e.getValue());
-                    return new Record(elements);
-                });
+            if (product.getOutputInfo().isPresent()) {
+                final OutputInfo outputInfo = product.getOutputInfo().get();
 
-                if (product.getOutputInfo().isPresent()) {
-                    final OutputInfo outputInfo = product.getOutputInfo().get();
+                final Path relativeArtifactPath = runtimeConfiguration.getProjectBaseDir()
+                    .toAbsolutePath().relativize(outputInfo.getArtifact().toAbsolutePath());
 
-                    // TODO relativize, if possible, otherwise use full path
-                    final Path relativeArtifactPath = runtimeConfiguration.getProjectBaseDir()
-                        .toAbsolutePath().relativize(outputInfo.getArtifact().toAbsolutePath());
-
-                    SimpleSerializer.write(productInfoFile, List.of(outputInfo),
-                        (e) -> new Record(e.getName(), relativeArtifactPath.toString()));
-                }
-
-                checksum = product.checksum();
+                SimpleSerializer.write(productInfoFile, List.of(outputInfo),
+                    (e) -> new Record(e.getName(), relativeArtifactPath.toString()));
             }
+
+            checksum = product.checksum();
 
             FileUtil.writeStringToFile(checksumFile, checksum, StandardOpenOption.CREATE_NEW);
         } catch (final IOException e) {

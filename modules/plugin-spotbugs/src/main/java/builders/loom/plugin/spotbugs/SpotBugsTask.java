@@ -25,9 +25,11 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -57,7 +59,7 @@ public class SpotBugsTask extends AbstractModuleTask {
     private final CompileTarget compileTarget;
     private final SpotBugsPluginSettings pluginSettings;
     private final String effort;
-    private final List<String> plugins;
+    private final Set<String> plugins;
     private final int priorityThreshold;
     private final String sourceProductId;
     private final String compilationProductId;
@@ -71,7 +73,7 @@ public class SpotBugsTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
         effort = pluginSettings.getEffort();
         priorityThreshold = SpotBugsUtil.resolvePriority(pluginSettings.getReportLevel());
-        plugins = StringUtil.split(pluginSettings.getCustomPlugins(), ",");
+        plugins = new HashSet<>(StringUtil.split(pluginSettings.getCustomPlugins(), ","));
         reporter = ReporterType.valueOf(pluginSettings.getReporter().toUpperCase());
 
         switch (compileTarget) {

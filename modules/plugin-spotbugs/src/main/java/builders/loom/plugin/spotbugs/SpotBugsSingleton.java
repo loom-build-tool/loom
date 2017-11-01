@@ -38,13 +38,13 @@ import edu.umd.cs.findbugs.Plugin;
 import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.plugins.DuplicatePluginIdException;
 
-public final class SpotBugsSingleton {
+final class SpotBugsSingleton {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsSingleton.class);
 
     private static final Map<String, String> PLUGIN_JAR_PREFIXES = Map.of(
-            "FbContrib", "fb-contrib",
-            "FindSecBugs", "findsecbugs");
+        "FbContrib", "fb-contrib",
+        "FindSecBugs", "findsecbugs");
 
     private static volatile boolean initialized;
 
@@ -53,78 +53,64 @@ public final class SpotBugsSingleton {
     private SpotBugsSingleton() {
     }
 
-    public static void initSpotBugs(final Set<String> plugins) {
-
+    static void initSpotBugs(final Set<String> plugins) {
         if (!initialized) {
             synchronized (SpotBugsSingleton.class) {
                 if (!initialized) {
-
                     loadSpotBugsPlugin(plugins);
                     disableUpdateChecksOnEveryPlugin();
 
                     LOG.info("Using SpotBugs plugins: {}", Plugin.getAllPluginIds());
 
                     initialized = true;
-
                 }
             }
         }
-
     }
 
     /**
      * Note: spotbugs plugins are registered in a static map and thus has many concurrency issues.
      */
     private static void loadSpotBugsPlugin(final Set<String> plugins) {
-
         final Set<String> unknownPlugins = plugins.stream()
-                .filter(pn -> !PLUGIN_JAR_PREFIXES.keySet().contains(pn))
-                .collect(Collectors.toSet());
+            .filter(pn -> !PLUGIN_JAR_PREFIXES.keySet().contains(pn))
+            .collect(Collectors.toSet());
 
         Preconditions.checkState(unknownPlugins.isEmpty(),
-                "Unknown SpotBugs plugin(s): %s", unknownPlugins);
+            "Unknown SpotBugs plugin(s): %s", unknownPlugins);
 
         final ClassLoader contextClassLoader = SpotBugsSingleton.class.getClassLoader();
 
         final Set<String> pluginFilePrefixes = PLUGIN_JAR_PREFIXES.entrySet().stream()
-                .filter(e -> plugins.contains(e.getKey()))
-                .map(e -> e.getValue())
-                .collect(Collectors.toSet());
+            .filter(e -> plugins.contains(e.getKey()))
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toSet());
 
         LOG.debug("Requesting custom plugins by prefixes {}", pluginFilePrefixes);
 
         try {
             final List<Path> availablePluginJars =
-                    Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
+                Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
                     .map(SpotBugsSingleton::normalizeUrl)
                     .collect(Collectors.toList());
 
             LOG.info("Available custom plugins: {}", availablePluginJars);
 
             for (final String prefix : pluginFilePrefixes) {
-
-                final URI pluginUri = search(prefix, availablePluginJars);
-
-                addCustomPlugin(contextClassLoader, pluginUri);
-
+                addCustomPlugin(contextClassLoader, search(prefix, availablePluginJars));
             }
-
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-
     }
 
     private static URI search(final String prefix, final List<Path> availablePluginJars) {
-
-        return
-        availablePluginJars.stream()
+        return availablePluginJars.stream()
             .filter(p -> p.getFileName().toString().startsWith(prefix))
             .findFirst()
             .map(Path::toUri)
             .orElseThrow(() -> new IllegalStateException(
-                    "Requested SpotBugs plugin not found by prefix " + prefix));
-
+                "Requested SpotBugs plugin not found by prefix " + prefix));
     }
 
     private static void addCustomPlugin(final ClassLoader contextClassLoader, final URI pluginUri) {

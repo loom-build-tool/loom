@@ -18,8 +18,10 @@ package builders.loom.plugin.idea;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +35,9 @@ import builders.loom.api.JavaVersion;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactListProduct;
-import builders.loom.api.product.DummyProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
+import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.xml.XmlBuilder;
 import builders.loom.util.xml.XmlWriter;
 
@@ -82,7 +85,7 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
         // modules.xml file containing referencing all modules
         xmlWriter.write(createModulesFile(ideaModules), ideaDirectory.resolve("modules.xml"));
 
-        return TaskResult.ok(new DummyProduct("Idea project files"));
+        return TaskResult.done(newProduct());
     }
 
     private JavaVersion determineModulesHighestJavaVersion() {
@@ -244,20 +247,29 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
                 .attr("scope", "COMPILE");
 
             // add compile artifacts of dependent module
-            useProduct(depModule.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
-                .map(ArtifactListProduct::getArtifacts)
-                .ifPresent(artifacts -> orderEntries.append(artifacts, "COMPILE"));
+            final List<String> compileArtifacts =
+                useProduct(depModule.getModuleName(), "compileArtifacts", Product.class)
+                    .map(p -> p.getProperties("artifacts"))
+                    .orElse(Collections.emptyList());
+
+            addOrderEntries(orderEntries, compileArtifacts, "COMPILE");
         }
 
         // add compile artifacts
-        useProduct(module.getModuleName(), "compileArtifacts", ArtifactListProduct.class)
-            .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> orderEntries.append(artifacts, "COMPILE"));
+        final List<String> compileArtifacts =
+            useProduct(module.getModuleName(), "compileArtifacts", Product.class)
+                .map(p -> p.getProperties("artifacts"))
+                .orElse(Collections.emptyList());
+
+        addOrderEntries(orderEntries, compileArtifacts, "COMPILE");
 
         // add test artifacts
-        useProduct(module.getModuleName(), "testArtifacts", ArtifactListProduct.class)
-            .map(ArtifactListProduct::getArtifacts)
-            .ifPresent(artifacts -> orderEntries.append(artifacts, "TEST"));
+        final List<String> testArtifacts =
+            useProduct(module.getModuleName(), "testArtifacts", Product.class)
+                .map(p -> p.getProperties("artifacts"))
+                .orElse(Collections.emptyList());
+
+        addOrderEntries(orderEntries, testArtifacts, "TEST");
 
         buildOrderEntries(component, orderEntries.getEntryList());
 
@@ -266,6 +278,17 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
             .attr("forTests", "false");
 
         return moduleE.getDocument();
+    }
+
+    private void addOrderEntries(final OrderEntries orderEntries, final List<String> artifacts,
+                                 final String scope) {
+        for (final String artifact : artifacts) {
+            // FIXME evil hack
+            final String[] split = artifact.split("#");
+            final Path mainArtifact = Paths.get(split[0]);
+            final Path sourceArtifact = split[1].isEmpty() ? null : Paths.get(split[1]);
+            orderEntries.append(mainArtifact, sourceArtifact, scope);
+        }
     }
 
     private String buildRelativeModuleDir(final Path relativeModulePath) {
@@ -323,6 +346,11 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
             libHolder.element("root")
                 .attr("url", String.format("jar://%s!/", jar));
         }
+    }
+
+    private static Product newProduct() {
+        return new UnmanagedGenericProduct(Collections.emptyMap(),
+            new OutputInfo("Idea project files"));
     }
 
 }

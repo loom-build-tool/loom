@@ -16,38 +16,81 @@
 
 package builders.loom.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-public final class Hasher {
+public class Hasher {
 
     private static final int MASK = 0xff;
 
-    private Hasher() {
+    private final MessageDigest messageDigest = getMessageDigest();
+
+    public Hasher putByte(final byte data) {
+        messageDigest.update(data);
+        return this;
     }
 
-    public static String hash(final Collection<String> strings) {
-        final MessageDigest digest = getMessageDigest();
+    public Hasher putBytes(final byte[] data) {
+        messageDigest.update(data);
+        return this;
+    }
 
-        for (final String string : strings) {
-            digest.update(string.getBytes(StandardCharsets.UTF_8));
+    public Hasher putBytes(final byte[] data, final int off, final int len) {
+        messageDigest.update(data, off, len);
+        return this;
+    }
+
+    public Hasher putStrings(final Stream<String> data) {
+        data.forEach(this::putString);
+        return this;
+    }
+
+    public Hasher putStrings(final String... data) {
+        for (final String str : data) {
+            putString(str);
+        }
+        return this;
+    }
+
+    public Hasher putStrings(final Iterable<String> data) {
+        data.forEach(this::putString);
+        return this;
+    }
+
+    public Hasher putString(final String data) {
+        messageDigest.update(data.getBytes(StandardCharsets.UTF_8));
+        return this;
+    }
+
+    @SuppressWarnings("checkstyle:magicnumber")
+    public Hasher putFile(final Path f) {
+        final byte[] buf = new byte[8192];
+        int cnt;
+
+        try (final InputStream in = Files.newInputStream(f)) {
+            while ((cnt = in.read(buf)) != -1) {
+                messageDigest.update(buf, 0, cnt);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
 
-        return bytesToHex(digest.digest());
+        return this;
     }
 
-    public static byte[] hash(final byte[] data) {
-        return getMessageDigest().digest(data);
+    public byte[] hash() {
+        return messageDigest.digest();
     }
 
-    private static MessageDigest getMessageDigest() {
-        try {
-            return MessageDigest.getInstance("SHA-256");
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+    public String hashHex() {
+        return bytesToHex(hash());
     }
 
     private static String bytesToHex(final byte[] hash) {
@@ -60,6 +103,14 @@ public final class Hasher {
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    private static MessageDigest getMessageDigest() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

@@ -51,11 +51,11 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.ClassLoaderUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class CheckstyleTask extends AbstractModuleTask {
@@ -116,26 +116,29 @@ public class CheckstyleTask extends AbstractModuleTask {
             final int errors = rootModule.process(files);
 
             if (errors > 0) {
-                return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+                return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                     "Checkstyle reported " + errors + " errors");
             }
         } finally {
             rootModule.destroy();
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
-    private List<File> listSourceFiles() throws InterruptedException {
-        final Optional<SourceTreeProduct> sourceTree =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+    private List<File> listSourceFiles() throws InterruptedException, IOException {
+        final Optional<Product> sourceTree =
+            useProduct(sourceProductId, Product.class);
 
         if (!sourceTree.isPresent()) {
             return Collections.emptyList();
         }
 
+        final Path srcDir = Paths.get(sourceTree.get().getProperty("srcDir"));
+
         // Checkstyle doesn't support module-info.java, so skip it
-        return sourceTree.get().getSrcFiles().stream()
+        return Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
             .filter(f -> !f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .map(Path::toFile)
             .collect(Collectors.toList());
@@ -203,26 +206,26 @@ public class CheckstyleTask extends AbstractModuleTask {
 
         switch (compileTarget) {
             case MAIN:
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
 
-                useProduct("compileDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntriesAsUrls)
-                    .ifPresent(urls::addAll);
+                useProduct("compileDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> urls.add(ClassLoaderUtil.toUrl(Paths.get(c)))));
                 break;
             case TEST:
-                useProduct("testCompilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("testCompilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
 
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(c -> urls.add(ClassLoaderUtil.toUrl(c)));
 
-                useProduct("testDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntriesAsUrls)
-                    .ifPresent(urls::addAll);
+                useProduct("testDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> urls.add(ClassLoaderUtil.toUrl(Paths.get(c)))));
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
@@ -269,6 +272,14 @@ public class CheckstyleTask extends AbstractModuleTask {
     private XMLLogger newXmlLogger(final Path reportFile) throws IOException {
         return new XMLLogger(new BufferedOutputStream(Files.newOutputStream(reportFile)),
             AutomaticBean.OutputStreamOptions.CLOSE);
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        // note: skiphints can be based on report file meta data,
+        //   because checkstyle uses a cache to prevent recreation of identical reports
+        return new ManagedGenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo(outputInfo, reportDir));
     }
 
 }

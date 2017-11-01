@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,8 +50,9 @@ import org.sonatype.aether.util.artifact.SubArtifact;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
+import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -85,10 +87,10 @@ public class MavenInstallTask extends AbstractModuleTask {
             throw new IllegalStateException("Missing configuration of maven.groupAndArtifact");
         }
 
-        final Path jarFile = requireProduct("jar", AssemblyProduct.class).getAssemblyFile();
+        final Path jarFile = Paths.get(requireProduct("jar", Product.class)
+            .getProperty("classesJarFile"));
 
-        return TaskResult.ok(new DirectoryProduct(install(jarFile),
-            "Directory of installed artifact"));
+        return TaskResult.done(newProduct(install(jarFile)));
     }
 
     private Path install(final Path jarFile) throws IOException, InstallationException {
@@ -168,6 +170,11 @@ public class MavenInstallTask extends AbstractModuleTask {
         return new DefaultArtifact(
             String.format("%s:%s", pluginSettings.getGroupAndArtifact(), version))
             .setFile(assemblyFile.toFile());
+    }
+
+    private static Product newProduct(final Path install) {
+        return new UnmanagedGenericProduct("mavenInstallDir", install.toString(),
+            new OutputInfo("Directory of installed artifact", install));
     }
 
 }

@@ -21,14 +21,14 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Properties;
 
-public final class Version {
+public final class LoomVersion {
 
     private static final String VERSION;
 
     static {
         final Properties properties = new Properties();
         try {
-            try (InputStream in = Version.class.getResourceAsStream("/loom.properties")) {
+            try (InputStream in = LoomVersion.class.getResourceAsStream("/loom.properties")) {
                 properties.load(in);
             }
         } catch (final IOException e) {
@@ -37,7 +37,7 @@ public final class Version {
         VERSION = properties.getProperty("version");
     }
 
-    private Version() {
+    private LoomVersion() {
     }
 
     public static String getVersion() {

@@ -19,6 +19,7 @@ package builders.loom.plugin.pmd;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,9 +33,11 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
 import net.sourceforge.pmd.Report;
@@ -130,8 +133,8 @@ public class PmdTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> sourceTreeProduct =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+        final Optional<Product> sourceTreeProduct =
+            useProduct(sourceProductId, Product.class);
 
         if (!sourceTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -144,12 +147,14 @@ public class PmdTask extends AbstractModuleTask {
         final AtomicInteger ruleViolations = new AtomicInteger(0);
         ctx.getReport().addListener(new LogListener(ruleViolations));
 
-        final List<DataSource> files = sourceTreeProduct.get().getSrcFiles().stream()
-            .map(Path::toFile)
-            .map(FileDataSource::new)
+        final Path srcDir = Paths.get(sourceTreeProduct.get().getProperty("srcDir"));
+
+        final List<DataSource> files = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .map(p -> new FileDataSource(p.toFile()))
             .collect(Collectors.toList());
 
-        final String inputPaths = sourceTreeProduct.get().getSrcDir().toString();
+        final String inputPaths = sourceTreeProduct.get().getProperty("srcDir");
         configuration.setInputPaths(inputPaths);
 
         final Path reportDir =
@@ -172,12 +177,12 @@ public class PmdTask extends AbstractModuleTask {
         final int ruleViolationCnt = ruleViolations.get();
 
         if (ruleViolationCnt > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                 "Stopping build since PMD found " + ruleViolationCnt
                     + " rule violations in the code");
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
     private HTMLRenderer buildHtmlRenderer(final Path reportPath) throws IOException {
@@ -212,6 +217,12 @@ public class PmdTask extends AbstractModuleTask {
         }
 
         return ruleSetFactory;
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        return new ManagedGenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo(outputInfo, reportDir));
     }
 
     private static class LogRenderer extends AbstractRenderer {

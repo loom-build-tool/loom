@@ -18,24 +18,26 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> sourceTree = useProduct(
-            "source", SourceTreeProduct.class);
+        final Optional<Product> sourceTree = useProduct(
+            "source", Product.class);
 
-        final Optional<ResourcesTreeProduct> resourcesTreeProduct = useProduct(
-            "resources", ResourcesTreeProduct.class);
+        final Optional<Product> resourcesTreeProduct = useProduct(
+            "resources", Product.class);
 
         if (!sourceTree.isPresent() && !resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -45,17 +47,25 @@ public class JavaAssembleSourcesJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("sources-jar"))
             .resolve(String.format("%s-sources.jar", getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(sourceJarFile))) {
-            if (sourceTree.isPresent()) {
-                JavaFileUtil.copy(sourceTree.get().getSrcDir(), os);
-            }
+        final JarToolWrapper jarTool = new JarToolWrapper();
 
-            if (resourcesTreeProduct.isPresent()) {
-                JavaFileUtil.copy(resourcesTreeProduct.get().getSrcDir(), os);
-            }
-        }
+        final List<String> args = new ArrayList<>(List.of("-c", "-f", sourceJarFile.toString()));
 
-        return TaskResult.ok(new AssemblyProduct(sourceJarFile, "Jar of sources"));
+        sourceTree.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("srcDir"), ".")));
+
+        resourcesTreeProduct.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("resDir"), ".")));
+
+        jarTool.jar(args);
+
+        return TaskResult.done(newProduct(sourceJarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        return new ManagedGenericProduct("sourceJarFile", jarFile.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(jarFile),
+            new OutputInfo("Jar of sources", jarFile));
     }
 
 }

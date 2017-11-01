@@ -18,13 +18,17 @@ package builders.loom.plugin.java;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
@@ -42,10 +46,10 @@ import builders.loom.api.CompileTarget;
 import builders.loom.api.JavaVersion;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaCompileTask extends AbstractModuleTask {
 
@@ -71,8 +75,8 @@ public class JavaCompileTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> sourceTreeProduct =
-            useProduct(sourceProductId, SourceTreeProduct.class);
+        final Optional<Product> sourceTreeProduct =
+            useProduct(sourceProductId, Product.class);
 
         final Path buildDir = resolveBuildDir();
 
@@ -81,34 +85,49 @@ public class JavaCompileTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<Path> classpath = new ArrayList<>();
+        final Set<Path> classpath = new LinkedHashSet<>();
 
         switch (compileTarget) {
             case MAIN:
-                useProduct("compileDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("compileDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+
+                for (final String module : getModuleConfig().getModuleCompileDependencies()) {
+                    useProduct(module, "compileDependencies", Product.class)
+                        .map(p -> p.getProperties("classpath"))
+                        .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+                }
                 break;
             case TEST:
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(classpath::add);
 
-                useProduct("testDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("testDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+
+                for (final String module : getModuleConfig().getModuleCompileDependencies()) {
+                    useProduct(module, "compileDependencies", Product.class)
+                        .map(p -> p.getProperties("classpath"))
+                        .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
+                }
                 break;
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
 
-        final List<Path> srcFiles = sourceTreeProduct.get().getSrcFiles();
+        final Path srcDir = Paths.get(sourceTreeProduct.get().getProperty("srcDir"));
+        final List<Path> srcFiles = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .collect(Collectors.toList());
 
         FileUtil.createOrCleanDirectory(buildDir);
 
         compile(buildDir, classpath, srcFiles);
 
-        return TaskResult.ok(new CompilationProduct(buildDir));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private Path resolveBuildDir() {
@@ -118,9 +137,9 @@ public class JavaCompileTask extends AbstractModuleTask {
                 getBuildContext().getModuleName()));
     }
 
-    // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
 
-    private void compile(final Path buildDir, final List<Path> classpath,
+    // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
+    private void compile(final Path buildDir, final Collection<Path> classpath,
                          final List<Path> srcFiles)
         throws IOException, InterruptedException {
 
@@ -204,7 +223,7 @@ public class JavaCompileTask extends AbstractModuleTask {
     private StandardJavaFileManager newFileManager(
         final Path buildDir, final JavaCompiler compiler,
         final DiagnosticListener<JavaFileObject> diagnosticListener,
-        final boolean useModulePath, final List<Path> classpath)
+        final boolean useModulePath, final Collection<Path> classpath)
         throws IOException, InterruptedException {
 
         final StandardJavaFileManager fileManager = compiler.getStandardFileManager(
@@ -222,7 +241,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         return fileManager;
     }
 
-    private void buildModulePath(final Path buildDir, final List<Path> classpath,
+    private void buildModulePath(final Path buildDir, final Collection<Path> classpath,
                                  final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
 
@@ -252,7 +271,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         LOG.debug("Modulepath: {}", modulePath);
     }
 
-    private void buildClassPath(final List<Path> classpath,
+    private void buildClassPath(final Collection<Path> classpath,
                                 final StandardJavaFileManager fileManager)
         throws InterruptedException, IOException {
 
@@ -260,8 +279,9 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         // Wait until other modules have delivered their compilations to module path
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            useProduct(moduleName, "compilation", CompilationProduct.class)
-                .ifPresent(product -> classPath.add(product.getClassesDir()));
+            useProduct(moduleName, "compilation", Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
+                .ifPresent(classPath::add);
         }
 
         classPath.addAll(classpath);
@@ -270,7 +290,7 @@ public class JavaCompileTask extends AbstractModuleTask {
         LOG.debug("Classpath: {}", classPath);
     }
 
-    private void compileSources(final Path buildDir, final List<Path> classpath,
+    private void compileSources(final Path buildDir, final Collection<Path> classpath,
                                 final List<Path> srcFiles, final JavaCompiler compiler,
                                 final DiagnosticListener<JavaFileObject> diag,
                                 final boolean useModulePath, final JavaVersion release)
@@ -307,6 +327,11 @@ public class JavaCompileTask extends AbstractModuleTask {
         }
 
         return options;
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        return new ManagedGenericProduct("classesDir", buildDir.toString(),
+            ProductChecksumUtil.recursiveContentChecksum(buildDir), null);
     }
 
 }

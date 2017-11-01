@@ -17,40 +17,35 @@
 package builders.loom.api.product;
 
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Objects;
 
-/**
- * E.g. a "jar" file.
- *
- */
-public final class AssemblyProduct extends AbstractProduct {
+public final class OutputInfo {
 
-    private final Path assemblyFile;
-    private final String outputInfo;
+    private final String name;
+    private final Path artifact;
 
-    public AssemblyProduct(final Path assemblyFile, final String outputInfo) {
-        this.assemblyFile = assemblyFile;
-        this.outputInfo = outputInfo;
+    public OutputInfo(final String name) {
+        this(name, null);
     }
 
-    public Path getAssemblyFile() {
-        return assemblyFile;
+    public OutputInfo(final String name, final Path artifact) {
+        this.name = Objects.requireNonNull(name, "name is required");
+        this.artifact = artifact;
     }
 
-    @Override
-    public Optional<String> outputInfo() {
-        if (outputInfo == null) {
-            return Optional.empty();
-        }
+    public String getName() {
+        return name;
+    }
 
-        return Optional.of(outputInfo + ": " + assemblyFile);
+    public Path getArtifact() {
+        return artifact;
     }
 
     @Override
     public String toString() {
-        return "AssemblyProduct{"
-            + "assemblyFile=" + assemblyFile
-            + ", outputInfo='" + outputInfo + '\''
+        return "OutputInfo{"
+            + "name='" + name + '\''
+            + ", artifact='" + artifact + '\''
             + '}';
     }
 

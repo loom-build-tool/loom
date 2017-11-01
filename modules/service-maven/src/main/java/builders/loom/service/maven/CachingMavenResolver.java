@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.service.ResolvedArtifact;
-import builders.loom.util.Hasher;
+import builders.loom.util.Hashing;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
 
@@ -59,7 +59,7 @@ public class CachingMavenResolver implements DependencyResolver {
             String.format("dependencies-%s-%s-%s",
                 scope.name().toLowerCase(),
                 withSources ? "with-sources" : "wo-sources",
-                Hasher.hash(deps)));
+                Hashing.hash(deps)));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
         final Optional<List<ResolvedArtifact>> cachedArtifacts = readCache(cacheFile);

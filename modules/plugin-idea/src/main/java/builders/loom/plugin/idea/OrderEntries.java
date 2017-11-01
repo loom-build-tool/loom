@@ -16,33 +16,29 @@
 
 package builders.loom.plugin.idea;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import builders.loom.api.product.ArtifactProduct;
 
 class OrderEntries {
 
     private final Map<String, OrderEntry> entryList = new HashMap<>();
 
-    void append(final List<ArtifactProduct> artifacts, final String scope) {
-        for (final ArtifactProduct artifact : artifacts) {
-            final String mainJar =
-                artifact.getMainArtifact().toAbsolutePath().normalize().toString();
+    void append(final Path mainArtifact, final Path sourceArtifact, final String scope) {
+        final String mainJar =
+            mainArtifact.toAbsolutePath().normalize().toString();
 
-            final OrderEntry existingEntry = entryList.get(mainJar);
-            if (existingEntry != null) {
-                if (isScopeUpgrade(existingEntry.getScope(), scope)) {
-                    existingEntry.setScope(scope);
-                }
-            } else {
-                final OrderEntry orderEntry =
-                    new OrderEntry(artifact.getMainArtifact(), artifact.getSourceArtifact());
-                orderEntry.setScope(scope);
-                entryList.put(mainJar, orderEntry);
+        final OrderEntry existingEntry = entryList.get(mainJar);
+        if (existingEntry != null) {
+            if (isScopeUpgrade(existingEntry.getScope(), scope)) {
+                existingEntry.setScope(scope);
             }
+        } else {
+            final OrderEntry orderEntry =
+                new OrderEntry(mainArtifact, sourceArtifact);
+            orderEntry.setScope(scope);
+            entryList.put(mainJar, orderEntry);
         }
     }
 

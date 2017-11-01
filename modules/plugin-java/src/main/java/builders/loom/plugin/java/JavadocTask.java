@@ -17,10 +17,12 @@
 package builders.loom.plugin.java;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.tools.DiagnosticListener;
 import javax.tools.DocumentationTool;
@@ -36,10 +38,11 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.DirectoryProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavadocTask extends AbstractModuleTask {
 
@@ -47,7 +50,7 @@ public class JavadocTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<SourceTreeProduct> source = useProduct("source", SourceTreeProduct.class);
+        final Optional<Product> source = useProduct("source", Product.class);
 
         if (!source.isPresent()) {
             return TaskResult.empty();
@@ -66,12 +69,15 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
                 List.of(buildDir));
 
-            final Optional<ClasspathProduct> compileDependencies =
-                useProduct("compileDependencies", ClasspathProduct.class);
+            final Optional<Product> compileDependencies =
+                useProduct("compileDependencies", Product.class);
 
             if (compileDependencies.isPresent()) {
-                fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH,
-                    compileDependencies.get().getEntries());
+                final List<Path> files = compileDependencies.get()
+                    .getProperties("classpath").stream()
+                    .map(p -> Paths.get(p)).collect(Collectors.toList());
+
+                fileManager.setLocationFromPaths(StandardLocation.CLASS_PATH, files);
             }
 
             for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
@@ -94,10 +100,15 @@ public class JavadocTask extends AbstractModuleTask {
             fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
                 List.of(getBuildDir().getParent()));
 
-            final Iterable<? extends JavaFileObject> compUnits =
-                fileManager.getJavaFileObjectsFromPaths(source.get().getSrcFiles());
+            final Path srcDir = Paths.get(source.get().getProperty("srcDir"));
+            final List<Path> srcFiles = Files
+                .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+                .collect(Collectors.toList());
 
-            LOG.info("Create Javadoc for {} files", source.get().getSrcFiles().size());
+            final Iterable<? extends JavaFileObject> compUnits =
+                fileManager.getJavaFileObjectsFromPaths(srcFiles);
+
+            LOG.info("Create Javadoc for {} files", srcFiles.size());
 
             final DocumentationTool.DocumentationTask javaDocTask =
                 docTool.getTask(null, fileManager, diagnosticListener, null, null, compUnits);
@@ -107,7 +118,7 @@ public class JavadocTask extends AbstractModuleTask {
             }
         }
 
-        return TaskResult.ok(new DirectoryProduct(buildDir, "JavaDoc output"));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private Path getBuildDir() {
@@ -115,6 +126,12 @@ public class JavadocTask extends AbstractModuleTask {
         return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
             .resolve(Paths.get("compilation", CompileTarget.MAIN.name().toLowerCase(),
                 getBuildContext().getModuleName()));
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        return new ManagedGenericProduct("javaDocOut", buildDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(buildDir),
+            new OutputInfo("JavaDoc output", buildDir));
     }
 
 }

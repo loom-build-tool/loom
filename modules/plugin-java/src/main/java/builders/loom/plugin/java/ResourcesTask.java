@@ -16,9 +16,10 @@
 
 package builders.loom.plugin.java;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,9 +27,10 @@ import java.util.function.Function;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.api.product.ResourcesTreeProduct;
-import builders.loom.util.Hasher;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
+import builders.loom.util.Hashing;
+import builders.loom.util.ProductChecksumUtil;
 
 public class ResourcesTask extends AbstractModuleTask {
 
@@ -60,8 +62,8 @@ public class ResourcesTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<ResourcesTreeProduct> resourcesProduct =
-            useProduct(resourcesProductId, ResourcesTreeProduct.class);
+        final Optional<Product> resourcesProduct =
+            useProduct(resourcesProductId, Product.class);
 
         if (!resourcesProduct.isPresent()) {
             return TaskResult.empty();
@@ -70,18 +72,27 @@ public class ResourcesTask extends AbstractModuleTask {
         final Path buildDir =
             Files.createDirectories(resolveBuildDir("resources", compileTarget));
 
-        final Path srcDir = resourcesProduct.get().getSrcDir();
+        final Path resDir = Paths.get(resourcesProduct.get().getProperty("resDir"));
 
         final KeyValueCache cache = initCache();
 
-        Files.walkFileTree(srcDir, new CopyFileVisitor(buildDir, cache,
-            pluginSettings.getResourceFilterGlob(), buildVariablesMap()));
-
-        Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(srcDir, cache));
+        Files.walkFileTree(resDir, newCopyVisitor(buildDir, cache));
+        Files.walkFileTree(buildDir, new DeleteObsoleteFileVisitor(resDir, cache));
 
         cache.saveCache();
 
-        return TaskResult.ok(new ProcessedResourceProduct(buildDir));
+        return TaskResult.done(newProduct(buildDir));
+    }
+
+    private CopyFileVisitor newCopyVisitor(final Path buildDir, final KeyValueCache cache)
+        throws IOException {
+
+        final String glob = pluginSettings.getResourceFilterGlob();
+        if (glob != null) {
+            return new CopyFileVisitor(buildDir, cache, glob, buildVariablesMap());
+        }
+
+        return new CopyFileVisitor(buildDir, cache);
     }
 
     private KeyValueCache initCache() {
@@ -91,7 +102,7 @@ public class ResourcesTask extends AbstractModuleTask {
 
         // hash has to change for filter glob changes -- filtered files must not be cached
         final String hash =
-            Hasher.hash(List.of(Objects.toString(pluginSettings.getResourceFilterGlob())));
+            Hashing.hash(Objects.toString(pluginSettings.getResourceFilterGlob()));
 
         final Path cacheFile = cacheDir
             .resolve(getBuildContext().getModuleName())
@@ -110,6 +121,11 @@ public class ResourcesTask extends AbstractModuleTask {
             return Optional.ofNullable(System.getProperty(placeholder))
                 .or(() -> Optional.ofNullable(System.getenv(placeholder)));
         };
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        return new ManagedGenericProduct("processedResourcesDir", buildDir.toString(),
+            ProductChecksumUtil.recursiveContentChecksum(buildDir), null);
     }
 
 }

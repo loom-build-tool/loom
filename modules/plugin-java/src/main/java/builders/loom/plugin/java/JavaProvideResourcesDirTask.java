@@ -19,16 +19,15 @@ package builders.loom.plugin.java;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ResourcesTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaProvideResourcesDirTask extends AbstractModuleTask {
 
@@ -50,23 +49,28 @@ public class JavaProvideResourcesDirTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         final Path srcDir = getBuildContext().getPath().resolve(srcFragmentDir);
-        final List<Path> srcFiles = findSources(srcDir);
+        final boolean hasSrcFiles = findSources(srcDir);
 
-        if (srcFiles.isEmpty()) {
+        if (!hasSrcFiles) {
             return TaskResult.empty();
         }
 
-        return TaskResult.ok(new ResourcesTreeProduct(srcDir, srcFiles));
+        return TaskResult.done(newProduct(srcDir));
     }
 
-    private List<Path> findSources(final Path srcDir) throws IOException {
+    private boolean findSources(final Path srcDir) throws IOException {
         if (FileUtil.isDirAbsentOrEmpty(srcDir)) {
-            return Collections.emptyList();
+            return false;
         }
 
         return Files
             .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
-            .collect(Collectors.toList());
+            .findFirst().isPresent();
+    }
+
+    private static Product newProduct(final Path srcDir) {
+        return new ManagedGenericProduct("resDir", srcDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(srcDir), null);
     }
 
 }

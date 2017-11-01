@@ -81,7 +81,7 @@ public abstract class AbstractTask implements Task,
     }
 
     public <P extends Product> Optional<P> useProduct(final String productId,
-                                                       final Class<P> productClass)
+                                                      final Class<P> productClass)
         throws InterruptedException {
         Objects.requireNonNull(productId, "productId required");
         Objects.requireNonNull(productClass, "productClass required");

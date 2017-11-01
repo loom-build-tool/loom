@@ -18,13 +18,15 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactProduct;
-import builders.loom.api.product.ClasspathProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class DependencyResolverTask extends ArtifactResolverTask {
 
@@ -42,10 +44,19 @@ public class DependencyResolverTask extends ArtifactResolverTask {
         }
 
         final List<Path> artifacts = resolve(dependencies, false).stream()
-            .map(ArtifactProduct::getMainArtifact)
+            .map(Artifact::getMainArtifact)
             .collect(Collectors.toList());
 
-        return TaskResult.ok(new ClasspathProduct(artifacts));
+        return TaskResult.done(newProduct(artifacts));
+    }
+
+    private static Product newProduct(final List<Path> artifacts) {
+        final Map<String, List<String>> properties = Map.of(
+            "classpath",
+            artifacts.stream().map(Path::toString).collect(Collectors.toList())
+        );
+        return new ManagedGenericProduct(properties, ProductChecksumUtil.metaChecksum(artifacts),
+            null);
     }
 
 }

@@ -16,7 +16,7 @@
 
 package builders.loom.cli;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,15 +29,20 @@ import java.util.Optional;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
+import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.ModuleRunner;
 import builders.loom.core.plugin.ConfiguredTask;
 
 final class ProductReportPrinter {
 
+    private final RuntimeConfiguration runtimeConfiguration;
     private final ModuleRunner moduleRunner;
 
-    ProductReportPrinter(final ModuleRunner moduleRunner) {
+    ProductReportPrinter(final RuntimeConfiguration runtimeConfiguration,
+                         final ModuleRunner moduleRunner) {
+        this.runtimeConfiguration = runtimeConfiguration;
         this.moduleRunner = moduleRunner;
     }
 
@@ -64,8 +69,8 @@ final class ProductReportPrinter {
                 .lookupProduct(configuredTask.getBuildContext(), productId)
                 .getWithoutWait();
 
-            if (product.isPresent() && product.get().outputInfo().isPresent()) {
-                final String outputInfo = product.get().outputInfo().get();
+            if (product.isPresent() && product.get().getOutputInfo().isPresent()) {
+                final OutputInfo outputInfo = product.get().getOutputInfo().get();
                 final String pluginName = configuredTask.getPluginName();
                 aggProducts.putIfAbsent(pluginName, new ArrayList<>());
                 aggProducts.get(pluginName).add(new ProductInfo(productId, outputInfo));
@@ -92,16 +97,17 @@ final class ProductReportPrinter {
                 .newline();
 
             for (final ProductInfo productInfo : productInfos) {
-                final String outputInfo = productInfo.getOutputInfo()
-                    .replace(Paths.get("").toAbsolutePath().toString() + "/", "");
-
                 ansi
                     .bold().a("| ").boldOff()
                     .fgCyan().a(productInfo.getProductId()).fgDefault()
                     .bold().a(" > ").boldOff()
-                    .fgGreen().a(outputInfo)
-                    .reset()
-                    .newline();
+                    .fgGreen().a(productInfo.getOutputInfo().getName());
+
+                if (productInfo.getOutputInfo().getArtifact() != null) {
+                    ansi.a(": ").fgDefault().a(constructArtifactPath(productInfo).toString());
+                }
+
+                ansi.reset().newline();
             }
 
             if (iterator.hasNext()) {
@@ -112,12 +118,23 @@ final class ProductReportPrinter {
         }
     }
 
+    private Path constructArtifactPath(final ProductInfo productInfo) {
+        final Path artifactPath =
+            productInfo.getOutputInfo().getArtifact().toAbsolutePath();
+        final Path projectPath =
+            runtimeConfiguration.getProjectBaseDir().toAbsolutePath();
+
+        return artifactPath.startsWith(projectPath)
+            ? projectPath.relativize(artifactPath)
+            : artifactPath;
+    }
+
     private static final class ProductInfo {
 
         private final String productId;
-        private final String outputInfo;
+        private final OutputInfo outputInfo;
 
-        ProductInfo(final String productId, final String outputInfo) {
+        ProductInfo(final String productId, final OutputInfo outputInfo) {
             this.productId = productId;
             this.outputInfo = outputInfo;
         }
@@ -126,7 +143,7 @@ final class ProductReportPrinter {
             return productId;
         }
 
-        String getOutputInfo() {
+        OutputInfo getOutputInfo() {
             return outputInfo;
         }
 

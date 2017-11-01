@@ -32,19 +32,19 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.DirectoryProduct;
-import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
 import builders.loom.util.Iterables;
 import builders.loom.util.Preconditions;
+import builders.loom.util.ProductChecksumUtil;
 
 public class SpringBootTask extends AbstractModuleTask {
 
@@ -74,25 +74,28 @@ public class SpringBootTask extends AbstractModuleTask {
             buildDir.resolve(Paths.get("BOOT-INF", "lib")));
 
         // copy resources
-        final Optional<ProcessedResourceProduct> resourcesTreeProduct =
-            useProduct("processedResources", ProcessedResourceProduct.class);
-        resourcesTreeProduct.ifPresent(processedResourceProduct ->
-            FileUtil.copyFiles(processedResourceProduct.getSrcDir(), classesDir));
+        final Optional<Product> resourcesTreeProduct =
+            useProduct("processedResources", Product.class);
+        resourcesTreeProduct.ifPresent(processedResourceProduct -> FileUtil.copyFiles(
+            Paths.get(processedResourceProduct.getProperty("processedResourcesDir")), classesDir));
 
         // copy classes
-        final CompilationProduct compilationProduct =
-            requireProduct("compilation", CompilationProduct.class);
-        FileUtil.copyFiles(compilationProduct.getClassesDir(), classesDir);
+        final Product compilationProduct =
+            requireProduct("compilation", Product.class);
+        FileUtil.copyFiles(Paths.get(compilationProduct.getProperty("classesDir")), classesDir);
 
         // copy libs
-        final ClasspathProduct compileDependenciesProduct =
-            requireProduct("compileDependencies", ClasspathProduct.class);
-        FileUtil.copyFiles(compileDependenciesProduct.getEntries(), libDir);
+        final List<Path> compileDependencies =
+            requireProduct("compileDependencies", Product.class)
+            .getProperties("classpath").stream()
+            .map(p -> Paths.get(p))
+            .collect(Collectors.toList());
+        FileUtil.copyFiles(compileDependencies, libDir);
 
         // copy dep modules
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            final Path jarFile =
-                requireProduct(moduleName, "jar", AssemblyProduct.class).getAssemblyFile();
+            final Path jarFile = Paths.get(requireProduct(moduleName, "jar", Product.class)
+                .getProperty("classesJarFile"));
 
             Files.copy(jarFile, libDir.resolve(jarFile.getFileName()));
         }
@@ -104,7 +107,7 @@ public class SpringBootTask extends AbstractModuleTask {
         final String applicationStarter = scanForApplicationStarter(compilationProduct);
         writeManifest(buildDir, prepareManifest(applicationStarter));
 
-        return TaskResult.ok(new DirectoryProduct(buildDir, "Spring Boot application"));
+        return TaskResult.done(newProduct(buildDir));
     }
 
     private Path resolveSpringBootLoaderJar() {
@@ -142,11 +145,12 @@ public class SpringBootTask extends AbstractModuleTask {
         }
     }
 
-    private String scanForApplicationStarter(final CompilationProduct compilationProduct)
+    private String scanForApplicationStarter(final Product compilationProduct)
         throws IOException {
 
         final String applicationClassname = new ClassScanner()
-            .scanArchives(compilationProduct.getClassesDir(), SPRING_BOOT_APPLICATION_ANNOTATION);
+            .scanArchives(Paths.get(compilationProduct.getProperty("classesDir")),
+                SPRING_BOOT_APPLICATION_ANNOTATION);
 
         if (applicationClassname == null) {
             throw new IllegalStateException("Couldn't find class with "
@@ -179,6 +183,12 @@ public class SpringBootTask extends AbstractModuleTask {
         try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
             manifest.write(os);
         }
+    }
+
+    private static Product newProduct(final Path buildDir) {
+        return new ManagedGenericProduct("springBootOut", buildDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(buildDir),
+            new OutputInfo("Spring Boot application", buildDir));
     }
 
 }

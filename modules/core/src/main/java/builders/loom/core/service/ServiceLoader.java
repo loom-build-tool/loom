@@ -29,9 +29,9 @@ import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Service;
 import builders.loom.core.DownloadProgressEmitterBridge;
+import builders.loom.core.LoomVersion;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
-import builders.loom.core.Version;
 import builders.loom.core.misc.ExtensionLoader;
 import builders.loom.util.SystemUtil;
 
@@ -67,7 +67,7 @@ public class ServiceLoader {
         service.setRuntimeConfiguration(runtimeConfiguration);
 
         service.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(Version.getVersion(), serviceName)));
+            .resolve(Paths.get(LoomVersion.getVersion(), serviceName)));
 
         if (service instanceof DependencyResolverService) {
             final DependencyResolverService drs = (DependencyResolverService) service;

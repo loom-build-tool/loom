@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package builders.loom.api.product;
+package builders.loom.plugin.java;
 
 import java.nio.file.Path;
 
-public final class ArtifactProduct {
+public final class Artifact {
 
     private final Path mainArtifact;
     private final Path sourceArtifact;
 
-    public ArtifactProduct(final Path mainArtifact, final Path sourceArtifact) {
+    Artifact(final Path mainArtifact, final Path sourceArtifact) {
         this.mainArtifact = mainArtifact;
         this.sourceArtifact = sourceArtifact;
     }
 
-    public Path getMainArtifact() {
+    Path getMainArtifact() {
         return mainArtifact;
     }
 
-    public Path getSourceArtifact() {
+    Path getSourceArtifact() {
         return sourceArtifact;
     }
 

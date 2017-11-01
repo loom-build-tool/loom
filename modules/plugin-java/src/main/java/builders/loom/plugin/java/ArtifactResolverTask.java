@@ -18,14 +18,16 @@ package builders.loom.plugin.java;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ArtifactListProduct;
-import builders.loom.api.product.ArtifactProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class ArtifactResolverTask extends AbstractModuleTask {
 
@@ -47,8 +49,8 @@ public class ArtifactResolverTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<ArtifactProduct> artifacts = resolve(dependencies, true);
-        return TaskResult.ok(new ArtifactListProduct(artifacts));
+        final List<Artifact> artifacts = resolve(dependencies, true);
+        return TaskResult.done(newProduct(artifacts));
     }
 
     List<String> listDependencies() {
@@ -67,12 +69,24 @@ public class ArtifactResolverTask extends AbstractModuleTask {
         return deps;
     }
 
-    protected List<ArtifactProduct> resolve(final List<String> dependencies,
-                                            final boolean withSources) {
+    protected List<Artifact> resolve(final List<String> dependencies,
+                                     final boolean withSources) {
         return dependencyResolver
             .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
-            .map(a -> new ArtifactProduct(a.getMainArtifact(), a.getSourceArtifact()))
+            .map(a -> new Artifact(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());
+    }
+
+    private static Product newProduct(final List<Artifact> artifacts) {
+        // FIXME evil hack
+        final Map<String, List<String>> properties = Map.of(
+            "artifacts",
+            artifacts.stream()
+                .map(a -> a.getMainArtifact() + "#" + a.getSourceArtifact())
+                .collect(Collectors.toList())
+        );
+        return new ManagedGenericProduct(properties, ProductChecksumUtil.checksum(properties),
+            null);
     }
 
 }

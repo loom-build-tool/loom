@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,11 +37,11 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ReportProduct;
-import builders.loom.api.product.SourceTreeProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.StringUtil;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.DetectorFactoryCollection;
@@ -48,7 +49,7 @@ import edu.umd.cs.findbugs.FindBugs2;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
-@SuppressWarnings("checkstyle:classdataabstractioncoupling")
+@SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
 public class SpotBugsTask extends AbstractModuleTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsTask.class);
@@ -92,8 +93,8 @@ public class SpotBugsTask extends AbstractModuleTask {
     @Override
     public TaskResult run() throws Exception {
         final List<String> classFiles =
-            useProduct(compilationProductId, CompilationProduct.class)
-                .map(CompilationProduct::getClassesDir)
+            useProduct(compilationProductId, Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
                 .map(SpotBugsTask::getClassesToScan)
                 .orElse(Collections.emptyList());
 
@@ -101,10 +102,14 @@ public class SpotBugsTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<Path> srcFiles =
-            useProduct(sourceProductId, SourceTreeProduct.class)
-            .map(SourceTreeProduct::getSrcFiles)
-            .orElse(Collections.emptyList());
+        final Product product = useProduct(sourceProductId, Product.class).orElseThrow(
+            () -> new IllegalStateException("No product <" + sourceProductId + "> found"));
+
+        final Path srcDir = Paths.get(product.getProperty("srcDir"));
+
+        final List<Path> srcFiles = Files
+            .find(srcDir, Integer.MAX_VALUE, (path, attr) -> attr.isRegularFile())
+            .collect(Collectors.toList());
 
         final Path reportDir =
             FileUtil.createOrCleanDirectory(resolveReportDir("spotbugs", compileTarget));
@@ -115,12 +120,12 @@ public class SpotBugsTask extends AbstractModuleTask {
         final FindBugs2 engine = executeSpotBugs(project, reportDir);
 
         if (engine.getBugCount() + engine.getErrorCount() > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, reportOutputDescription),
+            return TaskResult.fail(newProduct(reportDir, reportOutputDescription),
                 String.format("SpotBugs reported %d bugs and %d errors",
                     engine.getBugCount(), engine.getErrorCount()));
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, reportOutputDescription));
+        return TaskResult.done(newProduct(reportDir, reportOutputDescription));
     }
 
     private static List<String> getClassesToScan(final Path classesDir) {
@@ -154,18 +159,18 @@ public class SpotBugsTask extends AbstractModuleTask {
 
         switch (compileTarget) {
             case MAIN:
-                useProduct("compileDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("compileDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 break;
             case TEST:
-                useProduct("compilation", CompilationProduct.class)
-                    .map(CompilationProduct::getClassesDir)
+                useProduct("compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")))
                     .ifPresent(classpath::add);
 
-                useProduct("testDependencies", ClasspathProduct.class)
-                    .map(ClasspathProduct::getEntries)
-                    .ifPresent(classpath::addAll);
+                useProduct("testDependencies", Product.class)
+                    .map(p -> p.getProperties("classpath"))
+                    .ifPresent(p -> p.forEach(c -> classpath.add(Paths.get(c))));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown target: " + compileTarget);
@@ -258,6 +263,12 @@ public class SpotBugsTask extends AbstractModuleTask {
         }
 
         throw new IllegalStateException("Unknown reporter: " + reporter);
+    }
+
+    private static Product newProduct(final Path reportDir, final String outputInfo) {
+        return new ManagedGenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo(outputInfo, reportDir));
     }
 
 }

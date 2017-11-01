@@ -18,20 +18,23 @@ package builders.loom.plugin.java;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.jar.JarOutputStream;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<DirectoryProduct> resourcesTreeProduct =
-            useProduct("javadoc", DirectoryProduct.class);
+        final Optional<Product> resourcesTreeProduct =
+            useProduct("javadoc", Product.class);
 
         if (!resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -41,11 +44,22 @@ public class JavaAssembleJavadocJarTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("javadoc-jar"))
             .resolve(String.format("%s-javadoc.jar", getBuildContext().getModuleName()));
 
-        try (final JarOutputStream os = new JarOutputStream(Files.newOutputStream(jarFile))) {
-            JavaFileUtil.copy(resourcesTreeProduct.get().getDir(), os);
-        }
+        final JarToolWrapper jarTool = new JarToolWrapper();
 
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of Javadoc"));
+        final List<String> args = new ArrayList<>(List.of("-c", "-f", jarFile.toString()));
+
+        resourcesTreeProduct.ifPresent(p ->
+            args.addAll(List.of("-C", p.getProperty("javaDocOut"), ".")));
+
+        jarTool.jar(args);
+
+        return TaskResult.done(newProduct(jarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        return new ManagedGenericProduct("javaDocJarFile", jarFile.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(jarFile),
+            new OutputInfo("Jar of Javadoc", jarFile));
     }
 
 }

@@ -16,10 +16,13 @@
 
 package builders.loom.plugin.java;
 
+import java.util.List;
+
 import builders.loom.api.AbstractPlugin;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
+import builders.loom.util.SkipChecksumUtil;
 
 @SuppressWarnings("checkstyle:classdataabstractioncoupling")
 public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
@@ -37,6 +40,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new DependencyResolverTask(DependencyScope.COMPILE, dependencyResolver))
             .provides("compileDependencies", true)
             .desc("Fetches dependencies needed for main class compilation.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies())))
             .register();
 
         task("resolveCompileArtifacts")
@@ -44,12 +49,17 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 dependencyResolver))
             .provides("compileArtifacts", true)
             .desc("Fetches compile dependencies (incl. sources) needed for IDE import.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies())))
             .register();
 
         task("resolveTestDependencies")
             .impl(() -> new DependencyResolverTask(DependencyScope.TEST, dependencyResolver))
             .provides("testDependencies", true)
             .desc("Fetches dependencies needed for test class compilation.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies()),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
         task("resolveTestArtifacts")
@@ -57,6 +67,9 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
                 dependencyResolver))
             .provides("testArtifacts", true)
             .desc("Fetches test dependencies (incl. sources) needed for IDE import.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getCompileDependencies()),
+                SkipChecksumUtil.collection(getModuleBuildConfig().getTestDependencies())))
             .register();
 
         task("provideSource")
@@ -75,7 +88,9 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(CompileTarget.MAIN))
             .provides("compilation")
             .uses("source", "compileDependencies")
-            .importFromModules("compilation")
+            .importFromModules("compilation", "compileDependencies")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(), () -> "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .desc("Compiles main sources.")
             .register();
 
@@ -83,8 +98,10 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .impl(() -> new JavaCompileTask(CompileTarget.TEST))
             .provides("testCompilation")
             .uses("compilation", "testSource", "testDependencies")
-            .importFromModules("compilation")
+            .importFromModules("compilation", "compileDependencies")
             .desc("Compiles test sources.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion(), () -> "Module Java version "
+                + getModuleBuildConfig().getBuildSettings().getJavaPlatformVersion()))
             .register();
 
         task("assembleJar")
@@ -92,6 +109,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("jar")
             .uses("processedResources", "compilation")
             .desc("Assembles .jar file from compiled classes.")
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         task("assembleSourcesJar")
@@ -99,6 +117,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("sourcesJar")
             .uses("source", "resources")
             .desc("Assembles .jar file from main sources and main resources.")
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         task("provideResources")
@@ -119,6 +138,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedResources")
             .uses("resources")
             .desc("Processes main resources (copy and replace variables if necessary).")
+            .skipHints(List.of(
+                SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("processTestResources")
@@ -127,6 +148,8 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("processedTestResources")
             .uses("testResources")
             .desc("Processes test resources (copy and replace variables if necessary).")
+            .skipHints(List.of(
+                SkipChecksumUtil.whenNull(getPluginSettings().getResourceFilterGlob())))
             .register();
 
         task("javadoc")
@@ -135,6 +158,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .uses("source", "compileDependencies")
             .importFromModules("compilation")
             .desc("Creates Javadoc pages.")
+            .skipHints(List.of(SkipChecksumUtil.jvmVersion()))
             .register();
 
         task("assembleJavadocJar")
@@ -142,6 +166,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .provides("javadocJar")
             .uses("javadoc")
             .desc("Assembles .jar file from Javadocs.")
+            .skipHints(List.of(SkipChecksumUtil.always()))
             .register();
 
         goal("assemble")

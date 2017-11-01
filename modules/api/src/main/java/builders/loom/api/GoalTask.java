@@ -16,9 +16,12 @@
 
 package builders.loom.api;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 
-import builders.loom.api.product.DummyProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.Product;
 
 public class GoalTask implements Task, ProductDependenciesAware {
 
@@ -48,7 +51,12 @@ public class GoalTask implements Task, ProductDependenciesAware {
             usedProducts.waitForProduct(usedProductId);
         }
 
-        return TaskResult.ok(new DummyProduct("goal"));
+        return TaskResult.done(newProduct());
+    }
+
+    private static Product newProduct() {
+        return new ManagedGenericProduct(Collections.emptyMap(), UUID.randomUUID().toString(),
+            null);
     }
 
 }

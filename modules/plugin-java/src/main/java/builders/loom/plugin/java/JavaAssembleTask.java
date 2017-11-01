@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.spi.ToolProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +35,10 @@ import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ProcessedResourceProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
+import builders.loom.util.ProductChecksumUtil;
 import builders.loom.util.TempFile;
 
 public class JavaAssembleTask extends AbstractModuleTask {
@@ -50,14 +51,13 @@ public class JavaAssembleTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
     }
 
-    @SuppressWarnings("checkstyle:regexpmultiline")
     @Override
     public TaskResult run() throws Exception {
-        final Optional<CompilationProduct> compilationProduct = useProduct(
-            "compilation", CompilationProduct.class);
+        final Optional<Product> compilationProduct = useProduct(
+            "compilation", Product.class);
 
-        final Optional<ProcessedResourceProduct> resourcesTreeProduct = useProduct(
-            "processedResources", ProcessedResourceProduct.class);
+        final Optional<Product> resourcesTreeProduct = useProduct(
+            "processedResources", Product.class);
 
         if (!compilationProduct.isPresent() && !resourcesTreeProduct.isPresent()) {
             return TaskResult.empty();
@@ -67,8 +67,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
             .createDirectories(resolveBuildDir("jar"))
             .resolve(String.format("%s.jar", getBuildContext().getModuleName()));
 
-        final ToolProvider toolProvider = ToolProvider.findFirst("jar")
-            .orElseThrow(() -> new IllegalStateException("Couldn't find jar ToolProvider"));
+        final JarToolWrapper jarTool = new JarToolWrapper();
 
         final List<String> args = new ArrayList<>(List.of("-c", "-f", jarFile.toString()));
 
@@ -77,7 +76,7 @@ public class JavaAssembleTask extends AbstractModuleTask {
         }
 
         final boolean moduleInfoExists = compilationProduct
-            .map(CompilationProduct::getClassesDir)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(dir -> dir.resolve(LoomPaths.MODULE_INFO_CLASS))
             .filter(Files::exists)
             .isPresent();
@@ -86,8 +85,6 @@ public class JavaAssembleTask extends AbstractModuleTask {
             Optional.ofNullable(getRuntimeConfiguration().getVersion()).ifPresent(v ->
                 args.addAll(List.of("--module-version", v)));
         }
-
-        final int result;
 
         final String automaticModuleName = moduleInfoExists ? null : buildAutomaticModuleName();
         final Manifest manifest = prepareManifest(automaticModuleName);
@@ -99,20 +96,15 @@ public class JavaAssembleTask extends AbstractModuleTask {
             args.addAll(List.of("-m", metaInfTmpFile.getFile().toString()));
 
             compilationProduct.ifPresent(p ->
-                args.addAll(List.of("-C", p.getClassesDir().toString(), ".")));
+                args.addAll(List.of("-C", p.getProperty("classesDir"), ".")));
 
             resourcesTreeProduct.ifPresent(p ->
-                args.addAll(List.of("-C", p.getSrcDir().toString(), ".")));
+                args.addAll(List.of("-C", p.getProperty("processedResourcesDir"), ".")));
 
-            LOG.debug("Run JarToolProvider with args: {}", args);
-            result = toolProvider.run(System.out, System.err, args.toArray(new String[]{}));
+            jarTool.jar(args);
         }
 
-        if (result != 0) {
-            throw new IllegalStateException("Building jar file failed");
-        }
-
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Jar of compiled classes"));
+        return TaskResult.done(newProduct(jarFile));
     }
 
     private String buildAutomaticModuleName() {
@@ -151,6 +143,12 @@ public class JavaAssembleTask extends AbstractModuleTask {
         try (final OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
             manifest.write(os);
         }
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        return new ManagedGenericProduct("classesJarFile", jarFile.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(jarFile),
+            new OutputInfo("Jar of compiled classes", jarFile));
     }
 
 }

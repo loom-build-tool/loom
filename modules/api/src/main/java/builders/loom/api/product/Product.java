@@ -16,13 +16,21 @@
 
 package builders.loom.api.product;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface Product {
 
+    String getProperty(String key);
+
+    List<String> getProperties(String key);
+
+    Map<String, List<String>> getProperties();
+
     /**
      * Spring Boot application: build/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
      */
-    Optional<String> outputInfo();
+    Optional<OutputInfo> getOutputInfo();
 
 }

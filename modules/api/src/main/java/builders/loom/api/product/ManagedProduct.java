@@ -16,25 +16,8 @@
 
 package builders.loom.api.product;
 
-import java.nio.file.Path;
+public interface ManagedProduct extends Product {
 
-public final class ProcessedResourceProduct extends AbstractProduct {
-
-    private final Path resourcesDir;
-
-    public ProcessedResourceProduct(final Path resourcesDir) {
-        this.resourcesDir = resourcesDir;
-    }
-
-    public Path getSrcDir() {
-        return resourcesDir;
-    }
-
-    @Override
-    public String toString() {
-        return "ProcessedResourceProduct{"
-            + "resourcesDir=" + resourcesDir
-            + '}';
-    }
+    String checksum();
 
 }

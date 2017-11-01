@@ -18,8 +18,8 @@ package builders.loom.api;
 
 public enum TaskStatus {
 
-    OK,
-    UP_TO_DATE,
+    DONE,
+    SKIP,
     EMPTY,
     FAIL
 

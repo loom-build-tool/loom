@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,16 +34,16 @@ import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.api.TestProgressEmitterAware;
-import builders.loom.api.product.ClasspathProduct;
-import builders.loom.api.product.CompilationProduct;
-import builders.loom.api.product.ProcessedResourceProduct;
-import builders.loom.api.product.ReportProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.plugin.junit.shared.ProgressListenerDelegate;
 import builders.loom.plugin.junit.shared.TestResult;
 import builders.loom.plugin.junit.util.InjectingClassLoader;
 import builders.loom.plugin.junit.util.SharedApiClassLoader;
 import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmitterAware {
 
@@ -62,14 +63,14 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
 
     @Override
     public TaskResult run() throws Exception {
-        final Optional<CompilationProduct> testCompilation =
-            useProduct("testCompilation", CompilationProduct.class);
+        final Optional<Product> testCompilation =
+            useProduct("testCompilation", Product.class);
 
         if (!testCompilation.isPresent()) {
             return TaskResult.empty();
         }
 
-        final Path classesDir = testCompilation.get().getClassesDir();
+        final Path classesDir = Paths.get(testCompilation.get().getProperty("classesDir"));
         final List<URL> junitClassPath = buildJunitClassPath();
 
         LOG.debug("Test with classpath: {}", junitClassPath);
@@ -81,7 +82,7 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         LOG.info("JUnit test result: {}", result);
 
         if (result.getTotalFailureCount() > 0) {
-            return TaskResult.fail(new ReportProduct(reportDir, "JUnit report"),
+            return TaskResult.fail(newProduct(reportDir),
                 String.format(
                 "tests failed: %d (total: %d; succeeded: %d; skipped: %d; aborted: %d)",
                 result.getTotalFailureCount(),
@@ -91,39 +92,40 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
                 result.getTestsAbortedCount()));
         }
 
-        return TaskResult.ok(new ReportProduct(reportDir, "JUnit report"));
+        return TaskResult.done(newProduct(reportDir));
     }
 
     private List<URL> buildJunitClassPath() throws InterruptedException {
         final List<URL> urls = new ArrayList<>();
 
-        useProduct("testCompilation", CompilationProduct.class)
-            .map(CompilationProduct::getClassesDir)
+        useProduct("testCompilation", Product.class)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("processedTestResources", ProcessedResourceProduct.class)
-            .map(ProcessedResourceProduct::getSrcDir)
+        useProduct("processedTestResources", Product.class)
+            .map(p -> Paths.get(p.getProperty("processedResourcesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("compilation", CompilationProduct.class)
-            .map(CompilationProduct::getClassesDir)
+        useProduct("compilation", Product.class)
+            .map(p -> Paths.get(p.getProperty("classesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("processedResources", ProcessedResourceProduct.class)
-            .map(ProcessedResourceProduct::getSrcDir)
+        useProduct("processedResources", Product.class)
+            .map(p -> Paths.get(p.getProperty("processedResourcesDir")))
             .map(ClassLoaderUtil::toUrl)
             .ifPresent(urls::add);
 
-        useProduct("testDependencies", ClasspathProduct.class)
-            .map(ClasspathProduct::getEntriesAsUrls)
-            .ifPresent(urls::addAll);
+        useProduct("testDependencies", Product.class)
+            .map(p -> p.getProperties("classpath"))
+            .ifPresent(p -> p.forEach(c -> urls.add(ClassLoaderUtil.toUrl(Paths.get(c)))));
 
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            useProduct(moduleName, "compilation", CompilationProduct.class)
-                .ifPresent(product -> urls.add(ClassLoaderUtil.toUrl(product.getClassesDir())));
+            useProduct(moduleName, "compilation", Product.class)
+                .map(p -> Paths.get(p.getProperty("classesDir")))
+                .ifPresent(classesDir -> urls.add(ClassLoaderUtil.toUrl(classesDir)));
         }
 
         resolveJUnitPlatformLauncher().stream()
@@ -168,6 +170,12 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
             return (TestResult) wrapperRun.invoke(wrapper, targetClassLoader, classesDir,
                 reportDir, new ProgressListenerDelegate(testProgressEmitter));
         }
+    }
+
+    private static Product newProduct(final Path reportDir) {
+        return new ManagedGenericProduct("reportDir", reportDir.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(reportDir),
+            new OutputInfo("JUnit report", reportDir));
     }
 
 }

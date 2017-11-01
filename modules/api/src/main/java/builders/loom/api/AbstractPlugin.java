@@ -17,10 +17,12 @@
 package builders.loom.api;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -122,6 +124,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private Set<String> usedProducts = Collections.emptySet();
         private Set<String> importedProducts = Collections.emptySet();
         private Set<String> importedAllProducts = Collections.emptySet();
+        private List<Supplier<String>> skipHints = Collections.emptyList();
         private String description;
 
         public TaskBuilder(final String taskName) {
@@ -170,6 +173,11 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return importFromAllModules(Arrays.asList(Objects.requireNonNull(products)));
         }
 
+        public TaskBuilder skipHints(final List<Supplier<String>> hints) {
+            this.skipHints = new ArrayList<>(Objects.requireNonNull(hints));
+            return this;
+        }
+
         public TaskBuilder desc(final String taskDescription) {
             this.description = taskDescription;
             return this;
@@ -178,7 +186,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
                 intermediateProduct, usedProducts, importedProducts,
-                importedAllProducts, description);
+                importedAllProducts, skipHints, description);
         }
 
     }

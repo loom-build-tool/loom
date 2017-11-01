@@ -16,31 +16,30 @@
 
 package builders.loom.util;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public final class StringUtil {
+public final class Hashing {
 
-    private StringUtil() {
+    private Hashing() {
     }
 
-    public static List<String> split(final String input, final String regex) {
-        if (input == null || input.isEmpty()) {
-            return Collections.emptyList();
+    public static String hash(final Iterable<String> strings) {
+        final Hasher hasher = new Hasher();
+        for (final Iterator<String> iterator = strings.iterator(); iterator.hasNext();) {
+            final String string = iterator.next();
+            hasher.putString(string);
+
+            if (iterator.hasNext()) {
+                hasher.putByte((byte) 0);
+            }
+
         }
-
-        return Arrays.stream(input.split(regex))
-            .map(String::trim)
-            .filter(str -> !str.isEmpty())
-            .collect(Collectors.toList());
+        return hasher.hashHex();
     }
 
-    public static String repeat(final char c, final int cnt) {
-        final char[] chars = new char[cnt];
-        Arrays.fill(chars, c);
-        return new String(chars);
+    public static String hash(final String... strings) {
+        return hash(List.of(strings));
     }
 
 }

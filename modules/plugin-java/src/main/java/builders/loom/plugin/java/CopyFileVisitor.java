@@ -46,6 +46,10 @@ class CopyFileVisitor extends SimpleFileVisitor<Path> {
     private final Function<String, Optional<String>> propertyResolver;
     private Path sourceBasePath;
 
+    CopyFileVisitor(final Path targetBasePath, final KeyValueCache cache) throws IOException {
+        this(targetBasePath, cache, null, null);
+    }
+
     CopyFileVisitor(final Path targetBasePath, final KeyValueCache cache,
                     final String filterGlob,
                     final Function<String, Optional<String>> propertyResolver) throws IOException {

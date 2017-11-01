@@ -17,7 +17,6 @@
 package builders.loom.cli;
 
 import java.io.PrintStream;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -29,6 +28,7 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
 import builders.loom.core.ProgressMonitor;
+import builders.loom.util.StringUtil;
 
 final class ConsoleProgressMonitor implements ProgressMonitor {
 
@@ -156,9 +156,9 @@ final class ConsoleProgressMonitor implements ProgressMonitor {
             a.format("All %d tasks completed ", cpl);
         } else {
             a.a('[')
-                .a(String.join("", Collections.nCopies(progress, "=")))
+                .a(String.join("", StringUtil.repeat('=', progress)))
                 .a('>')
-                .a(String.join("", Collections.nCopies(nullProgress, " ")))
+                .a(String.join("", StringUtil.repeat(' ', nullProgress)))
                 .format("] (%d%%) [%d/%d tasks completed]", pct, cpl, taskCnt);
         }
 

@@ -18,6 +18,7 @@ package builders.loom.core.plugin;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -34,15 +35,16 @@ public class ConfiguredTask {
     private final Set<String> usedProducts;
     private final Set<String> importedProducts;
     private final Set<String> importedAllProducts;
+    private final List<Supplier<String>> skipHints;
     private final String description;
     private final TaskType type;
 
     @SuppressWarnings("checkstyle:parameternumber")
     ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
-            final Supplier<Task> taskSupplier, final String providedProduct,
-            final Set<String> usedProducts, final Set<String> importedProducts,
-            final Set<String> importedAllProducts, final String description,
-            final TaskType type) {
+                   final Supplier<Task> taskSupplier, final String providedProduct,
+                   final Set<String> usedProducts, final Set<String> importedProducts,
+                   final Set<String> importedAllProducts, final List<Supplier<String>> skipHints,
+                   final String description, final TaskType type) {
         this.buildContext = buildContext;
         this.name = name;
         this.pluginNames = new HashSet<>(Collections.singletonList(pluginName));
@@ -51,6 +53,7 @@ public class ConfiguredTask {
         this.usedProducts = new HashSet<>(usedProducts);
         this.importedProducts = importedProducts;
         this.importedAllProducts = importedAllProducts;
+        this.skipHints = skipHints;
         this.description = description;
         this.type = type;
     }
@@ -98,6 +101,10 @@ public class ConfiguredTask {
 
     public Set<String> getImportedAllProducts() {
         return Collections.unmodifiableSet(importedAllProducts);
+    }
+
+    public List<Supplier<String>> getSkipHints() {
+        return Collections.unmodifiableList(skipHints);
     }
 
     public String getDescription() {

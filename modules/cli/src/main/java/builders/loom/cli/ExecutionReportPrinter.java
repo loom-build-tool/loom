@@ -16,23 +16,24 @@
 
 package builders.loom.cli;
 
-import java.util.Collections;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiString;
 
+import builders.loom.api.TaskStatus;
 import builders.loom.core.ExecutionStatus;
 import builders.loom.core.plugin.TaskType;
+import builders.loom.util.StringUtil;
 
 final class ExecutionReportPrinter {
 
     void print(final Map<String, ExecutionStatus> durations) {
-        final int longestKey = durations.keySet().stream()
-            .mapToInt(String::length)
-            .max()
-            .orElse(0);
-
         final long totalDuration = durations.values().stream()
             .mapToLong(ExecutionStatus::getDuration)
             .sum();
@@ -45,40 +46,128 @@ final class ExecutionReportPrinter {
             .reset()
             .newline());
 
-        durations.forEach((key, value) -> printDuration(longestKey, totalDuration, key, value));
-    }
+        final Table table = new Table();
+        for (final Map.Entry<String, ExecutionStatus> entry : durations.entrySet()) {
+            final ExecutionStatus executionStatus = entry.getValue();
 
-    private static void printDuration(final int longestKey, final long totalDuration,
-                                      final String name, final ExecutionStatus executionStatus) {
-        final double pct = 100D / totalDuration * executionStatus.getDuration();
-        final String space = String.join("",
-            Collections.nCopies(longestKey - name.length(), " "));
-
-        final double minDuration = 0.1;
-        final String durationBar = pct < minDuration ? "." : String.join("",
-            Collections.nCopies((int) Math.ceil(pct / 2), "#"));
-
-        final double durationSecs = executionStatus.getDuration() / 1_000_000_000D;
-
-        final Ansi a = Ansi.ansi();
-
-        if (executionStatus.getType() == TaskType.GOAL) {
-            a.fgMagenta().a("Goal");
-        } else {
-            a.fgCyan().a("Task");
+            table.add(
+                renderType(executionStatus),
+                entry.getKey() + " " + renderStatus(executionStatus.getTaskStatus()),
+                renderTime(totalDuration, executionStatus.getDuration())
+            );
         }
 
-        a.reset()
-            .a(' ')
-            .a(name)
-            .a(' ')
-            .a(space)
-            .format(" %5.2fs", durationSecs)
-            .format(" (%4.1f%%)", pct)
-            .a(' ')
-            .a(durationBar);
+        table.print();
+    }
 
-        AnsiConsole.out().println(a);
+    private static String renderType(final ExecutionStatus executionStatus) {
+        if (executionStatus.getType() == TaskType.GOAL) {
+            return "@|magenta Goal|@";
+        }
+
+        return "@|cyan Task|@";
+    }
+
+    private static String renderStatus(final TaskStatus status) {
+        final StringBuilder sb = new StringBuilder("@|");
+        switch (status) {
+            case DONE:
+                sb.append("bold,green");
+                break;
+            case SKIP:
+                sb.append("bold,cyan");
+                break;
+            case EMPTY:
+                sb.append("bold,black");
+                break;
+            case FAIL:
+                sb.append("bold,red");
+                break;
+            default:
+                throw new IllegalStateException("Unknown status: " + status);
+        }
+
+        return sb.append(' ').append(status.name()).append("|@").toString();
+    }
+
+    private static String renderTime(final long totalDuration, final long duration) {
+        final double pct = 100D / totalDuration * duration;
+        final double durationSecs = duration / 1_000_000_000D;
+        return String.format("%5.2fs (%4.1f%%) %s", durationSecs, pct, renderBar(pct));
+    }
+
+    private static String renderBar(final double pct) {
+        return StringUtil.repeat('#', Math.max(1, (int) Math.ceil(pct / 2)));
+    }
+
+    private final class Table {
+
+        private final List<TableRow> rows = new ArrayList<>();
+        private final Map<Integer, Integer> columnSizes = new HashMap<>();
+
+        void add(final String... columns) {
+            rows.add(new TableRow(this, columns));
+        }
+
+        void print() {
+            for (final TableRow row : rows) {
+                row.print();
+            }
+        }
+
+        int getColSize(final int col) {
+            return columnSizes.computeIfAbsent(col, (c) -> {
+                int colSize = 0;
+                for (final TableRow row : rows) {
+                    final int rowColSize = row.getColSize(col);
+                    if (rowColSize > colSize) {
+                        colSize = rowColSize;
+                    }
+                }
+
+                return colSize;
+            });
+        }
+
+        private final class TableRow {
+
+            private final Table table;
+            private final List<String> columns;
+
+            TableRow(final Table table, final String... columns) {
+                this.table = table;
+                this.columns = new ArrayList<>(columns.length);
+
+                for (final String column : columns) {
+                    final Ansi ansi = Ansi.ansi();
+                    this.columns.add(ansi.render(column).toString());
+                }
+            }
+
+            void print() {
+                final PrintStream out = AnsiConsole.out();
+                final Ansi ansi = Ansi.ansi();
+                for (int i = 0, columnsSize = columns.size(); i < columnsSize; i++) {
+                    final String column = columns.get(i);
+                    ansi.a(column);
+
+                    final int colSize = table.getColSize(i);
+                    final int delta = colSize - getColSize(i);
+                    if (delta > 0) {
+                        ansi.a(StringUtil.repeat(' ', delta));
+                    }
+
+                    ansi.a(' ');
+                }
+                out.println(ansi);
+            }
+
+            int getColSize(final int col) {
+                return new AnsiString(columns.get(col)).length();
+            }
+
+        }
+
     }
 
 }

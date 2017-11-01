@@ -17,21 +17,24 @@
 package builders.loom.plugin.springboot;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.TaskResult;
-import builders.loom.api.product.AssemblyProduct;
-import builders.loom.api.product.DirectoryProduct;
+import builders.loom.api.product.ManagedGenericProduct;
+import builders.loom.api.product.OutputInfo;
+import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.ProductChecksumUtil;
 
 public class SpringBootFatJarTask extends AbstractModuleTask {
 
     @Override
     public TaskResult run() throws Exception {
-        final DirectoryProduct springBootApplication =
-            requireProduct("springBootApplication", DirectoryProduct.class);
+        final Product springBootApplication =
+            requireProduct("springBootApplication", Product.class);
 
-        final Path baseDir = springBootApplication.getDir();
+        final Path baseDir = Paths.get(springBootApplication.getProperty("springBootOut"));
         final Path buildDir = FileUtil.createOrCleanDirectory(resolveBuildDir("springboot-fatjar"));
 
         final Path jarFile = buildDir.resolve(String.format("%s-fatjar.jar",
@@ -40,7 +43,13 @@ public class SpringBootFatJarTask extends AbstractModuleTask {
         // assemble jar
         new JarAssembler().assemble(baseDir, jarFile);
 
-        return TaskResult.ok(new AssemblyProduct(jarFile, "Spring Boot Fat Jar application"));
+        return TaskResult.done(newProduct(jarFile));
+    }
+
+    private static Product newProduct(final Path jarFile) {
+        return new ManagedGenericProduct("springBootFatJar", jarFile.toString(),
+            ProductChecksumUtil.recursiveMetaChecksum(jarFile),
+            new OutputInfo("Spring Boot Fat Jar application", jarFile));
     }
 
 }

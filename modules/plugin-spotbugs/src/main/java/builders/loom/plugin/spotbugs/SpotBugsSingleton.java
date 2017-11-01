@@ -19,14 +19,16 @@ package builders.loom.plugin.spotbugs;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,10 @@ public final class SpotBugsSingleton {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotBugsSingleton.class);
 
+    private static final Map<String, String> PLUGIN_JAR_PREFIXES = Map.of(
+            "FbContrib", "fb-contrib",
+            "FindSecBugs", "findsecbugs");
+
     private static volatile boolean initialized;
 
     private static final String FINDBUGS_CORE_PLUGIN_ID = "edu.umd.cs.findbugs.plugins.core";
@@ -47,7 +53,7 @@ public final class SpotBugsSingleton {
     private SpotBugsSingleton() {
     }
 
-    public static void initSpotBugs(final List<String> plugins) {
+    public static void initSpotBugs(final Set<String> plugins) {
 
         if (!initialized) {
             synchronized (SpotBugsSingleton.class) {
@@ -69,49 +75,75 @@ public final class SpotBugsSingleton {
     /**
      * Note: spotbugs plugins are registered in a static map and thus has many concurrency issues.
      */
-    private static void loadSpotBugsPlugin(final List<String> plugins) {
+    private static void loadSpotBugsPlugin(final Set<String> plugins) {
+
+        final Set<String> unknownPlugins = plugins.stream()
+                .filter(pn -> !PLUGIN_JAR_PREFIXES.keySet().contains(pn))
+                .collect(Collectors.toSet());
+
+        Preconditions.checkState(unknownPlugins.isEmpty(),
+                "Unknown SpotBugs plugin(s): %s", unknownPlugins);
 
         final ClassLoader contextClassLoader = SpotBugsSingleton.class.getClassLoader();
 
-        // TODO smells
-        final List<String> pluginsToLoad = new ArrayList<>(plugins);
-        final boolean loadFbContrib = pluginsToLoad.remove("FbContrib");
-        final boolean loadFindBugsSec = pluginsToLoad.remove("FindSecBugs");
+        final Set<String> pluginFilePrefixes = PLUGIN_JAR_PREFIXES.entrySet().stream()
+                .filter(e -> plugins.contains(e.getKey()))
+                .map(e -> e.getValue())
+                .collect(Collectors.toSet());
 
-        Preconditions.checkState(pluginsToLoad.isEmpty(),
-            "Unknown SpotBugs plugin(s): " + pluginsToLoad);
+        LOG.debug("Requesting custom plugins by prefixes {}", pluginFilePrefixes);
 
         try {
+            final List<Path> availablePluginJars =
+                    Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
+                    .map(SpotBugsSingleton::normalizeUrl)
+                    .collect(Collectors.toList());
 
-            Collections.list(contextClassLoader.getResources("findbugs.xml")).stream()
-                .map(SpotBugsSingleton::normalizeUrl)
-                .filter(Files::exists)
-                .filter(file ->
-                    loadFbContrib && file.getFileName().toString().startsWith("fb-contrib")
-                    || loadFindBugsSec && file.getFileName().toString().startsWith("findsecbugs")
-                )
-                .map(Path::toUri)
-                .forEach(pluginUri -> {
-                    try {
-                        Plugin.addCustomPlugin(pluginUri, contextClassLoader);
-                    } catch (final PluginException e) {
-                        throw new IllegalStateException("Error loading plugin " + pluginUri, e);
-                    } catch (final DuplicatePluginIdException e) {
-                        if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
-                            throw new IllegalStateException(
-                                "Duplicate SpotBugs plugin " + e.getPluginId());
-                        }
-                    }
-                });
+            LOG.info("Available custom plugins: {}", availablePluginJars);
+
+            for (final String prefix : pluginFilePrefixes) {
+
+                final URI pluginUri = search(prefix, availablePluginJars);
+
+                addCustomPlugin(contextClassLoader, pluginUri);
+
+            }
+
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
 
     }
 
+    private static URI search(final String prefix, final List<Path> availablePluginJars) {
+
+        return
+        availablePluginJars.stream()
+            .filter(p -> p.getFileName().toString().startsWith(prefix))
+            .findFirst()
+            .map(Path::toUri)
+            .orElseThrow(() -> new IllegalStateException(
+                    "Requested SpotBugs plugin not found by prefix " + prefix));
+
+    }
+
+    private static void addCustomPlugin(final ClassLoader contextClassLoader, final URI pluginUri) {
+        LOG.debug("Loading custom plugin '{}'", pluginUri);
+        try {
+            Plugin.addCustomPlugin(pluginUri, contextClassLoader);
+        } catch (final PluginException e) {
+            throw new IllegalStateException("Error loading plugin " + pluginUri, e);
+        } catch (final DuplicatePluginIdException e) {
+            if (!FINDBUGS_CORE_PLUGIN_ID.equals(e.getPluginId())) {
+                throw new IllegalStateException(
+                    "Duplicate SpotBugs plugin " + e.getPluginId());
+            }
+        }
+    }
+
     /**
-     * jar:file:/C:/Users/leftout/plugin-spotbugs/spotbugs-3.0.1.jar!/spotbugs.xml
-     * will become C:/Users/leftout/plugin-spotbugs/spotbugs-3.0.1.jar
+     * jar:file:/C:/Users/leftout/plugin-spotbugs/findsecbugs-plugin-x.y.z.jar!/findbugs.xml
+     * will become C:/Users/leftout/plugin-spotbugs/findsecbugs-plugin-x.y.z.jar
      * .
      */
     private static Path normalizeUrl(final URL url) {

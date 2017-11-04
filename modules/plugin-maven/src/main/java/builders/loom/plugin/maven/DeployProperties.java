@@ -16,42 +16,60 @@
 
 package builders.loom.plugin.maven;
 
-public class DeployProperties {
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
+class DeployProperties {
 
     private String releaseUrl;
     private String snapshotUrl;
     private String username;
     private String password;
 
-    public String getReleaseUrl() {
+    DeployProperties(final Path configFile) throws IOException {
+        final Properties props = new Properties();
+        try (InputStream in = Files.newInputStream(configFile)) {
+            props.load(in);
+        }
+
+        username = props.getProperty("username");
+        password = props.getProperty("password");
+        releaseUrl = props.getProperty("releaseUrl");
+        snapshotUrl = props.getProperty("snapshotUrl");
+    }
+
+    String getReleaseUrl() {
         return releaseUrl;
     }
 
-    public void setReleaseUrl(final String releaseUrl) {
+    void setReleaseUrl(final String releaseUrl) {
         this.releaseUrl = releaseUrl;
     }
 
-    public String getSnapshotUrl() {
+    String getSnapshotUrl() {
         return snapshotUrl;
     }
 
-    public void setSnapshotUrl(final String snapshotUrl) {
+    void setSnapshotUrl(final String snapshotUrl) {
         this.snapshotUrl = snapshotUrl;
     }
 
-    public String getUsername() {
+    String getUsername() {
         return username;
     }
 
-    public void setUsername(final String username) {
+    void setUsername(final String username) {
         this.username = username;
     }
 
-    public String getPassword() {
+    String getPassword() {
         return password;
     }
 
-    public void setPassword(final String password) {
+    void setPassword(final String password) {
         this.password = password;
     }
 

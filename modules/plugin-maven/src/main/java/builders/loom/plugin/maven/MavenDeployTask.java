@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
-import java.util.Properties;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -63,6 +62,7 @@ import builders.loom.api.product.UnmanagedGenericProduct;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
+// TODO de-duplicate code (MavenInstallTask)
 public class MavenDeployTask extends AbstractModuleTask {
 
     private final MavenPluginSettings pluginSettings;
@@ -150,7 +150,7 @@ public class MavenDeployTask extends AbstractModuleTask {
                 sourceJarFile.toFile());
 
             final SubArtifact javaDocArtifact = new SubArtifact(jarArtifact, "*-javadoc", "jar",
-                sourceJarFile.toFile());
+                javadocFile.toFile());
 
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
                 tmpPomFile.getFile().toFile());
@@ -172,18 +172,7 @@ public class MavenDeployTask extends AbstractModuleTask {
         final Path deployConfig = getRuntimeConfiguration().getProjectBaseDir()
             .resolve("loom-deploy.properties");
 
-        final Properties props = new Properties();
-        try (InputStream in = Files.newInputStream(deployConfig)) {
-            props.load(in);
-        }
-
-        final DeployProperties deployProperties = new DeployProperties();
-        deployProperties.setUsername(props.getProperty("username"));
-        deployProperties.setPassword(props.getProperty("password"));
-        deployProperties.setReleaseUrl(props.getProperty("releaseUrl"));
-        deployProperties.setSnapshotUrl(props.getProperty("snapshotUrl"));
-
-        return deployProperties;
+        return new DeployProperties(deployConfig);
     }
 
     private Model readTemplateModel(final Path templatePom) throws IOException {

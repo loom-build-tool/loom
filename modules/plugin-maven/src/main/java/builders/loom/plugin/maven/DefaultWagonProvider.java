@@ -22,6 +22,7 @@ import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
 import org.apache.maven.wagon.providers.http.LightweightHttpsWagon;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 
+// TODO De-duplicate code (service-maven)
 class DefaultWagonProvider implements WagonProvider {
 
     @Override

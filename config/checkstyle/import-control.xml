@@ -45,6 +45,7 @@
 
     <subpackage name="plugin.maven">
         <allow pkg="org.apache.maven"/>
+        <allow pkg="org.bouncycastle"/>
         <allow pkg="org.codehaus.plexus.util.xml.pull"/>
         <allow pkg="org.sonatype.aether"/>
     </subpackage>

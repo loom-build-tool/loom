@@ -20,6 +20,7 @@ import builders.loom.api.PluginSettings;
 
 public class MavenPluginSettings implements PluginSettings {
 
+    // TODO also move to template-pom? What to do with future (non-maven) Loom installs?
     private String groupAndArtifact;
 
     public String getGroupAndArtifact() {

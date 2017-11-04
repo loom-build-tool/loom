@@ -20,14 +20,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 class DeployProperties {
 
-    private String releaseUrl;
-    private String snapshotUrl;
-    private String username;
-    private String password;
+    private final String releaseUrl;
+    private final String snapshotUrl;
+    private final String username;
+    private final String password;
+
+    private final Path keyRingFile;
+    private final String keyId;
+    private final String keyPassword;
 
     DeployProperties(final Path configFile) throws IOException {
         final Properties props = new Properties();
@@ -39,38 +44,38 @@ class DeployProperties {
         password = props.getProperty("password");
         releaseUrl = props.getProperty("releaseUrl");
         snapshotUrl = props.getProperty("snapshotUrl");
+
+        keyRingFile = Paths.get(props.getProperty("signing.secretKeyRingFile"));
+        keyId = props.getProperty("signing.keyId");
+        keyPassword = props.getProperty("signing.password");
     }
 
     String getReleaseUrl() {
         return releaseUrl;
     }
 
-    void setReleaseUrl(final String releaseUrl) {
-        this.releaseUrl = releaseUrl;
-    }
-
     String getSnapshotUrl() {
         return snapshotUrl;
-    }
-
-    void setSnapshotUrl(final String snapshotUrl) {
-        this.snapshotUrl = snapshotUrl;
     }
 
     String getUsername() {
         return username;
     }
 
-    void setUsername(final String username) {
-        this.username = username;
-    }
-
     String getPassword() {
         return password;
     }
 
-    void setPassword(final String password) {
-        this.password = password;
+    Path getKeyRingFile() {
+        return keyRingFile;
+    }
+
+    String getKeyId() {
+        return keyId;
+    }
+
+    String getKeyPassword() {
+        return keyPassword;
     }
 
 }

@@ -123,13 +123,23 @@ public class MavenDeployTask extends AbstractModuleTask {
 
         final Artifact jarArtifact = buildArtifact(jarFile);
 
-        final Path templatePom = getBuildContext().getPath().resolve("loom-pom.xml");
+        final Path templatePom =
+            getRuntimeConfiguration().getProjectBaseDir().resolve("loom-pom.xml");
+
         final Model model = readTemplateModel(templatePom);
         enhanceModel(model, jarArtifact);
 
         final DeployProperties deployProperties = readDeployProperties();
 
-        try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null)) {
+        final Signer signer = new Signer(deployProperties.getKeyRingFile(),
+            deployProperties.getKeyPassword(), deployProperties.getKeyId());
+
+        try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null);
+             final TempFile tmpJarSig = new TempFile(tmpDir, "jar", "asc");
+             final TempFile tmpJarSourceSig = new TempFile(tmpDir, "sourcesJar", "asc");
+             final TempFile tmpJarDocSig = new TempFile(tmpDir, "javadocJar", "asc");
+             final TempFile tmpPomSig = new TempFile(tmpDir, "pom", "asc")) {
+
             writeTmpPom(model, tmpPomFile.getFile());
 
             final DeployRequest request = new DeployRequest();
@@ -146,26 +156,47 @@ public class MavenDeployTask extends AbstractModuleTask {
 
             // TODO sign
 
-            final SubArtifact sourceArtifact = new SubArtifact(jarArtifact, "*-sources", "jar",
-                sourceJarFile.toFile());
+            signer.sign(sourceJarFile, tmpJarSourceSig.getFile());
+            signer.sign(javadocFile, tmpJarDocSig.getFile());
+            //signer.sign(tmpPomFile, tmpJarSig.getFile());
 
-            final SubArtifact javaDocArtifact = new SubArtifact(jarArtifact, "*-javadoc", "jar",
-                javadocFile.toFile());
+            final SubArtifact sourceArtifact = subArtifact(sourceJarFile, jarArtifact, "*-sources");
+
+            final SubArtifact javaDocArtifact = subArtifact(javadocFile, jarArtifact, "*-javadoc");
 
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
                 tmpPomFile.getFile().toFile());
 
+
+
             request
                 .setRepository(remoteRepository)
                 .addArtifact(jarArtifact)
+                .addArtifact(signedArtifact(jarArtifact, signer, tmpJarSig))
                 .addArtifact(sourceArtifact)
+                .addArtifact(signedArtifact(sourceArtifact, signer, tmpJarSourceSig))
                 .addArtifact(javaDocArtifact)
-                .addArtifact(pomArtifact);
+                .addArtifact(signedArtifact(javaDocArtifact, signer, tmpJarDocSig))
+                .addArtifact(pomArtifact)
+                .addArtifact(signedArtifact(pomArtifact, signer, tmpPomSig));
 
             system.deploy(session, request);
         }
 
         return url;
+    }
+
+    private SubArtifact subArtifact(final Path sourceJarFile, final Artifact jarArtifact,
+                                    final String classifier) {
+        return new SubArtifact(jarArtifact, classifier, "jar",
+            sourceJarFile.toFile());
+    }
+
+    private SubArtifact signedArtifact(final Artifact jarArtifact, final Signer signer,
+                                       final TempFile tmpJarSig) {
+        signer.sign(jarArtifact.getFile().toPath(), tmpJarSig.getFile());
+        return new SubArtifact(jarArtifact, jarArtifact.getClassifier(), "*.asc",
+            tmpJarSig.getFile().toFile());
     }
 
     private DeployProperties readDeployProperties() throws IOException {

@@ -43,7 +43,7 @@ A ``module.yml`` configuration has up to five sections.
 
 plugins
     A list of plugins to activate for the module.
-    Some plugins in Loom are active by default: ``eclipse``, ``idea``, ``java`` and ``maven``.
+    Some plugins in Loom are active by default: ``eclipse``, ``idea`` and ``java``.
 
 settings
     A list of global or plugin specific settings. Plugin specific settings starts with

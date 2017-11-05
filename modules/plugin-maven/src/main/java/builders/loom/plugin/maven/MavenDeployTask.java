@@ -38,6 +38,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.sonatype.aether.RepositoryException;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.artifact.Artifact;
+import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
 import org.sonatype.aether.deployment.DeployRequest;
@@ -73,6 +74,7 @@ public class MavenDeployTask extends AbstractModuleTask {
         this.pluginSettings = pluginSettings;
 
         final DefaultServiceLocator locator = new DefaultServiceLocator();
+        locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
         locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
         locator.addService(VersionResolver.class, DefaultVersionResolver.class);
         locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);

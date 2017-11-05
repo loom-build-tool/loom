@@ -37,6 +37,7 @@ import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.util.FileUtil;
+import builders.loom.util.IOUtil;
 import builders.loom.util.ProductChecksumUtil;
 import net.sourceforge.pmd.PMD;
 import net.sourceforge.pmd.PMDConfiguration;
@@ -154,6 +155,8 @@ public class PmdTask extends AbstractModuleTask {
             .map(p -> new FileDataSource(p.toFile()))
             .collect(Collectors.toList());
 
+        LOG.info("PMD will analyze {} files", files.size());
+
         final String inputPaths = sourceTreeProduct.get().getProperty("srcDir");
         configuration.setInputPaths(inputPaths);
 
@@ -172,6 +175,7 @@ public class PmdTask extends AbstractModuleTask {
 
         for (final Renderer renderer : renderers) {
             renderer.end();
+            IOUtil.closeQuietly(renderer.getWriter());
         }
 
         final int ruleViolationCnt = ruleViolations.get();

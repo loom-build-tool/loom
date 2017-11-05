@@ -17,6 +17,7 @@
 package builders.loom.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,6 +50,16 @@ public final class IOUtil {
             total += cnt;
         }
         return total;
+    }
+
+    public static void closeQuietly(final Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (final IOException ignored) {
+                // ignored
+            }
+        }
     }
 
 }

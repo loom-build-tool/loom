@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -96,7 +97,7 @@ public class PmdTask extends AbstractModuleTask {
     private PMDConfiguration getConfiguration() {
         final PMDConfiguration configuration = new PMDConfiguration();
         configuration.setReportShortNames(true);
-        configuration.setRuleSets(pluginSettings.getRuleSets());
+        configuration.setRuleSets(parseRuleSetSetting());
         configuration.setRuleSetFactoryCompatibilityEnabled(false);
         configuration.setSourceEncoding("UTF-8");
         configuration.setThreads(0);
@@ -109,6 +110,26 @@ public class PmdTask extends AbstractModuleTask {
             LOG.debug("Configured suppress marker: {}", configuration.getSuppressMarker());
         }
         return configuration;
+    }
+
+    private String parseRuleSetSetting() {
+        final String ruleSets = pluginSettings.getRuleSets();
+        if (ruleSets == null) {
+            return null;
+        }
+
+        final List<String> ruleSetFiles = new ArrayList<>();
+        for (final String set : ruleSets.split(",")) {
+            final Path p = getBuildContext().getPath().resolve(set);
+            if (Files.exists(p)) {
+                ruleSetFiles.add(p.toAbsolutePath().normalize().toString());
+            } else {
+                // Might be classloader relative...
+                ruleSetFiles.add(set);
+            }
+        }
+
+        return String.join(",", ruleSetFiles);
     }
 
     private LanguageVersion getLanguageVersion(final ModuleBuildConfig buildConfig) {

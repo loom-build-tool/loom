@@ -26,7 +26,9 @@ minimumPriority
 
 ruleSets
     A comma separated list of RuleSets.
-    By default, only ``rulesets/java/basic.xml`` is configured.
+    By default, only ``rulesets/java/basic.xml`` is configured -- which is embedded in PMD.
+    If you specify a RuleSet which is not embedded in PMD, the specified path has to be relative
+    to the module path for which the configuration is made.
     See the `PMD RuleSet index`_ and `PMD RuleSet files`_ for a full reference of all available
     RuleSets.
 

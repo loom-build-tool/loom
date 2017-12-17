@@ -25,12 +25,6 @@ import java.util.List;
 
 import javax.tools.ToolProvider;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 
@@ -44,8 +38,7 @@ import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 
-@SuppressWarnings({"checkstyle:hideutilityclassconstructor",
-    "checkstyle:classdataabstractioncoupling"})
+@SuppressWarnings("checkstyle:hideutilityclassconstructor")
 public final class Loom {
 
     // hold System.err, because it will be changed by StdOut2SLF4J
@@ -79,14 +72,12 @@ public final class Loom {
         try {
             init();
 
-            final Options options = buildOptions();
-            final CommandLine cmd = parseCommandLine(options, args);
+            final LoomCommand cmd = new LoomCommand(args);
 
-            if (validate(cmd, options)) {
+            if (validate(cmd)) {
                 Runtime.getRuntime().addShutdownHook(ctrlCHook);
 
-                cmd.getOptionProperties("D").forEach((key, value) ->
-                    System.setProperty((String) key, (String) value));
+                cmd.getSystemProperties().forEach(System::setProperty);
 
                 try (FileLock ignored = FileLockUtil.lock(lockFile)) {
                     run(projectBaseDir, logFile, cmd);
@@ -144,81 +135,38 @@ public final class Loom {
         }
     }
 
-    private static boolean isPreRelease(final String loomVersion) {
-        // pre-releases are determined by a hyphen (in accordance to semantic versioning)
-        return loomVersion.contains("-");
-    }
-
-    private static Options buildOptions() {
-        return new Options()
-            .addOption("h", "help", false, "Prints this help")
-            .addOption("c", "clean", false, "Clean before execution")
-            .addOption("n", "no-cache", false,
-                "Disable all caches (use on CI servers); also implies clean")
-            .addOption(
-                Option.builder("r")
-                    .longOpt("release")
-                    .numberOfArgs(1)
-                    .optionalArg(false)
-                    .argName("version")
-                    .desc("Defines the version to use for artifact creation")
-                    .build())
-            .addOption(
-                Option.builder("p")
-                    .longOpt("products")
-                    .numberOfArgs(1)
-                    .optionalArg(true)
-                    .argName("format")
-                    .desc("Show available products (formats: text [default], dot)")
-                    .build())
-            .addOption(
-                Option.builder("D")
-                    .hasArgs()
-                    .valueSeparator('=')
-                    .desc("Sets a system property")
-                    .build());
-    }
-
-    private static CommandLine parseCommandLine(final Options options, final String[] args) {
-        try {
-            return new DefaultParser().parse(options, args);
-        } catch (final ParseException e) {
-            throw new IllegalStateException("Error parsing command line: " + e.getMessage());
-        }
-    }
-
-    private static boolean validate(final CommandLine cmd, final Options options) {
-        if (cmd.hasOption("help")) {
-            printHelp(options);
+    private static boolean validate(final LoomCommand cmd) {
+        if (cmd.isHelpFlag()) {
+            cmd.printHelp();
             return false;
         }
 
-        if (!cmd.hasOption("clean") && !cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
+        if (!cmd.isAnyOperationRequested()) {
             AnsiConsole.out().println(Ansi.ansi()
                 .newline()
                 .fgBrightRed()
-                .a("No product requested!").reset().newline());
-            printHelp(options);
+                .a("No operation requested!").reset().newline());
+            cmd.printHelp();
             return false;
         }
 
         return true;
     }
 
-    private static void printHelp(final Options options) {
-        final HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("loom [option...] [product|goal...]", options);
+    private static boolean isPreRelease(final String loomVersion) {
+        // pre-releases are determined by a hyphen (in accordance to semantic versioning)
+        return loomVersion.contains("-");
     }
 
-    private static void run(final Path projectBaseDir, final Path logFile, final CommandLine cmd)
+    private static void run(final Path projectBaseDir, final Path logFile, final LoomCommand cmd)
         throws Exception {
 
-        if (cmd.hasOption("clean") || cmd.hasOption("no-cache")) {
+        if (cmd.isCleanFlag() || cmd.isNoCacheFlag()) {
             AnsiConsole.out().print(Ansi.ansi().a("Cleaning..."));
             clean(projectBaseDir);
             AnsiConsole.out().println(Ansi.ansi().a(" ").fgBrightGreen().a("done").reset());
 
-            if (!cmd.hasOption("products") && cmd.getArgList().isEmpty()) {
+            if (cmd.getPrintProducts() == null && cmd.getProducts().isEmpty()) {
                 return;
             }
         }
@@ -229,11 +177,11 @@ public final class Loom {
         loomProcessor.logSystemEnvironment();
         loomProcessor.logMemoryUsage();
 
-        final boolean noCacheMode = cmd.hasOption("no-cache");
+        final boolean noCacheMode = cmd.isNoCacheFlag();
 
         final RuntimeConfigurationImpl runtimeConfiguration =
             new RuntimeConfigurationImpl(projectBaseDir, !noCacheMode,
-                cmd.getOptionValue("release"),
+                cmd.getRelease(),
                 loomProcessor.isModuleBuild(projectBaseDir));
 
         printRuntimeConfiguration(runtimeConfiguration);
@@ -247,18 +195,17 @@ public final class Loom {
 
         loomProcessor.init(runtimeConfiguration, progressMonitor);
 
-        if (cmd.hasOption("products")) {
-            final String format = cmd.getOptionValue("products");
-            printProducts(runtimeConfiguration, loomProcessor, format);
+        if (cmd.getPrintProducts() != null) {
+            printProducts(runtimeConfiguration, loomProcessor, cmd.getPrintProducts());
         }
 
-        if (!cmd.getArgList().isEmpty()) {
+        if (!cmd.getProducts().isEmpty()) {
             buildExecuted = true;
 
             progressMonitor.start();
 
             final List<ConfiguredTask> configuredTasks =
-                loomProcessor.resolveTasks(cmd.getArgList());
+                loomProcessor.resolveTasks(cmd.getProducts());
 
             if (!configuredTasks.isEmpty()) {
                 final ExecutionReport executionReport;
@@ -304,12 +251,15 @@ public final class Loom {
     private static void printProducts(final RuntimeConfigurationImpl runtimeConfiguration,
                                       final LoomProcessor loomProcessor, final String format) {
 
-        if (format == null || "text".equals(format)) {
-            TextOutput.generate(loomProcessor.getModuleRunner());
-        } else if ("dot".equals(format)) {
-            generateDotProductOverview(runtimeConfiguration, loomProcessor);
-        } else {
-            throw new IllegalStateException("Unknown format: " + format);
+        switch (format) {
+            case "text":
+                TextOutput.generate(loomProcessor.getModuleRunner());
+                break;
+            case "dot":
+                generateDotProductOverview(runtimeConfiguration, loomProcessor);
+                break;
+            default:
+                throw new IllegalStateException("Unknown format: " + format);
         }
     }
 

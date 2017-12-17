@@ -122,6 +122,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private String providedProduct;
         private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
+        private Set<String> optionallyUsedProducts = Collections.emptySet();
         private Set<String> importedProducts = Collections.emptySet();
         private Set<String> importedAllProducts = Collections.emptySet();
         private List<Supplier<String>> skipHints = Collections.emptyList();
@@ -155,6 +156,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return uses(Arrays.asList(Objects.requireNonNull(products)));
         }
 
+        public TaskBuilder usesOptionally(final Collection<String> products) {
+            optionallyUsedProducts = new HashSet<>(Objects.requireNonNull(products));
+            return this;
+        }
+
+        public TaskBuilder usesOptionally(final String... products) {
+            return usesOptionally(Arrays.asList(Objects.requireNonNull(products)));
+        }
+
         public TaskBuilder importFromModules(final Collection<String> products) {
             importedProducts = new HashSet<>(Objects.requireNonNull(products));
             return this;
@@ -185,7 +195,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, importedProducts,
+                intermediateProduct, usedProducts, optionallyUsedProducts, importedProducts,
                 importedAllProducts, skipHints, description);
         }
 

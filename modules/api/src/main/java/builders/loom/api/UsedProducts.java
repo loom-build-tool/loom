@@ -66,6 +66,17 @@ public class UsedProducts {
         return value.map(clazz::cast);
     }
 
+    public void waitForOptionalProduct(final String productId) throws InterruptedException {
+        final Optional<ProductPromise> optProductPromise =
+            lookupProductPromise(selfModuleName, productId);
+
+        if (optProductPromise.isPresent()) {
+            final ProductPromise productPromise = optProductPromise.get();
+            actuallyWaitedForProducts.add(productPromise);
+            productPromise.getAndWaitForProduct();
+        }
+    }
+
     public void waitForProduct(final String productId) throws InterruptedException {
         getAndWaitProduct(selfModuleName, productId);
     }
@@ -73,20 +84,22 @@ public class UsedProducts {
     public Optional<Product> getAndWaitProduct(final String moduleName, final String productId)
         throws InterruptedException {
 
-        final ProductPromise productPromise = lookupProduct(moduleName, productId);
-        actuallyWaitedForProducts.add(productPromise);
-        return productPromise.getAndWaitForProduct();
-    }
-
-    private ProductPromise lookupProduct(final String moduleName, final String productId) {
-        return productPromises.stream()
-            .filter(pp -> pp.getModuleName().equals(moduleName)
-                && pp.getProductId().equals(productId))
-            .findFirst().orElseThrow(()
+        final ProductPromise productPromise = lookupProductPromise(moduleName, productId)
+            .orElseThrow(()
                 -> new IllegalStateException(
                 String.format("No access to product <%s> of module <%s>",
                     productId, moduleName)));
 
+        actuallyWaitedForProducts.add(productPromise);
+        return productPromise.getAndWaitForProduct();
+    }
+
+    private Optional<ProductPromise> lookupProductPromise(final String moduleName,
+                                                          final String productId) {
+        return productPromises.stream()
+            .filter(pp -> pp.getModuleName().equals(moduleName)
+                && pp.getProductId().equals(productId))
+            .findFirst();
     }
 
     public Set<ProductPromise> getAllProducts() {

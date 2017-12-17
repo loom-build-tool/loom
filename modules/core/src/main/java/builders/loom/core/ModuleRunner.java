@@ -306,7 +306,7 @@ public class ModuleRunner {
         final BuildContext buildContext, final String productId) {
         Objects.requireNonNull(buildContext);
         Objects.requireNonNull(productId);
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     // find tasks providing requested products (within same module)
@@ -408,7 +408,7 @@ public class ModuleRunner {
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     public Set<String> getPluginNames() {

@@ -16,7 +16,6 @@
 
 package builders.loom.cli;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ public class SLF4JPrintStream extends OutputStream {
     }
 
     @Override
-    public void write(final int b) throws IOException {
+    public void write(final int b) {
         switch (b) {
             case '\r':
                 // ignore
@@ -49,7 +48,7 @@ public class SLF4JPrintStream extends OutputStream {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() {
         if (sb.length() > 0) {
             log();
             sb.delete(0, sb.length());
@@ -66,7 +65,7 @@ public class SLF4JPrintStream extends OutputStream {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         flush();
     }
 

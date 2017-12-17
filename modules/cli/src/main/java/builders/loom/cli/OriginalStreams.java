@@ -14,26 +14,33 @@
  * limitations under the License.
  */
 
-package builders.loom.core;
+package builders.loom.cli;
 
-import builders.loom.api.DownloadProgressEmitter;
+import java.io.PrintStream;
 
-public class DownloadProgressEmitterBridge implements DownloadProgressEmitter {
+@SuppressWarnings("checkstyle:regexpmultiline")
+final class OriginalStreams {
 
-    private final ProgressMonitor progressMonitor;
+    private static final PrintStream OUT = System.out;
+    private static final PrintStream ERR = System.err;
 
-    public DownloadProgressEmitterBridge(final ProgressMonitor progressMonitor) {
-        this.progressMonitor = progressMonitor;
+    private OriginalStreams() {
     }
 
-    @Override
-    public void progressFiles(final String resourceName) {
-        progressMonitor.progressDownloadedFiles(resourceName);
+    static void init() {
     }
 
-    @Override
-    public void progressBytes(final long bytes) {
-        progressMonitor.progressDownloadedBytes(bytes);
+    static PrintStream getOut() {
+        return OUT;
+    }
+
+    static PrintStream getErr() {
+        return ERR;
+    }
+
+    static void reset() {
+        System.setOut(OUT);
+        System.setErr(ERR);
     }
 
 }

@@ -16,7 +16,6 @@
 
 package builders.loom.cli;
 
-import java.io.PrintStream;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +26,7 @@ import javax.tools.ToolProvider;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.internal.CLibrary;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.core.BuildException;
@@ -38,17 +38,18 @@ import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 
-@SuppressWarnings("checkstyle:hideutilityclassconstructor")
+@SuppressWarnings({"checkstyle:hideutilityclassconstructor",
+    "checkstyle:classdataabstractioncoupling"})
 public final class Loom {
-
-    // hold System.err, because it will be changed by StdOut2SLF4J
-    private static final PrintStream SYSTEM_ERR = System.err;
 
     private static boolean buildExecuted;
 
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})
     public static void main(final String[] args) {
+        // Save original streams for later reset
+        OriginalStreams.init();
+
         try {
             mainWithoutExit(args);
             System.exit(0);
@@ -86,7 +87,7 @@ public final class Loom {
         } catch (final Throwable e) {
             if (!(e instanceof BuildException)) {
                 // BuildExceptions are already logged
-                e.printStackTrace(SYSTEM_ERR);
+                e.printStackTrace(OriginalStreams.getErr());
             }
             if (buildExecuted) {
                 printFailed(logFile);
@@ -191,7 +192,9 @@ public final class Loom {
                 .fgBrightYellow().a("Running in no-cache mode").reset());
         }
 
-        final ProgressMonitor progressMonitor = new ConsoleProgressMonitor();
+        final ProgressMonitor progressMonitor = CLibrary.isatty(CLibrary.STDOUT_FILENO) == 0
+            ? new LogProgressMonitor(OriginalStreams.getOut())
+            : new ConsoleProgressMonitor();
 
         loomProcessor.init(runtimeConfiguration, progressMonitor);
 

@@ -139,7 +139,8 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         final List<String> artifacts = List.of(
             "org.junit.platform:junit-platform-launcher:1.0.0");
 
-        return dependencyResolverService.resolveMainArtifacts(artifacts, DependencyScope.COMPILE);
+        return dependencyResolverService.resolveMainArtifacts(artifacts, null,
+            DependencyScope.COMPILE);
     }
 
     private TestResult runTests(final Path classesDir, final List<URL> junitClassPath,

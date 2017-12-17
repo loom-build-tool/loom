@@ -34,11 +34,11 @@ public class NoCacheMavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
-                                          final boolean withSources) {
+    public List<ResolvedArtifact> resolve(final List<String> deps, final List<String> excludes,
+                                          final DependencyScope scope, final boolean withSources) {
         return MavenResolverSingleton
             .getInstance(repositoryUrl, downloadProgressEmitter)
-            .resolve(deps, scope, withSources);
+            .resolve(deps, excludes, scope, withSources);
     }
 
 }

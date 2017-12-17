@@ -32,6 +32,7 @@ public class BuildConfigDTO {
     private Set<String> moduleCompileDependencies;
     private Set<String> compileDependencies;
     private Set<String> testDependencies;
+    private Set<String> globalExcludes;
 
     public Set<String> getPlugins() {
         return plugins;
@@ -73,6 +74,14 @@ public class BuildConfigDTO {
         this.testDependencies = testDependencies;
     }
 
+    public Set<String> getGlobalExcludes() {
+        return globalExcludes;
+    }
+
+    public void setGlobalExcludes(final Set<String> globalExcludes) {
+        this.globalExcludes = globalExcludes;
+    }
+
     public BuildConfigImpl build() {
         final Map<String, String> cfg = settings != null ? settings : new HashMap<>();
 
@@ -86,12 +95,17 @@ public class BuildConfigDTO {
         final BuildSettings buildSettings = new BuildSettingsImpl(moduleName, javaPlatformVersion);
 
         return new BuildConfigImpl(
-            plugins != null ? plugins : Collections.emptySet(),
+            nullToEmpty(plugins),
             buildSettings,
             cfg,
-            moduleCompileDependencies != null ? moduleCompileDependencies : Collections.emptySet(),
-            compileDependencies != null ? compileDependencies : Collections.emptySet(),
-            testDependencies != null ? testDependencies : Collections.emptySet());
+            nullToEmpty(moduleCompileDependencies),
+            nullToEmpty(compileDependencies),
+            nullToEmpty(testDependencies),
+            nullToEmpty(globalExcludes));
+    }
+
+    private static Set<String> nullToEmpty(final Set<String> set) {
+        return set != null ? set : Collections.emptySet();
     }
 
 }

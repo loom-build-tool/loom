@@ -74,13 +74,13 @@ final class ConsoleProgressMonitor implements ProgressMonitor {
     }
 
     @Override
-    public void progress() {
+    public void progress(final String jobName) {
         COMPLETED_TASKS.incrementAndGet();
         UPDATED_REQUIRED.set(true);
     }
 
     @Override
-    public void progressDownloadedFiles() {
+    public void progressDownloadedFiles(final String resourceName) {
         DOWNLOADED_FILES.incrementAndGet();
         UPDATED_REQUIRED.set(true);
     }

@@ -29,7 +29,7 @@ public interface Product {
     Map<String, List<String>> getProperties();
 
     /**
-     * Spring Boot application: build/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
+     * Spring Boot application: build/products/springboot/springboot-1.0.0-SNAPSHOT-fatjar.jar.
      */
     Optional<OutputInfo> getOutputInfo();
 

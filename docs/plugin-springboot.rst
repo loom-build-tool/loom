@@ -22,7 +22,7 @@ where a single jar containing all other dependencies is created and launched.
 ::
 
     ./loom build springBootFatJarApplication
-    java -jar build/unnamed/springboot-fatjar/unnamed-fatjar.jar
+    java -jar build/products/unnamed/springboot-fatjar/unnamed-fatjar.jar
 
 
 Alternative 2 - Build application for Docker container
@@ -42,10 +42,10 @@ First, create a file called ``Dockerfile``:
 
     WORKDIR /app
 
-    COPY build/unnamed/springboot/META-INF /app/META-INF
-    COPY build/unnamed/springboot/org /app/org
-    COPY build/unnamed/springboot/BOOT-INF/lib /app/BOOT-INF/lib
-    COPY build/unnamed/springboot/BOOT-INF/classes /app/BOOT-INF/classes
+    COPY build/products/unnamed/springboot/META-INF /app/META-INF
+    COPY build/products/unnamed/springboot/org /app/org
+    COPY build/products/unnamed/springboot/BOOT-INF/lib /app/BOOT-INF/lib
+    COPY build/products/unnamed/springboot/BOOT-INF/classes /app/BOOT-INF/classes
 
     CMD ["java", "-cp", "/app", "-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.JarLauncher"]
 

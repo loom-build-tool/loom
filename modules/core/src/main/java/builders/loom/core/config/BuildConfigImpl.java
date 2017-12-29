@@ -38,10 +38,11 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     private final Set<String> moduleCompileDependencies;
     private final Set<String> compileDependencies;
     private final Set<String> testDependencies;
+    private final Set<String> globalExcludes;
 
     public BuildConfigImpl() {
         this(Set.of(), new BuildSettingsImpl(null, DEFAULT_JAVA_PLATFORM_VERSION),
-            Map.of(), Set.of(), Set.of(), Set.of());
+            Map.of(), Set.of(), Set.of(), Set.of(), Set.of());
     }
 
     public BuildConfigImpl(final Set<String> plugins,
@@ -49,7 +50,8 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
                            final Map<String, String> settings,
                            final Set<String> moduleCompileDependencies,
                            final Set<String> compileDependencies,
-                           final Set<String> testDependencies) {
+                           final Set<String> testDependencies,
+                           final Set<String> globalExcludes) {
         this.plugins = Collections.unmodifiableSet(Objects.requireNonNull(plugins));
         this.buildSettings = Objects.requireNonNull(buildSettings);
         this.settings = Collections.unmodifiableMap(Objects.requireNonNull(settings));
@@ -59,6 +61,8 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
             Collections.unmodifiableSet(Objects.requireNonNull(compileDependencies));
         this.testDependencies =
             Collections.unmodifiableSet(Objects.requireNonNull(testDependencies));
+        this.globalExcludes =
+            Collections.unmodifiableSet(Objects.requireNonNull(globalExcludes));
     }
 
     @Override
@@ -92,6 +96,11 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
     }
 
     @Override
+    public Set<String> getGlobalExcludes() {
+        return globalExcludes;
+    }
+
+    @Override
     public String toString() {
         return "BuildConfigImpl{"
             + "plugins=" + plugins
@@ -100,6 +109,7 @@ public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
             + ", moduleCompileDependencies=" + moduleCompileDependencies
             + ", compileDependencies=" + compileDependencies
             + ", testDependencies=" + testDependencies
+            + ", globalExcludes=" + globalExcludes
             + '}';
     }
 

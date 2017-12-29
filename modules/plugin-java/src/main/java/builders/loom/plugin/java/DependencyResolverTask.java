@@ -17,6 +17,7 @@
 package builders.loom.plugin.java;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,7 +44,9 @@ public class DependencyResolverTask extends ArtifactResolverTask {
             return TaskResult.empty();
         }
 
-        final List<Path> artifacts = resolve(dependencies, false).stream()
+        final List<String> globalExcludes = new ArrayList<>(getModuleConfig().getGlobalExcludes());
+
+        final List<Path> artifacts = resolve(dependencies, globalExcludes, false).stream()
             .map(Artifact::getMainArtifact)
             .collect(Collectors.toList());
 

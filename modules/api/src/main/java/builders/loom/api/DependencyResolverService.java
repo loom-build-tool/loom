@@ -25,9 +25,10 @@ public interface DependencyResolverService extends Service {
 
     void setDownloadProgressEmitter(DownloadProgressEmitter downloadProgressEmitter);
 
-    List<Path> resolveMainArtifacts(List<String> deps, DependencyScope scope);
+    List<Path> resolveMainArtifacts(List<String> deps, List<String> excludes,
+                                    DependencyScope scope);
 
-    List<ResolvedArtifact> resolveArtifacts(List<String> deps, DependencyScope scope,
-                                            boolean withSources);
+    List<ResolvedArtifact> resolveArtifacts(List<String> deps, List<String> excludes,
+                                            DependencyScope scope, boolean withSources);
 
 }

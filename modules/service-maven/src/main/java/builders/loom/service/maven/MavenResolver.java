@@ -53,6 +53,7 @@ import org.sonatype.aether.resolution.DependencyResult;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.SubArtifact;
+import org.sonatype.aether.util.filter.ExclusionsDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import builders.loom.api.DependencyScope;
@@ -97,7 +98,8 @@ public class MavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
+    public List<ResolvedArtifact> resolve(final List<String> deps, final List<String> excludes,
+                                          final DependencyScope scope,
                                           final boolean withSources) {
 
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
@@ -121,6 +123,10 @@ public class MavenResolver implements DependencyResolver {
 
             final DependencyRequest dependencyRequest = new DependencyRequest();
             dependencyRequest.setRoot(node);
+
+            if (excludes != null) {
+                dependencyRequest.setFilter(new ExclusionsDependencyFilter(excludes));
+            }
 
             final DependencyResult dependencyResult =
                 system.resolveDependencies(session, dependencyRequest);

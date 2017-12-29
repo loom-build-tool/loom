@@ -28,4 +28,6 @@ public interface ModuleBuildConfig extends BuildConfig, BuildConfigWithSettings 
 
     Set<String> getTestDependencies();
 
+    Set<String> getGlobalExcludes();
+
 }

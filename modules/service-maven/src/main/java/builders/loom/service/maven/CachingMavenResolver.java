@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.service.ResolvedArtifact;
-import builders.loom.util.Hashing;
+import builders.loom.util.Hasher;
 import builders.loom.util.serialize.Record;
 import builders.loom.util.serialize.SimpleSerializer;
 
@@ -52,14 +52,20 @@ public class CachingMavenResolver implements DependencyResolver {
     }
 
     @Override
-    public List<ResolvedArtifact> resolve(final List<String> deps, final DependencyScope scope,
-                                          final boolean withSources) {
+    public List<ResolvedArtifact> resolve(final List<String> deps, final List<String> excludes,
+                                          final DependencyScope scope, final boolean withSources) {
+
+        final Hasher hasher = new Hasher().putStrings(deps);
+
+        if (excludes != null) {
+            hasher.putStrings(excludes);
+        }
 
         final Path cacheFile = cacheDir.resolve(
             String.format("dependencies-%s-%s-%s",
                 scope.name().toLowerCase(),
                 withSources ? "with-sources" : "wo-sources",
-                Hashing.hash(deps)));
+                hasher.hashHex()));
 
         // note: caches do not need extra locking, because they get isolated by the scope used
         final Optional<List<ResolvedArtifact>> cachedArtifacts = readCache(cacheFile);
@@ -71,7 +77,7 @@ public class CachingMavenResolver implements DependencyResolver {
 
         final List<ResolvedArtifact> artifacts = MavenResolverSingleton
             .getInstance(repositoryUrl, downloadProgressEmitter)
-            .resolve(deps, scope, withSources);
+            .resolve(deps, excludes, scope, withSources);
 
         LOG.debug("Resolved {} dependencies {} to {}", scope, deps, artifacts);
 

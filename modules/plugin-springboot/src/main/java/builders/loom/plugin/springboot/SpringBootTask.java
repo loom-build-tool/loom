@@ -116,6 +116,7 @@ public class SpringBootTask extends AbstractModuleTask {
 
         final List<Path> resolvedArtifacts = dependencyResolverService.resolveMainArtifacts(
             Collections.singletonList(springBootLoaderArtifact),
+            null,
             DependencyScope.COMPILE);
 
         return Iterables.getOnlyElement(resolvedArtifacts);

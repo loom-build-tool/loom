@@ -58,17 +58,19 @@ public class MavenService implements DependencyResolverService {
     }
 
     @Override
-    public List<Path> resolveMainArtifacts(final List<String> deps, final DependencyScope scope) {
-        return resolveArtifacts(deps, scope, false).stream()
+    public List<Path> resolveMainArtifacts(final List<String> deps, final List<String> excludes,
+                                           final DependencyScope scope) {
+        return resolveArtifacts(deps, excludes, scope, false).stream()
             .map(ResolvedArtifact::getMainArtifact)
             .collect(Collectors.toList());
     }
 
     @Override
     public List<ResolvedArtifact> resolveArtifacts(final List<String> deps,
+                                                   final List<String> excludes,
                                                    final DependencyScope scope,
                                                    final boolean withSources) {
-        return dependencyResolver.resolve(deps, scope, withSources);
+        return dependencyResolver.resolve(deps, excludes, scope, withSources);
     }
 
 }

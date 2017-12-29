@@ -49,7 +49,9 @@ public class ArtifactResolverTask extends AbstractModuleTask {
             return TaskResult.empty();
         }
 
-        final List<Artifact> artifacts = resolve(dependencies, true);
+        final List<String> globalExcludes = new ArrayList<>(getModuleConfig().getGlobalExcludes());
+
+        final List<Artifact> artifacts = resolve(dependencies, globalExcludes, true);
         return TaskResult.done(newProduct(artifacts));
     }
 
@@ -70,9 +72,9 @@ public class ArtifactResolverTask extends AbstractModuleTask {
     }
 
     protected List<Artifact> resolve(final List<String> dependencies,
-                                     final boolean withSources) {
+                                     final List<String> excludes, final boolean withSources) {
         return dependencyResolver
-            .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
+            .resolveArtifacts(dependencies, excludes, dependencyScope, withSources).stream()
             .map(a -> new Artifact(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());
     }

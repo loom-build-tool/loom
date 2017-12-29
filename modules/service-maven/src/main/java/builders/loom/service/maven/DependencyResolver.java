@@ -23,6 +23,7 @@ import builders.loom.api.service.ResolvedArtifact;
 
 public interface DependencyResolver {
 
-    List<ResolvedArtifact> resolve(List<String> deps, DependencyScope scope, boolean withSources);
+    List<ResolvedArtifact> resolve(List<String> deps, List<String> excludes,
+                                   DependencyScope scope, boolean withSources);
 
 }

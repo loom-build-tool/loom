@@ -40,6 +40,7 @@ import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
@@ -59,6 +60,7 @@ public class Job implements Callable<TaskStatus> {
     private final BuildContext buildContext;
     private final RuntimeConfiguration runtimeConfiguration;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
+    private final ServiceRegistry serviceRegistry;
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies;
@@ -71,6 +73,7 @@ public class Job implements Callable<TaskStatus> {
     Job(final String name,
         final BuildContext buildContext,
         final RuntimeConfiguration runtimeConfiguration,
+        final ServiceRegistry serviceRegistry,
         final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final Map<Module, Set<Module>> transitiveModuleCompileDependencies,
@@ -80,6 +83,7 @@ public class Job implements Callable<TaskStatus> {
         this.name = Objects.requireNonNull(name, "name required");
         this.buildContext = buildContext;
         this.runtimeConfiguration = runtimeConfiguration;
+        this.serviceRegistry = serviceRegistry;
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
@@ -161,6 +165,7 @@ public class Job implements Callable<TaskStatus> {
     private void injectTaskProperties(final Task task) {
         task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
+        task.setServiceRegistry(serviceRegistry);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             pdaTask.setUsedProducts(usedProducts);

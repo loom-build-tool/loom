@@ -32,15 +32,12 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.BuildConfig;
 import builders.loom.api.BuildConfigWithSettings;
-import builders.loom.api.DownloadProgressEmitter;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
 import builders.loom.api.ServiceRegistry;
-import builders.loom.core.DownloadProgressEmitterBridge;
 import builders.loom.core.LoomVersion;
-import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.misc.BeanUtil;
 import builders.loom.core.misc.ExtensionLoader;
@@ -53,14 +50,11 @@ public class PluginLoader {
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final Map<String, Class<?>> pluginClasses = new HashMap<>();
     private final RuntimeConfigurationImpl runtimeConfiguration;
-    private final DownloadProgressEmitter downloadProgressEmitter;
     private final ServiceRegistry serviceRegistry;
 
     public PluginLoader(final RuntimeConfigurationImpl runtimeConfiguration,
-                        final ProgressMonitor progressMonitor,
                         final ServiceRegistry serviceRegistry) {
         this.runtimeConfiguration = runtimeConfiguration;
-        downloadProgressEmitter = new DownloadProgressEmitterBridge(progressMonitor);
         this.serviceRegistry = serviceRegistry;
     }
 
@@ -97,7 +91,6 @@ public class PluginLoader {
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(LoomVersion.getVersion(), pluginName)));
-        plugin.setDownloadProgressEmitter(downloadProgressEmitter);
 
         final Set<String> acceptedSettings = injectPluginSettings(pluginName, plugin, config);
 

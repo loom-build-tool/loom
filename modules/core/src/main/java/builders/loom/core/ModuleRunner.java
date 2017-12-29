@@ -39,6 +39,7 @@ import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductPromise.CompletedProductReport;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.core.misc.DirectedGraph;
 import builders.loom.core.plugin.ConfiguredTask;
@@ -73,6 +74,7 @@ public class ModuleRunner {
     );
 
     private final RuntimeConfiguration runtimeConfiguration;
+    private final ServiceRegistry serviceRegistry;
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
     private final ProgressMonitor progressMonitor;
@@ -82,11 +84,13 @@ public class ModuleRunner {
     private final TestProgressEmitter testProgressEmitter;
 
     public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
+                        final ServiceRegistry serviceRegistry,
                         final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry,
                         final ProgressMonitor progressMonitor,
                         final TestProgressEmitter emitter) {
         this.runtimeConfiguration = runtimeConfiguration;
+        this.serviceRegistry = serviceRegistry;
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
         this.progressMonitor = progressMonitor;
@@ -403,7 +407,7 @@ public class ModuleRunner {
 
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
-        return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
+        return new Job(jobName, buildContext, runtimeConfiguration, serviceRegistry, configuredTask,
             productRepository, transitiveModuleCompileDependencies, moduleProductRepositories,
             testProgressEmitter);
     }

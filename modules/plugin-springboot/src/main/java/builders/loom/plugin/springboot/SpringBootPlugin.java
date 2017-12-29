@@ -19,7 +19,6 @@ package builders.loom.plugin.springboot;
 import java.util.List;
 
 import builders.loom.api.AbstractPlugin;
-import builders.loom.api.DependencyResolverService;
 import builders.loom.util.SkipChecksumUtil;
 
 public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
@@ -36,11 +35,8 @@ public class SpringBootPlugin extends AbstractPlugin<SpringBootPluginSettings> {
             throw new IllegalStateException("Missing required setting: springboot.version");
         }
 
-        final DependencyResolverService dependencyResolverService =
-            getServiceRegistry().getDependencyResolverService();
-
         task("springBootApplication")
-            .impl(() -> new SpringBootTask(pluginSettings, dependencyResolverService))
+            .impl(() -> new SpringBootTask(pluginSettings))
             .provides("springBootApplication")
             .uses("processedResources", "compilation", "compileDependencies")
             .importFromModules("jar")

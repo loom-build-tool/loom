@@ -47,9 +47,6 @@ public interface Plugin {
     default void setRepositoryPath(final Path path) {
     }
 
-    default void setDownloadProgressEmitter(final DownloadProgressEmitter emitter) {
-    }
-
     default void configure() {
     }
 

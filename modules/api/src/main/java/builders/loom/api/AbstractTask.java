@@ -33,6 +33,7 @@ public abstract class AbstractTask implements Task,
     private RuntimeConfiguration runtimeConfiguration;
     private BuildContext buildContext;
     private UsedProducts usedProducts;
+    private ServiceRegistry serviceRegistry;
 
     public RuntimeConfiguration getRuntimeConfiguration() {
         return runtimeConfiguration;
@@ -50,6 +51,15 @@ public abstract class AbstractTask implements Task,
     @Override
     public void setBuildContext(final BuildContext buildContext) {
         this.buildContext = buildContext;
+    }
+
+    public ServiceRegistry getServiceRegistry() {
+        return serviceRegistry;
+    }
+
+    @Override
+    public void setServiceRegistry(final ServiceRegistry serviceRegistry) {
+        this.serviceRegistry = serviceRegistry;
     }
 
     @Override

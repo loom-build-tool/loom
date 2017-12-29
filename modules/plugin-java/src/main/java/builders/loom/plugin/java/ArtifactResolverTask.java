@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
@@ -32,13 +31,9 @@ import builders.loom.util.ProductChecksumUtil;
 public class ArtifactResolverTask extends AbstractModuleTask {
 
     private final DependencyScope dependencyScope;
-    private final DependencyResolverService dependencyResolver;
 
-    public ArtifactResolverTask(final DependencyScope dependencyScope,
-                                final DependencyResolverService dependencyResolver) {
-
+    public ArtifactResolverTask(final DependencyScope dependencyScope) {
         this.dependencyScope = dependencyScope;
-        this.dependencyResolver = dependencyResolver;
     }
 
     @Override
@@ -71,7 +66,7 @@ public class ArtifactResolverTask extends AbstractModuleTask {
 
     protected List<Artifact> resolve(final List<String> dependencies,
                                      final boolean withSources) {
-        return dependencyResolver
+        return getServiceRegistry().getDependencyResolverService()
             .resolveArtifacts(dependencies, dependencyScope, withSources).stream()
             .map(a -> new Artifact(a.getMainArtifact(), a.getSourceArtifact()))
             .collect(Collectors.toList());

@@ -27,7 +27,7 @@ public class JUnitPlugin extends AbstractPlugin<PluginSettings> {
     @Override
     public void configure() {
         task("junit")
-            .impl(() -> new JUnitTestTask(getServiceRegistry().getDependencyResolverService()))
+            .impl(() -> new JUnitTestTask())
             .provides("junitReport")
             .uses("testDependencies", "processedResources", "compilation",
                 "processedTestResources", "testCompilation")

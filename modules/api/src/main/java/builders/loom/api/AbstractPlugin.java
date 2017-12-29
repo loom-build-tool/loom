@@ -37,7 +37,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private ServiceRegistry serviceRegistry;
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
-    private DownloadProgressEmitter downloadProgressEmitter;
 
     public AbstractPlugin() {
         this.pluginSettings = null;
@@ -96,15 +95,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
     public Path getRepositoryPath() {
         return repositoryPath;
-    }
-
-    @Override
-    public void setDownloadProgressEmitter(final DownloadProgressEmitter emitter) {
-        this.downloadProgressEmitter = emitter;
-    }
-
-    public DownloadProgressEmitter getDownloadProgressEmitter() {
-        return downloadProgressEmitter;
     }
 
     protected TaskBuilder task(final String taskName) {

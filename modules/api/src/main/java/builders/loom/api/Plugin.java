@@ -38,9 +38,6 @@ public interface Plugin {
         return null;
     }
 
-    default void setServiceRegistry(final ServiceRegistry serviceRegistry) {
-    }
-
     default void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
     }
 

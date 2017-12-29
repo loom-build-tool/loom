@@ -73,8 +73,8 @@ public class LoomProcessor {
         LOG.debug("Initialized services in {}", sw);
         sw.reset();
 
-        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration,
-                serviceRegistry);
+        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration
+        );
         moduleRunner = new ModuleRunner(
             runtimeConfiguration, serviceRegistry, pluginLoader, moduleRegistry,
             progressMonitor, new TestProgressEmitterBridge(progressMonitor));

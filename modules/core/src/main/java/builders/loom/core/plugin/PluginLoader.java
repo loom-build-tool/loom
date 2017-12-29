@@ -36,7 +36,6 @@ import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
-import builders.loom.api.ServiceRegistry;
 import builders.loom.core.LoomVersion;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.misc.BeanUtil;
@@ -50,12 +49,9 @@ public class PluginLoader {
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final Map<String, Class<?>> pluginClasses = new HashMap<>();
     private final RuntimeConfigurationImpl runtimeConfiguration;
-    private final ServiceRegistry serviceRegistry;
 
-    public PluginLoader(final RuntimeConfigurationImpl runtimeConfiguration,
-                        final ServiceRegistry serviceRegistry) {
+    public PluginLoader(final RuntimeConfigurationImpl runtimeConfiguration) {
         this.runtimeConfiguration = runtimeConfiguration;
-        this.serviceRegistry = serviceRegistry;
     }
 
     public void initPlugins(final Map<String, String> availablePlugins,
@@ -87,7 +83,6 @@ public class PluginLoader {
         if (config instanceof ModuleBuildConfig) {
             plugin.setModuleBuildConfig((ModuleBuildConfig) config);
         }
-        plugin.setServiceRegistry(serviceRegistry);
         plugin.setRuntimeConfiguration(runtimeConfiguration);
         plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(LoomVersion.getVersion(), pluginName)));

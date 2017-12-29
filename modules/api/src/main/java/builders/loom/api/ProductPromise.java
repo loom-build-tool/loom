@@ -38,7 +38,7 @@ public final class ProductPromise {
     private final CompletableFuture<Optional<Product>> promise;
 
     private long startTime;
-    private AtomicLong completedAt = new AtomicLong();
+    private final AtomicLong completedAt = new AtomicLong();
     private TaskResult taskResult;
 
     public ProductPromise(final String moduleName, final String productId) {

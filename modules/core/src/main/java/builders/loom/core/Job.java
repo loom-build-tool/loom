@@ -114,7 +114,7 @@ public class Job implements Callable<TaskStatus> {
 
     private ProductPromise prepareProductPromise() {
         final ProductPromise productPromise = productRepository
-            .lookup(configuredTask.getProvidedProduct());
+            .require(configuredTask.getProvidedProduct());
 
         productPromise.startTimer();
 
@@ -124,9 +124,15 @@ public class Job implements Callable<TaskStatus> {
     private UsedProducts buildProductView() {
         final Set<ProductPromise> productPromises = new HashSet<>();
 
+        configuredTask.getOptionallyUsedProducts().stream()
+            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .forEach(productPromises::add);
+
         // inner module dependencies
         configuredTask.getUsedProducts().stream()
-            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .map(moduleProductRepositories.get(buildContext)::require)
             .forEach(productPromises::add);
 
         // explicit import from other modules
@@ -183,7 +189,7 @@ public class Job implements Callable<TaskStatus> {
             .map(Map.Entry::getValue)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Module <" + moduleName + "> not found"))
-            .lookup(productId);
+            .require(productId);
     }
 
     Set<ProductPromise> getActuallyUsedProducts() {

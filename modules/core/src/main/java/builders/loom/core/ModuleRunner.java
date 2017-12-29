@@ -150,7 +150,7 @@ public class ModuleRunner {
             .map(ConfiguredTask::toString)
             .collect(Collectors.joining(", ")));
 
-        registerProducts();
+        registerProducts(resolvedTasks);
 
         progressMonitor.setTasks(resolvedTasks.size());
 
@@ -170,7 +170,7 @@ public class ModuleRunner {
 
                 configuredTaskJobMap.get(configuredTask)
                     .getActuallyUsedProducts().stream()
-                    .map(pp -> pp.buildReport())
+                    .map(ProductPromise::buildReport)
                     .collect(Collectors.toSet())
                 ))
             .collect(Collectors.toList());
@@ -306,7 +306,7 @@ public class ModuleRunner {
         final BuildContext buildContext, final String productId) {
         Objects.requireNonNull(buildContext);
         Objects.requireNonNull(productId);
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     // find tasks providing requested products (within same module)
@@ -389,11 +389,12 @@ public class ModuleRunner {
         }
     }
 
-    private void registerProducts() {
-        moduleProductRepositories
-            .forEach((key, value) -> moduleTaskRegistries.get(key).configuredTasks()
-                .forEach(ct -> value.createProduct(
-                    ct.getBuildContext().getModuleName(), ct.getProvidedProduct())));
+    private void registerProducts(final List<ConfiguredTask> resolvedTasks) {
+        resolvedTasks.forEach(ct -> {
+            final BuildContext ctx = ct.getBuildContext();
+            final ProductRepository productRepository = moduleProductRepositories.get(ctx);
+            productRepository.createProduct(ctx.getModuleName(), ct.getProvidedProduct());
+        });
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {
@@ -408,7 +409,7 @@ public class ModuleRunner {
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     public Set<String> getPluginNames() {

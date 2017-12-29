@@ -165,7 +165,7 @@ public class Job implements Callable<TaskStatus> {
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 
-    private void injectTaskProperties(final Task task) {
+    private void injectTaskDependencies(final Task task) {
         task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
         task.setServiceRegistry(serviceRegistry);
@@ -299,7 +299,7 @@ public class Job implements Callable<TaskStatus> {
             final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
             Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
             final Task task = taskSupplier.get();
-            injectTaskProperties(task);
+            injectTaskDependencies(task);
 
             final TaskResult taskResult = task.run();
 

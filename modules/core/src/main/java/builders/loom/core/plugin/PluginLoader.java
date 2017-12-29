@@ -34,7 +34,6 @@ import builders.loom.api.BuildConfigWithSettings;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
-import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.misc.BeanUtil;
 import builders.loom.core.misc.ExtensionLoader;
 import builders.loom.util.SystemUtil;
@@ -45,11 +44,6 @@ public class PluginLoader {
 
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final Map<String, Class<?>> pluginClasses = new HashMap<>();
-    private final RuntimeConfigurationImpl runtimeConfiguration;
-
-    public PluginLoader(final RuntimeConfigurationImpl runtimeConfiguration) {
-        this.runtimeConfiguration = runtimeConfiguration;
-    }
 
     public void initPlugins(final Map<String, String> availablePlugins,
                             final Set<String> pluginsToInitialize,

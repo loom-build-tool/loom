@@ -124,7 +124,6 @@ public class Job implements Callable<TaskStatus> {
     private UsedProducts buildProductView() {
         final Set<ProductPromise> productPromises = new HashSet<>();
 
-        // FIXME Only add Promise if product was requested
         configuredTask.getOptionallyUsedProducts().stream()
             .map(moduleProductRepositories.get(buildContext)::lookup)
             .filter(Optional::isPresent)

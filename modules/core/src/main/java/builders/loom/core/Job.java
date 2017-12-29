@@ -17,6 +17,7 @@
 package builders.loom.core;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,6 +40,7 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
+import builders.loom.api.RepositoryPathAware;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.ServiceRegistry;
 import builders.loom.api.Task;
@@ -52,6 +54,7 @@ import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 
+@SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class Job implements Callable<TaskStatus> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
@@ -182,6 +185,15 @@ public class Job implements Callable<TaskStatus> {
         if (task instanceof TestProgressEmitterAware) {
             final TestProgressEmitterAware tpea = (TestProgressEmitterAware) task;
             tpea.setTestProgressEmitter(testProgressEmitter);
+        }
+        if (task instanceof RepositoryPathAware) {
+            final RepositoryPathAware rpa = (RepositoryPathAware) task;
+            final Path repositoryPath = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+                    .resolve(Paths.get(LoomVersion.getVersion(),
+                            configuredTask.getPluginName(),
+                            configuredTask.getName()
+                            ));
+            rpa.setRepositoryPath(repositoryPath);
         }
     }
 

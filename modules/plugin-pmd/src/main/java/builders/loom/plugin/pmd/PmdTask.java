@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.ModuleBuildConfig;
+import builders.loom.api.RepositoryPathAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
@@ -63,22 +64,21 @@ import net.sourceforge.pmd.util.datasource.DataSource;
 import net.sourceforge.pmd.util.datasource.FileDataSource;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class PmdTask extends AbstractModuleTask {
+public class PmdTask extends AbstractModuleTask implements RepositoryPathAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(PmdTask.class);
 
     private final CompileTarget compileTarget;
 
-    private final Path cacheDir;
     private final PmdPluginSettings pluginSettings;
     private final String sourceProductId;
     private final String reportOutputDescription;
+    private Path repositoryPath;
 
     public PmdTask(final PmdPluginSettings pluginSettings,
-                   final CompileTarget compileTarget, final Path cacheDir) {
+                   final CompileTarget compileTarget) {
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
-        this.cacheDir = cacheDir;
 
         switch (compileTarget) {
             case MAIN:
@@ -92,6 +92,11 @@ public class PmdTask extends AbstractModuleTask {
             default:
                 throw new IllegalStateException("Unknown compileTarget: " + compileTarget);
         }
+    }
+
+    @Override
+    public void setRepositoryPath(final Path repositoryPath) {
+        this.repositoryPath = repositoryPath;
     }
 
     private PMDConfiguration getConfiguration() {
@@ -147,7 +152,7 @@ public class PmdTask extends AbstractModuleTask {
     }
 
     private Path resolveCacheFile() {
-        return cacheDir
+        return repositoryPath
             .resolve(getBuildContext().getModuleName())
             .resolve(compileTarget.name().toLowerCase())
             .resolve("pmd.cache");

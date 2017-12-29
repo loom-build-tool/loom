@@ -18,7 +18,6 @@ package builders.loom.core.plugin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,11 +31,9 @@ import org.slf4j.LoggerFactory;
 
 import builders.loom.api.BuildConfig;
 import builders.loom.api.BuildConfigWithSettings;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.ModuleBuildConfig;
 import builders.loom.api.Plugin;
 import builders.loom.api.PluginSettings;
-import builders.loom.core.LoomVersion;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.misc.BeanUtil;
 import builders.loom.core.misc.ExtensionLoader;
@@ -83,9 +80,6 @@ public class PluginLoader {
         if (config instanceof ModuleBuildConfig) {
             plugin.setModuleBuildConfig((ModuleBuildConfig) config);
         }
-        plugin.setRuntimeConfiguration(runtimeConfiguration);
-        plugin.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
-            .resolve(Paths.get(LoomVersion.getVersion(), pluginName)));
 
         final Set<String> acceptedSettings = injectPluginSettings(pluginName, plugin, config);
 

@@ -50,6 +50,7 @@ import com.puppycrawl.tools.checkstyle.api.RootModule;
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
 import builders.loom.api.LoomPaths;
+import builders.loom.api.RepositoryPathAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
@@ -58,23 +59,21 @@ import builders.loom.util.ClassLoaderUtil;
 import builders.loom.util.ProductChecksumUtil;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
-public class CheckstyleTask extends AbstractModuleTask {
+public class CheckstyleTask extends AbstractModuleTask implements RepositoryPathAware {
 
     private static final Logger LOG = LoggerFactory.getLogger(CheckstyleTask.class);
 
     private final CompileTarget compileTarget;
 
     private final CheckstylePluginSettings pluginSettings;
-    private final Path cacheDir;
     private final String sourceProductId;
     private final String reportOutputDescription;
+    private Path repositoryPath;
 
     public CheckstyleTask(final CompileTarget compileTarget,
-                          final CheckstylePluginSettings pluginSettings,
-                          final Path cacheDir) {
+                          final CheckstylePluginSettings pluginSettings) {
         this.compileTarget = compileTarget;
         this.pluginSettings = pluginSettings;
-        this.cacheDir = cacheDir;
 
         if (pluginSettings.getConfigLocation() == null) {
             throw new IllegalStateException("Missing configuration: checkstyle.configLocation");
@@ -92,6 +91,11 @@ public class CheckstyleTask extends AbstractModuleTask {
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
+    }
+
+    @Override
+    public void setRepositoryPath(final Path repositoryPath) {
+        this.repositoryPath = repositoryPath;
     }
 
     @Override
@@ -181,7 +185,7 @@ public class CheckstyleTask extends AbstractModuleTask {
             checker.configure(config);
 
             if (getRuntimeConfiguration().isCacheEnabled()) {
-                final Path cacheFile = cacheDir
+                final Path cacheFile = repositoryPath
                     .resolve(getBuildContext().getModuleName())
                     .resolve(compileTarget.name().toLowerCase())
                     .resolve("checkstyle.cache");
@@ -281,5 +285,4 @@ public class CheckstyleTask extends AbstractModuleTask {
             ProductChecksumUtil.recursiveMetaChecksum(reportDir),
             new OutputInfo(outputInfo, reportDir));
     }
-
 }

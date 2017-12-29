@@ -127,8 +127,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processResources")
-            .impl(() -> new ResourcesTask(getPluginSettings(),
-                CompileTarget.MAIN, getRepositoryPath()))
+            .impl(() -> new ResourcesTask(getPluginSettings(), CompileTarget.MAIN))
             .provides("processedResources")
             .uses("resources")
             .desc("Processes main resources (copy and replace variables if necessary).")
@@ -137,8 +136,7 @@ public class JavaPlugin extends AbstractPlugin<JavaPluginSettings> {
             .register();
 
         task("processTestResources")
-            .impl(() -> new ResourcesTask(getPluginSettings(),
-                CompileTarget.TEST, getRepositoryPath()))
+            .impl(() -> new ResourcesTask(getPluginSettings(), CompileTarget.TEST))
             .provides("processedTestResources")
             .uses("testResources")
             .desc("Processes test resources (copy and replace variables if necessary).")

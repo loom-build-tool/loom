@@ -23,10 +23,11 @@ import java.util.stream.Collectors;
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.DownloadProgressEmitter;
+import builders.loom.api.DownloadProgressEmitterAware;
 import builders.loom.api.RuntimeConfiguration;
 import builders.loom.api.service.ResolvedArtifact;
 
-public class MavenService implements DependencyResolverService {
+public class MavenService implements DependencyResolverService, DownloadProgressEmitterAware {
 
     private static final String REPOSITORY_URL = "https://repo.maven.apache.org/maven2/";
 

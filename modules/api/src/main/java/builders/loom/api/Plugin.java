@@ -16,8 +16,6 @@
 
 package builders.loom.api;
 
-import java.nio.file.Path;
-
 /**
  * <strong>Performance consideration:</strong> A plugin is registered, if specified in the build
  * configuration &ndash; even if it isn't used in the build process. Ensure quick initialization and
@@ -36,18 +34,6 @@ public interface Plugin {
 
     default PluginSettings getPluginSettings() {
         return null;
-    }
-
-    default void setServiceRegistry(final ServiceRegistry serviceRegistry) {
-    }
-
-    default void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
-    }
-
-    default void setRepositoryPath(final Path path) {
-    }
-
-    default void setDownloadProgressEmitter(final DownloadProgressEmitter emitter) {
     }
 
     default void configure() {

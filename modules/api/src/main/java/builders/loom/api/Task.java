@@ -27,6 +27,9 @@ public interface Task {
     default void setBuildContext(final BuildContext buildContext) {
     }
 
+    default void setServiceRegistry(final ServiceRegistry serviceRegistry) {
+    }
+
     TaskResult run() throws Exception;
 
 }

@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package builders.loom.core;
+package builders.loom.api;
 
-import builders.loom.api.DownloadProgressEmitter;
+import java.nio.file.Path;
 
-public class DownloadProgressEmitterBridge implements DownloadProgressEmitter {
+public interface RepositoryPathAware {
 
-    private final ProgressMonitor progressMonitor;
-
-    public DownloadProgressEmitterBridge(final ProgressMonitor progressMonitor) {
-        this.progressMonitor = progressMonitor;
-    }
-
-    @Override
-    public void progressFiles(final String resourceName) {
-        progressMonitor.progressDownloadedFiles(resourceName);
-    }
-
-    @Override
-    public void progressBytes(final long bytes) {
-        progressMonitor.progressDownloadedBytes(bytes);
-    }
+    void setRepositoryPath(Path repositoryPath);
 
 }

@@ -28,16 +28,14 @@ public class CheckstylePlugin extends AbstractPlugin<CheckstylePluginSettings> {
     @Override
     public void configure() {
         task("checkstyleMain")
-            .impl(() -> new CheckstyleTask(CompileTarget.MAIN, getPluginSettings(),
-                getRepositoryPath()))
+            .impl(() -> new CheckstyleTask(CompileTarget.MAIN, getPluginSettings()))
             .provides("checkstyleMainReport")
             .uses("source", "compileDependencies", "compilation")
             .desc("Runs Checkstyle against main sources and create report.")
             .register();
 
         task("checkstyleTest")
-            .impl(() -> new CheckstyleTask(CompileTarget.TEST, getPluginSettings(),
-                getRepositoryPath()))
+            .impl(() -> new CheckstyleTask(CompileTarget.TEST, getPluginSettings()))
             .provides("checkstyleTestReport")
             .uses("testSource", "testDependencies", "compilation", "testCompilation")
             .desc("Runs Checkstyle against test sources and create report.")

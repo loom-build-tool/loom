@@ -17,7 +17,7 @@
 package builders.loom.core.plugin;
 
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import builders.loom.api.ProductPromise;
@@ -28,10 +28,14 @@ public class ProductRepositoryImpl implements ProductRepository {
     private final Map<String, ProductPromise> products = new ConcurrentHashMap<>();
 
     @Override
-    public ProductPromise lookup(final String productId) {
-        return
-            Objects.requireNonNull(
-                products.get(productId), "No product found by id <" + productId + ">");
+    public Optional<ProductPromise> lookup(final String productId) {
+        return Optional.ofNullable(products.get(productId));
+    }
+
+    @Override
+    public ProductPromise require(final String productId) {
+        return lookup(productId).orElseThrow(() ->
+            new IllegalStateException("No product found by id <" + productId + ">"));
     }
 
     @Override

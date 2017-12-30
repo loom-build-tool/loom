@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TestProgressEmitter;
@@ -49,11 +48,9 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
 
     private static final Logger LOG = LoggerFactory.getLogger(JUnitTestTask.class);
 
-    private final DependencyResolverService dependencyResolverService;
     private TestProgressEmitter testProgressEmitter;
 
-    public JUnitTestTask(final DependencyResolverService dependencyResolverService) {
-        this.dependencyResolverService = dependencyResolverService;
+    public JUnitTestTask() {
     }
 
     @Override
@@ -139,7 +136,8 @@ public class JUnitTestTask extends AbstractModuleTask implements TestProgressEmi
         final List<String> artifacts = List.of(
             "org.junit.platform:junit-platform-launcher:1.0.0");
 
-        return dependencyResolverService.resolveMainArtifacts(artifacts, DependencyScope.COMPILE);
+        return getServiceRegistry().getDependencyResolverService()
+                .resolveMainArtifacts(artifacts, DependencyScope.COMPILE);
     }
 
     private TestResult runTests(final Path classesDir, final List<URL> junitClassPath,

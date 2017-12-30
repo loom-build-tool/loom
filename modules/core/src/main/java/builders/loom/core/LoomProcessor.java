@@ -37,12 +37,12 @@ import org.slf4j.LoggerFactory;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Module;
 import builders.loom.api.ModuleBuildConfig;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.core.config.BuildConfigImpl;
 import builders.loom.core.config.ConfigReader;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.core.plugin.PluginLoader;
 import builders.loom.core.service.ServiceLoader;
-import builders.loom.core.service.ServiceRegistryImpl;
 import builders.loom.util.Stopwatch;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -67,15 +67,15 @@ public class LoomProcessor {
         LOG.debug("Initialized modules in {}", sw);
         sw.reset();
 
-        final ServiceRegistryImpl serviceRegistry = new ServiceRegistryImpl();
-        new ServiceLoader(runtimeConfiguration, progressMonitor, serviceRegistry).initServices();
+        final ServiceRegistry serviceRegistry =
+            new ServiceLoader(runtimeConfiguration, progressMonitor).initServices();
 
         LOG.debug("Initialized services in {}", sw);
         sw.reset();
 
-        final PluginLoader pluginLoader = new PluginLoader(runtimeConfiguration, progressMonitor,
-            serviceRegistry);
-        moduleRunner = new ModuleRunner(runtimeConfiguration, pluginLoader, moduleRegistry,
+        final PluginLoader pluginLoader = new PluginLoader();
+        moduleRunner = new ModuleRunner(
+            runtimeConfiguration, serviceRegistry, pluginLoader, moduleRegistry,
             progressMonitor, new TestProgressEmitterBridge(progressMonitor));
         moduleRunner.init();
 

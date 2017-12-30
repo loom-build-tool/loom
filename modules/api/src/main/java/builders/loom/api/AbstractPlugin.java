@@ -16,7 +16,6 @@
 
 package builders.loom.api;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,10 +33,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
     private String pluginName;
     private TaskRegistry taskRegistry;
     private ModuleBuildConfig moduleBuildConfig;
-    private ServiceRegistry serviceRegistry;
-    private RuntimeConfiguration runtimeConfiguration;
-    private Path repositoryPath;
-    private DownloadProgressEmitter downloadProgressEmitter;
 
     public AbstractPlugin() {
         this.pluginSettings = null;
@@ -71,42 +66,6 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         this.moduleBuildConfig = moduleBuildConfig;
     }
 
-    public ServiceRegistry getServiceRegistry() {
-        return serviceRegistry;
-    }
-
-    @Override
-    public void setServiceRegistry(final ServiceRegistry serviceRegistry) {
-        this.serviceRegistry = serviceRegistry;
-    }
-
-    @Override
-    public void setRuntimeConfiguration(final RuntimeConfiguration runtimeConfiguration) {
-        this.runtimeConfiguration = runtimeConfiguration;
-    }
-
-    public RuntimeConfiguration getRuntimeConfiguration() {
-        return runtimeConfiguration;
-    }
-
-    @Override
-    public void setRepositoryPath(final Path repositoryPath) {
-        this.repositoryPath = repositoryPath;
-    }
-
-    public Path getRepositoryPath() {
-        return repositoryPath;
-    }
-
-    @Override
-    public void setDownloadProgressEmitter(final DownloadProgressEmitter emitter) {
-        this.downloadProgressEmitter = emitter;
-    }
-
-    public DownloadProgressEmitter getDownloadProgressEmitter() {
-        return downloadProgressEmitter;
-    }
-
     protected TaskBuilder task(final String taskName) {
         return new TaskBuilder(taskName);
     }
@@ -122,6 +81,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
         private String providedProduct;
         private boolean intermediateProduct;
         private Set<String> usedProducts = Collections.emptySet();
+        private Set<String> optionallyUsedProducts = Collections.emptySet();
         private Set<String> importedProducts = Collections.emptySet();
         private Set<String> importedAllProducts = Collections.emptySet();
         private List<Supplier<String>> skipHints = Collections.emptyList();
@@ -155,6 +115,15 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
             return uses(Arrays.asList(Objects.requireNonNull(products)));
         }
 
+        public TaskBuilder usesOptionally(final Collection<String> products) {
+            optionallyUsedProducts = new HashSet<>(Objects.requireNonNull(products));
+            return this;
+        }
+
+        public TaskBuilder usesOptionally(final String... products) {
+            return usesOptionally(Arrays.asList(Objects.requireNonNull(products)));
+        }
+
         public TaskBuilder importFromModules(final Collection<String> products) {
             importedProducts = new HashSet<>(Objects.requireNonNull(products));
             return this;
@@ -185,7 +154,7 @@ public abstract class AbstractPlugin<S extends PluginSettings> implements Plugin
 
         public void register() {
             taskRegistry.registerTask(pluginName, taskName, taskSupplier, providedProduct,
-                intermediateProduct, usedProducts, importedProducts,
+                intermediateProduct, usedProducts, optionallyUsedProducts, importedProducts,
                 importedAllProducts, skipHints, description);
         }
 

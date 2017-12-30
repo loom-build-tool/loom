@@ -53,6 +53,9 @@ public class IdeaTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
+        // Don't run cleanIdea & idea in parallel
+        getUsedProducts().waitForOptionalProduct("cleanIdea");
+
         final Path projectBaseDir = getRuntimeConfiguration().getProjectBaseDir();
         final Path ideaDirectory = Files.createDirectories(projectBaseDir.resolve(".idea"));
 

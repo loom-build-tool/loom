@@ -319,7 +319,9 @@ public class JavaCompileTask extends AbstractModuleTask {
     private static List<String> buildOptions(final JavaVersion release) {
         final List<String> options = new ArrayList<>();
 
-        options.add("-Xlint:all");
+        final String envLint = System.getenv("LOOM_JAVA_COMPILE_LINT");
+        final String lint = envLint != null ? envLint : "all";
+        options.add("-Xlint:" + lint);
 
         if (release != null) {
             options.add("--release");

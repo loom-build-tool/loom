@@ -19,13 +19,13 @@ package builders.loom.core.service;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DownloadProgressEmitter;
+import builders.loom.api.DownloadProgressEmitterAware;
 import builders.loom.api.LoomPaths;
 import builders.loom.api.Service;
 import builders.loom.core.DownloadProgressEmitterBridge;
@@ -54,12 +54,10 @@ public class ServiceLoader {
     }
 
     public ServiceRegistryImpl initServices() {
-
         serviceRegistry.setDependencyResolverService(
-            buildService(
-                "service-maven", "builders.loom.service.maven.MavenService",
-                DependencyResolverService.class,
-                drs -> drs.setDownloadProgressEmitter(downloadProgressEmitter))
+            buildService("service-maven",
+                "builders.loom.service.maven.MavenService",
+                DependencyResolverService.class)
         );
 
         return serviceRegistry;
@@ -67,8 +65,7 @@ public class ServiceLoader {
 
     private <T extends Service> T buildService(final String serviceName,
                                                final String serviceClassname,
-                                               final Class<T> serviceInterface,
-                                               final Consumer<T> injection) {
+                                               final Class<T> serviceInterface) {
         final Service service = getService(serviceName, serviceClassname);
         service.setRuntimeConfiguration(runtimeConfiguration);
 
@@ -81,15 +78,20 @@ public class ServiceLoader {
             serviceClassname,
             serviceInterface);
 
-        final T targetService = serviceInterface.cast(service);
-
-        injection.accept(targetService);
+        injectDependencies(service);
 
         service.init();
 
         LOG.info("Service {} initialized", serviceName);
 
-        return targetService;
+        return serviceInterface.cast(service);
+    }
+
+    private void injectDependencies(final Service service) {
+        if (service instanceof DownloadProgressEmitterAware) {
+            final DownloadProgressEmitterAware dpea = (DownloadProgressEmitterAware) service;
+            dpea.setDownloadProgressEmitter(downloadProgressEmitter);
+        }
     }
 
     private Service getService(final String serviceName, final String serviceClassname) {

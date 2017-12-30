@@ -8,6 +8,7 @@ build
 *.ipr
 *.iws
 classes
+out
 
 # Eclipse
 .classpath

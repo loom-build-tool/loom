@@ -18,6 +18,7 @@ package builders.loom.api;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 public final class LoomPaths {
 
@@ -31,6 +32,7 @@ public final class LoomPaths {
 
     private static final Path MODULES_DIR = Paths.get("modules");
     private static final Path LOOM_DIR = Paths.get(".loom");
+    private static final Path CONFIG_DIR = Paths.get("config");
     private static final Path BUILD_DIR = Paths.get("build");
     private static final Path PRODUCT_DIR = Paths.get("products");
     private static final Path REPORT_DIR = Paths.get("reports");
@@ -45,6 +47,13 @@ public final class LoomPaths {
 
     public static Path loomDir(final Path projectBaseDir) {
         return projectBaseDir.resolve(LOOM_DIR);
+    }
+
+    public static Path configDir(final Path projectBaseDir) {
+        return
+            Optional.ofNullable(System.getenv("LOOM_CONFIG_DIR"))
+            .map(Paths::get)
+            .orElse(loomDir(projectBaseDir).resolve(CONFIG_DIR));
     }
 
     public static Path buildDir(final Path projectBaseDir) {

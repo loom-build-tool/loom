@@ -35,7 +35,6 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.DependencyResolverService;
 import builders.loom.api.DependencyScope;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
@@ -55,12 +54,9 @@ public class SpringBootTask extends AbstractModuleTask {
         "org.springframework.boot.loader.JarLauncher";
 
     private final SpringBootPluginSettings pluginSettings;
-    private final DependencyResolverService dependencyResolverService;
 
-    public SpringBootTask(final SpringBootPluginSettings pluginSettings,
-                          final DependencyResolverService dependencyResolverService) {
+    public SpringBootTask(final SpringBootPluginSettings pluginSettings) {
         this.pluginSettings = pluginSettings;
-        this.dependencyResolverService = dependencyResolverService;
     }
 
     @Override
@@ -114,7 +110,8 @@ public class SpringBootTask extends AbstractModuleTask {
         final String springBootLoaderArtifact =
             "org.springframework.boot:spring-boot-loader:" + pluginSettings.getVersion();
 
-        final List<Path> resolvedArtifacts = dependencyResolverService.resolveMainArtifacts(
+        final List<Path> resolvedArtifacts =
+                getServiceRegistry().getDependencyResolverService().resolveMainArtifacts(
             Collections.singletonList(springBootLoaderArtifact),
             DependencyScope.COMPILE);
 

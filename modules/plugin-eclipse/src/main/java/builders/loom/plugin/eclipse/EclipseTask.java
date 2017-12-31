@@ -63,6 +63,9 @@ public class EclipseTask extends AbstractTask implements ModuleGraphAware {
 
     @Override
     public TaskResult run() throws Exception {
+        // Don't run cleanEclipse & eclipse in parallel
+        getUsedProducts().waitForOptionalProduct("cleanEclipse");
+
         for (final Module module : allModules()) {
             createModuleProject(module);
         }

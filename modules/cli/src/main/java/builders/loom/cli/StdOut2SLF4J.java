@@ -18,11 +18,7 @@ package builders.loom.cli;
 
 import java.io.PrintStream;
 
-@SuppressWarnings("checkstyle:regexpmultiline")
 final class StdOut2SLF4J {
-
-    private static final PrintStream SYSTEM_OUT = System.out;
-    private static final PrintStream SYSTEM_ERR = System.err;
 
     private static PrintStream out;
     private static PrintStream err;
@@ -42,8 +38,7 @@ final class StdOut2SLF4J {
         out.flush();
         err.flush();
 
-        System.setOut(SYSTEM_OUT);
-        System.setErr(SYSTEM_ERR);
+        OriginalStreams.reset();
     }
 
 }

@@ -18,30 +18,56 @@ package builders.loom.core;
 
 public interface ProgressMonitor {
 
-    void start();
+    default void start() {
 
-    void setTasks(int tasks);
+    }
 
-    void progress();
+    default void setTasks(int tasks) {
 
-    void progressDownloadedFiles();
+    }
 
-    void progressDownloadedBytes(long bytes);
+    default void progress(final String jobName) {
 
-    void testsTotal(long tests);
+    }
 
-    void testsAdd();
+    default void progressDownloadedFiles(final String resourceName) {
 
-    void testSuccess();
+    }
 
-    void testAbort();
+    default void progressDownloadedBytes(long bytes) {
 
-    void testSkip();
+    }
 
-    void testFail();
+    default void testsTotal(long tests) {
 
-    void testError();
+    }
 
-    void stop();
+    default void testsAdd() {
+
+    }
+
+    default void testSuccess() {
+
+    }
+
+    default void testAbort() {
+
+    }
+
+    default void testSkip() {
+
+    }
+
+    default void testFail() {
+
+    }
+
+    default void testError() {
+
+    }
+
+    default void stop() {
+
+    }
 
 }

@@ -33,6 +33,7 @@ public class ConfiguredTask {
     private final Supplier<Task> taskSupplier;
     private final String providedProduct;
     private final Set<String> usedProducts;
+    private final Set<String> optionallyUsedProducts;
     private final Set<String> importedProducts;
     private final Set<String> importedAllProducts;
     private final List<Supplier<String>> skipHints;
@@ -42,7 +43,8 @@ public class ConfiguredTask {
     @SuppressWarnings("checkstyle:parameternumber")
     ConfiguredTask(final BuildContext buildContext, final String name, final String pluginName,
                    final Supplier<Task> taskSupplier, final String providedProduct,
-                   final Set<String> usedProducts, final Set<String> importedProducts,
+                   final Set<String> usedProducts, final Set<String> optionallyUsedProducts,
+                   final Set<String> importedProducts,
                    final Set<String> importedAllProducts, final List<Supplier<String>> skipHints,
                    final String description, final TaskType type) {
         this.buildContext = buildContext;
@@ -51,6 +53,7 @@ public class ConfiguredTask {
         this.taskSupplier = taskSupplier;
         this.providedProduct = providedProduct;
         this.usedProducts = new HashSet<>(usedProducts);
+        this.optionallyUsedProducts = new HashSet<>(optionallyUsedProducts);
         this.importedProducts = importedProducts;
         this.importedAllProducts = importedAllProducts;
         this.skipHints = skipHints;
@@ -87,6 +90,10 @@ public class ConfiguredTask {
 
     public Set<String> getUsedProducts() {
         return Collections.unmodifiableSet(usedProducts);
+    }
+
+    public Set<String> getOptionallyUsedProducts() {
+        return Collections.unmodifiableSet(optionallyUsedProducts);
     }
 
     public Set<String> getImportedProducts() {

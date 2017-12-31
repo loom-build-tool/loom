@@ -18,7 +18,7 @@ package builders.loom.api;
 
 public interface DownloadProgressEmitter {
 
-    void progressFiles();
+    void progressFiles(String resourceName);
 
     void progressBytes(long bytes);
 

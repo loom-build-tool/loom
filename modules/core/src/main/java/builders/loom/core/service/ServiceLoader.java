@@ -19,7 +19,7 @@ package builders.loom.core.service;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +33,12 @@ import builders.loom.core.LoomVersion;
 import builders.loom.core.ProgressMonitor;
 import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.misc.ExtensionLoader;
+import builders.loom.util.Preconditions;
 import builders.loom.util.SystemUtil;
 
 public class ServiceLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceLoader.class);
-
-    private static final Map<String, String> SERVICES = Map.of(
-        "service-maven", "builders.loom.service.maven.MavenService"
-    );
 
     private final Path loomBaseDir = SystemUtil.determineLoomBaseDir();
     private final RuntimeConfigurationImpl runtimeConfiguration;
@@ -49,41 +46,54 @@ public class ServiceLoader {
     private final ServiceRegistryImpl serviceRegistry;
 
     public ServiceLoader(final RuntimeConfigurationImpl runtimeConfiguration,
-                         final ProgressMonitor progressMonitor,
-                         final ServiceRegistryImpl serviceRegistry) {
+                         final ProgressMonitor progressMonitor) {
         this.runtimeConfiguration = runtimeConfiguration;
-        downloadProgressEmitter = new DownloadProgressEmitterBridge(progressMonitor);
-        this.serviceRegistry = serviceRegistry;
+        this.downloadProgressEmitter = new DownloadProgressEmitterBridge(progressMonitor);
+
+        this.serviceRegistry = new ServiceRegistryImpl();
     }
 
-    public void initServices() {
-        for (final String service : SERVICES.keySet()) {
-            initService(service);
-        }
+    public ServiceRegistryImpl initServices() {
+
+        serviceRegistry.setDependencyResolverService(
+            buildService(
+                "service-maven", "builders.loom.service.maven.MavenService",
+                DependencyResolverService.class,
+                drs -> drs.setDownloadProgressEmitter(downloadProgressEmitter))
+        );
+
+        return serviceRegistry;
     }
 
-    private void initService(final String serviceName) {
-        final Service service = getService(serviceName);
+    private <T extends Service> T buildService(final String serviceName,
+                                               final String serviceClassname,
+                                               final Class<T> serviceInterface,
+                                               final Consumer<T> injection) {
+        final Service service = getService(serviceName, serviceClassname);
         service.setRuntimeConfiguration(runtimeConfiguration);
 
         service.setRepositoryPath(LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
             .resolve(Paths.get(LoomVersion.getVersion(), serviceName)));
 
-        if (service instanceof DependencyResolverService) {
-            final DependencyResolverService drs = (DependencyResolverService) service;
-            drs.setDownloadProgressEmitter(downloadProgressEmitter);
-            serviceRegistry.setDependencyResolverService(drs);
-        } else {
-            throw new IllegalStateException("Unknown service type: " + service.getClass());
-        }
+        Preconditions.checkState(
+            serviceInterface.isAssignableFrom(service.getClass()),
+            "Service Class <%s> does not implement the requested service interface: %s",
+            serviceClassname,
+            serviceInterface);
+
+        final T targetService = serviceInterface.cast(service);
+
+        injection.accept(targetService);
 
         service.init();
 
         LOG.info("Service {} initialized", serviceName);
+
+        return targetService;
     }
 
-    private Service getService(final String serviceName) {
-        final String serviceClassname = SERVICES.get(serviceName);
+    private Service getService(final String serviceName, final String serviceClassname) {
+
         final Class<?> serviceClass =
             ExtensionLoader.loadExtension(loomBaseDir, serviceName, serviceClassname);
 

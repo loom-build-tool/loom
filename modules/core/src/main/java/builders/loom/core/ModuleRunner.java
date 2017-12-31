@@ -39,6 +39,7 @@ import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductPromise.CompletedProductReport;
 import builders.loom.api.ProductRepository;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.api.TestProgressEmitter;
 import builders.loom.core.misc.DirectedGraph;
 import builders.loom.core.plugin.ConfiguredTask;
@@ -73,6 +74,7 @@ public class ModuleRunner {
     );
 
     private final RuntimeConfiguration runtimeConfiguration;
+    private final ServiceRegistry serviceRegistry;
     private final PluginLoader pluginLoader;
     private final ModuleRegistry moduleRegistry;
     private final ProgressMonitor progressMonitor;
@@ -82,11 +84,13 @@ public class ModuleRunner {
     private final TestProgressEmitter testProgressEmitter;
 
     public ModuleRunner(final RuntimeConfiguration runtimeConfiguration,
+                        final ServiceRegistry serviceRegistry,
                         final PluginLoader pluginLoader,
                         final ModuleRegistry moduleRegistry,
                         final ProgressMonitor progressMonitor,
                         final TestProgressEmitter emitter) {
         this.runtimeConfiguration = runtimeConfiguration;
+        this.serviceRegistry = serviceRegistry;
         this.pluginLoader = pluginLoader;
         this.moduleRegistry = moduleRegistry;
         this.progressMonitor = progressMonitor;
@@ -150,7 +154,7 @@ public class ModuleRunner {
             .map(ConfiguredTask::toString)
             .collect(Collectors.joining(", ")));
 
-        registerProducts();
+        registerProducts(resolvedTasks);
 
         progressMonitor.setTasks(resolvedTasks.size());
 
@@ -170,7 +174,7 @@ public class ModuleRunner {
 
                 configuredTaskJobMap.get(configuredTask)
                     .getActuallyUsedProducts().stream()
-                    .map(pp -> pp.buildReport())
+                    .map(ProductPromise::buildReport)
                     .collect(Collectors.toSet())
                 ))
             .collect(Collectors.toList());
@@ -306,7 +310,7 @@ public class ModuleRunner {
         final BuildContext buildContext, final String productId) {
         Objects.requireNonNull(buildContext);
         Objects.requireNonNull(productId);
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     // find tasks providing requested products (within same module)
@@ -389,11 +393,12 @@ public class ModuleRunner {
         }
     }
 
-    private void registerProducts() {
-        moduleProductRepositories
-            .forEach((key, value) -> moduleTaskRegistries.get(key).configuredTasks()
-                .forEach(ct -> value.createProduct(
-                    ct.getBuildContext().getModuleName(), ct.getProvidedProduct())));
+    private void registerProducts(final List<ConfiguredTask> resolvedTasks) {
+        resolvedTasks.forEach(ct -> {
+            final BuildContext ctx = ct.getBuildContext();
+            final ProductRepository productRepository = moduleProductRepositories.get(ctx);
+            productRepository.createProduct(ctx.getModuleName(), ct.getProvidedProduct());
+        });
     }
 
     private Job buildJob(final ConfiguredTask configuredTask) {
@@ -402,13 +407,13 @@ public class ModuleRunner {
 
         final String jobName = buildContext.getModuleName() + " > " + configuredTask.getName();
 
-        return new Job(jobName, buildContext, runtimeConfiguration, configuredTask,
+        return new Job(jobName, buildContext, runtimeConfiguration, serviceRegistry, configuredTask,
             productRepository, transitiveModuleCompileDependencies, moduleProductRepositories,
             testProgressEmitter);
     }
 
     public ProductPromise lookupProduct(final BuildContext buildContext, final String productId) {
-        return moduleProductRepositories.get(buildContext).lookup(productId);
+        return moduleProductRepositories.get(buildContext).require(productId);
     }
 
     public Set<String> getPluginNames() {

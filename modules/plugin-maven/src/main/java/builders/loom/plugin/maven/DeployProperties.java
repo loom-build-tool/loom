@@ -21,7 +21,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.Properties;
+
+import builders.loom.util.Preconditions;
 
 class DeployProperties {
 
@@ -45,9 +48,15 @@ class DeployProperties {
         releaseUrl = props.getProperty("releaseUrl");
         snapshotUrl = props.getProperty("snapshotUrl");
 
-        keyRingFile = Paths.get(props.getProperty("signing.secretKeyRingFile"));
+        // all or nothing
+        keyRingFile = Optional.ofNullable(props.getProperty("signing.secretKeyRingFile")).map(Paths::get).orElse(null);
         keyId = props.getProperty("signing.keyId");
         keyPassword = props.getProperty("signing.password");
+        Preconditions.checkState(
+            (keyRingFile == null) && (keyId == null) && (keyPassword == null)
+            || (keyRingFile != null) && (keyId != null) && (keyPassword != null),
+            "Signing must be configured all or nothing"
+        );
     }
 
     String getReleaseUrl() {
@@ -76,6 +85,10 @@ class DeployProperties {
 
     String getKeyPassword() {
         return keyPassword;
+    }
+
+    boolean isSigningEnabled() {
+        return keyRingFile != null;
     }
 
 }

@@ -16,9 +16,13 @@
 
 package builders.loom.api;
 
+import java.util.Optional;
+
 public interface ProductRepository {
 
-    ProductPromise lookup(String productId);
+    Optional<ProductPromise> lookup(String productId);
+
+    ProductPromise require(String productId);
 
     void createProduct(final String moduleName, String productId);
 

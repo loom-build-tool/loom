@@ -17,6 +17,7 @@
 package builders.loom.core;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +40,9 @@ import builders.loom.api.ModuleGraphAware;
 import builders.loom.api.ProductDependenciesAware;
 import builders.loom.api.ProductPromise;
 import builders.loom.api.ProductRepository;
+import builders.loom.api.RepositoryPathAware;
 import builders.loom.api.RuntimeConfiguration;
+import builders.loom.api.ServiceRegistry;
 import builders.loom.api.Task;
 import builders.loom.api.TaskResult;
 import builders.loom.api.TaskStatus;
@@ -51,6 +54,7 @@ import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.core.plugin.ConfiguredTask;
 
+@SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class Job implements Callable<TaskStatus> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Job.class);
@@ -59,6 +63,7 @@ public class Job implements Callable<TaskStatus> {
     private final BuildContext buildContext;
     private final RuntimeConfiguration runtimeConfiguration;
     private final AtomicReference<JobStatus> status = new AtomicReference<>(JobStatus.INITIALIZING);
+    private final ServiceRegistry serviceRegistry;
     private final ConfiguredTask configuredTask;
     private final ProductRepository productRepository;
     private final Map<Module, Set<Module>> transitiveModuleCompileDependencies;
@@ -71,6 +76,7 @@ public class Job implements Callable<TaskStatus> {
     Job(final String name,
         final BuildContext buildContext,
         final RuntimeConfiguration runtimeConfiguration,
+        final ServiceRegistry serviceRegistry,
         final ConfiguredTask configuredTask,
         final ProductRepository productRepository,
         final Map<Module, Set<Module>> transitiveModuleCompileDependencies,
@@ -80,6 +86,7 @@ public class Job implements Callable<TaskStatus> {
         this.name = Objects.requireNonNull(name, "name required");
         this.buildContext = buildContext;
         this.runtimeConfiguration = runtimeConfiguration;
+        this.serviceRegistry = serviceRegistry;
         this.configuredTask = Objects.requireNonNull(configuredTask, "configuredTask required");
         this.productRepository =
             Objects.requireNonNull(productRepository, "productRepository required");
@@ -114,7 +121,7 @@ public class Job implements Callable<TaskStatus> {
 
     private ProductPromise prepareProductPromise() {
         final ProductPromise productPromise = productRepository
-            .lookup(configuredTask.getProvidedProduct());
+            .require(configuredTask.getProvidedProduct());
 
         productPromise.startTimer();
 
@@ -124,9 +131,15 @@ public class Job implements Callable<TaskStatus> {
     private UsedProducts buildProductView() {
         final Set<ProductPromise> productPromises = new HashSet<>();
 
+        configuredTask.getOptionallyUsedProducts().stream()
+            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .forEach(productPromises::add);
+
         // inner module dependencies
         configuredTask.getUsedProducts().stream()
-            .map(moduleProductRepositories.get(buildContext)::lookup)
+            .map(moduleProductRepositories.get(buildContext)::require)
             .forEach(productPromises::add);
 
         // explicit import from other modules
@@ -152,9 +165,10 @@ public class Job implements Callable<TaskStatus> {
         return new UsedProducts(buildContext.getModuleName(), productPromises);
     }
 
-    private void injectTaskProperties(final Task task) {
+    private void injectTaskDependencies(final Task task) {
         task.setRuntimeConfiguration(runtimeConfiguration);
         task.setBuildContext(buildContext);
+        task.setServiceRegistry(serviceRegistry);
         if (task instanceof ProductDependenciesAware) {
             final ProductDependenciesAware pdaTask = (ProductDependenciesAware) task;
             pdaTask.setUsedProducts(usedProducts);
@@ -172,6 +186,15 @@ public class Job implements Callable<TaskStatus> {
             final TestProgressEmitterAware tpea = (TestProgressEmitterAware) task;
             tpea.setTestProgressEmitter(testProgressEmitter);
         }
+        if (task instanceof RepositoryPathAware) {
+            final RepositoryPathAware rpa = (RepositoryPathAware) task;
+            final Path repositoryPath = LoomPaths.loomDir(runtimeConfiguration.getProjectBaseDir())
+                    .resolve(Paths.get(LoomVersion.getVersion(),
+                            configuredTask.getPluginName(),
+                            configuredTask.getName()
+                            ));
+            rpa.setRepositoryPath(repositoryPath);
+        }
     }
 
     private ProductPromise buildModuleProduct(final String moduleName, final String productId) {
@@ -183,7 +206,7 @@ public class Job implements Callable<TaskStatus> {
             .map(Map.Entry::getValue)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Module <" + moduleName + "> not found"))
-            .lookup(productId);
+            .require(productId);
     }
 
     Set<ProductPromise> getActuallyUsedProducts() {
@@ -276,7 +299,7 @@ public class Job implements Callable<TaskStatus> {
             final Supplier<Task> taskSupplier = configuredTask.getTaskSupplier();
             Thread.currentThread().setContextClassLoader(taskSupplier.getClass().getClassLoader());
             final Task task = taskSupplier.get();
-            injectTaskProperties(task);
+            injectTaskDependencies(task);
 
             final TaskResult taskResult = task.run();
 

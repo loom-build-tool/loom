@@ -19,7 +19,6 @@ package builders.loom.service.maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.transfer.AbstractTransferListener;
-import org.sonatype.aether.transfer.TransferCancelledException;
 import org.sonatype.aether.transfer.TransferEvent;
 
 import builders.loom.api.DownloadProgressEmitter;
@@ -36,12 +35,13 @@ public class ProgressLoggingTransferListener extends AbstractTransferListener {
     }
 
     @Override
-    public void transferStarted(final TransferEvent event) throws TransferCancelledException {
-        downloadProgressEmitter.progressFiles();
+    public void transferStarted(final TransferEvent event) {
+        downloadProgressEmitter.progressFiles(event.getResource().getRepositoryUrl()
+            + event.getResource().getResourceName());
     }
 
     @Override
-    public void transferProgressed(final TransferEvent event) throws TransferCancelledException {
+    public void transferProgressed(final TransferEvent event) {
         downloadProgressEmitter.progressBytes(event.getDataLength());
     }
 

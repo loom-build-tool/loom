@@ -26,27 +26,27 @@ import java.util.function.Function;
 
 import builders.loom.api.AbstractModuleTask;
 import builders.loom.api.CompileTarget;
+import builders.loom.api.RepositoryPathAware;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.Product;
 import builders.loom.util.Hashing;
 import builders.loom.util.ProductChecksumUtil;
 
-public class ResourcesTask extends AbstractModuleTask {
+public class ResourcesTask extends AbstractModuleTask implements RepositoryPathAware {
 
     private static final NullKeyValueCache NULL_CACHE = new NullKeyValueCache();
 
     private final JavaPluginSettings pluginSettings;
     private final CompileTarget compileTarget;
-    private final Path cacheDir;
     private final String resourcesProductId;
+    private Path repositoryPath;
 
     ResourcesTask(final JavaPluginSettings pluginSettings,
-                  final CompileTarget compileTarget, final Path cacheDir) {
+                  final CompileTarget compileTarget) {
 
         this.pluginSettings = pluginSettings;
         this.compileTarget = compileTarget;
-        this.cacheDir = cacheDir;
 
         switch (compileTarget) {
             case MAIN:
@@ -58,6 +58,11 @@ public class ResourcesTask extends AbstractModuleTask {
             default:
                 throw new IllegalStateException("Unknown compileTarget " + compileTarget);
         }
+    }
+
+    @Override
+    public void setRepositoryPath(final Path repositoryPath) {
+        this.repositoryPath = repositoryPath;
     }
 
     @Override
@@ -104,7 +109,7 @@ public class ResourcesTask extends AbstractModuleTask {
         final String hash =
             Hashing.hash(Objects.toString(pluginSettings.getResourceFilterGlob()));
 
-        final Path cacheFile = cacheDir
+        final Path cacheFile = repositoryPath
             .resolve(getBuildContext().getModuleName())
             .resolve(compileTarget.name().toLowerCase())
             .resolve("resource-" + hash + ".cache");
@@ -127,5 +132,4 @@ public class ResourcesTask extends AbstractModuleTask {
         return new ManagedGenericProduct("processedResourcesDir", buildDir.toString(),
             ProductChecksumUtil.recursiveContentChecksum(buildDir), null);
     }
-
 }

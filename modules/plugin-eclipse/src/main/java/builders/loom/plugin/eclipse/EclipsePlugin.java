@@ -26,6 +26,7 @@ public class EclipsePlugin extends AbstractPlugin<PluginSettings> {
         task("createEclipseFiles")
             .impl(EclipseTask::new)
             .provides("eclipse")
+            .usesOptionally("cleanEclipse")
             .importFromAllModules("compileArtifacts", "testArtifacts")
             .desc("Generates/updates .classpath/.project/.settings for Eclipse IDE.")
             .register();

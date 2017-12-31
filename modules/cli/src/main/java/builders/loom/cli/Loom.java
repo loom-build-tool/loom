@@ -16,17 +16,23 @@
 
 package builders.loom.cli;
 
-import java.io.PrintStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.channels.FileLock;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import javax.tools.ToolProvider;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.internal.CLibrary;
 
 import builders.loom.api.LoomPaths;
 import builders.loom.core.BuildException;
@@ -38,17 +44,18 @@ import builders.loom.core.RuntimeConfigurationImpl;
 import builders.loom.core.plugin.ConfiguredTask;
 import builders.loom.util.FileUtil;
 
-@SuppressWarnings("checkstyle:hideutilityclassconstructor")
+@SuppressWarnings({"checkstyle:hideutilityclassconstructor",
+    "checkstyle:classdataabstractioncoupling"})
 public final class Loom {
-
-    // hold System.err, because it will be changed by StdOut2SLF4J
-    private static final PrintStream SYSTEM_ERR = System.err;
 
     private static boolean buildExecuted;
 
     @SuppressWarnings({"checkstyle:uncommentedmain", "checkstyle:illegalcatch",
         "checkstyle:regexpmultiline"})
     public static void main(final String[] args) {
+        // Save original streams for later reset
+        OriginalStreams.init();
+
         try {
             mainWithoutExit(args);
             System.exit(0);
@@ -86,7 +93,7 @@ public final class Loom {
         } catch (final Throwable e) {
             if (!(e instanceof BuildException)) {
                 // BuildExceptions are already logged
-                e.printStackTrace(SYSTEM_ERR);
+                e.printStackTrace(OriginalStreams.getErr());
             }
             if (buildExecuted) {
                 printFailed(logFile);
@@ -191,7 +198,9 @@ public final class Loom {
                 .fgBrightYellow().a("Running in no-cache mode").reset());
         }
 
-        final ProgressMonitor progressMonitor = new ConsoleProgressMonitor();
+        final ProgressMonitor progressMonitor = CLibrary.isatty(CLibrary.STDOUT_FILENO) == 0
+            ? new LogProgressMonitor(OriginalStreams.getOut())
+            : new ConsoleProgressMonitor();
 
         loomProcessor.init(runtimeConfiguration, progressMonitor);
 
@@ -226,8 +235,50 @@ public final class Loom {
     }
 
     private static void clean(final Path projectBaseDir) {
-        FileUtil.deleteDirectoryRecursively(LoomPaths.loomDir(projectBaseDir), true);
+        cleanLoomDirectoryRecursively(projectBaseDir);
         FileUtil.deleteDirectoryRecursively(LoomPaths.buildDir(projectBaseDir), true);
+    }
+
+    /**
+     * clean and delete .loom dir but keep .loom/config/
+     */
+    private static void cleanLoomDirectoryRecursively(final Path projectBaseDir) {
+        final Path loomDir = LoomPaths.loomDir(projectBaseDir);
+        if (Files.notExists(loomDir)) {
+            return;
+        }
+
+        try {
+            Files.walkFileTree(loomDir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+                    if (LoomPaths.configDir(projectBaseDir).equals(dir)) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                    throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
+                    throws IOException {
+                    try {
+                        Files.delete(dir);
+                    } catch (DirectoryNotEmptyException dne) {
+                        // ok
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static void configureLogging(final Path logFile) {

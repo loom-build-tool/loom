@@ -72,7 +72,7 @@ public class JobPool {
                 currentJobs.put(jobName, job);
                 job.call();
 
-                progressMonitor.progress();
+                progressMonitor.progress(jobName);
             } catch (final Throwable e) {
                 // In case of any Task error we end up here
                 if (firstException.compareAndSet(null, e)) {

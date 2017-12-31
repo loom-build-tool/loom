@@ -108,6 +108,9 @@ public class MavenDeployTask extends AbstractModuleTask {
         final Path javadocJarFile = Paths.get(requireProduct("javadocJar", Product.class)
             .getProperty("javaDocJarFile"));
 
+        // Don't deploy non-valid artifacts
+        getUsedProducts().waitForOptionalProduct("check");
+
         final String url = deploy(jarFile, sourceJarFile, javadocJarFile);
 
         return TaskResult.done(newProduct(url));

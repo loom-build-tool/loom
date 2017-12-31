@@ -16,16 +16,8 @@
 
 package builders.loom.api;
 
-import java.nio.file.Path;
-import java.util.List;
+public interface DownloadProgressEmitterAware {
 
-import builders.loom.api.service.ResolvedArtifact;
-
-public interface DependencyResolverService extends Service {
-
-    List<Path> resolveMainArtifacts(List<String> deps, DependencyScope scope);
-
-    List<ResolvedArtifact> resolveArtifacts(List<String> deps, DependencyScope scope,
-                                            boolean withSources);
+    void setDownloadProgressEmitter(DownloadProgressEmitter downloadProgressEmitter);
 
 }

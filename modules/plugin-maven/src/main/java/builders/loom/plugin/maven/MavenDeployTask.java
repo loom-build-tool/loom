@@ -60,6 +60,7 @@ import builders.loom.api.TaskResult;
 import builders.loom.api.product.OutputInfo;
 import builders.loom.api.product.Product;
 import builders.loom.api.product.UnmanagedGenericProduct;
+import builders.loom.util.Preconditions;
 import builders.loom.util.TempFile;
 
 @SuppressWarnings({"checkstyle:classdataabstractioncoupling", "checkstyle:classfanoutcomplexity"})
@@ -131,10 +132,9 @@ public class MavenDeployTask extends AbstractModuleTask {
         final Model model = readTemplateModel(templatePom);
         enhanceModel(model, jarArtifact);
 
+        // TODO show error if file is missing
         final DeployProperties deployProperties = readDeployProperties();
 
-        final Signer signer = new Signer(deployProperties.getKeyRingFile(),
-            deployProperties.getKeyPassword(), deployProperties.getKeyId());
 
         try (final TempFile tmpPomFile = new TempFile(tmpDir, "pom", null);
              final TempFile tmpJarSig = new TempFile(tmpDir, "jar", "asc");
@@ -156,12 +156,6 @@ public class MavenDeployTask extends AbstractModuleTask {
                     deployProperties.getUsername(), deployProperties.getPassword()));
             }
 
-            // TODO sign
-
-            signer.sign(sourceJarFile, tmpJarSourceSig.getFile());
-            signer.sign(javadocFile, tmpJarDocSig.getFile());
-            //signer.sign(tmpPomFile, tmpJarSig.getFile());
-
             final SubArtifact sourceArtifact = subArtifact(sourceJarFile, jarArtifact, "*-sources");
 
             final SubArtifact javaDocArtifact = subArtifact(javadocFile, jarArtifact, "*-javadoc");
@@ -169,18 +163,23 @@ public class MavenDeployTask extends AbstractModuleTask {
             final SubArtifact pomArtifact = new SubArtifact(jarArtifact, null, "pom",
                 tmpPomFile.getFile().toFile());
 
-
-
             request
                 .setRepository(remoteRepository)
                 .addArtifact(jarArtifact)
-                .addArtifact(signedArtifact(jarArtifact, signer, tmpJarSig))
                 .addArtifact(sourceArtifact)
-                .addArtifact(signedArtifact(sourceArtifact, signer, tmpJarSourceSig))
                 .addArtifact(javaDocArtifact)
-                .addArtifact(signedArtifact(javaDocArtifact, signer, tmpJarDocSig))
-                .addArtifact(pomArtifact)
-                .addArtifact(signedArtifact(pomArtifact, signer, tmpPomSig));
+                .addArtifact(pomArtifact);
+
+            if (deployProperties.isSigningEnabled()) {
+                final Signer signer = new Signer(deployProperties.getKeyRingFile(),
+                    deployProperties.getKeyPassword(), deployProperties.getKeyId());
+
+                request
+                    .addArtifact(signedArtifact(jarArtifact, signer, tmpJarSig))
+                    .addArtifact(signedArtifact(sourceArtifact, signer, tmpJarSourceSig))
+                    .addArtifact(signedArtifact(javaDocArtifact, signer, tmpJarDocSig))
+                    .addArtifact(signedArtifact(pomArtifact, signer, tmpPomSig));
+            }
 
             system.deploy(session, request);
         }
@@ -202,9 +201,14 @@ public class MavenDeployTask extends AbstractModuleTask {
     }
 
     private DeployProperties readDeployProperties() throws IOException {
-        final Path deployConfig = getRuntimeConfiguration().getProjectBaseDir()
+        final Path deployConfig = LoomPaths.configDir(getRuntimeConfiguration().getProjectBaseDir())
             .resolve("loom-deploy.properties");
 
+        Preconditions.checkState(
+            Files.exists(deployConfig),
+            "Missing configuration file: %s", deployConfig);
+
+        // TODO validate properties
         return new DeployProperties(deployConfig);
     }
 
@@ -266,5 +270,4 @@ public class MavenDeployTask extends AbstractModuleTask {
     private BufferedOutputStream newOut(final Path file) throws IOException {
         return new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.APPEND));
     }
-
 }

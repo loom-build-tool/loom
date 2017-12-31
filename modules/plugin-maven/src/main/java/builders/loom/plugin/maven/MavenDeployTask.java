@@ -118,10 +118,8 @@ public class MavenDeployTask extends AbstractModuleTask {
 
         final String url;
 
-        final LocalRepository localRepo = new LocalRepository(
-            new MavenSettingsHelper().findLocalMavenRepository().toFile());
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
-        session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo)); // FIXME
+        session.setLocalRepositoryManager(localRepositoryManager);
 
         final Path tmpDir = Files.createDirectories(
             LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir()));

@@ -16,40 +16,29 @@
 
 package builders.loom.service.maven;
 
+import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.Wagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
-import org.apache.maven.wagon.providers.http.LightweightHttpsWagon;
+import org.apache.maven.wagon.providers.http.HttpWagon;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 
 class DefaultWagonProvider implements WagonProvider {
 
     @Override
-    public Wagon lookup(final String roleHint) throws Exception {
-        switch (roleHint) {
-            case "http":
-                return newHttpWagon();
-            case "https":
-                return newHttpsWagon();
-            default:
-                return null;
+    public Wagon lookup(final String roleHint) {
+        if ("http".equals(roleHint) || "https".equals(roleHint)) {
+            return new HttpWagon();
         }
-    }
 
-    private Wagon newHttpWagon() {
-        final LightweightHttpWagon lightweightHttpWagon = new LightweightHttpWagon();
-        lightweightHttpWagon.setAuthenticator(new LightweightHttpWagonAuthenticator());
-        return lightweightHttpWagon;
-    }
-
-    private Wagon newHttpsWagon() {
-        final LightweightHttpsWagon lightweightHttpWagon = new LightweightHttpsWagon();
-        lightweightHttpWagon.setAuthenticator(new LightweightHttpWagonAuthenticator());
-        return lightweightHttpWagon;
+        return null;
     }
 
     @Override
     public void release(final Wagon wagon) {
+        try {
+            wagon.disconnect();
+        } catch (final ConnectionException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

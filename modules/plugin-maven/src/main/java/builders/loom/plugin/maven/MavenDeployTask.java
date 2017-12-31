@@ -118,8 +118,10 @@ public class MavenDeployTask extends AbstractModuleTask {
 
         final String url;
 
+        final LocalRepository localRepo = new LocalRepository(
+            new MavenSettingsHelper().findLocalMavenRepository().toFile());
         final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
-        session.setLocalRepositoryManager(localRepositoryManager);
+        session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo)); // FIXME
 
         final Path tmpDir = Files.createDirectories(
             LoomPaths.tmpDir(getRuntimeConfiguration().getProjectBaseDir()));
@@ -127,7 +129,7 @@ public class MavenDeployTask extends AbstractModuleTask {
         final Artifact jarArtifact = buildArtifact(jarFile);
 
         final Path templatePom =
-            getRuntimeConfiguration().getProjectBaseDir().resolve("loom-pom.xml");
+            getBuildContext().getPath().resolve("loom-pom.xml");
 
         final Model model = readTemplateModel(templatePom);
         enhanceModel(model, jarArtifact);

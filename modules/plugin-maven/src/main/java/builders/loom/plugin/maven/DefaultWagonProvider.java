@@ -17,9 +17,7 @@
 package builders.loom.plugin.maven;
 
 import org.apache.maven.wagon.Wagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
-import org.apache.maven.wagon.providers.http.LightweightHttpWagonAuthenticator;
-import org.apache.maven.wagon.providers.http.LightweightHttpsWagon;
+import org.apache.maven.wagon.providers.http.HttpWagon;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 
 // TODO De-duplicate code (service-maven)
@@ -38,15 +36,11 @@ class DefaultWagonProvider implements WagonProvider {
     }
 
     private Wagon newHttpWagon() {
-        final LightweightHttpWagon lightweightHttpWagon = new LightweightHttpWagon();
-        lightweightHttpWagon.setAuthenticator(new LightweightHttpWagonAuthenticator());
-        return lightweightHttpWagon;
+        return new HttpWagon();
     }
 
     private Wagon newHttpsWagon() {
-        final LightweightHttpsWagon lightweightHttpWagon = new LightweightHttpsWagon();
-        lightweightHttpWagon.setAuthenticator(new LightweightHttpWagonAuthenticator());
-        return lightweightHttpWagon;
+        return new HttpWagon();
     }
 
     @Override

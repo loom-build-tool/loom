@@ -30,6 +30,7 @@ public class MavenPlugin extends AbstractPlugin<MavenPluginSettings> {
             .impl(() -> new MavenInstallTask(getPluginSettings()))
             .provides("mavenArtifact")
             .uses("jar")
+            .usesOptionally("check")
             .desc("Installs the jar file to the local Maven repository.")
             .register();
     }

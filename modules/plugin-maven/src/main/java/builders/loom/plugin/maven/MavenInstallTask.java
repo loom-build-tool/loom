@@ -90,6 +90,9 @@ public class MavenInstallTask extends AbstractModuleTask {
         final Path jarFile = Paths.get(requireProduct("jar", Product.class)
             .getProperty("classesJarFile"));
 
+        // Don't install non-valid artifacts
+        getUsedProducts().waitForOptionalProduct("check");
+
         return TaskResult.done(newProduct(install(jarFile)));
     }
 

@@ -97,3 +97,29 @@ javaPlatformVersion
     to lower the required Java version of your application, you can specify 6, 7 or 8 and
     Loom will use JDKs cross-compile functionality to support older Java releases.
     Please note, that Loom itself always requires JDK 9 to run.
+
+
+Environment
+-----------
+
+Some behaviour of Loom can be controlled by environment variables.
+This is a comprehensive overview:
+
+LOOM_EXIT_CONSOLE
+    Used by the *Loom Launcher* for Windows (``loom.cmd``) to control the script termination
+    behaviour in case of an error (default: ``exit /B``; setting LOOM_EXIT_CONSOLE to a non
+    empty-value causes the script to exit just with ``exit``).
+
+LOOM_OPTS
+    Specify parameters (like system properties or memory switches) that are passed to the Java
+    executable when launching Loom.
+
+LOOM_REPOSITORY_URL
+    Overrides the default repository URL ``https://repo.maven.apache.org/maven2/``.
+
+LOOM_USER_HOME
+    Overrides the default location where the *Loom Library* is installed. The default is system
+    specific. For more details, read the `Installing and Updating`_ section.
+
+
+.. _Installing and Updating: installing-and-updating.html

@@ -18,6 +18,7 @@ package builders.loom.service.maven;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import builders.loom.api.DependencyResolverService;
@@ -29,7 +30,7 @@ import builders.loom.api.service.ResolvedArtifact;
 
 public class MavenService implements DependencyResolverService, DownloadProgressEmitterAware {
 
-    private static final String REPOSITORY_URL = "https://repo.maven.apache.org/maven2/";
+    private static final String DEFAULT_REPOSITORY_URL = "https://repo.maven.apache.org/maven2/";
 
     private RuntimeConfiguration runtimeConfiguration;
     private Path repositoryPath;
@@ -53,9 +54,12 @@ public class MavenService implements DependencyResolverService, DownloadProgress
 
     @Override
     public void init() {
+        final String loomRepositoryUrl = System.getenv("LOOM_REPOSITORY_URL");
+        final String repositoryUrl = Objects.toString(loomRepositoryUrl, DEFAULT_REPOSITORY_URL);
+
         dependencyResolver = runtimeConfiguration.isCacheEnabled()
-            ? new CachingMavenResolver(REPOSITORY_URL, downloadProgressEmitter, repositoryPath)
-            : new NoCacheMavenResolver(REPOSITORY_URL, downloadProgressEmitter);
+            ? new CachingMavenResolver(repositoryUrl, downloadProgressEmitter, repositoryPath)
+            : new NoCacheMavenResolver(repositoryUrl, downloadProgressEmitter);
     }
 
     @Override

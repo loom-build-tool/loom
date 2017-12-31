@@ -239,8 +239,9 @@ public final class Loom {
     }
 
     /**
-     * clean and delete .loom dir but keep .loom/config/
+     * clean and delete .loom dir but keep .loom/config/.
      */
+    @SuppressWarnings("checkstyle:anoninnerlength")
     private static void cleanLoomDirectoryRecursively(final Path projectBaseDir) {
         final Path loomDir = LoomPaths.loomDir(projectBaseDir);
         if (Files.notExists(loomDir)) {
@@ -248,13 +249,15 @@ public final class Loom {
         }
 
         try {
+            final Path configDir = LoomPaths.configDir(projectBaseDir);
+
             Files.walkFileTree(loomDir, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-                    if (LoomPaths.configDir(projectBaseDir).equals(dir)) {
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                    return FileVisitResult.CONTINUE;
+                public FileVisitResult preVisitDirectory(final Path dir,
+                                                         final BasicFileAttributes attrs) {
+                    return dir.equals(configDir)
+                        ? FileVisitResult.SKIP_SUBTREE
+                        : FileVisitResult.CONTINUE;
                 }
 
                 @Override
@@ -271,18 +274,17 @@ public final class Loom {
                         throw exc;
                     }
 
-                    if (!Files.isSameFile(loomDir, dir)) {
+                    if (!dir.equals(loomDir)) {
                         Files.delete(dir);
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
 
-            if (!Files.exists(LoomPaths.configDir(projectBaseDir))) {
+            if (!Files.exists(configDir)) {
                 // .loom/config prevents deletion of .loom dir
                 Files.delete(loomDir);
             }
-
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

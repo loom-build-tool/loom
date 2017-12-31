@@ -37,6 +37,7 @@ class DeployProperties {
     private final String keyId;
     private final String keyPassword;
 
+    @SuppressWarnings("checkstyle:booleanexpressioncomplexity")
     DeployProperties(final Path configFile) throws IOException {
         final Properties props = new Properties();
         try (InputStream in = Files.newInputStream(configFile)) {
@@ -49,7 +50,8 @@ class DeployProperties {
         snapshotUrl = props.getProperty("snapshotUrl");
 
         // all or nothing
-        keyRingFile = Optional.ofNullable(props.getProperty("signing.secretKeyRingFile")).map(Paths::get).orElse(null);
+        keyRingFile = Optional.ofNullable(props.getProperty("signing.secretKeyRingFile"))
+            .map(Paths::get).orElse(null);
         keyId = props.getProperty("signing.keyId");
         keyPassword = props.getProperty("signing.password");
         Preconditions.checkState(

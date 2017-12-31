@@ -19,6 +19,7 @@ package builders.loom.cli;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.FileLock;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -249,17 +250,11 @@ public final class Loom {
 
         try {
             Files.walkFileTree(loomDir, new SimpleFileVisitor<>() {
-
-                private boolean deleteDir;
-
                 @Override
-                public FileVisitResult preVisitDirectory(final Path dir,
-                                                         final BasicFileAttributes attrs) {
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
                     if (LoomPaths.configDir(projectBaseDir).equals(dir)) {
-                        deleteDir = false;
                         return FileVisitResult.SKIP_SUBTREE;
                     }
-                    deleteDir = true;
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -273,11 +268,10 @@ public final class Loom {
                 @Override
                 public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
                     throws IOException {
-                    if (exc != null) {
-                        throw exc;
-                    }
-                    if (deleteDir) {
+                    try {
                         Files.delete(dir);
+                    } catch (DirectoryNotEmptyException dne) {
+                        // ok
                     }
                     return FileVisitResult.CONTINUE;
                 }

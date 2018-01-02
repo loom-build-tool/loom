@@ -5,13 +5,12 @@ archivesBaseName = 'loom-plugin-idea'
 dependencies {
     compileOnly project(':modules:api')
     compileOnly project(':modules:util')
-    testCompile('junit:junit:4.12')
 }
 
 jar {
     manifest {
         attributes(
-            'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
+                'Class-Path': configurations.compile.collect { it.getName() }.join(' ')
         )
     }
 }

@@ -16,10 +16,12 @@
 
 package builders.loom.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import builders.loom.core.misc.DirectedGraph;
 
@@ -38,10 +40,10 @@ public class DirectedGraphTest {
         graph.addEdge("bar", "baz");
         graph.addEdge("bob", "alice");
 
-        Assert.assertEquals(Arrays.asList("baz", "bar", "foo"), graph.resolve("foo"));
+        assertEquals(Arrays.asList("baz", "bar", "foo"), graph.resolve("foo"));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void cycling() {
         final DirectedGraph<String> graph = new DirectedGraph<>();
         graph.addNode("foo");
@@ -50,7 +52,7 @@ public class DirectedGraphTest {
         graph.addEdge("foo", "bar");
         graph.addEdge("bar", "foo");
 
-        graph.resolve("foo");
+        assertThrows(IllegalStateException.class, () -> graph.resolve("foo"));
     }
 
 }

@@ -16,13 +16,14 @@
 
 package builders.loom.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StringReplaceUtilTest {
 
@@ -32,9 +33,9 @@ public class StringReplaceUtilTest {
             replace("Hello ${name}!"));
     }
 
-    @Test(expected = UncheckedIOException.class)
+    @Test
     public void empty() {
-        replace("Hello ${}!");
+        assertThrows(UncheckedIOException.class, () -> replace("Hello ${}!"));
     }
 
     public void halfOpen() {
@@ -42,9 +43,9 @@ public class StringReplaceUtilTest {
             replace("Hello $"));
     }
 
-    @Test(expected = UncheckedIOException.class)
+    @Test
     public void open() {
-        replace("Hello ${");
+        assertThrows(UncheckedIOException.class, () -> replace("Hello ${"));
     }
 
     @Test
@@ -59,9 +60,10 @@ public class StringReplaceUtilTest {
             replace("Hello ${name}! You are ${age:} years old."));
     }
 
-    @Test(expected = UncheckedIOException.class)
+    @Test
     public void missingDefault() {
-        replace("Hello ${name}! You are ${age} years old.");
+        assertThrows(UncheckedIOException.class,
+            () -> replace("Hello ${name}! You are ${age} years old."));
     }
 
     private String replace(final String tpl) {

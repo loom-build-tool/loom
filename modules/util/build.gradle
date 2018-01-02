@@ -1,8 +1,21 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.2")
+	}
+}
+
 apply plugin: 'java'
+apply plugin: 'org.junit.platform.gradle.plugin'
 
 archivesBaseName = 'loom-util'
 
 dependencies {
 	compileOnly project(':modules:api')
-	testCompile('junit:junit:4.12')
+	testCompile('org.junit.jupiter:junit-jupiter-api:5.0.2')
+	testRuntime('org.junit.jupiter:junit-jupiter-engine:5.0.2')
+	testCompile('org.apiguardian:apiguardian-api:1.0.0')
+	testRuntime('org.junit.platform:junit-platform-launcher:1.0.2')
 }

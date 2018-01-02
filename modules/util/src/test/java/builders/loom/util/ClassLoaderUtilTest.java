@@ -16,14 +16,14 @@
 
 package builders.loom.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ClassLoaderUtilTest {
 
     @Test
-    public void classnameFromFilename() throws Exception {
+    public void classnameFromFilename() {
         assertEquals(
             "com.example.Foo",
             ClassLoaderUtil.classnameFromFilename("com/example/Foo.class"));

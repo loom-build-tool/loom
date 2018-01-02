@@ -16,6 +16,8 @@
 
 package builders.loom.util.serialize;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,8 +25,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SimpleSerializerTest {
 
@@ -44,12 +45,12 @@ public class SimpleSerializerTest {
         final List<Record> recordList = new ArrayList<>();
         SimpleSerializer.read(file, recordList::add);
 
-        Assert.assertEquals(4, recordList.size());
+        assertEquals(4, recordList.size());
         final Iterator<Record> it = recordList.iterator();
-        Assert.assertEquals(Arrays.asList("foo", "bar"), it.next().getFields());
-        Assert.assertEquals(Arrays.asList(null, ""), it.next().getFields());
-        Assert.assertEquals(Arrays.asList("", null), it.next().getFields());
-        Assert.assertEquals(Arrays.asList(null, null), it.next().getFields());
+        assertEquals(Arrays.asList("foo", "bar"), it.next().getFields());
+        assertEquals(Arrays.asList(null, ""), it.next().getFields());
+        assertEquals(Arrays.asList("", null), it.next().getFields());
+        assertEquals(Arrays.asList(null, null), it.next().getFields());
     }
 
 }

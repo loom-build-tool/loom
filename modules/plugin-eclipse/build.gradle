@@ -5,7 +5,6 @@ archivesBaseName = 'loom-plugin-eclipse'
 dependencies {
     compileOnly project(':modules:api')
     compileOnly project(':modules:util')
-    testCompile('junit:junit:4.12')
 }
 
 jar {

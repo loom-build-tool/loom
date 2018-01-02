@@ -283,9 +283,9 @@ The text of each license is also included at licenses/LICENSE-[project].txt.
 
     Animal Sniffer Annotations (org.codehaus.mojo:animal-sniffer-annotations:1.14 - http://www.mojohaus.org/animal-sniffer/animal-sniffer-annotations/)
     JSoup (org.jsoup:jsoup:1.7.2 - http://jsoup.org/)
-    SLF4J (org.slf4j:jcl-over-slf4j:1.8.0-alpha2 - https://www.slf4j.org/)
-    SLF4J (org.slf4j:jul-to-slf4j:1.8.0-alpha2 - https://www.slf4j.org/)
-    SLF4J (org.slf4j:slf4j-api:1.8.0-alpha2 - https://www.slf4j.org/)
+    SLF4J (org.slf4j:jcl-over-slf4j:1.8.0-beta0 - https://www.slf4j.org/)
+    SLF4J (org.slf4j:jul-to-slf4j:1.8.0-beta0 - https://www.slf4j.org/)
+    SLF4J (org.slf4j:slf4j-api:1.8.0-beta0 - https://www.slf4j.org/)
 
 
 ========================================================================

@@ -57,7 +57,6 @@ public class DiskLogAppender implements LogAppender {
 
         final ThreadFactory threadFactory = r -> {
             final Thread t = new Thread(r, "DiskLogAppender");
-            t.setDaemon(true);
             t.setPriority(Thread.MIN_PRIORITY);
             return t;
         };
@@ -71,7 +70,7 @@ public class DiskLogAppender implements LogAppender {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         queue.add(POISON_PILL);
 
         executorService.shutdown();

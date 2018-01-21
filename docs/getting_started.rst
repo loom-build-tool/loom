@@ -26,7 +26,7 @@ A typical configuration with a few external dependencies might look like this:
     compileDependencies:
       - com.google.guava:guava:23.0
     testDependencies:
-      - org.junit.jupiter:junit-jupiter-engine:5.0.2
+      - org.junit.jupiter:junit-jupiter-engine:5.0.3
 
 
 For more details, read the `Configuration`_ section.

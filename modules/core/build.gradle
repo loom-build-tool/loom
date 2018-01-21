@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.2")
+        classpath("org.junit.platform:junit-platform-gradle-plugin:1.0.3")
     }
 }
 
@@ -17,9 +17,8 @@ dependencies {
     compile project(':modules:util')
     compile('org.slf4j:jul-to-slf4j:1.8.0-beta0')
     compile('org.yaml:snakeyaml:1.18')
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.2')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.0.2')
-    testCompile('org.apiguardian:apiguardian-api:1.0.0')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.3')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.0.3')
 }
 
 processResources {

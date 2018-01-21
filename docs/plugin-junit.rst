@@ -3,7 +3,7 @@ Plugin junit
 
 This plugin allows the use of `JUnit`_ within projects build with Loom.
 
-Loom uses the JUnit Platform version 1.0.2 (which is part of JUnit 5).
+Loom uses the JUnit Platform version 1.0.3 (which is part of JUnit 5).
 
 
 Products
@@ -25,7 +25,7 @@ To execute Tests with JUnit 5 natively, this is your configuration:
     plugins:
       - junit
     testDependencies:
-      - org.junit.jupiter:junit-jupiter-engine:5.0.2
+      - org.junit.jupiter:junit-jupiter-engine:5.0.3
 
 
 Legacy configuration
@@ -41,7 +41,7 @@ dependency to test your project without any changes.
     plugins:
       - junit
     testDependencies:
-      - org.junit.vintage:junit-vintage-engine:4.12.2
+      - org.junit.vintage:junit-vintage-engine:4.12.3
 
 
 Settings

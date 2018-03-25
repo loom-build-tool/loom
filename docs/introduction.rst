@@ -10,5 +10,5 @@ convention over configuration to reduce the configuration to a bare minimum.
 Requirements
 ------------
 
-Loom requires **JDK 9** to build and run but it can build projects
-**targeting Java 6-9** through JDKs cross-compile functionality.
+Loom requires **JDK 10** to build and run but it can build projects
+**targeting Java 6-10** through JDKs cross-compile functionality.

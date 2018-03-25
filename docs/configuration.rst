@@ -93,7 +93,7 @@ moduleName
     of the module using this setting.
 
 javaPlatformVersion
-    By default, Loom compiles your sources with Java 9 as the target Java version. If you want
-    to lower the required Java version of your application, you can specify 6, 7 or 8 and
+    By default, Loom compiles your sources with Java 10 as the target Java version. If you want
+    to lower the required Java version of your application, you can specify 6, 7, 8 or 9 and
     Loom will use JDKs cross-compile functionality to support older Java releases.
-    Please note, that Loom itself always requires JDK 9 to run.
+    Please note, that Loom itself always requires JDK 10 to run.

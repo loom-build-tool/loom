@@ -16,6 +16,12 @@ dependencies {
     compile('org.apache.maven:maven-aether-provider:3.0.4')
 }
 
+compileJava {
+    // get rid of this:
+    // warning: Supported source version 'RELEASE_6' from annotation processor 'org.sonatype.guice.bean.scanners.index.SisuIndexAPT6' less than -source '10'
+    options.compilerArgs += ["-proc:none"]
+}
+
 jar {
     manifest {
         attributes(

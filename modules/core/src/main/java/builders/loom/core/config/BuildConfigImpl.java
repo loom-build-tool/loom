@@ -28,7 +28,7 @@ import builders.loom.api.ModuleBuildConfig;
 
 public class BuildConfigImpl implements ModuleBuildConfig, Serializable {
 
-    static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_9;
+    static final JavaVersion DEFAULT_JAVA_PLATFORM_VERSION = JavaVersion.JAVA_10;
 
     private static final long serialVersionUID = 1L;
 

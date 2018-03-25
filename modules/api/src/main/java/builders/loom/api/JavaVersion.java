@@ -18,11 +18,11 @@ package builders.loom.api;
 
 public enum JavaVersion {
 
-    JAVA_1_5(5, "1.5"),
     JAVA_1_6(6, "1.6"),
     JAVA_1_7(7, "1.7"),
     JAVA_1_8(8, "1.8"),
-    JAVA_9(9, "9");
+    JAVA_9(9, "9"),
+    JAVA_10(10, "10");
 
     private final int numericVersion;
     private final String stringVersion;
@@ -47,6 +47,8 @@ public enum JavaVersion {
     @SuppressWarnings("checkstyle:returncount")
     public static JavaVersion ofVersion(final String versionStr) {
         switch (versionStr) {
+            case "10":
+                return JAVA_10;
             case "9":
                 return JAVA_9;
             case "1.8":
@@ -58,16 +60,13 @@ public enum JavaVersion {
             case "1.6":
             case "6":
                 return JAVA_1_6;
-            case "1.5":
-            case "5":
-                return JAVA_1_5;
             default:
                 throw new IllegalArgumentException("Unknown Java version: " + versionStr);
         }
     }
 
     public static JavaVersion current() {
-        return ofVersion(Integer.toString(Runtime.version().major()));
+        return ofVersion(Integer.toString(Runtime.version().feature()));
     }
 
 }

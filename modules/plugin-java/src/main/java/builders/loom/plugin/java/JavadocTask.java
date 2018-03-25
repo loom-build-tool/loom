@@ -35,8 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import builders.loom.api.AbstractModuleTask;
-import builders.loom.api.CompileTarget;
-import builders.loom.api.LoomPaths;
 import builders.loom.api.TaskResult;
 import builders.loom.api.product.ManagedGenericProduct;
 import builders.loom.api.product.OutputInfo;
@@ -81,24 +79,15 @@ public class JavadocTask extends AbstractModuleTask {
             }
 
             for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-                // TODO doesn't work
-/*
-                final Optional<CompilationProduct> compilation =
-                    useProduct(moduleName, "compilation", CompilationProduct.class);
+                final Optional<Path> moduleBuildPath =
+                    useProduct(moduleName, "compilation", Product.class)
+                        .map(p -> Paths.get(p.getProperty("classesDir")));
 
-                if (compilation.isPresent()) {
+                if (moduleBuildPath.isPresent()) {
                     fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
-                        moduleName, List.of(compilation.get().getClassesDir()));
+                        moduleName, List.of(moduleBuildPath.get()));
                 }
-*/
-
-                // workaround - step 1/2
-                getUsedProducts().getAndWaitProduct(moduleName, "compilation");
             }
-
-            // workaround - step 2/2
-            fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH,
-                List.of(getBuildDir().getParent()));
 
             final Path srcDir = Paths.get(source.get().getProperty("srcDir"));
             final List<Path> srcFiles = Files
@@ -119,13 +108,6 @@ public class JavadocTask extends AbstractModuleTask {
         }
 
         return TaskResult.done(newProduct(buildDir));
-    }
-
-    private Path getBuildDir() {
-        // TODO another workaround for non-functional MODULE_PATH
-        return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
-            .resolve(Paths.get("compilation", CompileTarget.MAIN.name().toLowerCase(),
-                getBuildContext().getModuleName()));
     }
 
     private static Product newProduct(final Path buildDir) {

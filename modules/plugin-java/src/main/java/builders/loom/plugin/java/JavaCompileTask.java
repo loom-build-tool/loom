@@ -56,6 +56,7 @@ public class JavaCompileTask extends AbstractModuleTask {
     private static final Logger LOG = LoggerFactory.getLogger(JavaCompileTask.class);
 
     private final CompileTarget compileTarget;
+    private final String productId;
     private final String sourceProductId;
 
     public JavaCompileTask(final CompileTarget compileTarget) {
@@ -63,9 +64,11 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         switch (compileTarget) {
             case MAIN:
+                productId = "compilation";
                 sourceProductId = "source";
                 break;
             case TEST:
+                productId = "testCompilation";
                 sourceProductId = "testSource";
                 break;
             default:
@@ -131,12 +134,11 @@ public class JavaCompileTask extends AbstractModuleTask {
     }
 
     private Path resolveBuildDir() {
-        // TODO another workaround for non-functional MODULE_PATH
         return LoomPaths.buildDir(getRuntimeConfiguration().getProjectBaseDir())
-            .resolve(Paths.get("compilation", compileTarget.name().toLowerCase(),
-                getBuildContext().getModuleName()));
+            .resolve("products")
+            .resolve(productId)
+            .resolve(getBuildContext().getModuleName());
     }
-
 
     // read: http://blog.ltgt.net/most-build-tools-misuse-javac/
     private void compile(final Path buildDir, final Collection<Path> classpath,
@@ -165,7 +167,8 @@ public class JavaCompileTask extends AbstractModuleTask {
         if (moduleInfoOpt.isPresent()) {
             // Case 1 or 4
 
-            if (crossCompileVersion.isPresent()) {
+            if (crossCompileVersion.isPresent()
+                && JavaVersion.JAVA_9.isNewerThan(crossCompileVersion.get())) {
                 // Case 4 - 1st step
 
                 // Unfortunately JDK doesn't support cross-compile for module-info.java
@@ -247,28 +250,16 @@ public class JavaCompileTask extends AbstractModuleTask {
 
         // Wait until other modules have delivered their compilations to module path
         for (final String moduleName : getModuleConfig().getModuleCompileDependencies()) {
-            // TODO doesn't work
-/*
-            final Optional<CompilationProduct> compilation =
-                useProduct(moduleName, "compilation", CompilationProduct.class);
-            if (compilation.isPresent()) {
-                final Path moduleCompilePath = compilation.get().getClassesDir();
+            final Optional<Path> moduleCompilePath =
+                useProduct(moduleName, "compilation", Product.class)
+                    .map(p -> Paths.get(p.getProperty("classesDir")));
+
+            if (moduleCompilePath.isPresent()) {
                 LOG.debug("Modulepath for module {}: {}", moduleName, moduleCompilePath);
                 fileManager.setLocationForModule(StandardLocation.MODULE_PATH,
-                    moduleName, List.of(moduleCompilePath));
+                    moduleName, List.of(moduleCompilePath.get()));
             }
-*/
-
-            // workaround - step 1/2
-            getUsedProducts().getAndWaitProduct(moduleName, "compilation");
         }
-
-        // workaround - step 2/2
-        final List<Path> modulePath = new ArrayList<>();
-        modulePath.add(buildDir.getParent());
-        modulePath.addAll(classpath);
-        fileManager.setLocationFromPaths(StandardLocation.MODULE_PATH, modulePath);
-        LOG.debug("Modulepath: {}", modulePath);
     }
 
     private void buildClassPath(final Collection<Path> classpath,

@@ -66,7 +66,7 @@ public enum JavaVersion {
     }
 
     public static JavaVersion current() {
-        return ofVersion(Integer.toString(Runtime.version().major()));
+        return ofVersion(Integer.toString(Runtime.version().feature()));
     }
 
 }

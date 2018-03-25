@@ -157,6 +157,8 @@ public class JavaCompileTask extends AbstractModuleTask {
             .filter(f -> f.getFileName().toString().equals(LoomPaths.MODULE_INFO_JAVA))
             .findFirst();
 
+        // FIXME Java 10
+
         // Handle these cases:
         // Case 1 -- pure Java 9 compile with module-info.java --> MODULE_PATH
         // Case 2 -- pure Java 9 compile without module-info.java --> CLASS_PATH

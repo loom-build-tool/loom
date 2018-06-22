@@ -40,7 +40,7 @@ excludeFilterFiles
 
 excludeTests
     Boolean flag to allow the exclusion of test classes. As it is *not* recommended,
-    thd default is ``false``. Set it to ``true`` to have standard Maven behaviour.
+    the default is ``false``. Set it to ``true`` to have standard Maven behaviour.
 
 includeFilterFiles
     Filename of a filter configuration (whitelist).

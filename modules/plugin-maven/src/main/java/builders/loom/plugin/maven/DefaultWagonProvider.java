@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package builders.loom.service.maven;
+package builders.loom.plugin.maven;
 
 import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.providers.http.HttpWagon;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 
+// TODO De-duplicate code (service-maven)
 class DefaultWagonProvider implements WagonProvider {
 
     @Override

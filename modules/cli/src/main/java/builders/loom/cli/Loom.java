@@ -16,10 +16,15 @@
 
 package builders.loom.cli;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.channels.FileLock;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import javax.tools.ToolProvider;
@@ -229,8 +234,60 @@ public final class Loom {
     }
 
     private static void clean(final Path projectBaseDir) {
-        FileUtil.deleteDirectoryRecursively(LoomPaths.loomDir(projectBaseDir), true);
+        cleanLoomDirectoryRecursively(projectBaseDir);
         FileUtil.deleteDirectoryRecursively(LoomPaths.buildDir(projectBaseDir), true);
+    }
+
+    /**
+     * clean and delete .loom dir but keep .loom/config/.
+     */
+    @SuppressWarnings("checkstyle:anoninnerlength")
+    private static void cleanLoomDirectoryRecursively(final Path projectBaseDir) {
+        final Path loomDir = LoomPaths.loomDir(projectBaseDir);
+        if (Files.notExists(loomDir)) {
+            return;
+        }
+
+        try {
+            final Path configDir = LoomPaths.configDir(projectBaseDir);
+
+            Files.walkFileTree(loomDir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir,
+                                                         final BasicFileAttributes attrs) {
+                    return dir.equals(configDir)
+                        ? FileVisitResult.SKIP_SUBTREE
+                        : FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+                    throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
+                    throws IOException {
+                    if (exc != null) {
+                        throw exc;
+                    }
+
+                    if (!dir.equals(loomDir)) {
+                        Files.delete(dir);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            if (!Files.exists(configDir)) {
+                // .loom/config prevents deletion of .loom dir
+                Files.delete(loomDir);
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static void configureLogging(final Path logFile) {

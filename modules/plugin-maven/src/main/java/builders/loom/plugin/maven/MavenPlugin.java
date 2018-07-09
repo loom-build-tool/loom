@@ -33,6 +33,14 @@ public class MavenPlugin extends AbstractPlugin<MavenPluginSettings> {
             .usesOptionally("check")
             .desc("Installs the jar file to the local Maven repository.")
             .register();
+
+        task("deploy")
+            .impl(() -> new MavenDeployTask(getPluginSettings()))
+            .provides("deployedMavenArtifact")
+            .uses("jar", "sourcesJar", "javadocJar")
+            .usesOptionally("check")
+            .desc("Deploys the jar file to a remote Maven repository.")
+            .register();
     }
 
 }

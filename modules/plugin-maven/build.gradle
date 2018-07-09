@@ -11,6 +11,10 @@ dependencies {
     compileOnly project(':modules:util')
     compile('org.sonatype.aether:aether-impl:1.13.1')
     compile('org.apache.maven:maven-aether-provider:3.0.4')
+    compile('org.sonatype.aether:aether-connector-wagon:1.13.1')
+    compile('org.sonatype.aether:aether-connector-file:1.13.1')
+    compile('org.apache.maven.wagon:wagon-http:3.0.0')
+    compile('org.bouncycastle:bcpg-jdk15on:1.58')
 }
 
 jar {
